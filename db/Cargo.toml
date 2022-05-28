@@ -1,0 +1,17 @@
+[package]
+name = "db"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+diesel = { version = "1.4", features = ["postgres", "r2d2", "uuid", "chrono"] }
+env_logger = "0.9"
+log = "0.4"
+r2d2 = "0.8"
+r2d2_postgres = "0.18"
+serde = "1.0.80"
+serde_derive = "1.0.115"
+serde_json = "1.0.13"
