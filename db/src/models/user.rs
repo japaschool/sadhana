@@ -3,6 +3,7 @@ use diesel::{PgConnection, QueryDsl, Queryable, RunQueryDsl};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::schema::users;
+use errors::Error;
 
 #[derive(Debug, Identifiable, Serialize, Deserialize, Queryable)]
 pub struct User {
@@ -15,9 +16,9 @@ pub struct User {
 }
 
 impl User {
-    pub fn get_all(conn: &PgConnection) -> Result<Vec<User>, diesel::result::Error> {
+    pub fn get_all(conn: &PgConnection) -> Result<Vec<User>, Error> {
         use crate::schema::users::dsl::{name, users};
 
-        users.order(name).load(conn)
+        Ok(users.order(name).load(conn)?)
     }
 }

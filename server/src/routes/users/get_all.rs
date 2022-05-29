@@ -1,17 +1,16 @@
 use actix_web::{
-    error,
-    error::Error,
     web::{block, Data, Json},
     Result,
 };
+use errors::Error;
 
 use db::{get_conn, models::User, PgPool};
 
 pub async fn get_all(pool: Data<PgPool>) -> Result<Json<Vec<User>>, Error> {
-    let connection = get_conn(&pool);
+    let connection = get_conn(&pool)?;
 
     let res = block(move || User::get_all(&connection)).await?;
-    let users = res.map_err(|err| error::ErrorBadRequest(err))?;
+    let users = res?;
 
     Ok(Json(users))
 }
@@ -35,7 +34,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_get_all_returns_users() {
         let pool = new_pool();
-        let conn = get_conn(&pool);
+        let conn = get_conn(&pool).unwrap();
 
         diesel::insert_into(users::table)
             .values(NewUser {
