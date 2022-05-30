@@ -17,19 +17,14 @@ pub async fn get_all(pool: Data<PgPool>) -> Result<Json<Vec<User>>, Error> {
 
 #[cfg(test)]
 mod tests {
-    use diesel::{Insertable, RunQueryDsl};
-
-    use db::{get_conn, models::User, new_pool, schema::users};
-
-    use crate::tests;
-
-    #[derive(Debug, Insertable)]
-    #[table_name = "users"]
-    pub struct NewUser {
-        pub name: String,
-        pub email: String,
-        pub pwd_hash: String,
-    }
+    use crate::test_helpers;
+    use db::{
+        get_conn,
+        models::{NewUser, User},
+        new_pool,
+        schema::users,
+    };
+    use diesel::RunQueryDsl;
 
     #[actix_rt::test]
     async fn test_get_all_returns_users() {
@@ -45,9 +40,11 @@ mod tests {
             .execute(&conn)
             .unwrap();
 
-        let res: (u16, Vec<User>) = tests::test_get("/api/users").await;
+        let res: (u16, Vec<User>) = test_helpers::test_get("/api/users").await;
         assert_eq!(res.0, 200);
         assert_eq!(res.1.len(), 1);
         assert_eq!(res.1[0].email, "dummy@gmail.com");
+
+        diesel::delete(users::dsl::users).execute(&conn).unwrap();
     }
 }

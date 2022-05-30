@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use diesel::{PgConnection, QueryDsl, Queryable, RunQueryDsl};
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::schema::users;
 use errors::Error;
@@ -21,4 +21,21 @@ impl User {
 
         Ok(users.order(name).load(conn)?)
     }
+
+    pub fn create(conn: &PgConnection, new_user: NewUser) -> Result<User, Error> {
+        use crate::schema::users::dsl::users;
+
+        let user: User = diesel::insert_into(users)
+            .values(new_user)
+            .get_result(conn)?;
+        Ok(user)
+    }
+}
+
+#[derive(Debug, Insertable, Serialize)]
+#[table_name = "users"]
+pub struct NewUser {
+    pub name: String,
+    pub email: String,
+    pub pwd_hash: String,
 }

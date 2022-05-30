@@ -1,12 +1,10 @@
-// use std::env;
-
 use actix_cors::Cors;
 use actix_web::{http, middleware::Logger, web::Data, App, HttpServer};
 use dotenv::dotenv;
 
 mod routes;
 #[cfg(test)]
-mod tests;
+mod test_helpers;
 
 #[actix_web::main]
 pub async fn main() -> std::io::Result<()> {

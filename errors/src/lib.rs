@@ -7,7 +7,7 @@ use actix_web::{
 use derive_more::Display;
 use diesel::result::{DatabaseErrorKind, Error as DBError};
 use r2d2::Error as PoolError;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Display, PartialEq)]
 pub enum Error {
