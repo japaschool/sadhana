@@ -18,6 +18,8 @@ pub enum Error {
     NotFound(String),
     PoolError(String),
     BlockingError(String),
+    #[display(fmt = "")]
+    ValidationError(Vec<String>),
 }
 
 impl ResponseError for Error {
@@ -30,6 +32,10 @@ impl ResponseError for Error {
             Error::NotFound(msg) => {
                 let error: ErrorResponse = msg.into();
                 HttpResponse::NotFound().json(error)
+            }
+            Error::ValidationError(msgs) => {
+                let error: ErrorResponse = msgs.to_vec().into();
+                HttpResponse::UnprocessableEntity().json(error)
             }
             _ => {
                 error!("Internal server error: {:?}", self);

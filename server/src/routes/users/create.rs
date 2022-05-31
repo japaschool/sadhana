@@ -4,7 +4,7 @@ use actix_web::{
 };
 use errors::Error;
 use serde::{Deserialize, Serialize};
-// use validator::{Validate, ValidationError};
+use validator::Validate;
 
 use db::{
     get_conn,
@@ -12,13 +12,15 @@ use db::{
     PgPool,
 };
 
-#[derive(Clone, Deserialize, Serialize)]
+use crate::validation::validate;
+
+#[derive(Clone, Deserialize, Serialize, Validate)]
 pub struct CreateUserRequest {
-    // #[validate(length(min = "3"))]
+    #[validate(length(min = 3))]
     name: String,
-    // #[validate(email)]
+    #[validate(email)]
     email: String,
-    // #[validate(length(min = "5"))]
+    #[validate(length(min = 5))]
     pwd_hash: String,
 }
 
@@ -26,7 +28,7 @@ pub async fn create(
     pool: Data<PgPool>,
     params: Json<CreateUserRequest>,
 ) -> Result<Json<User>, Error> {
-    // validate(&params)?;
+    validate(&params)?;
 
     let connection = get_conn(&pool)?;
 
@@ -56,6 +58,7 @@ mod tests {
         schema::users,
     };
     use diesel::RunQueryDsl;
+    use errors::ErrorResponse;
 
     #[actix_rt::test]
     pub async fn test_create_user() {
@@ -80,5 +83,28 @@ mod tests {
         assert_eq!(result_users[0].email, "xyz@gmail.com");
 
         diesel::delete(users::dsl::users).execute(&conn).unwrap();
+    }
+
+    #[actix_rt::test]
+    pub async fn test_create_email_validation() {
+        let pool = new_pool();
+        let conn = get_conn(&pool).unwrap();
+
+        // note here how the deserialize type has changed
+        let res: (u16, ErrorResponse) = test_helpers::test_post(
+            "/api/users",
+            NewUser {
+                name: "X Yz".into(),
+                email: "xyz".into(),
+                pwd_hash: "abcdef".into(),
+            },
+        )
+        .await;
+
+        assert_eq!(res.0, 422);
+        assert_eq!(res.1.errors, vec!["email is required"]);
+
+        let result_users = users::dsl::users.load::<User>(&conn).unwrap();
+        assert_eq!(result_users.len(), 0);
     }
 }

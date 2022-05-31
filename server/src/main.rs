@@ -5,6 +5,7 @@ use dotenv::dotenv;
 mod routes;
 #[cfg(test)]
 mod test_helpers;
+mod validation;
 
 #[actix_web::main]
 pub async fn main() -> std::io::Result<()> {
