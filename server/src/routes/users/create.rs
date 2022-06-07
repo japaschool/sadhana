@@ -16,12 +16,12 @@ use crate::validation::validate;
 
 #[derive(Clone, Deserialize, Serialize, Validate)]
 pub struct CreateUserRequest {
-    #[validate(length(min = 3))]
-    name: String,
     #[validate(email)]
     email: String,
     #[validate(length(min = 5))]
-    pwd_hash: String,
+    hash: String,
+    #[validate(length(min = 3))]
+    name: String,
 }
 
 pub async fn create(
@@ -36,9 +36,9 @@ pub async fn create(
         User::create(
             &connection,
             NewUser {
-                name: params.name.clone(),
                 email: params.email.clone(),
-                pwd_hash: params.pwd_hash.clone(),
+                hash: params.hash.clone(),
+                name: params.name.clone(),
             },
         )
     })
@@ -68,9 +68,9 @@ mod tests {
         let res: (u16, User) = test_helpers::test_post(
             "/api/users",
             NewUser {
-                name: "X Yz".into(),
                 email: "xyz@gmail.com".into(),
-                pwd_hash: "abcdef".into(),
+                hash: "abcdef".into(),
+                name: "X Yz".into(),
             },
         )
         .await;
@@ -94,9 +94,9 @@ mod tests {
         let res: (u16, ErrorResponse) = test_helpers::test_post(
             "/api/users",
             NewUser {
-                name: "X Yz".into(),
                 email: "xyz".into(),
-                pwd_hash: "abcdef".into(),
+                hash: "abcdef".into(),
+                name: "X Yz".into(),
             },
         )
         .await;

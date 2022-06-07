@@ -1,9 +1,8 @@
 table! {
-    users (id) {
-        id -> Int4,
+    users (email) {
+        email -> Varchar,
+        hash -> Varchar,
         name -> Text,
-        email -> Text,
-        pwd_hash -> Text,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }

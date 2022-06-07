@@ -33,9 +33,9 @@ mod tests {
 
         diesel::insert_into(users::table)
             .values(NewUser {
-                name: "dummy".to_string(),
                 email: "dummy@gmail.com".to_string(),
-                pwd_hash: "abcde".to_string(),
+                hash: "abcde".to_string(),
+                name: "dummy".to_string(),
             })
             .execute(&conn)
             .unwrap();

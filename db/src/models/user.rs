@@ -5,12 +5,11 @@ use serde::{Deserialize, Serialize};
 use crate::schema::users;
 use errors::Error;
 
-#[derive(Debug, Identifiable, Serialize, Deserialize, Queryable)]
+#[derive(Debug, Serialize, Deserialize, Queryable)]
 pub struct User {
-    pub id: i32,
-    pub name: String,
     pub email: String,
-    pub pwd_hash: String, //FIXME: ensure this field is not returned to the UI
+    pub hash: String, //FIXME: ensure this field is not returned to the UI
+    pub name: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -35,7 +34,17 @@ impl User {
 #[derive(Debug, Insertable, Serialize)]
 #[table_name = "users"]
 pub struct NewUser {
-    pub name: String,
     pub email: String,
-    pub pwd_hash: String,
+    pub hash: String,
+    pub name: String,
+}
+
+impl NewUser {
+    pub fn new(email: String, pwd: String, name: String) -> Self {
+        NewUser {
+            email,
+            hash: pwd.into(),
+            name,
+        }
+    }
 }

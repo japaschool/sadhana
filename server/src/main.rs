@@ -1,5 +1,10 @@
 use actix_cors::Cors;
-use actix_web::{http, middleware::Logger, web::Data, App, HttpServer};
+use actix_web::{
+    http,
+    middleware::Logger,
+    web::{Data, JsonConfig},
+    App, HttpServer,
+};
 use dotenv::dotenv;
 
 mod routes;
@@ -32,6 +37,8 @@ pub async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .wrap(Logger::new("%a %{User-Agent}i"))
             .app_data(Data::new(pool.clone()))
+            // limit the maximum amount of data that server will accept
+            .app_data(JsonConfig::default().limit(4096))
             .configure(routes::routes)
     })
     .bind("0.0.0.0:8080")?

@@ -1,8 +1,7 @@
 create table users (
-  id serial primary key,
+  email varchar(100) not null primary key,
+  hash varchar(122) not null,
   name text not null,
-  email text not null,
-  pwd_hash text not null,
   created_at timestamp with time zone not null default now(),
   updated_at timestamp with time zone not null default now()
 );

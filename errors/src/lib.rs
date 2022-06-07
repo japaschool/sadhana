@@ -18,7 +18,7 @@ pub enum Error {
     NotFound(String),
     PoolError(String),
     BlockingError(String),
-    #[display(fmt = "")]
+    #[display(fmt = "Validation Error")]
     ValidationError(Vec<String>),
 }
 
