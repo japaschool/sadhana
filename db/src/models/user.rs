@@ -43,7 +43,7 @@ impl NewUser {
     pub fn new(email: String, pwd: String, name: String) -> Self {
         NewUser {
             email,
-            hash: pwd.into(),
+            hash: pwd,
             name,
         }
     }

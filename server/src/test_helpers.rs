@@ -19,9 +19,9 @@ pub async fn test_get<R>(route: &str) -> (u16, R)
 where
     R: DeserializeOwned,
 {
-    let mut app = get_service().await;
+    let app = get_service().await;
     let req = test::TestRequest::get().uri(route);
-    let res = test::call_service(&mut app, req.to_request()).await;
+    let res = test::call_service(&app, req.to_request()).await;
 
     let status = res.status().as_u16();
     let body = test::read_body(res).await;
@@ -42,11 +42,11 @@ where
     T: Serialize,
     R: DeserializeOwned,
 {
-    let mut app = get_service().await;
+    let app = get_service().await;
 
     let req = test::TestRequest::post().set_json(&params).uri(route);
 
-    let res = test::call_service(&mut app, req.to_request()).await;
+    let res = test::call_service(&app, req.to_request()).await;
 
     let status = res.status().as_u16();
     let body = test::read_body(res).await;

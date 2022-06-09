@@ -22,5 +22,10 @@ reset_db:
 test:
 	DATABASE_URL=$(db_url) cargo test $(T) -- --nocapture --test-threads=1
 
+lint:
+	@rustup component add clippy 2> /dev/null
+	# touch src/**
+	cargo clippy --all-targets --all-features -- -D warnings
+
 # non-file target for make
-.PHONY: run_server create_migration migrate redo_migrate reset_db test
+.PHONY: run_server create_migration migrate redo_migrate reset_db test lint

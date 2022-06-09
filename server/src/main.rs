@@ -22,7 +22,9 @@ pub async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let cors = Cors::default()
-            // .allowed_origin("*")
+            .allow_any_origin()
+            .send_wildcard()
+            // .allowed_methods(vec!["GET"])
             // .allowed_origin(&env::var("CLIENT_HOST").unwrap())
             .allow_any_method()
             .allowed_headers(vec![
