@@ -24,7 +24,6 @@ test:
 
 lint:
 	@rustup component add clippy 2> /dev/null
-	# touch src/**
 	cargo clippy --all-targets --all-features -- -D warnings
 
 # non-file target for make
