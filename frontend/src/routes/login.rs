@@ -4,13 +4,14 @@ use yew_hooks::prelude::*;
 use yew_router::prelude::*;
 
 use crate::components::list_errors::ListErrors;
+use crate::hooks::use_user_context;
 use crate::services::login;
 use crate::{model::*, AppRoute};
 
 #[function_component(Login)]
 pub fn login() -> Html {
+    let user_ctx = use_user_context();
     let login_info = use_state(|| LoginInfo::default());
-
     let user_login = {
         let login_info = login_info.clone();
         use_async(async move {
@@ -20,6 +21,17 @@ pub fn login() -> Html {
             login(request).await
         })
     };
+
+    /* Hook into changes of user_login */
+    use_effect_with_deps(
+        move |user_login| {
+            if let Some(user_info) = &user_login.data {
+                user_ctx.login(user_info.user.clone());
+            }
+            || ()
+        },
+        user_login.clone(),
+    );
 
     let onsubmit = {
         let user_login = user_login.clone();

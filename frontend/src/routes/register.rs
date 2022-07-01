@@ -1,68 +1,126 @@
+use web_sys::HtmlInputElement;
 use yew::prelude::*;
+use yew_hooks::prelude::*;
+use yew_router::prelude::*;
+
+use crate::components::list_errors::ListErrors;
+use crate::hooks::use_user_context;
+use crate::model::{RegisterInfo, RegisterInfoWrapper};
+use crate::services::register;
+use crate::AppRoute;
 
 #[function_component(Register)]
 pub fn register() -> Html {
-    html! {<h1>{"Registration Page"}</h1>}
+    let user_ctx = use_user_context();
+    let register_info = use_state(RegisterInfo::default);
+    let user_register = {
+        let register_info = register_info.clone();
+        use_async(async move {
+            let request = RegisterInfoWrapper {
+                user: (*register_info).clone(),
+            };
+            register(request).await
+        })
+    };
+
+    /* Hook into changes of user_register. Once a user is successfully registered, log him in */
+    use_effect_with_deps(
+        move |user_register| {
+            if let Some(user_info) = &user_register.data {
+                user_ctx.login(user_info.user.clone());
+            }
+            || ()
+        },
+        user_register.clone(),
+    );
+
+    let onsubmit = {
+        let user_register = user_register.clone();
+        Callback::from(move |e: FocusEvent| {
+            e.prevent_default(); /* Prevent event propagation */
+            user_register.run();
+        })
+    };
+    let oninput_username = {
+        let register_info = register_info.clone();
+        Callback::from(move |e: InputEvent| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+            let mut info = (*register_info).clone();
+            info.username = input.value();
+            register_info.set(info);
+        })
+    };
+    let oninput_email = {
+        let register_info = register_info.clone();
+        Callback::from(move |e: InputEvent| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+            let mut info = (*register_info).clone();
+            info.email = input.value();
+            register_info.set(info);
+        })
+    };
+    let oninput_password = {
+        let register_info = register_info.clone();
+        Callback::from(move |e: InputEvent| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+            let mut info = (*register_info).clone();
+            info.password = input.value();
+            register_info.set(info);
+        })
+    };
+
+    html! {
+        <div class="auth-page">
+            <div class="container page">
+                <div class="row">
+                    <div class="col-md-6 offset-md-3 col-xs-12">
+                        <h1 class="text-xs-center">{ "Sign Up" }</h1>
+                        <p class="text-xs-center">
+                            <Link<AppRoute> to={AppRoute::Login}>
+                                { "Have an account?" }
+                            </Link<AppRoute>>
+                        </p>
+                        <ListErrors error={user_register.error.clone()} />
+                        <form {onsubmit}>
+                            <fieldset>
+                                <fieldset class="form-group">
+                                    <input
+                                        class="form-control form-control-lg"
+                                        type="text"
+                                        placeholder="Username"
+                                        value={register_info.username.clone()}
+                                        oninput={oninput_username}
+                                        />
+                                </fieldset>
+                                <fieldset class="form-group">
+                                    <input
+                                        class="form-control form-control-lg"
+                                        type="email"
+                                        placeholder="Email"
+                                        value={register_info.email.clone()}
+                                        oninput={oninput_email}
+                                        />
+                                </fieldset>
+                                <fieldset class="form-group">
+                                    <input
+                                        class="form-control form-control-lg"
+                                        type="password"
+                                        placeholder="Password"
+                                        value={register_info.password.clone()}
+                                        oninput={oninput_password}
+                                        />
+                                </fieldset>
+                                <button
+                                    class="btn btn-lg btn-primary pull-xs-right"
+                                    type="submit"
+                                    disabled=false>
+                                    { "Sign up" }
+                                </button>
+                            </fieldset>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 }
-
-// pub enum Msg {
-//     RegisterUser,
-//     UpdateNameInputText(String),
-//     UpdateEmailInputText(String),
-//     UpdatePwdInputText(String),
-//     // UpdateColorInputText(String),
-//     // RegisterUserResponse(Result<User, rest_helper::RestError>),
-//     // FindGameResponse(Result<String, rest_helper::RestError>),
-//     // JoinGameResponse(Result<String, rest_helper::RestError>),
-//     // NewGameResponse(Result<String, rest_helper::RestError>),
-// }
-
-// #[allow(dead_code)] //FIXME:
-// pub struct Register {
-//     user: Option<User>,
-//     // router: RouteAgentDispatcher,
-//     // storage: StorageService,
-// }
-// impl Component for Register {
-//     type Message = Msg;
-//     type Properties = ();
-
-//     fn create(_ctx: &Context<Self>) -> Self {
-//         Self { user: None }
-//     }
-
-//     fn update(&mut self, _ctx: &Context<Self>, _msg: Self::Message) -> bool {
-//         false
-//         // match msg {
-//         //     Msg::SetInputEnabled(enabled) => {
-//         //         if self.input_enabled != enabled {
-//         //             self.input_enabled = enabled;
-//         //             true // Re-render
-//         //         } else {
-//         //             false
-//         //         }
-//         //     }
-//         // }
-//     }
-
-//     fn view(&self, ctx: &Context<Self>) -> Html {
-//         let link = ctx.link();
-
-//         html! {
-//             <div>
-//                 <h1>{ "New Sadhaka Registration" }</h1>
-//                 <div>
-//                     <label for="user_name">{"Devotee's Name:"}</label>
-//                     <input type="text" oninput={link.callback(|e: InputEvent| Msg::UpdateNameInputText(e.data().unwrap_or("".to_string())))} />
-//                     <label for="email_address">{"Email Address:"}</label>
-//                     <input type="text" oninput={link.callback(|e: InputEvent| Msg::UpdateEmailInputText(e.value))} />
-//                     <label for="user_name">{"Password:"}</label>
-//                     <input type="text" oninput={link.callback(|e: InputEvent| Msg::UpdatePwdInputText(e.value))} />
-//                     <button onclick={link.callback(|_| Msg::RegisterUser)}>
-//                         { "Submit" }
-//                     </button>
-//                 </div>
-//             </div>
-//         }
-//     }
-// }

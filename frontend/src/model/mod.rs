@@ -16,7 +16,7 @@ impl UserInfo {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UserInfoWrapper {
     pub user: UserInfo,
 }
@@ -37,4 +37,17 @@ pub struct LoginInfo {
 // #[serde(rename_all = "camelCase")]
 pub struct ErrorInfo {
     pub errors: HashMap<String, Vec<String>>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+// #[serde(rename_all = "camelCase")]
+pub struct RegisterInfo {
+    pub username: String,
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct RegisterInfoWrapper {
+    pub user: RegisterInfo,
 }
