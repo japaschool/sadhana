@@ -41,12 +41,12 @@ pub fn register() -> Html {
             user_register.run();
         })
     };
-    let oninput_username = {
+    let oninput_name = {
         let register_info = register_info.clone();
         Callback::from(move |e: InputEvent| {
             let input: HtmlInputElement = e.target_unchecked_into();
             let mut info = (*register_info).clone();
-            info.username = input.value();
+            info.name = input.value();
             register_info.set(info);
         })
     };
@@ -87,9 +87,9 @@ pub fn register() -> Html {
                                     <input
                                         class="form-control form-control-lg"
                                         type="text"
-                                        placeholder="Username"
-                                        value={register_info.username.clone()}
-                                        oninput={oninput_username}
+                                        placeholder="Name"
+                                        value={register_info.name.clone()}
+                                        oninput={oninput_name}
                                         />
                                 </fieldset>
                                 <fieldset class="form-group">

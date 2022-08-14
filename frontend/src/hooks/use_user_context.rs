@@ -1,3 +1,4 @@
+use std::fmt;
 use std::ops::Deref;
 
 use yew::prelude::*;
@@ -39,6 +40,29 @@ impl Deref for UseUserContextHandle {
 
     fn deref(&self) -> &Self::Target {
         &(*self.inner)
+    }
+}
+
+impl Clone for UseUserContextHandle {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+            history: self.history.clone(),
+        }
+    }
+}
+
+impl PartialEq for UseUserContextHandle {
+    fn eq(&self, other: &Self) -> bool {
+        *self.inner == *other.inner
+    }
+}
+
+impl fmt::Debug for UseUserContextHandle {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("UseUserContextHandle")
+            .field("value", &format!("{:?}", *self.inner))
+            .finish()
     }
 }
 

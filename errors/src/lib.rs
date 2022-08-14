@@ -4,6 +4,7 @@ extern crate log;
 use actix_web::{
     body::BoxBody, error::BlockingError, Error as ActixError, HttpResponse, ResponseError,
 };
+use bcrypt::BcryptError;
 use derive_more::Display;
 use diesel::result::{DatabaseErrorKind, Error as DBError};
 use r2d2::Error as PoolError;
@@ -105,6 +106,12 @@ impl From<BlockingError> for Error {
 
 impl From<ActixError> for Error {
     fn from(err: ActixError) -> Self {
+        Error::InternalServerError(err.to_string())
+    }
+}
+
+impl From<BcryptError> for Error {
+    fn from(err: BcryptError) -> Self {
         Error::InternalServerError(err.to_string())
     }
 }

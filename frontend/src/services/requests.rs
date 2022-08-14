@@ -1,11 +1,11 @@
 use crate::{error::Error, model::ErrorInfo};
-use dotenv_codegen::dotenv;
+// use dotenv_codegen::dotenv;
 use gloo::storage::{LocalStorage, Storage};
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
 use serde::{de::DeserializeOwned, Serialize};
 
-const API_ROOT: &str = dotenv!("API_ROOT");
+const API_ROOT: &str = "http://localhost:8080/api"; //FIXME: dotenv!("API_ROOT");
 const TOKEN_KEY: &str = "yew.token";
 
 lazy_static! {
@@ -50,10 +50,11 @@ where
     let mut builder = reqwest::Client::new()
         .request(method, url)
         .header("Content-Type", "application/json");
-    //FIXME: auth token
-    // if let Some(token) = get_token() {
-    //     builder = builder.bearer_auth(token);
-    // }
+
+    if let Some(token) = get_token() {
+        builder = builder.bearer_auth(token);
+    }
+
     if with_body {
         builder = builder.json(&body);
     }

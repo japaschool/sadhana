@@ -9,10 +9,18 @@ pub async fn get_service(
 ) -> impl Service<Request, Response = ServiceResponse<BoxBody>, Error = Error> {
     test::init_service(
         App::new()
-            .app_data(Data::new(db::new_pool()))
+            .app_data(Data::new(super::db::establish_connection()))
             .configure(routes),
     )
     .await
+}
+
+pub async fn test_get_status(route: &str) -> u16 {
+    let app = get_service().await;
+    let req = test::TestRequest::get().uri(route);
+    let res = test::call_service(&app, req.to_request()).await;
+
+    res.status().as_u16()
 }
 
 pub async fn test_get<R>(route: &str) -> (u16, R)

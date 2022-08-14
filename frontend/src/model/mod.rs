@@ -42,9 +42,9 @@ pub struct ErrorInfo {
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 // #[serde(rename_all = "camelCase")]
 pub struct RegisterInfo {
-    pub username: String,
     pub email: String,
     pub password: String,
+    pub name: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

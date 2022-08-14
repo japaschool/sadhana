@@ -2,7 +2,5 @@
 
 members = [
   "server",
-  "db",
-  "errors",
   "frontend",
 ]

@@ -4,7 +4,7 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::components::use_context_provider::UserContextProvider;
+use crate::components::user_context_provider::UserContextProvider;
 use crate::routes::*;
 
 mod components;
@@ -30,7 +30,7 @@ fn app() -> Html {
 }
 
 fn main() {
-    wasm_logger::init(wasm_logger::Config::new(log::Level::Trace));
+    wasm_logger::init(wasm_logger::Config::new(log::Level::Debug));
     console_error_panic_hook::set_once();
     yew::start_app::<App>();
 }
