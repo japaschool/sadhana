@@ -1,4 +1,4 @@
-use actix_web::{middleware::Logger, App, HttpServer};
+use actix_web::{middleware::Logger, web::Data, App, HttpServer};
 use dotenv::dotenv;
 
 #[macro_use]
@@ -22,15 +22,10 @@ async fn main() -> std::io::Result<()> {
 
     env_logger::init_from_env(env_logger::Env::default().default_filter_or("debug"));
 
-    let state = {
-        let pool = utils::db::establish_connection();
-        middleware::state::AppState { pool }
-    };
-
     HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())
-            .app_data(actix_web::web::Data::new(state.clone()))
+            .app_data(Data::new(middleware::state::AppState::init()))
             .wrap(middleware::cors::cors())
             .wrap(middleware::auth::Authentication)
             .configure(routes::routes)

@@ -55,10 +55,11 @@ mod tests {
             request::{Signup, SignupUser},
             response::UserResponse,
         },
-        schema::users,
+        schema::users::dsl::*,
         utils::{db, test_helpers},
     };
-    use diesel::RunQueryDsl;
+    use diesel::prelude::*;
+    use diesel::{QueryDsl, RunQueryDsl};
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -73,13 +74,15 @@ mod tests {
         assert_eq!(res, 401);
     }
 
-    // FIXME: figure out why this test fails
-    #[ignore]
     #[actix_rt::test]
     pub async fn test_signup() {
         init();
+
         let pool = db::establish_connection();
         let conn = pool.get().unwrap();
+
+        let cleanup = diesel::delete(users.filter(email.eq("xyz@gmail.com")));
+        let _ = cleanup.execute(&conn);
 
         let res: (u16, UserResponse) = test_helpers::test_post(
             "/api/users",
@@ -96,10 +99,10 @@ mod tests {
         assert_eq!(res.0, 200);
         assert_eq!(res.1.user.email, "xyz@gmail.com");
 
-        let result_users = users::dsl::users.load::<User>(&conn).unwrap();
+        let result_users = users.load::<User>(&conn).unwrap();
         assert_eq!(result_users.len(), 1);
         assert_eq!(result_users[0].email, "xyz@gmail.com");
 
-        diesel::delete(users::dsl::users).execute(&conn).unwrap();
+        cleanup.execute(&conn).unwrap();
     }
 }

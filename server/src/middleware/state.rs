@@ -15,4 +15,9 @@ impl AppState {
         let conn = self.pool.get()?;
         Ok(conn)
     }
+
+    pub fn init() -> Self {
+        let pool = utils::db::establish_connection();
+        AppState { pool }
+    }
 }

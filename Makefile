@@ -30,6 +30,7 @@ gen_schema:
 
 test:
 	DATABASE_URL=$(db_url) \
+		JWT_KEY= \
 		cargo test $(T) -- --nocapture --test-threads=1
 
 lint:

@@ -3,13 +3,13 @@ use actix_service::Service;
 use actix_web::{dev::ServiceResponse, error::Error, test, web::Data, App};
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::routes::routes;
+use crate::{middleware::state::AppState, routes::routes};
 
 pub async fn get_service(
 ) -> impl Service<Request, Response = ServiceResponse<BoxBody>, Error = Error> {
     test::init_service(
         App::new()
-            .app_data(Data::new(super::db::establish_connection()))
+            .app_data(Data::new(AppState::init()))
             .configure(routes),
     )
     .await
