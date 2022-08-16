@@ -1,17 +1,12 @@
 use yew::prelude::*;
 
-use crate::hooks::use_user_context;
+// use crate::hooks::use_user_context;
 
 // use super::AppRoute;
 
 #[function_component(Home)]
 pub fn home() -> Html {
-    let user_ctx = use_user_context();
-
-    log::debug!(
-        "Rendering home. Current user is_authenticated is {:?}",
-        user_ctx
-    );
+    // let user_ctx = use_user_context();
 
     html! {
         <h1>{"Home Page"}</h1>

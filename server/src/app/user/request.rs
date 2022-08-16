@@ -8,11 +8,11 @@ pub struct Signup {
 
 #[derive(Clone, Deserialize, Serialize, Debug, Validate)]
 pub struct SignupUser {
-    #[validate(email)]
+    #[validate(email(message = "email is malformed"))]
     pub email: String,
-    #[validate(length(min = 5))]
+    #[validate(length(min = 5, message = "password must be at least 5 symbols long"))]
     pub password: String,
-    #[validate(length(min = 3))]
+    #[validate(length(min = 3, message = "name must be at least 3 letters long"))]
     pub name: String,
 }
 

@@ -26,7 +26,6 @@ pub fn login() -> Html {
     use_effect_with_deps(
         move |user_login| {
             if let Some(user_info) = &user_login.data {
-                log::debug!("Login succeeded. Updating current user state.");
                 user_ctx.login(user_info.user.clone());
             }
             || ()

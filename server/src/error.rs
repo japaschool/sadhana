@@ -130,7 +130,7 @@ impl From<ValidationErrors> for AppError {
             .field_errors()
             .into_iter()
             .map(|err| {
-                let default = format!("{} is required", err.0);
+                let default = format!("{} fails validation", err.0);
                 err.1[0]
                     .message
                     .as_ref()

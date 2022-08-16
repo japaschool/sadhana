@@ -45,14 +45,24 @@ where
     (status, json_body)
 }
 
-pub async fn test_post<T, R>(route: &str, params: T) -> (u16, R)
+pub async fn test_post_status<T: Serialize>(route: &str, params: &T) -> u16 {
+    let app = get_service().await;
+
+    let req = test::TestRequest::post().set_json(params).uri(route);
+
+    let res = test::call_service(&app, req.to_request()).await;
+
+    res.status().as_u16()
+}
+
+pub async fn test_post<T, R>(route: &str, params: &T) -> (u16, R)
 where
     T: Serialize,
     R: DeserializeOwned,
 {
     let app = get_service().await;
 
-    let req = test::TestRequest::post().set_json(&params).uri(route);
+    let req = test::TestRequest::post().set_json(params).uri(route);
 
     let res = test::call_service(&app, req.to_request()).await;
 

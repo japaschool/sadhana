@@ -13,12 +13,7 @@ pub async fn signin(
     form: web::Json<request::Signin>,
 ) -> Result<HttpResponse, AppError> {
     let conn = state.get_conn()?;
-    debug!("Trying to login {:?}", form.user);
     let (user, token) = User::signin(&conn, &form.user.email, &form.user.password)?;
-    debug!(
-        "Successfully logged in user {:?} with token {}",
-        user, token
-    );
     let res = UserResponse::from((user, token));
     Ok(HttpResponse::Ok().json(res))
 }
@@ -86,7 +81,7 @@ mod tests {
 
         let res: (u16, UserResponse) = test_helpers::test_post(
             "/api/users",
-            Signup {
+            &Signup {
                 user: SignupUser {
                     email: "xyz@gmail.com".into(),
                     password: "abcdef".into(),
@@ -99,10 +94,69 @@ mod tests {
         assert_eq!(res.0, 200);
         assert_eq!(res.1.user.email, "xyz@gmail.com");
 
-        let result_users = users.load::<User>(&conn).unwrap();
-        assert_eq!(result_users.len(), 1);
-        assert_eq!(result_users[0].email, "xyz@gmail.com");
+        cleanup.execute(&conn).unwrap();
+    }
+
+    #[actix_rt::test]
+    pub async fn test_signup_validations() {
+        init();
+
+        let mut res: (u16, Vec<String>) = test_helpers::test_post(
+            "/api/users",
+            &Signup {
+                user: SignupUser {
+                    email: "invalid email".into(),
+                    password: "".into(),
+                    name: "a".into(),
+                },
+            },
+        )
+        .await;
+
+        assert_eq!(res.0, 422);
+
+        let mut expected = vec![
+            "password must be at least 5 symbols long",
+            "name must be at least 3 letters long",
+            "email is malformed",
+        ];
+
+        assert_eq!(res.1.sort(), expected.sort());
+    }
+
+    #[actix_rt::test]
+    pub async fn test_signup_duplicate() {
+        let pool = db::establish_connection();
+        let conn = pool.get().unwrap();
+
+        let test_email = "dup_test@gmail.com";
+        let payload = Signup {
+            user: SignupUser {
+                email: test_email.into(),
+                password: "abcdef".into(),
+                name: "X Yz".into(),
+            },
+        };
+
+        let cleanup = diesel::delete(users.filter(email.eq(test_email)));
+        let _ = cleanup.execute(&conn);
+
+        let res: (u16, UserResponse) = test_helpers::test_post("/api/users", &payload).await;
+
+        assert_eq!(res.0, 200);
+        assert_eq!(res.1.user.email, test_email);
+
+        let res = test_helpers::test_post_status("/api/users", &payload).await;
+
+        assert_eq!(res, 422);
 
         cleanup.execute(&conn).unwrap();
     }
+
+    // #[actix_rt::test]
+    // pub async fn test_signin() {
+    // #[actix_rt::test]
+    // pub async fn test_signin_failure() {
+    // #[actix_rt::test]
+    // pub async fn test_me() {
 }
