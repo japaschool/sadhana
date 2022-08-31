@@ -46,8 +46,7 @@ pub async fn me(req: HttpRequest) -> Result<HttpResponse, AppError> {
 mod tests {
     use crate::{
         app::user::{
-            model::User,
-            request::{Signup, SignupUser},
+            request::{Signin, SigninUser, Signup, SignupUser},
             response::UserResponse,
         },
         schema::users::dsl::*,
@@ -153,10 +152,56 @@ mod tests {
         cleanup.execute(&conn).unwrap();
     }
 
-    // #[actix_rt::test]
-    // pub async fn test_signin() {
-    // #[actix_rt::test]
-    // pub async fn test_signin_failure() {
-    // #[actix_rt::test]
-    // pub async fn test_me() {
+    #[actix_rt::test]
+    pub async fn test_signin() {
+        let pool = db::establish_connection();
+        let conn = pool.get().unwrap();
+
+        let test_email = "signin_test@gmail.com";
+        let test_pwd = "abcdef";
+
+        let payload = Signup {
+            user: SignupUser {
+                email: test_email.into(),
+                password: test_pwd.into(),
+                name: "X Yz".into(),
+            },
+        };
+
+        let cleanup = diesel::delete(users.filter(email.eq(test_email)));
+        let _ = cleanup.execute(&conn);
+
+        let res = test_helpers::test_post_status("/api/users", &payload).await;
+
+        assert_eq!(res, 200);
+
+        let payload = Signin {
+            user: SigninUser {
+                email: test_email.into(),
+                password: test_pwd.into(),
+            },
+        };
+
+        let res = test_helpers::test_post_status("/api/users/login", &payload).await;
+
+        assert_eq!(res, 200);
+
+        let payload = Signin {
+            user: SigninUser {
+                email: test_email.into(),
+                password: "wrong password".into(),
+            },
+        };
+
+        let res = test_helpers::test_post_status("/api/users/login", &payload).await;
+
+        assert_eq!(res, 401);
+
+        cleanup.execute(&conn).unwrap();
+    }
+
+    #[actix_rt::test]
+    pub async fn test_me() {
+        todo!()
+    }
 }

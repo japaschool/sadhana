@@ -52,7 +52,12 @@ impl User {
             .filter(users::email.eq(email))
             .limit(1)
             .first::<User>(conn)?;
-        let _ = hasher::verify(&naive_password, &user.hash)?;
+        let password_matches = hasher::verify(&naive_password, &user.hash)?;
+
+        if !password_matches {
+            return Err(AppError::Unauthorized("Invalid password".into()));
+        }
+
         let token = user.generate_token()?;
         Ok((user, token))
     }

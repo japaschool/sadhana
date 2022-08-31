@@ -22,3 +22,13 @@
 - [ ] Extract errors.rs from frontend and backend into a separate crate.
 - [ ] https support
 - [ ] script up spinning up local docker instance for postgres
+
+### Learning Rust
+* [Niko Matsakis: What's unique about Rust?](https://www.youtube.com/watch?v=jQOZX0xkrWA)
+* [Rust Book](https://doc.rust-lang.org/book/ch00-00-introduction.html)
+* [Visualizing memory layout of Rust's data types](https://www.youtube.com/watch?v=rDoqT-a6UFg)
+* [Learning rust with too many lists](https://rust-unofficial.github.io/too-many-lists/)
+
+#### References
+* [Cheat Sheet](https://cheats.rs/#data-structures)
+* [Tour of Rust's Standard Library Traits](https://github.com/pretzelhammer/rust-blog/blob/master/posts/tour-of-rusts-standard-library-traits.md)

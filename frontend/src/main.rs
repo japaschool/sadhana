@@ -14,10 +14,6 @@ mod model;
 mod routes;
 mod services;
 
-// Use `wee_alloc` as the global allocator.
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-
 #[function_component(App)]
 fn app() -> Html {
     html! {
