@@ -21,10 +21,12 @@ pub fn user_context_provider(props: &Props) -> Html {
     let current_user = use_async(async move { current().await });
 
     {
-        /* On startup check if the user is already loggd in from local storage. */
+        /* On startup check if the user is already logged in from local storage. */
         let current_user = current_user.clone();
         use_mount(move || {
+            log::debug!("Called by use_mount. Token is {:?}", get_token());
             if get_token().is_some() {
+                log::debug!("Fetching current user info");
                 current_user.run();
             }
         });
@@ -35,6 +37,7 @@ pub fn user_context_provider(props: &Props) -> Html {
         let user_ctx = user_ctx.clone();
         use_effect_with_deps(
             move |current_user| {
+                log::debug!("Reacting to current user change.");
                 if let Some(user_info) = &current_user.data {
                     user_ctx.set(user_info.user.clone());
                 }

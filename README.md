@@ -14,21 +14,44 @@
 ### iOS
 - How to [make web app look like a native iOS app](https://medium.com/appscope/designing-native-like-progressive-web-apps-for-ios-1b3cdda1d0e8)
 
-### TODO List
-#### Bugs
+## TODO List
+### Bugs
 - [ ] Server needs to send errors in a format UI can understand 
+- [ ] Login page redirect doesn't work (in home.rs)
 
-#### Features
-- [ ] Extract errors.rs from frontend and backend into a separate crate.
-- [ ] https support
-- [ ] script up spinning up local docker instance for postgres
+### Features
+- [ ] Validate email upon registration #auth
+- [ ] Magic link login #auth
+- [ ] Update user details #api
+- [ ] Delete user #api
+- [ ] Extract errors.rs from frontend and backend into a separate crate. #tech_debt
+- [ ] https support #tech_debt
+- [ ] script up spinning up local docker instance for postgres #tech_debt
 
-### Learning Rust
+## Learning Rust
 * [Niko Matsakis: What's unique about Rust?](https://www.youtube.com/watch?v=jQOZX0xkrWA)
 * [Rust Book](https://doc.rust-lang.org/book/ch00-00-introduction.html)
 * [Visualizing memory layout of Rust's data types](https://www.youtube.com/watch?v=rDoqT-a6UFg)
 * [Learning rust with too many lists](https://rust-unofficial.github.io/too-many-lists/)
 
-#### References
+### References
 * [Cheat Sheet](https://cheats.rs/#data-structures)
 * [Tour of Rust's Standard Library Traits](https://github.com/pretzelhammer/rust-blog/blob/master/posts/tour-of-rusts-standard-library-traits.md)
+
+## Requirements
+* https://docs.google.com/spreadsheets/d/1I9TTV_3fZ3saqSjlhVjJG6DWpjnX9H3JqbVDqRuRQGs/edit?usp=sharing
+* https://docs.google.com/document/d/1HePTbaFPy5C3XXL8NS0slXRFSQFEKpDrCHvi0Sja4Zk/edit?usp=sharing
+
+## Dev
+### Running the code
+1. Install trunk `cargo install -f trunk`
+2. Do `rustup target add wasm32-unknown-unknown`
+3. Install diesel_cli: 
+```
+brew install libpq
+brew link --force libpq
+echo 'export PATH="/usr/local/opt/libpq/bin:$PATH"' >> ~/.zshrc
+cargo install diesel_cli --no-default-features --features postgres
+```
+4. Run: `make run`
+5. Open in chrome localhost:8080

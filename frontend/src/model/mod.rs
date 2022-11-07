@@ -32,7 +32,7 @@ pub struct LoginInfo {
     pub password: String,
 }
 
-/// Conduit api error info for Unprocessable Entity error
+/// Error info for Unprocessable Entity error
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 // #[serde(rename_all = "camelCase")]
 pub struct ErrorInfo {
@@ -50,4 +50,46 @@ pub struct RegisterInfo {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RegisterInfoWrapper {
     pub user: RegisterInfo,
+}
+
+#[derive(Debug, Clone)]
+pub struct JournalEntry {
+    pub rounds_before_7: u8,
+    pub rounds_total: u8,
+}
+
+#[derive(Debug, Clone)]
+pub struct JournalEntry2 {
+    pub values: HashMap<String, PracticeEntryValue>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PracticeEntry {
+    pub practice_name: String,
+    pub value: PracticeEntryValue,
+}
+
+#[derive(Debug, Clone)]
+pub enum PracticeEntryValue {
+    Int(u16),
+    Bool(bool),
+    Time { h: u8, m: u8 },
+}
+
+#[derive(Debug, Clone)]
+pub struct EnabledPractices {
+    pub practices: Vec<Practice>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Practice {
+    pub name: String,
+    pub value_type: PracticeType,
+}
+
+#[derive(Debug, Clone)]
+pub enum PracticeType {
+    Int,
+    Time,
+    Bool,
 }

@@ -1,5 +1,7 @@
+use chrono::{Date, Local};
+
 use crate::error::Error;
-use crate::model::{LoginInfoWrapper, RegisterInfoWrapper, UserInfoWrapper};
+use crate::model::{JournalEntry, LoginInfoWrapper, RegisterInfoWrapper, UserInfoWrapper};
 
 use self::requests::*;
 
@@ -18,4 +20,14 @@ pub async fn register(register_info: RegisterInfoWrapper) -> Result<UserInfoWrap
 /// Get current user info
 pub async fn current() -> Result<UserInfoWrapper, Error> {
     request_get::<UserInfoWrapper>("/user".to_string()).await
+}
+
+/// Get journal data for a date
+pub async fn fetch(date: &Date<Local>) -> Result<JournalEntry, Error> {
+    // FIXME: remove stub
+    log::debug!("Fetching journal entry for {}", date);
+    Ok(JournalEntry {
+        rounds_before_7: 2,
+        rounds_total: 16,
+    })
 }
