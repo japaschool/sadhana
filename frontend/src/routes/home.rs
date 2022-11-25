@@ -6,12 +6,7 @@ use yew::prelude::*;
 use yew_hooks::{use_async, use_map};
 use yew_router::prelude::*;
 
-use super::AppRoute;
-use crate::{
-    hooks::use_user_context,
-    model::{JournalEntry2, PracticeEntry, PracticeEntryValue},
-    services::fetch,
-};
+use crate::{hooks::use_user_context, model::PracticeEntryValue, services::fetch};
 
 #[function_component(Home)]
 pub fn home() -> Html {
@@ -30,17 +25,10 @@ pub fn home() -> Html {
 
     let current_date = use_state(|| Local::now().date());
     let form_changed = use_state(|| false);
-    let je2 = use_map(HashMap::from([
-        ("Total Rounds".to_string(), PracticeEntryValue::Int(16)),
-        (
-            "Wake Up Time".to_string(),
-            PracticeEntryValue::Time { h: 5, m: 10 },
-        ),
-        ("Настройка".to_string(), PracticeEntryValue::Bool(true)),
-    ]));
+    let local_journal_entry = use_map(HashMap::new());
     let journal_entry = {
         let current_date = current_date.clone();
-        use_async(async move { fetch(&*current_date).await })
+        use_async(async move { fetch(&*current_date).await.map(|je| je.values) })
     };
 
     {
@@ -51,6 +39,17 @@ pub fn home() -> Html {
                 || ()
             },
             current_date.clone(),
+        );
+    }
+
+    {
+        let lje = local_journal_entry.clone();
+        use_effect_with_deps(
+            move |je| {
+                je.data.iter().for_each(|data| lje.set(data.clone()));
+                || ()
+            },
+            journal_entry.clone(),
         );
     }
 
@@ -71,11 +70,11 @@ pub fn home() -> Html {
     };
 
     let oninput = {
-        let je2 = je2.clone();
+        let lje = local_journal_entry.clone();
         let form_changed = form_changed.clone();
         Callback::from(move |e: InputEvent| {
             let input: HtmlInputElement = e.target_unchecked_into();
-            let maybe_new_val = je2
+            let maybe_new_val = lje
                 .current()
                 .get(input.name().as_str())
                 .and_then(|v| match v {
@@ -94,7 +93,7 @@ pub fn home() -> Html {
                     }
                 });
             maybe_new_val.into_iter().for_each(|v| {
-                je2.update(&input.name(), v);
+                lje.update(&input.name(), v);
                 form_changed.set(true);
             });
         })
@@ -119,9 +118,10 @@ pub fn home() -> Html {
             <form {onsubmit}>
                 <fieldset>
                     {
-                        je2.current().iter().map(|(practice_name, value)| {
+                        //FIXME: The order of a hash map is random. Need to sort here somehow by practice name
+                        local_journal_entry.current().iter().map(|(practice_name, value)| {
                             html!{
-                                <fieldset key={practice_name.clone()}>
+                                <div key={practice_name.clone()}>
                                     <label>{ format!("{}: ", practice_name) }</label>
                                     {
                                         match value {
@@ -152,7 +152,7 @@ pub fn home() -> Html {
                                                                                 },
                                         }
                                     }
-                                </fieldset>
+                                </div>
                             }
                         }).collect::<Html>()
                     }
@@ -163,12 +163,6 @@ pub fn home() -> Html {
                     { "Save" }
                 </button>
             </form>
-            { journal_entry.data.as_ref().map_or_else(|| html!{}, |je| html!{
-                <>
-                    <p>{ format!("Rounds before 7am: {}",  je.rounds_before_7) }</p>
-                    <p>{ format!("Rounds total: {}",  je.rounds_total) }</p>
-                </>
-            }) }
         </div>
     }
 }

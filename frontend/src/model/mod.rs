@@ -54,12 +54,6 @@ pub struct RegisterInfoWrapper {
 
 #[derive(Debug, Clone)]
 pub struct JournalEntry {
-    pub rounds_before_7: u8,
-    pub rounds_total: u8,
-}
-
-#[derive(Debug, Clone)]
-pub struct JournalEntry2 {
     pub values: HashMap<String, PracticeEntryValue>,
 }
 
@@ -69,7 +63,7 @@ pub struct PracticeEntry {
     pub value: PracticeEntryValue,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum PracticeEntryValue {
     Int(u16),
     Bool(bool),

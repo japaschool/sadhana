@@ -1,7 +1,11 @@
+use std::collections::HashMap;
+
 use chrono::{Date, Local};
 
 use crate::error::Error;
-use crate::model::{JournalEntry, LoginInfoWrapper, RegisterInfoWrapper, UserInfoWrapper};
+use crate::model::{
+    JournalEntry, LoginInfoWrapper, PracticeEntryValue, RegisterInfoWrapper, UserInfoWrapper,
+};
 
 use self::requests::*;
 
@@ -27,7 +31,13 @@ pub async fn fetch(date: &Date<Local>) -> Result<JournalEntry, Error> {
     // FIXME: remove stub
     log::debug!("Fetching journal entry for {}", date);
     Ok(JournalEntry {
-        rounds_before_7: 2,
-        rounds_total: 16,
+        values: HashMap::from([
+            ("Total Rounds".to_string(), PracticeEntryValue::Int(16)),
+            (
+                "Wake Up Time".to_string(),
+                PracticeEntryValue::Time { h: 5, m: 10 },
+            ),
+            ("Настройка".to_string(), PracticeEntryValue::Bool(true)),
+        ]),
     })
 }
