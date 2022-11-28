@@ -17,11 +17,11 @@ mod services;
 #[function_component(App)]
 fn app() -> Html {
     html! {
-        <UserContextProvider>
-            <BrowserRouter>
+        <BrowserRouter>
+            <UserContextProvider>
                 <Switch<AppRoute> render={Switch::render(switch)} />
-            </BrowserRouter>
-        </UserContextProvider>
+            </UserContextProvider>
+        </BrowserRouter>
     }
 }
 

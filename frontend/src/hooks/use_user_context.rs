@@ -30,8 +30,8 @@ impl UseUserContextHandle {
         // Clear global token after logged out
         set_token(None);
         self.inner.set(UserInfo::default());
-        // Redirect to home page
-        self.history.push(AppRoute::Home);
+        // Redirect to login page
+        self.history.push(AppRoute::Login);
     }
 }
 
@@ -67,7 +67,7 @@ impl fmt::Debug for UseUserContextHandle {
 }
 
 pub fn use_user_context() -> UseUserContextHandle {
-    let inner = use_context::<UseStateHandle<UserInfo>>().unwrap();
+    let inner = use_context().unwrap();
     let history = use_history().unwrap();
 
     UseUserContextHandle { inner, history }

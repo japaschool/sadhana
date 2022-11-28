@@ -4,25 +4,11 @@ use chrono::prelude::*;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_map};
-use yew_router::prelude::*;
 
-use crate::{hooks::use_user_context, model::PracticeEntryValue, services::fetch};
+use crate::{model::PracticeEntryValue, services::fetch};
 
 #[function_component(Home)]
 pub fn home() -> Html {
-    let user_ctx = use_user_context();
-
-    // FIXME: when user opens home page display login screen if there's no valid token in the storage
-    // The code below does not work cause user context gets refreshed only after the page rendering
-    // is finished. Had we stayed on the home page it would have triggered re-rendering. But we
-    // redirect prematurely.
-    if !user_ctx.is_authenticated() {
-        log::debug!("User is not authenticated. Redirecting to Login page.");
-        // return html! {
-        //     <Redirect<AppRoute> to={AppRoute::Login}/>
-        // };
-    }
-
     let current_date = use_state(|| Local::now().date());
     let form_changed = use_state(|| false);
     let local_journal_entry = use_map(HashMap::new());

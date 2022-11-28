@@ -1,9 +1,11 @@
 use yew::prelude::*;
 use yew_hooks::prelude::*;
+use yew_router::prelude::*;
 
 use crate::{
     error::Error,
     model::UserInfo,
+    routes::AppRoute,
     services::{
         current,
         requests::{get_token, set_token},
@@ -19,15 +21,18 @@ pub struct Props {
 pub fn user_context_provider(props: &Props) -> Html {
     let user_ctx = use_state(UserInfo::default);
     let current_user = use_async(async move { current().await });
+    let history = use_history().unwrap();
 
     {
         /* On startup check if the user is already logged in from local storage. */
         let current_user = current_user.clone();
+        let history = history.clone();
         use_mount(move || {
-            log::debug!("Called by use_mount. Token is {:?}", get_token());
             if get_token().is_some() {
                 log::debug!("Fetching current user info");
                 current_user.run();
+            } else {
+                history.push(AppRoute::Login);
             }
         });
     }
@@ -35,9 +40,9 @@ pub fn user_context_provider(props: &Props) -> Html {
     {
         /* If local storage has a token either log the user in or show error if couldn't fetch user data. */
         let user_ctx = user_ctx.clone();
+        let history = history.clone();
         use_effect_with_deps(
             move |current_user| {
-                log::debug!("Reacting to current user change.");
                 if let Some(user_info) = &current_user.data {
                     user_ctx.set(user_info.user.clone());
                 }
@@ -47,6 +52,7 @@ pub fn user_context_provider(props: &Props) -> Html {
                         Error::Unauthorized | Error::Forbidden => set_token(None),
                         _ => (),
                     }
+                    history.push(AppRoute::Login);
                 }
                 || ()
             },
