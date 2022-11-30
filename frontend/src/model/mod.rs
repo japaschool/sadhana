@@ -32,13 +32,6 @@ pub struct LoginInfo {
     pub password: String,
 }
 
-/// Error info for Unprocessable Entity error
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-// #[serde(rename_all = "camelCase")]
-pub struct ErrorInfo {
-    pub errors: HashMap<String, Vec<String>>,
-}
-
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 // #[serde(rename_all = "camelCase")]
 pub struct RegisterInfo {
@@ -52,7 +45,7 @@ pub struct RegisterInfoWrapper {
     pub user: RegisterInfo,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct JournalEntry {
     pub values: HashMap<String, PracticeEntryValue>,
 }
@@ -63,7 +56,7 @@ pub struct PracticeEntry {
     pub value: PracticeEntryValue,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 pub enum PracticeEntryValue {
     Int(u16),
     Bool(bool),

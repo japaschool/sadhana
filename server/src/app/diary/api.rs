@@ -1,6 +1,6 @@
+use crate::middleware::state::AppState;
 use actix_web::{web, HttpResponse};
-
-use crate::{error::AppError, middleware::state::AppState};
+use common::error::AppError;
 
 use super::request;
 

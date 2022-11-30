@@ -11,17 +11,17 @@ use crate::{model::PracticeEntryValue, services::fetch};
 pub fn home() -> Html {
     let current_date = use_state(|| Local::now().date());
     let form_changed = use_state(|| false);
-    let local_journal_entry = use_map(HashMap::new());
-    let journal_entry = {
+    let local_diary_entry = use_map(HashMap::new());
+    let diary_entry = {
         let current_date = current_date.clone();
         use_async(async move { fetch(&*current_date).await.map(|je| je.values) })
     };
 
     {
-        let journal_entry = journal_entry.clone();
+        let diary_entry = diary_entry.clone();
         use_effect_with_deps(
             move |_| {
-                journal_entry.run();
+                diary_entry.run();
                 || ()
             },
             current_date.clone(),
@@ -29,13 +29,13 @@ pub fn home() -> Html {
     }
 
     {
-        let lje = local_journal_entry.clone();
+        let lje = local_diary_entry.clone();
         use_effect_with_deps(
             move |je| {
                 je.data.iter().for_each(|data| lje.set(data.clone()));
                 || ()
             },
-            journal_entry.clone(),
+            diary_entry.clone(),
         );
     }
 
@@ -56,7 +56,7 @@ pub fn home() -> Html {
     };
 
     let oninput = {
-        let lje = local_journal_entry.clone();
+        let lje = local_diary_entry.clone();
         let form_changed = form_changed.clone();
         Callback::from(move |e: InputEvent| {
             let input: HtmlInputElement = e.target_unchecked_into();
@@ -105,7 +105,7 @@ pub fn home() -> Html {
                 <fieldset>
                     {
                         //FIXME: The order of a hash map is random. Need to sort here somehow by practice name
-                        local_journal_entry.current().iter().map(|(practice_name, value)| {
+                        local_diary_entry.current().iter().map(|(practice_name, value)| {
                             html!{
                                 <div key={practice_name.clone()}>
                                     <label>{ format!("{}: ", practice_name) }</label>

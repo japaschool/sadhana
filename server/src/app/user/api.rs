@@ -1,10 +1,7 @@
+use crate::middleware::{auth, state::AppState};
 use actix_web::{web, HttpRequest, HttpResponse};
+use common::error::AppError;
 use validator::Validate;
-
-use crate::{
-    error::AppError,
-    middleware::{auth, state::AppState},
-};
 
 use super::{model::User, request, response::UserResponse};
 

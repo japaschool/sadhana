@@ -1,9 +1,4 @@
-use yew::prelude::*;
-use yew_hooks::prelude::*;
-use yew_router::prelude::*;
-
 use crate::{
-    error::Error,
     model::UserInfo,
     routes::AppRoute,
     services::{
@@ -11,6 +6,10 @@ use crate::{
         requests::{get_token, set_token},
     },
 };
+use common::error::AppError;
+use yew::prelude::*;
+use yew_hooks::prelude::*;
+use yew_router::prelude::*;
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
@@ -49,7 +48,7 @@ pub fn user_context_provider(props: &Props) -> Html {
 
                 if let Some(error) = &current_user.error {
                     match error {
-                        Error::Unauthorized | Error::Forbidden => set_token(None),
+                        AppError::Unauthorized(_) | AppError::Forbidden => set_token(None),
                         _ => (),
                     }
                     history.push(AppRoute::Login);

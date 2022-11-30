@@ -1,5 +1,5 @@
-use crate::error::AppError;
 use crate::utils;
+use common::error::AppError;
 use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, PooledConnection};
 

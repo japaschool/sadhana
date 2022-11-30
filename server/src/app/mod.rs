@@ -1,2 +1,2 @@
-pub mod journal;
+pub mod diary;
 pub mod user;

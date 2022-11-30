@@ -1,10 +1,10 @@
+use crate::{hasher, schema::users, utils::token};
 use chrono::{DateTime, Utc};
+use common::error::AppError;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-
-use crate::{error::AppError, hasher, schema::users, utils::token};
 
 #[derive(Identifiable, Queryable, Serialize, Deserialize, Debug, Clone, Associations)]
 #[table_name = "users"]

@@ -1,6 +1,8 @@
 [workspace]
+resolver = "2" # features for target-specific deps are not enabled if the target is not being built
 
 members = [
   "server",
   "frontend",
+  "common",
 ]

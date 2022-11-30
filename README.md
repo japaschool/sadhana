@@ -17,7 +17,6 @@
 ## TODO List
 ### Bugs
 - [ ] Server needs to send errors in a format UI can understand 
-- [ ] Login page redirect doesn't work (in home.rs)
 
 ### Features
 - [ ] Validate email upon registration #auth

@@ -9,7 +9,7 @@ extern crate log;
 
 mod app;
 mod constants;
-mod error;
+// mod error;
 mod hasher;
 mod middleware;
 mod routes;

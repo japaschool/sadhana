@@ -1,5 +1,4 @@
-use std::pin::Pin;
-
+use crate::{app::user::model::User, constants, utils::token};
 use actix_http::{body::EitherBody, HttpMessage, Method};
 use actix_service::{Service, Transform};
 use actix_web::{
@@ -7,14 +6,13 @@ use actix_web::{
     web::Data,
     Error, HttpRequest, HttpResponse,
 };
+use common::error::AppError;
 use futures::{
     future::{ok, Ready},
     Future,
 };
-use serde_json::json;
+use std::pin::Pin;
 use uuid::Uuid;
-
-use crate::{app::user::model::User, constants, error::AppError, utils::token};
 
 use super::state::AppState;
 
@@ -183,7 +181,7 @@ pub fn get_current_user(req: &HttpRequest) -> Result<User, AppError> {
         .get::<User>()
         .map(|user| user.to_owned())
         .ok_or_else(|| {
-            AppError::Unauthorized(json!({"error": "Unauthrized user. Need auth token on header."}))
+            AppError::Unauthorized("Unauthrized user. Need auth token on header.".into())
         })
 }
 

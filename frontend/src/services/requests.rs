@@ -1,4 +1,4 @@
-use crate::{error::Error, model::ErrorInfo};
+use common::error::*;
 // use dotenv_codegen::dotenv;
 use gloo::storage::{LocalStorage, Storage};
 use lazy_static::lazy_static;
@@ -37,7 +37,7 @@ pub fn get_token() -> Option<String> {
 }
 
 /// build all kinds of http request: post/get/delete etc.
-pub async fn request<B, T>(method: reqwest::Method, url: String, body: B) -> Result<T, Error>
+pub async fn request<B, T>(method: reqwest::Method, url: String, body: B) -> Result<T, AppError>
 where
     T: DeserializeOwned + 'static + std::fmt::Debug,
     B: Serialize + std::fmt::Debug,
@@ -68,32 +68,35 @@ where
                 log::debug!("Response: {:?}", data);
                 Ok(data)
             } else {
-                Err(Error::DeserializeError)
+                Err(AppError::DeserializeError)
             }
         } else {
             match data.status().as_u16() {
-                401 => Err(Error::Unauthorized),
-                403 => Err(Error::Forbidden),
-                404 => Err(Error::NotFound),
-                500 => Err(Error::InternalServerError),
+                //TODO: check these unwraps as we should never hit them
+                401 => Err(AppError::Unauthorized(
+                    data.json::<String>().await.unwrap_or_default(),
+                )),
+                403 => Err(AppError::Forbidden),
+                404 => Err(AppError::NotFound),
+                500 => Err(AppError::InternalServerError),
                 422 => {
-                    let data: Result<ErrorInfo, _> = data.json::<ErrorInfo>().await;
+                    let data = data.json::<Vec<String>>().await;
                     if let Ok(data) = data {
-                        Err(Error::UnprocessableEntity(data))
+                        Err(AppError::UnprocessableEntity(data))
                     } else {
-                        Err(Error::DeserializeError)
+                        Err(AppError::DeserializeError)
                     }
                 }
-                _ => Err(Error::RequestError),
+                _ => Err(AppError::RequestError),
             }
         }
     } else {
-        Err(Error::RequestError)
+        Err(AppError::RequestError)
     }
 }
 
 /// Delete request
-pub async fn request_delete<T>(url: String) -> Result<T, Error>
+pub async fn request_delete<T>(url: String) -> Result<T, AppError>
 where
     T: DeserializeOwned + 'static + std::fmt::Debug,
 {
@@ -101,7 +104,7 @@ where
 }
 
 /// Get request
-pub async fn request_get<T>(url: String) -> Result<T, Error>
+pub async fn request_get<T>(url: String) -> Result<T, AppError>
 where
     T: DeserializeOwned + 'static + std::fmt::Debug,
 {
@@ -109,7 +112,7 @@ where
 }
 
 /// Get request
-pub async fn request_post<T, B>(url: String, body: B) -> Result<T, Error>
+pub async fn request_post<T, B>(url: String, body: B) -> Result<T, AppError>
 where
     T: DeserializeOwned + 'static + std::fmt::Debug,
     B: Serialize + std::fmt::Debug,
@@ -118,7 +121,7 @@ where
 }
 
 /// Put request with a body
-pub async fn request_put<B, T>(url: String, body: B) -> Result<T, Error>
+pub async fn request_put<B, T>(url: String, body: B) -> Result<T, AppError>
 where
     T: DeserializeOwned + 'static + std::fmt::Debug,
     B: Serialize + std::fmt::Debug,

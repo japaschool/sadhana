@@ -8,7 +8,6 @@ use crate::components::user_context_provider::UserContextProvider;
 use crate::routes::*;
 
 mod components;
-mod error;
 mod hooks;
 mod model;
 mod routes;

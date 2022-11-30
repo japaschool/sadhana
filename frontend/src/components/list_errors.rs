@@ -1,10 +1,9 @@
+use common::error::AppError;
 use yew::prelude::*;
-
-use crate::error::Error;
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
-    pub error: Option<Error>,
+    pub error: Option<AppError>,
 }
 
 #[function_component(ListErrors)]
@@ -14,19 +13,12 @@ pub fn list_errors(props: &Props) -> Html {
             <ul class="error-messages">
                 {
                     match error {
-                        Error::UnprocessableEntity(error_info) => {
+                        AppError::UnprocessableEntity(error_info) => {
                             html! {
                                 <>
-                                {for error_info.errors.iter().map(|(key, value)| {
+                                {for error_info.iter().map(|e| {
                                     html! {
-                                        <li>
-                                        { key }
-                                        {for value.iter().map(|e| {
-                                            html! {
-                                                <>{" "} {e}</>
-                                            }
-                                        })}
-                                        </li>
+                                        <li>{e}</li>
                                     }
                                 })}
                                 </>
