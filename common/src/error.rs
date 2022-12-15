@@ -116,6 +116,7 @@ impl From<DieselError> for AppError {
                     let message = info.details().unwrap_or_else(|| info.message()).to_string();
                     AppError::UnprocessableEntity(vec![message])
                 } else {
+                    log::debug!("Unexpected diesel error {:?}", info.message());
                     AppError::InternalServerError
                 }
             }

@@ -9,8 +9,8 @@ pub async fn signin(
     state: web::Data<AppState>,
     form: web::Json<request::Signin>,
 ) -> Result<HttpResponse, AppError> {
-    let conn = state.get_conn()?;
-    let (user, token) = User::signin(&conn, &form.user.email, &form.user.password)?;
+    let mut conn = state.get_conn()?;
+    let (user, token) = User::signin(&mut conn, &form.user.email, &form.user.password)?;
     let res = UserResponse::from((user, token));
     Ok(HttpResponse::Ok().json(res))
 }
@@ -21,9 +21,9 @@ pub async fn signup(
 ) -> Result<HttpResponse, AppError> {
     form.user.validate()?;
 
-    let conn = state.get_conn()?;
+    let mut conn = state.get_conn()?;
     let (user, token) = User::signup(
-        &conn,
+        &mut conn,
         &form.user.email,
         &form.user.name,
         &form.user.password,
@@ -70,10 +70,10 @@ mod tests {
         init();
 
         let pool = db::establish_connection();
-        let conn = pool.get().unwrap();
+        let mut conn = pool.get().unwrap();
 
-        let cleanup = diesel::delete(users.filter(email.eq("xyz@gmail.com")));
-        let _ = cleanup.execute(&conn);
+        let cleanup = || diesel::delete(users.filter(email.eq("xyz@gmail.com")));
+        let _ = cleanup().execute(&mut conn);
 
         let res: (u16, UserResponse) = test_helpers::test_post(
             "/api/users",
@@ -90,7 +90,7 @@ mod tests {
         assert_eq!(res.0, 200);
         assert_eq!(res.1.user.email, "xyz@gmail.com");
 
-        cleanup.execute(&conn).unwrap();
+        cleanup().execute(&mut conn).unwrap();
     }
 
     #[actix_rt::test]
@@ -123,7 +123,7 @@ mod tests {
     #[actix_rt::test]
     pub async fn test_signup_duplicate() {
         let pool = db::establish_connection();
-        let conn = pool.get().unwrap();
+        let mut conn = pool.get().unwrap();
 
         let test_email = "dup_test@gmail.com";
         let payload = Signup {
@@ -134,8 +134,8 @@ mod tests {
             },
         };
 
-        let cleanup = diesel::delete(users.filter(email.eq(test_email)));
-        let _ = cleanup.execute(&conn);
+        let cleanup = || diesel::delete(users.filter(email.eq(test_email)));
+        let _ = cleanup().execute(&mut conn);
 
         let res: (u16, UserResponse) = test_helpers::test_post("/api/users", &payload).await;
 
@@ -146,13 +146,13 @@ mod tests {
 
         assert_eq!(res, 422);
 
-        cleanup.execute(&conn).unwrap();
+        cleanup().execute(&mut conn).unwrap();
     }
 
     #[actix_rt::test]
     pub async fn test_signin() {
         let pool = db::establish_connection();
-        let conn = pool.get().unwrap();
+        let mut conn = pool.get().unwrap();
 
         let test_email = "signin_test@gmail.com";
         let test_pwd = "abcdef";
@@ -165,8 +165,8 @@ mod tests {
             },
         };
 
-        let cleanup = diesel::delete(users.filter(email.eq(test_email)));
-        let _ = cleanup.execute(&conn);
+        let cleanup = || diesel::delete(users.filter(email.eq(test_email)));
+        let _ = cleanup().execute(&mut conn);
 
         let res = test_helpers::test_post_status("/api/users", &payload).await;
 
@@ -194,7 +194,7 @@ mod tests {
 
         assert_eq!(res, 401);
 
-        cleanup.execute(&conn).unwrap();
+        cleanup().execute(&mut conn).unwrap();
     }
 
     #[actix_rt::test]

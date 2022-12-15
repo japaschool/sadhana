@@ -4,7 +4,7 @@ use actix_web::{
     web,
 };
 
-use crate::app;
+use crate::app::{self};
 
 pub fn routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -14,7 +14,12 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                     .route("/login", web::post().to(app::user::api::signin))
                     .route("", web::post().to(app::user::api::signup)),
             )
-            .service(web::scope("/user").route("", web::get().to(app::user::api::me))),
+            .service(web::scope("/user").route("", web::get().to(app::user::api::me)))
+            .service(
+                web::scope("/diary")
+                    .route("", web::post().to(app::diary::api::upsert_diary_day))
+                    .route("", web::get().to(app::diary::api::get_diary_day)),
+            ),
     )
     .service(
         Files::new("/", "./dist/")

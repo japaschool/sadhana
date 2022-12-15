@@ -2,14 +2,11 @@ use actix_web::{middleware::Logger, web::Data, App, HttpServer};
 use dotenv::dotenv;
 
 #[macro_use]
-extern crate diesel;
-
-#[macro_use]
 extern crate log;
 
 mod app;
 mod constants;
-// mod error;
+mod db_types;
 mod hasher;
 mod middleware;
 mod routes;

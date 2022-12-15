@@ -6,8 +6,8 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Identifiable, Queryable, Serialize, Deserialize, Debug, Clone, Associations)]
-#[table_name = "users"]
+#[derive(Identifiable, Queryable, Serialize, Deserialize, Debug, Clone)]
+#[diesel(table_name = users)]
 pub struct User {
     pub id: Uuid,
     pub email: String,
@@ -21,7 +21,7 @@ type Token = String;
 
 impl User {
     pub fn signup<'a>(
-        conn: &PgConnection,
+        conn: &mut PgConnection,
         email: &'a str,
         username: &'a str,
         naive_password: &'a str,
@@ -44,7 +44,7 @@ impl User {
     }
 
     pub fn signin(
-        conn: &PgConnection,
+        conn: &mut PgConnection,
         email: &str,
         naive_password: &str,
     ) -> Result<(User, Token), AppError> {
@@ -68,14 +68,14 @@ impl User {
         Ok(token)
     }
 
-    pub fn find(conn: &PgConnection, id: Uuid) -> Result<Self, AppError> {
+    pub fn find(conn: &mut PgConnection, id: Uuid) -> Result<Self, AppError> {
         let user = users::table.find(id).first(conn)?;
         Ok(user)
     }
 }
 
-#[derive(Insertable, Debug, Deserialize)]
-#[table_name = "users"]
+#[derive(Insertable, Debug)]
+#[diesel(table_name = users)]
 struct SignupUser<'a> {
     pub email: &'a str,
     pub hash: &'a str,

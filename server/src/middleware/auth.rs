@@ -109,12 +109,12 @@ fn set_auth_user(req: &mut ServiceRequest) -> bool {
 fn fetch_user(req: &ServiceRequest) -> Result<User, &str> {
     let user_id = get_user_id_from_header(req)?;
 
-    let conn = req
+    let mut conn = req
         .app_data::<Data<AppState>>()
         .ok_or("Cannot get state.")
         .and_then(|state| state.get_conn().map_err(|_err| "Cannot get db connection."))?;
 
-    User::find(&conn, user_id).map_err(|_err| "Cannot find auth user")
+    User::find(&mut conn, user_id).map_err(|_err| "Cannot find auth user")
 }
 
 fn get_user_id_from_header(req: &ServiceRequest) -> Result<Uuid, &str> {

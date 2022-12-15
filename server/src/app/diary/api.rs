@@ -1,17 +1,57 @@
-use crate::middleware::state::AppState;
-use actix_web::{web, HttpResponse};
+use crate::middleware::{auth, state::AppState};
+use actix_web::{web, HttpRequest, HttpResponse};
+use chrono::NaiveDate;
 use common::error::AppError;
+use serde::Deserialize;
 
-use super::request;
+use super::{
+    model::{DiaryDayEntry, DiaryEntryUpdate},
+    request,
+    response::DiaryDayResponse,
+};
 
-pub fn upsert(
+#[derive(Deserialize, Debug)]
+pub struct DiaryDayQueryParams {
+    cob_date: NaiveDate,
+}
+
+/// Inserts or updates a diary day
+pub async fn upsert_diary_day(
     state: web::Data<AppState>,
-    form: web::Json<request::Upsert>,
+    req: HttpRequest,
+    form: web::Json<request::DiaryDayUpsertRequest>,
 ) -> Result<HttpResponse, AppError> {
-    todo!()
+    let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
+    log::debug!("Upserting {:?}", form);
+
+    DiaryDayEntry::upsert(
+        &mut conn,
+        &form
+            .diary_day
+            .iter()
+            .map(|entry| DiaryEntryUpdate {
+                cob_date: &form.cob_date,
+                user_id: &user_id,
+                practice: &entry.practice,
+                value: entry.value.as_ref(),
+            })
+            .collect(),
+    )?;
+    Ok(HttpResponse::Ok().finish())
 }
 
-// TODO: from/to dates query parameters
-pub fn show(state: web::Data<AppState>) -> Result<HttpResponse, AppError> {
-    todo!()
+/// Retrieves a diary day
+pub async fn get_diary_day(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    params: web::Query<DiaryDayQueryParams>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
+
+    let res = DiaryDayEntry::get_diary_day(&mut conn, &params.cob_date, &user_id)?;
+    Ok(HttpResponse::Ok().json(DiaryDayResponse::from((params.cob_date, res))))
 }
+
+//TODO: add tests

@@ -1,7 +1,15 @@
-pub struct Upsert {
-    pub record: UpsertRecord,
+use chrono::NaiveDate;
+use serde::Deserialize;
+use serde_json::Value as JsonValue;
+
+#[derive(Deserialize, Debug)]
+pub struct DiaryDayUpsertRequest {
+    pub diary_day: Vec<DiaryDayEntryUpsert>,
+    pub cob_date: NaiveDate,
 }
 
-pub struct UpsertRecord {
-    a: u16,
+#[derive(Deserialize, Debug)]
+pub struct DiaryDayEntryUpsert {
+    pub practice: String,
+    pub value: Option<JsonValue>,
 }

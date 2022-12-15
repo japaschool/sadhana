@@ -17,14 +17,16 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
 dotenv = "0.15"
 log = "0.4"
-env_logger = "0.9"
-diesel = { version = "1.4", features = ["postgres", "r2d2", "uuidv07", "chrono", "serde_json"] }
+env_logger = "0.10"
+diesel = { version = "2.0", features = ["postgres", "r2d2", "chrono", "serde_json", "uuid"] }
 validator = { version = "0.16", features = ["derive"] }
 bcrypt = { version = "0.13" }
-uuid = { version = "0.8", features = ["serde", "v4"] }
+uuid = { version = "1.2", features = ["serde", "v4"] }
 jsonwebtoken = { version = "8.1" }
 thiserror = "1.0"
 futures = { version = "0.3" }
 chrono = { version = "0.4", features = ["serde"] }
 lazy_static = "1.4"
 # derive_more = "0.99"
+# diesel-derive-enum = { version = "1", features = ["postgres"] }
+diesel-derive-enum = { version = "2.0.0-rc.0", features = ["postgres"] }

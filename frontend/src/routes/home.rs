@@ -1,23 +1,52 @@
-use std::collections::HashMap;
-
 use chrono::prelude::*;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
-use yew_hooks::{use_async, use_map};
+use yew_hooks::{use_async, use_list};
 
-use crate::{model::PracticeEntryValue, services::fetch};
+use crate::{
+    model::{DiaryDay, DiaryEntry, PracticeDataType, PracticeEntryValue},
+    services::{get_diary_day, save_diary},
+};
 
 #[function_component(Home)]
 pub fn home() -> Html {
-    let current_date = use_state(|| Local::now().date());
+    let current_date = use_state(|| Local::now().date_naive());
     let form_changed = use_state(|| false);
-    let local_diary_entry = use_map(HashMap::new());
+    let local_diary_entry = use_list(Vec::new());
     let diary_entry = {
         let current_date = current_date.clone();
-        use_async(async move { fetch(&*current_date).await.map(|je| je.values) })
+        use_async(async move { get_diary_day(&*current_date).await.map(|je| je.diary_day) })
+    };
+    let save_diary_day = {
+        let local = local_diary_entry.clone();
+        let cob = current_date.clone();
+        use_async(async move {
+            save_diary(DiaryDay {
+                diary_day: local.current().to_owned(),
+                cob_date: *cob,
+            })
+            .await
+        })
     };
 
     {
+        // Send local changes to the backend
+        let save_diary_day = save_diary_day.clone();
+        let changed = form_changed.clone();
+        use_effect_with_deps(
+            move |_| {
+                if *changed {
+                    save_diary_day.run();
+                    changed.set(false);
+                }
+                || ()
+            },
+            form_changed.clone(),
+        );
+    }
+
+    {
+        // Fetch data from server on date change
         let diary_entry = diary_entry.clone();
         use_effect_with_deps(
             move |_| {
@@ -29,10 +58,11 @@ pub fn home() -> Html {
     }
 
     {
-        let lje = local_diary_entry.clone();
+        // Update local state from server data when the later changes
+        let local = local_diary_entry.clone();
         use_effect_with_deps(
             move |je| {
-                je.data.iter().for_each(|data| lje.set(data.clone()));
+                je.data.iter().for_each(|data| local.set(data.clone()));
                 || ()
             },
             diary_entry.clone(),
@@ -43,7 +73,7 @@ pub fn home() -> Html {
         let current_date = current_date.clone();
         Callback::from(move |ev: MouseEvent| {
             ev.prevent_default();
-            current_date.set(current_date.pred());
+            current_date.set(current_date.pred_opt().unwrap());
         })
     };
 
@@ -51,7 +81,7 @@ pub fn home() -> Html {
         let current_date = current_date.clone();
         Callback::from(move |ev: MouseEvent| {
             ev.prevent_default();
-            current_date.set(current_date.succ());
+            current_date.set(current_date.succ_opt().unwrap());
         })
     };
 
@@ -60,36 +90,41 @@ pub fn home() -> Html {
         let form_changed = form_changed.clone();
         Callback::from(move |e: InputEvent| {
             let input: HtmlInputElement = e.target_unchecked_into();
-            let maybe_new_val = lje
+            let new_val_with_idx = lje
                 .current()
-                .get(input.name().as_str())
-                .and_then(|v| match v {
-                    PracticeEntryValue::Int(_) => input
-                        .value()
-                        .parse()
-                        .map(|v| PracticeEntryValue::Int(v))
-                        .ok(),
-                    PracticeEntryValue::Bool(_) => Some(PracticeEntryValue::Bool(input.checked())),
-                    PracticeEntryValue::Time { h: _, m: _ } => {
-                        input.value().split_once(":").and_then(|(h, m)| {
-                            let h = h.parse().ok()?;
-                            let m = m.parse().ok()?;
-                            Some(PracticeEntryValue::Time { h, m })
-                        })
-                    }
+                .binary_search_by(|probe| probe.practice.cmp(&input.name()))
+                .ok()
+                .and_then(|idx| {
+                    let new_val = match lje.current()[idx].data_type {
+                        PracticeDataType::Bool => input
+                            .value()
+                            .parse()
+                            .map(|v| PracticeEntryValue::Bool(v))
+                            .ok(),
+                        PracticeDataType::Int => input
+                            .value()
+                            .parse()
+                            .map(|v| PracticeEntryValue::Int(v))
+                            .ok(),
+                        PracticeDataType::Time => {
+                            input.value().split_once(":").and_then(|(h, m)| {
+                                let h = h.parse().ok()?;
+                                let m = m.parse().ok()?;
+                                Some(PracticeEntryValue::Time { h, m })
+                            })
+                        }
+                    };
+                    Some((idx, new_val))
                 });
-            maybe_new_val.into_iter().for_each(|v| {
-                lje.update(&input.name(), v);
+            new_val_with_idx.into_iter().for_each(|(idx, new_val)| {
+                let new_val = DiaryEntry {
+                    value: new_val,
+                    data_type: lje.current()[idx].data_type.clone(),
+                    practice: lje.current()[idx].practice.clone(),
+                };
+                lje.update(idx, new_val);
                 form_changed.set(true);
-            });
-        })
-    };
-
-    let onsubmit = {
-        let form_changed = form_changed.clone();
-        Callback::from(move |e: FocusEvent| {
-            e.prevent_default(); /* Prevent event propagation */
-            form_changed.set(false);
+            })
         })
     };
 
@@ -101,54 +136,46 @@ pub fn home() -> Html {
                 { current_date.format(" %a, %-d ") }
                 <button onclick={inc_date}>{">"}</button>
             </p>
-            <form {onsubmit}>
-                <fieldset>
-                    {
-                        //FIXME: The order of a hash map is random. Need to sort here somehow by practice name
-                        local_diary_entry.current().iter().map(|(practice_name, value)| {
-                            html!{
-                                <div key={practice_name.clone()}>
-                                    <label>{ format!("{}: ", practice_name) }</label>
-                                    {
-                                        match value {
-                                            PracticeEntryValue::Int(i) => html!{
-                                                                            <input
-                                                                                oninput={ oninput.clone() }
-                                                                                name={ practice_name.clone() }
-                                                                                type="number"
-                                                                                value={ i.to_string() }
-                                                                                min="0"
-                                                                                />
-                                                                            },
-                                            PracticeEntryValue::Bool(b) => html!{
-                                                                            <input
-                                                                                oninput={ oninput.clone() }
-                                                                                name={ practice_name.clone() }
-                                                                                type="checkbox"
-                                                                                checked={ *b }
-                                                                                />
-                                                                            },
-                                            PracticeEntryValue::Time{h, m} => html!{
-                                                                                <input
-                                                                                    oninput={ oninput.clone() }
-                                                                                    name={ practice_name.clone() }
-                                                                                    type="time"
-                                                                                    value={ format!("{:0width$}:{:0width$}", h, m, width = 2) }
-                                                                                    />
-                                                                                },
-                                        }
+            <fieldset>
+                {
+                    local_diary_entry.current().iter().map(|DiaryEntry {practice, data_type, value}| {
+                        html!{
+                            <div key={practice.clone()}>
+                                <label>{ format!("{}: ", practice) }</label>
+                                {
+                                    match data_type {
+                                        PracticeDataType::Int => html!{
+                                            <input
+                                                oninput={ oninput.clone() }
+                                                name={ practice.clone() }
+                                                type="number"
+                                                value={ value.iter().find_map(|v| v.as_int().map(|i| i.to_string())).unwrap_or_default() }
+                                                min="0"
+                                                />
+                                            },
+                                        PracticeDataType::Bool => html!{
+                                            <input
+                                                oninput={ oninput.clone() }
+                                                name={ practice.clone() }
+                                                type="checkbox"
+                                                checked={  value.iter().find_map(|v| v.as_bool()).unwrap_or(false)  }
+                                                />
+                                            },
+                                        PracticeDataType::Time => html! {
+                                            <input
+                                                oninput={ oninput.clone() }
+                                                name={ practice.clone() }
+                                                type="time"
+                                                value={ value.iter().find_map(|v| v.as_time_str()).unwrap_or_default() }
+                                                />
+                                            },
                                     }
-                                </div>
-                            }
-                        }).collect::<Html>()
-                    }
-                </fieldset>
-                <button
-                    type="submit"
-                    disabled={ !*form_changed } >
-                    { "Save" }
-                </button>
-            </form>
+                                }
+                            </div>
+                        }
+                    }).collect::<Html>()
+                }
+            </fieldset>
         </div>
     }
 }
