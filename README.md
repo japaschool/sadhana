@@ -16,16 +16,20 @@
 
 ## TODO List
 ### Bugs
-- [ ] Server needs to send errors in a format UI can understand 
+- [X] Server needs to send errors in a format UI can understand 
 
 ### Features
 - [ ] Validate email upon registration #auth
 - [ ] Magic link login #auth
 - [ ] Update user details #api
 - [ ] Delete user #api
-- [ ] Extract errors.rs from frontend and backend into a separate crate. #tech_debt
+- [X] Extract errors.rs from frontend and backend into a separate crate. #tech_debt
 - [ ] https support #tech_debt
 - [ ] script up spinning up local docker instance for postgres #tech_debt
+- [ ] tests #tech_debt
+- [ ] choosing practices #feature
+- [ ] adding custom practices #feature
+- [ ] automatically add default practices to new users #feature
 
 ## Learning Rust
 * [Niko Matsakis: What's unique about Rust?](https://www.youtube.com/watch?v=jQOZX0xkrWA)

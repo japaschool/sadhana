@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 thiserror = "1"
 actix-web ={ version = "4", optional = true }
-diesel = { version = "2.0", features = ["r2d2"], optional = true }
+diesel = { version = "2.0", features = ["r2d2", "uuid"], optional = true }
 bcrypt = { version = "0.13", optional = true }
 jsonwebtoken = { version = "8.1", optional = true }
 uuid = { version = "1.2",  optional = true }
