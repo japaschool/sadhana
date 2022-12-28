@@ -65,6 +65,19 @@ pub enum PracticeDataType {
     Time,
 }
 
+impl TryFrom<&str> for PracticeDataType {
+    type Error = String;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "int" => Ok(PracticeDataType::Int),
+            "bool" => Ok(PracticeDataType::Bool),
+            "time" => Ok(PracticeDataType::Time),
+            _ => Err(format!("Unknown PracticeDataType value {}", value)),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct PracticeEntry {
     pub practice_name: String,
@@ -114,13 +127,8 @@ pub struct AllUserPractices {
     pub user_practices: Vec<UserPractice>,
 }
 
-// #[derive(Debug, Clone)]
-// pub struct EnabledPractices {
-//     pub practices: Vec<Practice>,
-// }
-
-// #[derive(Debug, Clone)]
-// pub struct Practice {
-//     pub name: String,
-//     pub value_type: PracticeDataType,
-// }
+#[derive(Debug, Serialize)]
+pub struct CreateUserPractice {
+    pub practice: String,
+    pub data_type: PracticeDataType,
+}

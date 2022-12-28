@@ -44,6 +44,7 @@ pub fn login() -> Html {
     let oninput_email = {
         let login_info = login_info.clone();
         Callback::from(move |e: InputEvent| {
+            e.prevent_default();
             let input: HtmlInputElement = e.target_unchecked_into();
             let mut info = (*login_info).clone();
             info.email = input.value();
@@ -54,6 +55,7 @@ pub fn login() -> Html {
     let oninput_password = {
         let login_info = login_info.clone();
         Callback::from(move |e: InputEvent| {
+            e.prevent_default();
             let input: HtmlInputElement = e.target_unchecked_into();
             let mut info = (*login_info).clone();
             info.password = input.value();
@@ -96,7 +98,7 @@ pub fn login() -> Html {
                                 <button
                                     class="btn btn-lg btn-primary pull-xs-right"
                                     type="submit"
-                                    disabled=false>
+                                    disabled=false >
                                     { "Sign in" }
                                 </button>
                             </fieldset>

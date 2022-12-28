@@ -14,7 +14,6 @@ use super::AppRoute;
 #[function_component(Home)]
 pub fn home() -> Html {
     let current_date = use_state(|| Local::now().date_naive());
-    let form_changed = use_state(|| false);
     let local_diary_entry = use_list(Vec::new());
     let diary_entry = {
         let current_date = current_date.clone();
@@ -31,21 +30,6 @@ pub fn home() -> Html {
             .await
         })
     };
-
-    {
-        // Send local changes to the backend
-        let save_diary_day = save_diary_day.clone();
-        use_effect_with_deps(
-            move |changed| {
-                if **changed {
-                    save_diary_day.run();
-                    changed.set(false);
-                }
-                || ()
-            },
-            form_changed.clone(),
-        );
-    }
 
     {
         // Fetch data from server on date change
@@ -89,7 +73,7 @@ pub fn home() -> Html {
 
     let oninput = {
         let lje = local_diary_entry.clone();
-        let form_changed = form_changed.clone();
+        let save_diary_day = save_diary_day.clone();
         Callback::from(move |e: InputEvent| {
             e.prevent_default();
 
@@ -123,7 +107,7 @@ pub fn home() -> Html {
                     practice: lje.current()[idx].practice.clone(),
                 };
                 lje.update(idx, new_val);
-                form_changed.set(true);
+                save_diary_day.run();
             })
         })
     };

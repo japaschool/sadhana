@@ -18,12 +18,20 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                 web::scope("/user")
                     .service(
                         web::scope("/practices")
+                            .route("", web::post().to(app::user_practices::add_new))
                             .route("", web::get().to(app::user_practices::get_user_practices)),
                     )
-                    .service(web::scope("/practice").route(
-                        "{practice}",
-                        web::put().to(app::user_practices::set_is_active),
-                    ))
+                    .service(
+                        web::scope("/practice")
+                            .route(
+                                "{practice}",
+                                web::delete().to(app::user_practices::delete_user_practice),
+                            )
+                            .route(
+                                "{practice}",
+                                web::put().to(app::user_practices::set_is_active),
+                            ),
+                    )
                     .route("", web::get().to(app::user::api::me)),
             )
             .service(

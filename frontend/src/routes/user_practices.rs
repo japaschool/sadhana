@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use gloo_dialogs::confirm;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
@@ -8,17 +9,31 @@ use yew_router::prelude::*;
 
 use crate::{
     model::UserPractice,
-    services::{get_user_practices, update_user_practice_activity},
+    services::{delete_user_practice, get_user_practices, update_user_practice_activity},
 };
 
 use super::AppRoute;
 
 #[function_component(UserPractices)]
 pub fn user_practices() -> Html {
-    // let all_practices = use_list(vec!["Rounds, Total", "Rounds before 7am", "Reading Books"]);
+    let reload = use_state(|| true);
     let selected_practices = use_set::<String>(HashSet::from([]));
     let all_practices =
         use_async(async move { get_user_practices().await.map(|res| res.user_practices) });
+
+    {
+        // TODO: This is a hack that forces the state to reload from backend when we redirect
+        // to this page after a new practice has been added. Without it (and its use_effect_with_deps)
+        // the reload does not happen.
+        let all_practices = all_practices.clone();
+        use_effect_with_deps(
+            move |_| {
+                all_practices.run();
+                || ()
+            },
+            reload.clone(),
+        );
+    }
 
     {
         // Load state on mount
@@ -35,6 +50,7 @@ pub fn user_practices() -> Html {
         use_effect_with_deps(
             move |all| {
                 log::debug!("All Practices loaded. Initialising active practices");
+
                 selected.set(
                     all.data
                         .as_ref()
@@ -83,6 +99,23 @@ pub fn user_practices() -> Html {
         })
     };
 
+    let delete = {
+        let all_practices = all_practices.clone();
+        Callback::from(move |e: MouseEvent| {
+            e.prevent_default();
+            if confirm("Are you sure you want to delete? Any logged data associated with this practice will be lost.") {
+                let input: HtmlInputElement = e.target_unchecked_into();
+                let practice = input.name();
+
+                log::debug!("Deleting user practice {:?}", practice);
+                spawn_local(async move { delete_user_practice(&practice).await.unwrap() });
+
+                // Reload the state from backend
+                all_practices.run();
+            }
+        })
+    };
+
     html! {
         <div>
             <h1>{"Select Practices"}</h1>
@@ -97,6 +130,7 @@ pub fn user_practices() -> Html {
                                 checked={ selected_practices.current().contains(&p.practice) }
                                 />
                             <label>{ p.practice.clone() }</label>
+                            <button name={ p.practice.clone() } onclick={ delete.clone() }>{ "Delete" }</button>
                         </div>
                     }}).collect::<Html>()
                 }
@@ -104,6 +138,11 @@ pub fn user_practices() -> Html {
             <p>
                 <Link<AppRoute> to={AppRoute::Home}>
                     { "Done" }
+                </Link<AppRoute>>
+            </p>
+            <p>
+                <Link<AppRoute> to={AppRoute::NewUserPractice}>
+                    { "Add new practice" }
                 </Link<AppRoute>>
             </p>
         </div>

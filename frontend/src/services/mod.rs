@@ -2,8 +2,8 @@ use chrono::NaiveDate;
 use common::error::AppError;
 
 use crate::model::{
-    AllUserPractices, DiaryDay, LoginInfoWrapper, RegisterInfoWrapper, UserInfoWrapper,
-    UserPractice,
+    AllUserPractices, CreateUserPractice, DiaryDay, LoginInfoWrapper, RegisterInfoWrapper,
+    UserInfoWrapper, UserPractice,
 };
 
 use self::requests::*;
@@ -52,4 +52,14 @@ pub async fn update_user_practice_activity(data: &UserPractice) -> Result<(), Ap
         (),
     )
     .await
+}
+
+/// Delete user practice
+pub async fn delete_user_practice(practice: &String) -> Result<(), AppError> {
+    request_delete(format!("/user/practice/{}", practice)).await
+}
+
+/// Create a new user practice
+pub async fn create_user_practice(data: &CreateUserPractice) -> Result<(), AppError> {
+    request_post("/user/practices".to_string(), data).await
 }
