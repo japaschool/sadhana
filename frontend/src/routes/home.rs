@@ -2,11 +2,14 @@ use chrono::prelude::*;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_list};
+use yew_router::prelude::*;
 
 use crate::{
     model::{DiaryDay, DiaryEntry, PracticeDataType, PracticeEntryValue},
     services::{get_diary_day, save_diary},
 };
+
+use super::AppRoute;
 
 #[function_component(Home)]
 pub fn home() -> Html {
@@ -32,10 +35,9 @@ pub fn home() -> Html {
     {
         // Send local changes to the backend
         let save_diary_day = save_diary_day.clone();
-        let changed = form_changed.clone();
         use_effect_with_deps(
-            move |_| {
-                if *changed {
+            move |changed| {
+                if **changed {
                     save_diary_day.run();
                     changed.set(false);
                 }
@@ -89,6 +91,8 @@ pub fn home() -> Html {
         let lje = local_diary_entry.clone();
         let form_changed = form_changed.clone();
         Callback::from(move |e: InputEvent| {
+            e.prevent_default();
+
             let input: HtmlInputElement = e.target_unchecked_into();
             let new_val_with_idx = lje
                 .current()
@@ -96,11 +100,7 @@ pub fn home() -> Html {
                 .ok()
                 .and_then(|idx| {
                     let new_val = match lje.current()[idx].data_type {
-                        PracticeDataType::Bool => input
-                            .value()
-                            .parse()
-                            .map(|v| PracticeEntryValue::Bool(v))
-                            .ok(),
+                        PracticeDataType::Bool => Some(PracticeEntryValue::Bool(input.checked())),
                         PracticeDataType::Int => input
                             .value()
                             .parse()
@@ -136,46 +136,47 @@ pub fn home() -> Html {
                 { current_date.format(" %a, %-d ") }
                 <button onclick={inc_date}>{">"}</button>
             </p>
-            <fieldset>
-                {
-                    local_diary_entry.current().iter().map(|DiaryEntry {practice, data_type, value}| {
-                        html!{
-                            <div key={practice.clone()}>
-                                <label>{ format!("{}: ", practice) }</label>
-                                {
-                                    match data_type {
-                                        PracticeDataType::Int => html!{
-                                            <input
-                                                oninput={ oninput.clone() }
-                                                name={ practice.clone() }
-                                                type="number"
-                                                value={ value.iter().find_map(|v| v.as_int().map(|i| i.to_string())).unwrap_or_default() }
-                                                min="0"
-                                                />
-                                            },
-                                        PracticeDataType::Bool => html!{
-                                            <input
-                                                oninput={ oninput.clone() }
-                                                name={ practice.clone() }
-                                                type="checkbox"
-                                                checked={  value.iter().find_map(|v| v.as_bool()).unwrap_or(false)  }
-                                                />
-                                            },
-                                        PracticeDataType::Time => html! {
-                                            <input
-                                                oninput={ oninput.clone() }
-                                                name={ practice.clone() }
-                                                type="time"
-                                                value={ value.iter().find_map(|v| v.as_time_str()).unwrap_or_default() }
-                                                />
-                                            },
-                                    }
-                                }
-                            </div>
-                        }
-                    }).collect::<Html>()
-                }
-            </fieldset>
+            <fieldset> {
+                local_diary_entry.current().iter().map(|DiaryEntry {practice, data_type, value}| {
+                    html!{
+                        <div key={practice.clone()}>
+                            <label>{ format!("{}: ", practice) }</label>
+                            { match data_type {
+                                PracticeDataType::Int => html!{
+                                    <input
+                                        oninput={ oninput.clone() }
+                                        name={ practice.clone() }
+                                        type="number"
+                                        value={ value.iter().find_map(|v| v.as_int().map(|i| i.to_string())).unwrap_or_default() }
+                                        min="0"
+                                        />
+                                    },
+                                PracticeDataType::Bool => html!{
+                                    <input
+                                        oninput={ oninput.clone() }
+                                        name={ practice.clone() }
+                                        type="checkbox"
+                                        checked={  value.iter().find_map(|v| v.as_bool()).unwrap_or(false)  }
+                                        />
+                                    },
+                                PracticeDataType::Time => html! {
+                                    <input
+                                        oninput={ oninput.clone() }
+                                        name={ practice.clone() }
+                                        type="time"
+                                        value={ value.iter().find_map(|v| v.as_time_str()).unwrap_or_default() }
+                                        />
+                                    },
+                            }
+                        } </div>
+                    }
+                }).collect::<Html>()
+            } </fieldset>
+            <p>
+                <Link<AppRoute> to={AppRoute::UserPractices}>
+                    { "Modify practices" }
+                </Link<AppRoute>>
+            </p>
         </div>
     }
 }

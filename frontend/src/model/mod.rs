@@ -103,6 +103,17 @@ impl PracticeEntryValue {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct UserPractice {
+    pub practice: String,
+    pub is_active: bool,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AllUserPractices {
+    pub user_practices: Vec<UserPractice>,
+}
+
 // #[derive(Debug, Clone)]
 // pub struct EnabledPractices {
 //     pub practices: Vec<Practice>,

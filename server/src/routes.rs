@@ -14,7 +14,18 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                     .route("/login", web::post().to(app::user::api::signin))
                     .route("", web::post().to(app::user::api::signup)),
             )
-            .service(web::scope("/user").route("", web::get().to(app::user::api::me)))
+            .service(
+                web::scope("/user")
+                    .service(
+                        web::scope("/practices")
+                            .route("", web::get().to(app::user_practices::get_user_practices)),
+                    )
+                    .service(web::scope("/practice").route(
+                        "{practice}",
+                        web::put().to(app::user_practices::set_is_active),
+                    ))
+                    .route("", web::get().to(app::user::api::me)),
+            )
             .service(
                 web::scope("/diary")
                     .route("", web::post().to(app::diary::api::upsert_diary_day))

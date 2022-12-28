@@ -1,8 +1,8 @@
 use crate::{hasher, schema::users, utils::token};
 use chrono::{DateTime, Utc};
 use common::error::AppError;
-use diesel::pg::PgConnection;
 use diesel::prelude::*;
+use diesel::{pg::PgConnection, sql_query, sql_types::Uuid as DieselUuid};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -40,6 +40,17 @@ impl User {
             .get_result::<User>(conn)?;
 
         let token = user.generate_token()?;
+
+        sql_query(
+            r#"
+        insert into user_practices (user_id, practice, data_type, is_active)
+        select $1, practice, data_type, true
+        from default_user_practices
+        "#,
+        )
+        .bind::<DieselUuid, _>(&user.id)
+        .execute(conn)?;
+
         Ok((user, token))
     }
 

@@ -1,7 +1,10 @@
 use chrono::NaiveDate;
 use common::error::AppError;
 
-use crate::model::{DiaryDay, LoginInfoWrapper, RegisterInfoWrapper, UserInfoWrapper};
+use crate::model::{
+    AllUserPractices, DiaryDay, LoginInfoWrapper, RegisterInfoWrapper, UserInfoWrapper,
+    UserPractice,
+};
 
 use self::requests::*;
 
@@ -32,4 +35,21 @@ pub async fn get_diary_day(date: &NaiveDate) -> Result<DiaryDay, AppError> {
 pub async fn save_diary(data: DiaryDay) -> Result<(), AppError> {
     log::debug!("Saving diary day: {:?}", data);
     request_post("/diary".into(), data).await
+}
+
+/// Get user practices
+pub async fn get_user_practices() -> Result<AllUserPractices, AppError> {
+    request_get("/user/practices".to_string()).await
+}
+
+/// Update is_active flag on a user practice
+pub async fn update_user_practice_activity(data: &UserPractice) -> Result<(), AppError> {
+    request_put(
+        format!(
+            "/user/practice/{}?is_active={}",
+            data.practice, data.is_active
+        ),
+        (),
+    )
+    .await
 }

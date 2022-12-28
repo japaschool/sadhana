@@ -7,6 +7,16 @@ pub mod sql_types {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::PracticeDataTypeEnum;
+
+    default_user_practices (practice) {
+        practice -> Text,
+        data_type -> PracticeDataTypeEnum,
+    }
+}
+
+diesel::table! {
     diary (cob_date, user_id, practice_id) {
         cob_date -> Date,
         user_id -> Uuid,
@@ -26,8 +36,7 @@ diesel::table! {
         user_id -> Uuid,
         practice -> Text,
         data_type -> PracticeDataTypeEnum,
-        valid_from -> Nullable<Date>,
-        valid_to -> Nullable<Date>,
+        is_active -> Nullable<Bool>,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }
@@ -49,6 +58,7 @@ diesel::joinable!(diary -> users (user_id));
 diesel::joinable!(user_practices -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    default_user_practices,
     diary,
     user_practices,
     users,

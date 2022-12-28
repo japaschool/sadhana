@@ -26,15 +26,11 @@ impl DiaryDayEntry {
             r#"
         select up.practice, up.data_type, d.value
         from user_practices up
-        left join (
-            select *
-            from diary d
-            where d.cob_date = $1
-            ) d
+        left join diary d
         on up.user_id = d.user_id 
         and up.id = d.practice_id
-        and coalesce(up.valid_from, '2001-01-01') <= $1
-        and coalesce(up.valid_to, '9999-12-31') >= $1
+        and d.cob_date = $1
+        where up.is_active = true
         and up.user_id = $2
         order by up.practice
         "#,
@@ -51,7 +47,16 @@ impl DiaryDayEntry {
         diary_day: &Vec<DiaryEntryUpdate>,
     ) -> Result<(), AppError> {
         conn.transaction(|conn| {
-            let sql = r#"
+            // Deleting entries that were set to None
+            let delete_sql = r#"
+            delete from diary d 
+            where d.cob_date = $1 
+            and d.user_id = $2
+            and d.practice_id = (select id from user_practices where user_id = $2 and practice = $3)
+            "#;
+
+            // Upserting entries with non-empty values
+            let upsert_sql = r#"
             insert into diary(cob_date, user_id, practice_id, value)
             values($1, $2, (select id from user_practices where user_id = $2 and practice = $3), $4)
             on conflict (cob_date, user_id, practice_id)
@@ -61,12 +66,20 @@ impl DiaryDayEntry {
             let mut res = Ok(0);
 
             for entry in diary_day {
-                res = sql_query(sql)
-                    .bind::<Date, _>(entry.cob_date)
-                    .bind::<DieselUuid, _>(entry.user_id)
-                    .bind::<Text, _>(entry.practice)
-                    .bind::<Nullable<Jsonb>, _>(entry.value)
-                    .execute(conn);
+                if entry.value.is_some() {
+                    res = sql_query(upsert_sql)
+                        .bind::<Date, _>(entry.cob_date)
+                        .bind::<DieselUuid, _>(entry.user_id)
+                        .bind::<Text, _>(entry.practice)
+                        .bind::<Nullable<Jsonb>, _>(entry.value)
+                        .execute(conn);
+                } else {
+                    res = sql_query(delete_sql)
+                        .bind::<Date, _>(entry.cob_date)
+                        .bind::<DieselUuid, _>(entry.user_id)
+                        .bind::<Text, _>(entry.practice)
+                        .execute(conn);
+                }
                 if res.is_err() {
                     break;
                 }
@@ -86,3 +99,5 @@ pub struct DiaryEntryUpdate<'a> {
     pub practice: &'a str,
     pub value: Option<&'a JsonValue>,
 }
+
+//TODO: test `upsert` that empty values are not inserted (and deleted if a value becomes empty) from diary

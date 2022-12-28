@@ -782,6 +782,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
+ "wasm-bindgen-futures",
  "wasm-logger",
  "web-sys",
  "yew",
