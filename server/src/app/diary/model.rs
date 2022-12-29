@@ -32,7 +32,7 @@ impl DiaryDayEntry {
         and d.cob_date = $1
         where up.is_active = true
         and up.user_id = $2
-        order by up.practice
+        order by up.data_type, up.practice
         "#,
         )
         .bind::<Date, _>(cob_date)
