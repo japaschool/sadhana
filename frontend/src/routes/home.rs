@@ -15,6 +15,10 @@ use super::AppRoute;
 pub fn home() -> Html {
     let current_date = use_state(|| Local::now().date_naive());
     let local_diary_entry = use_list(Vec::new());
+    // A copy of the backend state without local values changes.
+    // Used as reference for getting indexes and data types of entries to avoid
+    // immutable borrowing of the local change buffer.
+    let static_diary_entry = use_state(|| Vec::new());
     let diary_entry = {
         let current_date = current_date.clone();
         use_async(async move { get_diary_day(&*current_date).await.map(|je| je.diary_day) })
@@ -46,9 +50,11 @@ pub fn home() -> Html {
     {
         // Update local state from server data when the later changes
         let local = local_diary_entry.clone();
+        let local2 = static_diary_entry.clone();
         use_effect_with_deps(
             move |je| {
                 je.data.iter().for_each(|data| local.set(data.clone()));
+                local2.set(local.current().clone());
                 || ()
             },
             diary_entry.clone(),
@@ -71,44 +77,53 @@ pub fn home() -> Html {
         })
     };
 
+    fn get_new_val(input: &HtmlInputElement, entry: &DiaryEntry) -> Option<PracticeEntryValue> {
+        match entry.data_type {
+            PracticeDataType::Bool => Some(PracticeEntryValue::Bool(input.checked())),
+            PracticeDataType::Int => input
+                .value()
+                .parse()
+                .map(|v| PracticeEntryValue::Int(v))
+                .ok(),
+            PracticeDataType::Time => input.value().split_once(":").and_then(|(h, m)| {
+                let h = h.parse().ok()?;
+                let m = m.parse().ok()?;
+                Some(PracticeEntryValue::Time { h, m })
+            }),
+        }
+    }
+
+    let checkbox_onclick = {
+        let change_buffer = local_diary_entry.clone();
+        let ref_diary_entry = static_diary_entry.clone();
+        let save_diary_day = save_diary_day.clone();
+        Callback::from(move |ev: MouseEvent| {
+            let input: HtmlInputElement = ev.target_unchecked_into();
+            let idx: usize = input.id().parse().unwrap();
+            let mut current = ref_diary_entry[idx].clone();
+            let new_val = get_new_val(&input, &current);
+
+            current.value = new_val;
+            change_buffer.update(idx, current);
+            save_diary_day.run();
+        })
+    };
+
     let oninput = {
-        let lje = local_diary_entry.clone();
+        let change_buffer = local_diary_entry.clone();
+        let ref_diary_entry = static_diary_entry.clone();
         let save_diary_day = save_diary_day.clone();
         Callback::from(move |e: InputEvent| {
             e.prevent_default();
 
             let input: HtmlInputElement = e.target_unchecked_into();
-            let new_val_with_idx = lje
-                .current()
-                .binary_search_by(|probe| probe.practice.cmp(&input.name()))
-                .ok()
-                .and_then(|idx| {
-                    let new_val = match lje.current()[idx].data_type {
-                        PracticeDataType::Bool => Some(PracticeEntryValue::Bool(input.checked())),
-                        PracticeDataType::Int => input
-                            .value()
-                            .parse()
-                            .map(|v| PracticeEntryValue::Int(v))
-                            .ok(),
-                        PracticeDataType::Time => {
-                            input.value().split_once(":").and_then(|(h, m)| {
-                                let h = h.parse().ok()?;
-                                let m = m.parse().ok()?;
-                                Some(PracticeEntryValue::Time { h, m })
-                            })
-                        }
-                    };
-                    Some((idx, new_val))
-                });
-            new_val_with_idx.into_iter().for_each(|(idx, new_val)| {
-                let new_val = DiaryEntry {
-                    value: new_val,
-                    data_type: lje.current()[idx].data_type.clone(),
-                    practice: lje.current()[idx].practice.clone(),
-                };
-                lje.update(idx, new_val);
-                save_diary_day.run();
-            })
+            let idx: usize = input.id().parse().unwrap();
+            let mut current = ref_diary_entry[idx].clone();
+            let new_val = get_new_val(&input, &current);
+
+            current.value = new_val;
+            change_buffer.update(idx, current);
+            save_diary_day.run();
         })
     };
 
@@ -121,7 +136,7 @@ pub fn home() -> Html {
                 <button onclick={inc_date}>{">"}</button>
             </p>
             <fieldset> {
-                local_diary_entry.current().iter().map(|DiaryEntry {practice, data_type, value}| {
+                local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, value})| {
                     html!{
                         <div key={practice.clone()}>
                             <label>{ format!("{}: ", practice) }</label>
@@ -129,7 +144,8 @@ pub fn home() -> Html {
                                 PracticeDataType::Int => html!{
                                     <input
                                         oninput={ oninput.clone() }
-                                        name={ practice.clone() }
+                                        // name={ practice.clone() }
+                                        id={ idx.to_string() }
                                         type="number"
                                         value={ value.iter().find_map(|v| v.as_int().map(|i| i.to_string())).unwrap_or_default() }
                                         min="0"
@@ -137,8 +153,9 @@ pub fn home() -> Html {
                                     },
                                 PracticeDataType::Bool => html!{
                                     <input
-                                        oninput={ oninput.clone() }
-                                        name={ practice.clone() }
+                                        onclick={ checkbox_onclick.clone() }
+                                        // name={ practice.clone() }
+                                        id={ idx.to_string() }
                                         type="checkbox"
                                         checked={  value.iter().find_map(|v| v.as_bool()).unwrap_or(false)  }
                                         />
@@ -146,7 +163,8 @@ pub fn home() -> Html {
                                 PracticeDataType::Time => html! {
                                     <input
                                         oninput={ oninput.clone() }
-                                        name={ practice.clone() }
+                                        // name={ practice.clone() }
+                                        id={ idx.to_string() }
                                         type="time"
                                         value={ value.iter().find_map(|v| v.as_time_str()).unwrap_or_default() }
                                         />
