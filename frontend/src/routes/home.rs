@@ -1,7 +1,7 @@
 use chrono::prelude::*;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
-use yew_hooks::{use_async, use_list};
+use yew_hooks::{use_async, use_list, use_timeout};
 use yew_router::prelude::*;
 
 use crate::{
@@ -34,6 +34,18 @@ pub fn home() -> Html {
             })
             .await
         })
+    };
+
+    // Saves local changes to backend after a timeout.
+    // Required to avoid saving while user typing.
+    let delayed_save = {
+        let save_diary_day = save_diary_day.clone();
+        use_timeout(
+            move || {
+                save_diary_day.run();
+            },
+            2000,
+        )
     };
 
     {
@@ -98,8 +110,10 @@ pub fn home() -> Html {
     let checkbox_onclick = {
         let change_buffer = local_diary_entry.clone();
         let ref_diary_entry = static_diary_entry.clone();
-        let save_diary_day = save_diary_day.clone();
+        let delayed_save = delayed_save.clone();
         Callback::from(move |ev: MouseEvent| {
+            delayed_save.reset();
+
             let input: HtmlInputElement = ev.target_unchecked_into();
             let idx: usize = input.id().parse().unwrap();
             let mut current = ref_diary_entry[idx].clone();
@@ -107,15 +121,16 @@ pub fn home() -> Html {
 
             current.value = new_val;
             change_buffer.update(idx, current);
-            save_diary_day.run();
         })
     };
 
     let oninput = {
         let change_buffer = local_diary_entry.clone();
         let ref_diary_entry = static_diary_entry.clone();
-        let save_diary_day = save_diary_day.clone();
+        let delayed_save = delayed_save.clone();
         Callback::from(move |e: InputEvent| {
+            delayed_save.reset();
+
             let input: HtmlInputElement = e.target_unchecked_into();
             let idx: usize = input.id().parse().unwrap();
             let mut current = ref_diary_entry[idx].clone();
@@ -123,7 +138,6 @@ pub fn home() -> Html {
 
             current.value = new_val;
             change_buffer.update(idx, current);
-            save_diary_day.run();
         })
     };
 
@@ -148,6 +162,7 @@ pub fn home() -> Html {
                                         type="number"
                                         value={ value.iter().find_map(|v| v.as_int().map(|i| i.to_string())).unwrap_or_default() }
                                         min="0"
+                                        step="1"
                                         />
                                     },
                                 PracticeDataType::Bool => html!{
