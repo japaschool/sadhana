@@ -1,4 +1,4 @@
-create type practice_data_type_enum AS ENUM ('time', 'bool', 'int');
+create type practice_data_type_enum AS ENUM ('time', 'bool', 'int', 'text');
 
 create table user_practices (
   id uuid primary key default uuid_generate_v4(),

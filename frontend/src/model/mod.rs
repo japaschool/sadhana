@@ -63,6 +63,7 @@ pub enum PracticeDataType {
     Int,
     Bool,
     Time,
+    Text,
 }
 
 impl TryFrom<&str> for PracticeDataType {
@@ -73,6 +74,7 @@ impl TryFrom<&str> for PracticeDataType {
             "int" => Ok(PracticeDataType::Int),
             "bool" => Ok(PracticeDataType::Bool),
             "time" => Ok(PracticeDataType::Time),
+            "text" => Ok(PracticeDataType::Text),
             _ => Err(format!("Unknown PracticeDataType value {}", value)),
         }
     }
@@ -89,6 +91,7 @@ pub enum PracticeEntryValue {
     Int(u16),
     Bool(bool),
     Time { h: u8, m: u8 },
+    Text(String),
 }
 
 impl PracticeEntryValue {
@@ -111,6 +114,13 @@ impl PracticeEntryValue {
             &PracticeEntryValue::Time { h, m } => {
                 Some(format!("{:0width$}:{:0width$}", h, m, width = 2))
             }
+            _ => None,
+        }
+    }
+
+    pub fn as_text(&self) -> Option<String> {
+        match &self {
+            &PracticeEntryValue::Text(s) => Some(s.clone()),
             _ => None,
         }
     }

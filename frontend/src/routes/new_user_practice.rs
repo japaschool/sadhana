@@ -81,6 +81,7 @@ pub fn new_user_practice() -> Html {
                         <option value="int">{ "Integer" }</option>
                         <option value="time">{ "Time" }</option>
                         <option value="bool">{ "Boolean" }</option>
+                        <option value="text">{ "Text" }</option>
                     </select>
                 </fieldset>
                 <button type="submit">{ "Save" }</button>

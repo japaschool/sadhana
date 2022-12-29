@@ -14,6 +14,7 @@ use super::AppRoute;
 #[function_component(Home)]
 pub fn home() -> Html {
     let current_date = use_state(|| Local::now().date_naive());
+    // A copy of backend data with local changes
     let local_diary_entry = use_list(Vec::new());
     // A copy of the backend state without local values changes.
     // Used as reference for getting indexes and data types of entries to avoid
@@ -85,6 +86,7 @@ pub fn home() -> Html {
                 .parse()
                 .map(|v| PracticeEntryValue::Int(v))
                 .ok(),
+            PracticeDataType::Text => Some(PracticeEntryValue::Text(input.value())),
             PracticeDataType::Time => input.value().split_once(":").and_then(|(h, m)| {
                 let h = h.parse().ok()?;
                 let m = m.parse().ok()?;
@@ -114,8 +116,6 @@ pub fn home() -> Html {
         let ref_diary_entry = static_diary_entry.clone();
         let save_diary_day = save_diary_day.clone();
         Callback::from(move |e: InputEvent| {
-            e.prevent_default();
-
             let input: HtmlInputElement = e.target_unchecked_into();
             let idx: usize = input.id().parse().unwrap();
             let mut current = ref_diary_entry[idx].clone();
@@ -144,7 +144,6 @@ pub fn home() -> Html {
                                 PracticeDataType::Int => html!{
                                     <input
                                         oninput={ oninput.clone() }
-                                        // name={ practice.clone() }
                                         id={ idx.to_string() }
                                         type="number"
                                         value={ value.iter().find_map(|v| v.as_int().map(|i| i.to_string())).unwrap_or_default() }
@@ -154,21 +153,28 @@ pub fn home() -> Html {
                                 PracticeDataType::Bool => html!{
                                     <input
                                         onclick={ checkbox_onclick.clone() }
-                                        // name={ practice.clone() }
                                         id={ idx.to_string() }
                                         type="checkbox"
                                         checked={  value.iter().find_map(|v| v.as_bool()).unwrap_or(false)  }
                                         />
                                     },
-                                PracticeDataType::Time => html! {
+                                PracticeDataType::Time => html!{
                                     <input
                                         oninput={ oninput.clone() }
-                                        // name={ practice.clone() }
                                         id={ idx.to_string() }
                                         type="time"
                                         value={ value.iter().find_map(|v| v.as_time_str()).unwrap_or_default() }
                                         />
                                     },
+                                PracticeDataType::Text => html!{
+                                    <input
+                                        oninput={ oninput.clone() }
+                                        id={ idx.to_string() }
+                                        type="text"
+                                        maxlength=1024
+                                        value={ value.iter().find_map(|v| v.as_text()).unwrap_or_default() }
+                                        />
+                                }
                             }
                         } </div>
                     }
