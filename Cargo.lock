@@ -2035,6 +2035,7 @@ dependencies = [
  "diesel",
  "diesel-derive-enum",
  "dotenv",
+ "dotenv_codegen",
  "env_logger",
  "futures",
  "jsonwebtoken",

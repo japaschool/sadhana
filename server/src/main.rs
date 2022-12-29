@@ -4,6 +4,9 @@ use dotenv::dotenv;
 #[macro_use]
 extern crate log;
 
+#[macro_use]
+extern crate dotenv_codegen;
+
 mod app;
 mod constants;
 mod db_types;
@@ -27,7 +30,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::auth::Authentication)
             .configure(routes::routes)
     })
-    .bind(constants::BIND)?
+    .bind(dotenv!("SERVER_ADDRESS"))?
     .run()
     .await
 }
