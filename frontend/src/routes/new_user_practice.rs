@@ -3,7 +3,7 @@ use yew::prelude::*;
 use yew_hooks::use_async;
 
 use crate::{
-    hooks::use_user_context, model::CreateUserPractice, routes::AppRoute,
+    hooks::use_user_context, i18n::Locale, model::CreateUserPractice, routes::AppRoute,
     services::create_user_practice,
 };
 
@@ -77,14 +77,14 @@ pub fn new_user_practice() -> Html {
                         name="data type"
                         onchange={ data_type_onchange }
                         required=true >
-                        <option value="" selected=true style="display:none">{ "Select data type" }</option>
-                        <option value="int">{ "Integer" }</option>
-                        <option value="time">{ "Time" }</option>
-                        <option value="bool">{ "Boolean" }</option>
-                        <option value="text">{ "Text" }</option>
+                        <option value="" selected=true style="display:none">{ Locale::current().select_data_type() }</option>
+                        <option value="int">{ Locale::current().integer() }</option>
+                        <option value="time">{ Locale::current().time() }</option>
+                        <option value="bool">{ Locale::current().boolean() }</option>
+                        <option value="text">{ Locale::current().text() }</option>
                     </select>
                 </fieldset>
-                <button type="submit">{ "Save" }</button>
+                <button type="submit">{ Locale::current().save() }</button>
             </form>
         </div>
     }

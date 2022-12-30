@@ -9,6 +9,7 @@ use crate::routes::*;
 
 mod components;
 mod hooks;
+mod i18n;
 mod model;
 mod routes;
 mod services;

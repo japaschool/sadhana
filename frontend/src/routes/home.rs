@@ -5,6 +5,7 @@ use yew_hooks::{use_async, use_list, use_timeout};
 use yew_router::prelude::*;
 
 use crate::{
+    i18n::Locale,
     model::{DiaryDay, DiaryEntry, PracticeDataType, PracticeEntryValue},
     services::{get_diary_day, save_diary},
 };
@@ -143,10 +144,10 @@ pub fn home() -> Html {
 
     html! {
         <div>
-            <h1>{"Sadhana Pro"}</h1>
+            <h1>{ Locale::current().sadhana_pro() }</h1>
             <p>
                 <button onclick={decr_date}>{"<"}</button>
-                { current_date.format(" %a, %-d ") }
+                { format!(" {}, {} ", Locale::current().day_of_week(&*current_date), current_date.format("%-d")) }
                 <button onclick={inc_date}>{">"}</button>
             </p>
             <fieldset> {
@@ -197,7 +198,7 @@ pub fn home() -> Html {
             } </fieldset>
             <p>
                 <Link<AppRoute> to={AppRoute::UserPractices}>
-                    { "Modify practices" }
+                    { Locale::current().modify_practices() }
                 </Link<AppRoute>>
             </p>
         </div>

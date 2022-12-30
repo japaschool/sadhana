@@ -30,7 +30,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::auth::Authentication)
             .configure(routes::routes)
     })
-    .bind(dotenv!("SERVER_ADDRESS"))?
+    .bind(dbg!(dotenv!("SERVER_ADDRESS")))?
     .run()
     .await
 }

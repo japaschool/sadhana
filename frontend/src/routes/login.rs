@@ -6,7 +6,7 @@ use yew_router::prelude::*;
 use crate::components::list_errors::ListErrors;
 use crate::hooks::use_user_context;
 use crate::services::login;
-use crate::{model::*, AppRoute};
+use crate::{i18n::Locale, model::*, AppRoute};
 
 #[function_component(Login)]
 pub fn login() -> Html {
@@ -68,10 +68,10 @@ pub fn login() -> Html {
             <div class="container page">
                 <div class="row">
                     <div class="col-md-6 offset-md-3 col-xs-12">
-                        <h1 class="text-xs-center">{ "Sign In" }</h1>
+                        <h1 class="text-xs-center">{ Locale::current().sign_in() }</h1>
                         <p class="text-xs-center">
                             <Link<AppRoute> to={AppRoute::Register}>
-                                { "Need an account?" }
+                                { Locale::current().need_an_account() }
                             </Link<AppRoute>>
                         </p>
                         <ListErrors error={user_login.error.clone()} />
@@ -90,7 +90,7 @@ pub fn login() -> Html {
                                     <input
                                         class="form-control form-control-lg"
                                         type="password"
-                                        placeholder="Password"
+                                        placeholder={ Locale::current().password() }
                                         value={login_info.password.clone()}
                                         oninput={oninput_password}
                                         />
@@ -99,7 +99,7 @@ pub fn login() -> Html {
                                     class="btn btn-lg btn-primary pull-xs-right"
                                     type="submit"
                                     disabled=false >
-                                    { "Sign in" }
+                                    { Locale::current().sign_in() }
                                 </button>
                             </fieldset>
                         </form>

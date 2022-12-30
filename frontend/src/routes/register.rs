@@ -5,6 +5,7 @@ use yew_router::prelude::*;
 
 use crate::components::list_errors::ListErrors;
 use crate::hooks::use_user_context;
+use crate::i18n::Locale;
 use crate::model::{RegisterInfo, RegisterInfoWrapper};
 use crate::services::register;
 use crate::AppRoute;
@@ -77,7 +78,7 @@ pub fn register() -> Html {
                         <h1 class="text-xs-center">{ "Sign Up" }</h1>
                         <p class="text-xs-center">
                             <Link<AppRoute> to={AppRoute::Login}>
-                                { "Have an account?" }
+                                { Locale::current().have_an_account() }
                             </Link<AppRoute>>
                         </p>
                         <ListErrors error={user_register.error.clone()} />
@@ -87,9 +88,9 @@ pub fn register() -> Html {
                                     <input
                                         class="form-control form-control-lg"
                                         type="text"
-                                        placeholder="Name"
-                                        value={register_info.name.clone()}
-                                        oninput={oninput_name}
+                                        placeholder={ Locale::current().name() }
+                                        value={ register_info.name.clone() }
+                                        oninput={ oninput_name }
                                         />
                                 </fieldset>
                                 <fieldset class="form-group">
@@ -97,24 +98,24 @@ pub fn register() -> Html {
                                         class="form-control form-control-lg"
                                         type="email"
                                         placeholder="Email"
-                                        value={register_info.email.clone()}
-                                        oninput={oninput_email}
+                                        value={ register_info.email.clone() }
+                                        oninput={ oninput_email }
                                         />
                                 </fieldset>
                                 <fieldset class="form-group">
                                     <input
                                         class="form-control form-control-lg"
                                         type="password"
-                                        placeholder="Password"
-                                        value={register_info.password.clone()}
-                                        oninput={oninput_password}
+                                        placeholder={ Locale::current().password() }
+                                        value={ register_info.password.clone() }
+                                        oninput={ oninput_password }
                                         />
                                 </fieldset>
                                 <button
                                     class="btn btn-lg btn-primary pull-xs-right"
                                     type="submit"
                                     disabled=false>
-                                    { "Sign up" }
+                                    { Locale::current().sign_up() }
                                 </button>
                             </fieldset>
                         </form>

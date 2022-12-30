@@ -8,6 +8,7 @@ use yew_hooks::{use_async, use_mount, use_set};
 use yew_router::prelude::*;
 
 use crate::{
+    i18n::Locale,
     model::UserPractice,
     services::{delete_user_practice, get_user_practices, update_user_practice_activity},
 };
@@ -103,7 +104,7 @@ pub fn user_practices() -> Html {
         let all_practices = all_practices.clone();
         Callback::from(move |e: MouseEvent| {
             e.prevent_default();
-            if confirm("Are you sure you want to delete? Any logged data associated with this practice will be lost.") {
+            if confirm(Locale::current().delete_practice_warning().as_str()) {
                 let input: HtmlInputElement = e.target_unchecked_into();
                 let practice = input.name();
 
@@ -118,7 +119,7 @@ pub fn user_practices() -> Html {
 
     html! {
         <div>
-            <h1>{"Select Practices"}</h1>
+            <h1>{ Locale::current().select_practices() }</h1>
             <form> {
                 all_practices.data.as_ref().unwrap_or(&vec![]).iter().map ( |p| {
                     html! {
@@ -130,19 +131,19 @@ pub fn user_practices() -> Html {
                                 checked={ selected_practices.current().contains(&p.practice) }
                                 />
                             <label>{ p.practice.clone() }</label>
-                            <button name={ p.practice.clone() } onclick={ delete.clone() }>{ "Delete" }</button>
+                            <button name={ p.practice.clone() } onclick={ delete.clone() }>{ Locale::current().delete() }</button>
                         </div>
                     }}).collect::<Html>()
                 }
             </form>
             <p>
                 <Link<AppRoute> to={AppRoute::Home}>
-                    { "Done" }
+                    { Locale::current().done() }
                 </Link<AppRoute>>
             </p>
             <p>
                 <Link<AppRoute> to={AppRoute::NewUserPractice}>
-                    { "Add new practice" }
+                    { Locale::current().add_new_practice() }
                 </Link<AppRoute>>
             </p>
         </div>
