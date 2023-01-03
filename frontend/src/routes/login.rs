@@ -5,8 +5,7 @@ use yew_router::prelude::*;
 
 use crate::components::list_errors::ListErrors;
 use crate::hooks::use_user_context;
-use crate::services::login;
-use crate::{i18n::Locale, model::*, AppRoute};
+use crate::{i18n::Locale, model::*, services, AppRoute};
 
 #[function_component(Login)]
 pub fn login() -> Html {
@@ -18,7 +17,7 @@ pub fn login() -> Html {
             let request = LoginInfoWrapper {
                 user: (*login_info).clone(),
             };
-            login(request).await
+            services::login(request).await
         })
     };
 
@@ -35,7 +34,7 @@ pub fn login() -> Html {
 
     let onsubmit = {
         let user_login = user_login.clone();
-        Callback::from(move |e: FocusEvent| {
+        Callback::from(move |e: SubmitEvent| {
             e.prevent_default(); /* Prevent event propagation */
             user_login.run();
         })

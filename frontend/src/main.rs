@@ -19,7 +19,7 @@ fn app() -> Html {
     html! {
         <BrowserRouter>
             <UserContextProvider>
-                <Switch<AppRoute> render={Switch::render(switch)} />
+                <Switch<AppRoute> render={switch} />
             </UserContextProvider>
         </BrowserRouter>
     }
@@ -28,5 +28,5 @@ fn app() -> Html {
 fn main() {
     wasm_logger::init(wasm_logger::Config::new(log::Level::Debug));
     console_error_panic_hook::set_once();
-    yew::start_app::<App>();
+    yew::Renderer::<App>::new().render();
 }

@@ -27,9 +27,9 @@
 - [ ] https support #tech_debt
 - [ ] script up spinning up local docker instance for postgres #tech_debt
 - [ ] tests #tech_debt
-- [ ] choosing practices #feature
-- [ ] adding custom practices #feature
-- [ ] automatically add default practices to new users #feature
+- [X] choosing practices #feature
+- [X] adding custom practices #feature
+- [X] automatically add default practices to new users #feature
 
 ## Learning Rust
 * [Niko Matsakis: What's unique about Rust?](https://www.youtube.com/watch?v=jQOZX0xkrWA)

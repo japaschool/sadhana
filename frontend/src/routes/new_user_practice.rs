@@ -31,10 +31,10 @@ pub fn new_user_practice() -> Html {
     let onsubmit = {
         let save = save.clone();
         let user_ctx = user_ctx.clone();
-        Callback::from(move |e: FocusEvent| {
+        Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
             save.run();
-            user_ctx.redirect_to(AppRoute::UserPractices);
+            user_ctx.redirect_to(&AppRoute::UserPractices);
         })
     };
 

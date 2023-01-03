@@ -7,7 +7,7 @@ use crate::components::list_errors::ListErrors;
 use crate::hooks::use_user_context;
 use crate::i18n::Locale;
 use crate::model::{RegisterInfo, RegisterInfoWrapper};
-use crate::services::register;
+use crate::services;
 use crate::AppRoute;
 
 #[function_component(Register)]
@@ -20,7 +20,7 @@ pub fn register() -> Html {
             let request = RegisterInfoWrapper {
                 user: (*register_info).clone(),
             };
-            register(request).await
+            services::register(request).await
         })
     };
 
@@ -37,7 +37,7 @@ pub fn register() -> Html {
 
     let onsubmit = {
         let user_register = user_register.clone();
-        Callback::from(move |e: FocusEvent| {
+        Callback::from(move |e: SubmitEvent| {
             e.prevent_default(); /* Prevent event propagation */
             user_register.run();
         })
