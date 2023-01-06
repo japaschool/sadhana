@@ -1,0 +1,2 @@
+DROP TABLE confirmations;
+drop function confirmations_delete_old_rows;

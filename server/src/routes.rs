@@ -11,6 +11,11 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
         web::scope("/api")
             .service(
                 web::scope("/users")
+                    .service(
+                        web::scope("/signup_link")
+                            .route("/{id}", web::get().to(app::user::api::signup_link_details))
+                            .route("", web::post().to(app::user::api::send_signup_link)),
+                    )
                     .route("/login", web::post().to(app::user::api::signin))
                     .route("", web::post().to(app::user::api::signup)),
             )

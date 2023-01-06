@@ -12,8 +12,9 @@ jsonwebtoken = { version = "8.1", optional = true }
 uuid = { version = "1.2",  optional = true }
 validator = { version = "0.16",  optional = true }
 log = "0.4"
+lettre = { version = "0.10", optional = true, default-features = false, features = ["smtp-transport", "tokio1-rustls-tls", "hostname", "builder"] }
 
 [features]
 default = []
 frontend = []
-backend = ["actix-web", "diesel", "bcrypt", "jsonwebtoken", "uuid", "validator"]
+backend = ["actix-web", "diesel", "bcrypt", "jsonwebtoken", "uuid", "validator", "lettre"]

@@ -27,6 +27,8 @@
 - [ ] https support #tech_debt
 - [ ] script up spinning up local docker instance for postgres #tech_debt
 - [ ] tests #tech_debt
+- [ ] refactor frontend to have similar structure to backend #tech_debt
+- [ ] validate confirmation on backend when creating a new user. Frontend should send conf id for that.
 - [X] choosing practices #feature
 - [X] adding custom practices #feature
 - [X] automatically add default practices to new users #feature

@@ -15,6 +15,7 @@ mod middleware;
 mod routes;
 mod schema;
 mod utils;
+mod vars;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -30,7 +31,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::auth::Authentication)
             .configure(routes::routes)
     })
-    .bind(dbg!(dotenv!("SERVER_ADDRESS")))?
+    .bind(vars::server_address())?
     .run()
     .await
 }

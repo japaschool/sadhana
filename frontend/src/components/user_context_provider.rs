@@ -8,7 +8,7 @@ use crate::{
 };
 use common::error::AppError;
 use yew::prelude::*;
-use yew_hooks::prelude::*;
+use yew_hooks::prelude::{use_async, use_mount};
 use yew_router::prelude::*;
 
 #[derive(Properties, Clone, PartialEq)]
@@ -21,6 +21,7 @@ pub fn user_context_provider(props: &Props) -> Html {
     let user_ctx = use_state(UserInfo::default);
     let current_user = use_async(async move { current().await });
     let navigator = use_navigator().unwrap();
+    let location = use_location();
 
     {
         /* On startup check if the user is already logged in from local storage. */
@@ -30,7 +31,10 @@ pub fn user_context_provider(props: &Props) -> Html {
             if get_token().is_some() {
                 log::debug!("Fetching current user info");
                 current_user.run();
-            } else {
+            } else if location
+                .filter(|l| l.path().starts_with("/register"))
+                .is_none()
+            {
                 navigator.push(&AppRoute::Login);
             }
         });

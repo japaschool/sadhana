@@ -1,16 +1,27 @@
-use crate::middleware::{auth, state::AppState};
+use crate::{
+    middleware::{auth, state::AppState},
+    utils::emails::send_email_smtp,
+    vars,
+};
 use actix_web::{web, HttpRequest, HttpResponse};
 use common::error::AppError;
+use uuid::Uuid;
 use validator::Validate;
 
-use super::{model::User, request, response::UserResponse};
+use super::{
+    model::{Confirmation, User},
+    request,
+    response::{ConfirmationResponse, UserResponse},
+};
 
 pub async fn signin(
     state: web::Data<AppState>,
     form: web::Json<request::Signin>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
-    let (user, token) = User::signin(&mut conn, &form.user.email, &form.user.password)?;
+    let (user, token) =
+        web::block(move || User::signin(&mut conn, &form.user.email, &form.user.password))
+            .await??;
     let res = UserResponse::from((user, token));
     Ok(HttpResponse::Ok().json(res))
 }
@@ -22,14 +33,54 @@ pub async fn signup(
     form.user.validate()?;
 
     let mut conn = state.get_conn()?;
-    let (user, token) = User::signup(
-        &mut conn,
-        &form.user.email,
-        &form.user.name,
-        &form.user.password,
-    )?;
+    let (user, token) = web::block(move || {
+        User::signup(
+            &mut conn,
+            &form.user.email,
+            &form.user.name,
+            &form.user.password,
+        )
+    })
+    .await??;
     let res = UserResponse::from((user, token));
     Ok(HttpResponse::Ok().json(res))
+}
+
+pub async fn send_signup_link(
+    state: web::Data<AppState>,
+    form: web::Json<request::SendSignupLink>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let email = form.email.clone();
+
+    let confirmation = web::block(move || Confirmation::create(&mut conn, &email)).await??;
+
+    let html_text = format!(
+        "Please click on the link below to complete registration. <br/>
+                <a href=\"{domain}/register/{id}\">Complete registration</a> <br/>
+                This link expires on <strong>{expires}</strong>",
+        domain = vars::server_address(),
+        id = confirmation.id,
+        expires = confirmation.expires_at
+    );
+
+    send_email_smtp(form.email.as_str(), "Complete your registration", html_text).await?;
+
+    Ok(HttpResponse::Ok().finish())
+}
+
+type ConfirmationIdSlug = Uuid;
+
+pub async fn signup_link_details(
+    state: web::Data<AppState>,
+    // req: HttpRequest,
+    path: web::Path<ConfirmationIdSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let id = path.into_inner();
+    let confirmation = web::block(move || Confirmation::get(&mut conn, &id)).await??;
+
+    Ok(HttpResponse::Ok().json(ConfirmationResponse::from(confirmation)))
 }
 
 pub async fn me(req: HttpRequest) -> Result<HttpResponse, AppError> {

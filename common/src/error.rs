@@ -1,5 +1,5 @@
 #[cfg(feature = "backend")]
-use actix_web::{http::StatusCode, HttpResponse, ResponseError};
+use actix_web::{error::BlockingError, http::StatusCode, HttpResponse, ResponseError};
 #[cfg(feature = "backend")]
 use bcrypt::BcryptError;
 #[cfg(feature = "backend")]
@@ -8,6 +8,10 @@ use diesel::r2d2::{Error as R2D2Error, PoolError};
 use diesel::result::{DatabaseErrorKind, Error as DieselError};
 #[cfg(feature = "backend")]
 use jsonwebtoken::errors::{Error as JwtError, ErrorKind as JwtErrorKind};
+#[cfg(feature = "backend")]
+use lettre::{
+    address::AddressError, error::Error as LettreError, transport::smtp::Error as LettreSmtpError,
+};
 #[cfg(feature = "backend")]
 use uuid::Error as UuidError;
 #[cfg(feature = "backend")]
@@ -73,6 +77,17 @@ impl ResponseError for AppError {
 }
 
 #[cfg(feature = "backend")]
+impl From<BlockingError> for AppError {
+    fn from(err: BlockingError) -> Self {
+        log::error!(
+            "Error during running a blocking call in background: {:?}",
+            err.to_string()
+        );
+        AppError::InternalServerError
+    }
+}
+
+#[cfg(feature = "backend")]
 impl From<PoolError> for AppError {
     fn from(_err: PoolError) -> Self {
         AppError::InternalServerError
@@ -116,7 +131,7 @@ impl From<DieselError> for AppError {
                     let message = info.details().unwrap_or_else(|| info.message()).to_string();
                     AppError::UnprocessableEntity(vec![message])
                 } else {
-                    log::debug!("Unexpected diesel error {:?}", info.message());
+                    log::error!("Unexpected diesel error {:?}", info.message());
                     AppError::InternalServerError
                 }
             }
@@ -150,5 +165,29 @@ impl From<ValidationErrors> for AppError {
             .collect();
 
         AppError::UnprocessableEntity(error_messages.into())
+    }
+}
+
+#[cfg(feature = "backend")]
+impl From<LettreSmtpError> for AppError {
+    fn from(err: LettreSmtpError) -> Self {
+        log::error!("SmtpError: {:?}", err.to_string());
+        AppError::InternalServerError
+    }
+}
+
+#[cfg(feature = "backend")]
+impl From<AddressError> for AppError {
+    fn from(err: AddressError) -> Self {
+        log::error!("Email address parsing error: {:?}", err.to_string());
+        AppError::InternalServerError
+    }
+}
+
+#[cfg(feature = "backend")]
+impl From<LettreError> for AppError {
+    fn from(err: LettreError) -> Self {
+        log::error!("Failed to send email: {:?}", err.to_string());
+        AppError::InternalServerError
     }
 }

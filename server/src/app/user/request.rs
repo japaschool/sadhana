@@ -1,9 +1,17 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use validator::Validate;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Signup {
     pub user: SignupUser,
+    //TODO: use confirmation id to validate email before registering a new user
+    // pub confirmation_id: Uuid,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SendSignupLink {
+    pub email: String,
 }
 
 #[derive(Clone, Deserialize, Serialize, Debug, Validate)]

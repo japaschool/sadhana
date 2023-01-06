@@ -3,13 +3,14 @@ use yew_router::prelude::*;
 
 use self::{
     home::Home, login::Login, new_user_practice::NewUserPractice, register::Register,
-    user_practices::UserPractices,
+    register_with_id::RegisterWithId, user_practices::UserPractices,
 };
 
 pub mod home;
 pub mod login;
 pub mod new_user_practice;
 pub mod register;
+pub mod register_with_id;
 pub mod user_practices;
 
 #[derive(Clone, Routable, PartialEq)]
@@ -18,6 +19,8 @@ pub enum AppRoute {
     Home,
     #[at("/register")]
     Register,
+    #[at("/register/:id")]
+    RegisterWithId { id: String },
     #[at("/login")]
     Login,
     #[at("/user/practices")]
@@ -33,6 +36,7 @@ pub fn switch(routes: AppRoute) -> Html {
     match routes {
         AppRoute::Home => html! { <Home /> },
         AppRoute::Register => html! { <Register /> },
+        AppRoute::RegisterWithId { id } => html! { <RegisterWithId id = {id} /> },
         AppRoute::Login => html! { <Login /> },
         AppRoute::UserPractices => html! { <UserPractices /> },
         AppRoute::NewUserPractice => html! { <NewUserPractice /> },

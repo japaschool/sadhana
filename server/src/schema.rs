@@ -7,6 +7,14 @@ pub mod sql_types {
 }
 
 diesel::table! {
+    confirmations (id) {
+        id -> Uuid,
+        email -> Varchar,
+        expires_at -> Timestamp,
+    }
+}
+
+diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::PracticeDataTypeEnum;
 
@@ -58,6 +66,7 @@ diesel::joinable!(diary -> users (user_id));
 diesel::joinable!(user_practices -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    confirmations,
     default_user_practices,
     diary,
     user_practices,

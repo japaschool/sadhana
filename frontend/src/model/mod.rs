@@ -1,4 +1,4 @@
-use chrono::naive::NaiveDate;
+use chrono::{naive::NaiveDate, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 
 //FIXME: break up into sub modules
@@ -32,11 +32,28 @@ pub struct LoginInfo {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-// #[serde(rename_all = "camelCase")]
 pub struct RegisterInfo {
+    pub confirmation_id: String,
     pub email: String,
     pub password: String,
     pub name: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SendSignupLink {
+    pub email: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct SignupLinkDetailsWrapper {
+    pub confirmation: Confirmation,
+}
+
+#[derive(Debug, Deserialize, Clone, PartialEq)]
+pub struct Confirmation {
+    pub id: String,
+    pub email: String,
+    pub expires_at: NaiveDateTime,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

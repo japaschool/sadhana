@@ -24,5 +24,6 @@
     "thu": "Thu",
     "fri": "Fri",
     "sat": "Sat",
-    "sun": "Sun"
+    "sun": "Sun",
+    "signup_email_sent": "Please check your emails. You should get one from us with a link to continue registration."
 }

@@ -3,7 +3,7 @@ use common::error::AppError;
 
 use crate::model::{
     AllUserPractices, CreateUserPractice, DiaryDay, LoginInfoWrapper, RegisterInfoWrapper,
-    UserInfoWrapper, UserPractice,
+    SendSignupLink, SignupLinkDetailsWrapper, UserInfoWrapper, UserPractice,
 };
 
 use self::requests::*;
@@ -13,6 +13,16 @@ pub mod requests;
 /// Login a user
 pub async fn login(login_info: LoginInfoWrapper) -> Result<UserInfoWrapper, AppError> {
     request_post("/users/login".to_string(), login_info).await
+}
+
+/// Send registration form link email
+pub async fn send_signup_link(payload: SendSignupLink) -> Result<(), AppError> {
+    request_post("/users/signup_link".to_string(), payload).await
+}
+
+/// Get details by signup link id
+pub async fn get_signup_link_details(id: &str) -> Result<SignupLinkDetailsWrapper, AppError> {
+    request_get(format!("/users/signup_link/{}", id)).await
 }
 
 /// Register a user
