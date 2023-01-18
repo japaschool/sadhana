@@ -4,3 +4,8 @@ dist = "../dist"
 
 [[proxy]]
 backend = "http://[::1]:8080/api/"
+
+[[hooks]]
+stage = "build"
+command = "sh"
+command_arguments = ["-c", "~/tailwindcss -i styles/tailwind.css -o $TRUNK_STAGING_DIR/app.css"]

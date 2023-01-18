@@ -4,7 +4,8 @@ use yew_hooks::{use_async, use_mount};
 use yew_router::prelude::*;
 
 use crate::{
-    components::list_errors::ListErrors,
+    components::{blank_page::BlankPage, list_errors::ListErrors},
+    css::*,
     hooks::use_user_context,
     i18n::Locale,
     model::{RegisterInfo, RegisterInfoWrapper},
@@ -42,6 +43,7 @@ pub fn register_with_id(props: &Props) -> Html {
     };
 
     {
+        //FIXME: remove this?
         // Load confirmation from the backend
         let signup_confirmation = signup_confirmation.clone();
         use_mount(move || signup_confirmation.run());
@@ -100,69 +102,68 @@ pub fn register_with_id(props: &Props) -> Html {
         })
     };
 
-    if signup_confirmation.loading {
-        return html! {
-            <div><label>{ "Loading..." }</label></div>
-        };
-    }
-
     html! {
-        <div class="auth-page">
-            <div class="container page">
-                <div class="row">
-                    <div class="col-md-6 offset-md-3 col-xs-12">
-                        <h1 class="text-xs-center">{ "Sign Up" }</h1>
-                        <p class="text-xs-center">
-                            <Link<AppRoute> to={AppRoute::Login}>
-                                { Locale::current().have_an_account() }
+        <BlankPage header_label={ Locale::current().register() }>
+            <ListErrors error={signup_confirmation.error.clone()} />
+            <ListErrors error={user_register.error.clone()} />
+            <form {onsubmit}>
+                <div class={ BODY_DIV_CSS }>
+                    <div class="relative">
+                            <input
+                                id="email"
+                                type="email"
+                                placeholder="Email"
+                                class={ INPUT_CSS }
+                                value={ register_info.email.clone() }
+                                disabled=true
+                                required = true
+                                />
+                            <label for="email"
+                                class={ INPUT_LABEL_CSS }>
+                                <i class="fa fa-envelope"></i>{ format!(" {}", Locale::current().email_address()) }
+                            </label>
+                        </div>
+                        <div class="relative">
+                            <input
+                                id="name"
+                                type="text"
+                                placeholder="Name"
+                                class={ INPUT_CSS }
+                                value={ register_info.name.clone() }
+                                oninput={ oninput_name }
+                                required = true
+                                />
+                            <label for="name"
+                                class={ INPUT_LABEL_CSS }>
+                                <i class="fa fa-user"></i>{ format!(" {}", Locale::current().name()) }
+                            </label>
+                        </div>
+                        <div class="relative">
+                            <input
+                                id="password"
+                                type="password"
+                                placeholder="Password"
+                                class={ INPUT_CSS }
+                                value={ register_info.password.clone() }
+                                oninput={ oninput_password }
+                                required = true
+                                />
+                            <label for="password"
+                                class={ INPUT_LABEL_CSS }>
+                                <i class="fa fa-key"></i>{ format!(" {}", Locale::current().password()) }
+                            </label>
+                        </div>
+                        <div class="relative flex justify-between sm:text-sm">
+                            <Link<AppRoute>
+                                classes={ LINK_CSS }
+                                to={AppRoute::Login}>{ Locale::current().have_an_account() }
                             </Link<AppRoute>>
-                        </p>
-                        <ListErrors error={user_register.error.clone()} />
-                        <ListErrors error={signup_confirmation.error.clone()} />
-                        <form {onsubmit}>
-                            <fieldset>
-                                <fieldset class="form-group">
-                                    <input
-                                        class="form-control form-control-lg"
-                                        type="text"
-                                        placeholder={ Locale::current().name() }
-                                        value={ register_info.name.clone() }
-                                        oninput={ oninput_name }
-                                        required = true
-                                        />
-                                </fieldset>
-                                <fieldset class="form-group">
-                                    <input
-                                        class="form-control form-control-lg"
-                                        type="email"
-                                        placeholder="Email"
-                                        value={ register_info.email.clone() }
-                                        disabled=true
-                                        required = true
-                                        />
-                                </fieldset>
-                                <fieldset class="form-group">
-                                    <input
-                                        class="form-control form-control-lg"
-                                        type="password"
-                                        placeholder={ Locale::current().password() }
-                                        value={ register_info.password.clone() }
-                                        oninput={ oninput_password }
-                                        required = true
-                                        />
-                                </fieldset>
-                                <button
-                                    class="btn btn-lg btn-primary pull-xs-right"
-                                    type="submit"
-                                    disabled=false
-                                    >
-                                    { Locale::current().sign_up() }
-                                </button>
-                            </fieldset>
-                        </form>
-                    </div>
+                        </div>
+                        <div class="relative">
+                            <button class={ SUBMIT_BTN_CSS }>{ Locale::current().sign_up() }</button>
+                        </div>
                 </div>
-            </div>
-        </div>
+            </form>
+        </BlankPage>
     }
 }

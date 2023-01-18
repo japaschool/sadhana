@@ -8,6 +8,7 @@ use crate::components::user_context_provider::UserContextProvider;
 use crate::routes::*;
 
 mod components;
+mod css;
 mod hooks;
 mod i18n;
 mod model;

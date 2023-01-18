@@ -2,11 +2,57 @@
 <html>
 
 <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" type="image/x-icon" href="data:image/x-icon;,">
     <!-- <link rel="stylesheet" href="https://unpkg.com/pollen-css" /> -->
-    <link data-trunk rel="sass" href="styles.scss">
-    <title>Yew App</title>
+    <!-- <link data-trunk rel="css" href="style.css"> -->
+    <link data-trunk rel="copy-file" href="site.webmanifest">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="stylesheet" href="/app.css">
+    <link data-trunk rel="copy-file" href="images/logo.png">
+    <link data-trunk rel="copy-file" href="images/background.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/html-duration-picker@latest/dist/html-duration-picker.min.js"></script>
+    <!-- <script src="https://kit.fontawesome.com/b13047cc4b.js" crossorigin="anonymous"></script> -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
+        crossorigin="anonymous" />
+    <!-- <script>
+        // This code empowers all input tags having a placeholder and data-slots attribute
+        // source: https://stackoverflow.com/questions/12578507/implement-an-input-with-a-mask
+        document.addEventListener('DOMContentLoaded', () => {
+            for (const el of document.querySelectorAll("[placeholder][data-slots]")) {
+                const pattern = el.getAttribute("placeholder"),
+                    slots = new Set(el.dataset.slots || "_"),
+                    prev = (j => Array.from(pattern, (c, i) => slots.has(c) ? j = i + 1 : j))(0),
+                    first = [...pattern].findIndex(c => slots.has(c)),
+                    accept = new RegExp(el.dataset.accept || "\\d", "g"),
+                    clean = input => {
+                        input = input.match(accept) || [];
+                        return Array.from(pattern, c =>
+                            input[0] === c || slots.has(c) ? input.shift() || c : c
+                        );
+                    },
+                    format = () => {
+                        const [i, j] = [el.selectionStart, el.selectionEnd].map(i => {
+                            i = clean(el.value.slice(0, i)).findIndex(c => slots.has(c));
+                            return i < 0 ? prev[prev.length - 1] : back ? prev[i - 1] || first : i;
+                        });
+                        el.value = clean(el.value).join``;
+                        el.setSelectionRange(i, j);
+                        back = false;
+                    };
+                let back = false;
+                el.addEventListener("keydown", (e) => back = e.key === "Backspace");
+                el.addEventListener("input", format);
+                el.addEventListener("focus", format);
+                el.addEventListener("blur", () => el.value === pattern && (el.value = ""));
+            }
+        }); -->
+    </script>
+    <title>Sadhana Pro</title>
 </head>
 
 <body>loading...</body>

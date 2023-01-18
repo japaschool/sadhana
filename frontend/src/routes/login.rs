@@ -3,9 +3,14 @@ use yew::prelude::*;
 use yew_hooks::prelude::*;
 use yew_router::prelude::*;
 
-use crate::components::list_errors::ListErrors;
-use crate::hooks::use_user_context;
-use crate::{i18n::Locale, model::*, services, AppRoute};
+use crate::{
+    components::{blank_page::BlankPage, list_errors::ListErrors},
+    css::*,
+    hooks::use_user_context,
+    i18n::Locale,
+    model::*,
+    services, AppRoute,
+};
 
 #[function_component(Login)]
 pub fn login() -> Html {
@@ -63,48 +68,52 @@ pub fn login() -> Html {
     };
 
     html! {
-        <div class="auth-page">
-            <div class="container page">
-                <div class="row">
-                    <div class="col-md-6 offset-md-3 col-xs-12">
-                        <h1 class="text-xs-center">{ Locale::current().sign_in() }</h1>
-                        <p class="text-xs-center">
-                            <Link<AppRoute> to={AppRoute::Register}>
-                                { Locale::current().need_an_account() }
-                            </Link<AppRoute>>
-                        </p>
-                        <ListErrors error={user_login.error.clone()} />
-                        <form {onsubmit}>
-                            <fieldset>
-                                <fieldset class="form-group">
-                                    <input
-                                        class="form-control form-control-lg"
-                                        type="email"
-                                        placeholder="Email"
-                                        value={login_info.email.clone()}
-                                        oninput={oninput_email}
-                                        />
-                                </fieldset>
-                                <fieldset class="form-group">
-                                    <input
-                                        class="form-control form-control-lg"
-                                        type="password"
-                                        placeholder={ Locale::current().password() }
-                                        value={login_info.password.clone()}
-                                        oninput={oninput_password}
-                                        />
-                                </fieldset>
-                                <button
-                                    class="btn btn-lg btn-primary pull-xs-right"
-                                    type="submit"
-                                    disabled=false >
-                                    { Locale::current().sign_in() }
-                                </button>
-                            </fieldset>
-                        </form>
+        <BlankPage header_label={ Locale::current().login() }>
+            <ListErrors error={user_login.error.clone()} />
+            <form {onsubmit}>
+                <div class={ BODY_DIV_CSS }>
+                    <div class="relative">
+                        <input
+                            type="email"
+                            id="email"
+                            placeholder="Email"
+                            value={login_info.email.clone()}
+                            oninput={oninput_email}
+                            class={ INPUT_CSS }
+                            required = true
+                            />
+                        <label for="email" class={ INPUT_LABEL_CSS }>
+                            <i class="fa fa-envelope"></i>{ format!(" {}", Locale::current().email_address()) }
+                        </label>
+                    </div>
+                    <div class="relative">
+                        <input
+                            autocomplete="off"
+                            id="password"
+                            type="password"
+                            placeholder="Password"
+                            class={ INPUT_CSS }
+                            value={login_info.password.clone()}
+                            oninput={oninput_password}
+                            required = true
+                            />
+                        <label for="password"
+                            class={ INPUT_LABEL_CSS }>
+                            <i class="fa fa-key"></i>{ format!(" {}", Locale::current().password()) }
+                        </label>
+                    </div>
+                    <div class="relative flex justify-between sm:text-sm">
+                        <a>{"Forgot password?"}</a>
+                        <Link<AppRoute>
+                            classes={ LINK_CSS }
+                            to={AppRoute::Register}>{ Locale::current().need_an_account() }
+                        </Link<AppRoute>>
+                    </div>
+                    <div class="relative">
+                        <button class={ SUBMIT_BTN_CSS }>{ Locale::current().sign_in() }</button>
                     </div>
                 </div>
-            </div>
-        </div>
+            </form>
+        </BlankPage>
     }
 }

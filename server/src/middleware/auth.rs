@@ -122,20 +122,10 @@ fn get_user_id_from_header(req: &ServiceRequest) -> Result<Uuid, &str> {
         .get(constants::AUTHORIZATION)
         .ok_or("Cannot find authrization key-value in req header")
         .and_then(|auth_header| auth_header.to_str().map_err(|_err| "Cannot stringify"))
-        // .and_then(|auth_str| {
-        //     debug!("Received auth string {}", auth_str);
-        //     if auth_str.starts_with(TOKEN_IDENTIFIER) {
-        //         Ok(auth_str)
-        //     } else {
-        //         Err("Invalid token convention")
-        //     }
-        // })
         .map(|auth_str| auth_str[6..auth_str.len()].trim())
         .and_then(|token| token::decode(token).map_err(|_err| "Cannot decode token."))
         .map(|token| token.claims.user_id)
 }
-
-// const TOKEN_IDENTIFIER: &str = "Token";
 
 struct SkipAuthRoute {
     path: &'static str,
@@ -205,7 +195,7 @@ mod tests {
     }
 }
 
-const SKIP_AUTH_API_ROUTES: [SkipAuthRoute; 3] = [
+const SKIP_AUTH_API_ROUTES: [SkipAuthRoute; 4] = [
     SkipAuthRoute {
         path: "/api/users",
         method: Method::POST,
@@ -213,6 +203,10 @@ const SKIP_AUTH_API_ROUTES: [SkipAuthRoute; 3] = [
     SkipAuthRoute {
         path: "/api/users/signup_link",
         method: Method::POST,
+    },
+    SkipAuthRoute {
+        path: "/api/users/signup_link/{id}",
+        method: Method::GET,
     },
     SkipAuthRoute {
         path: "/api/users/login",

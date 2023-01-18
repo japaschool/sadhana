@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Remove the icon chrome browsers add on the right of input with type date or time */
+input::-webkit-calendar-picker-indicator {
+    display: none;
+    background: none;
+}

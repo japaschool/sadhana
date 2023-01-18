@@ -42,7 +42,7 @@ pub async fn upsert_diary_day(
     })
     .await??;
 
-    Ok(HttpResponse::Ok().finish())
+    Ok(HttpResponse::Ok().json(()))
 }
 
 /// Retrieves a diary day
