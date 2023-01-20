@@ -3,7 +3,12 @@ use yew::prelude::*;
 use yew_hooks::use_async;
 
 use crate::{
-    hooks::use_user_context, i18n::Locale, model::CreateUserPractice, routes::AppRoute,
+    components::{blank_page::BlankPage, list_errors::ListErrors},
+    css::*,
+    hooks::use_user_context,
+    i18n::Locale,
+    model::CreateUserPractice,
+    routes::AppRoute,
     services::create_user_practice,
 };
 
@@ -64,28 +69,47 @@ pub fn new_user_practice() -> Html {
     };
 
     html! {
-        <div>
+        <BlankPage header_label={ Locale::current().select_practices() } prev_link={ (Locale::current().cancel(), AppRoute::UserPractices) }>
+            <ListErrors error={save.error.clone()} />
             <form {onsubmit}>
-                <fieldset>
-                    <input
-                        type="text"
-                        name="Practice"
-                        oninput={ practice_oninput }
-                        required=true
-                        />
-                    <select
-                        name="data type"
-                        onchange={ data_type_onchange }
-                        required=true >
-                        <option value="" selected=true style="display:none">{ Locale::current().select_data_type() }</option>
-                        <option value="int">{ Locale::current().integer() }</option>
-                        <option value="time">{ Locale::current().time() }</option>
-                        <option value="bool">{ Locale::current().boolean() }</option>
-                        <option value="text">{ Locale::current().text() }</option>
-                    </select>
-                </fieldset>
-                <button type="submit">{ Locale::current().save() }</button>
+                <div class={ BODY_DIV_CSS }>
+                    <div class="relative">
+                        <input
+                            autocomplete="off"
+                            id="practice_name"
+                            type="text"
+                            oninput={ practice_oninput.clone() }
+                            class={ INPUT_CSS }
+                            placeholder="practice_name"
+                            required=true
+                            />
+                        <label for="practice_name" class={ INPUT_LABEL_CSS }>
+                            <i class="fa"></i>
+                            { format!(" {}: ", Locale::current().practice_name()) }
+                        </label>
+                    </div>
+                    <div class="relative">
+                        <select
+                            class={ INPUT_CSS }
+                            id="data_type"
+                            onchange={ data_type_onchange }
+                            required=true >
+                            <option value="" selected=true style="display:none">{ Locale::current().select_data_type() }</option>
+                            <option value="int">{ Locale::current().integer() }</option>
+                            <option value="time">{ Locale::current().time() }</option>
+                            <option value="bool">{ Locale::current().boolean() }</option>
+                            <option value="text">{ Locale::current().text() }</option>
+                        </select>
+                        <label for="data_type" class={ INPUT_LABEL_CSS }>
+                            <i class="fa"></i>
+                            { format!(" {}: ", Locale::current().data_type()) }
+                        </label>
+                    </div>
+                    <div class="relative">
+                        <button type="submit" class={ SUBMIT_BTN_CSS }>{ Locale::current().save() }</button>
+                    </div>
+                </div>
             </form>
-        </div>
+        </BlankPage>
     }
 }

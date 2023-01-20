@@ -176,56 +176,48 @@ pub fn home() -> Html {
     //     })
     // };
 
+    let hover_today_date_div_css = "flex group hover:bg-red-500 hover:shadow-lg hover-dark-shadow rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
+    let hover_date_div_css = "flex group hover:bg-slate-800 hover:shadow-lg hover-dark-shadow rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
+    let selected_today_date_div_css = "flex group bg-red-500 shadow-lg dark-shadow rounded-full mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
+    let selected_date_div_css = "flex group bg-slate-800 shadow-lg dark-shadow rounded-full mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
+
+    let calendar_day = |for_selected_date: bool, d: &NaiveDate| -> Html {
+        let date_css = match (for_selected_date, *d == today) {
+            (true, true) => selected_today_date_div_css,
+            (true, false) => selected_date_div_css,
+            (false, true) => hover_today_date_div_css,
+            (false, false) => hover_date_div_css,
+        };
+        let weekday_label_css = if for_selected_date {
+            "text-white text-sm font-semibold"
+        } else {
+            "text-white text-sm"
+        };
+        let date_label_css = if for_selected_date {
+            "text-white my-auto font-bold"
+        } else {
+            "text-white group-hover:text-gray-100 my-auto group-hover:font-bold transition-all duration-300"
+        };
+
+        let id = d.format(date_format);
+
+        html! {
+            <div class="text-center">
+                <p class={ weekday_label_css }>{ &Locale::current().day_of_week(d)[0..1] }</p>
+                <div class={ date_css } id={ id.to_string() } onclick={ onclick_date.clone() }>
+                    <p id={ id.to_string() } class={ date_label_css }>{ d.format("%-d") }</p>
+                </div>
+            </div>
+        }
+    };
+
     let calendar = html! {
         <div class="relative mt-4 py-2">
             <div class="flex justify-center overflow-x-scroll mx-auto px-2">
             {
                 week.iter().map(|d| html! {
                     <div class="flex group justify-center w-16">
-                        {if *d == today {
-                            html! {
-                                <span class="flex w-2 absolute bottom-2 ">
-                                    <span
-                                        class="animate-ping absolute group-hover:opacity-75 opacity-0 inline-flex h-full w-full rounded-full bg-red-400 "></span>
-                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-red-100"></span>
-                                </span>
-                            }
-                        } else { html! {}}}
-                        <div class="flex items-center px-1">
-                            {
-                                if *d == *selected_date {
-                                    html! {
-                                        <div class="text-center">
-                                            <p class="text-white text-sm font-semibold">
-                                                { &Locale::current().day_of_week(d)[0..1] } </p>
-                                            <div
-                                                class="flex group bg-red-500 shadow-lg dark-shadow rounded-full mt-2 mx-1 cursor-pointer justify-center h-9 w-9">
-                                                <p class="text-white my-auto font-bold">
-                                                    { d.format("%-d") } </p>
-                                            </div>
-                                        </div>
-                                    }
-                                } else {
-                                    html! {
-                                        <div class="text-center">
-                                            <p class="text-white text-sm">
-                                                { &Locale::current().day_of_week(d)[0..1] } </p>
-                                            <div
-                                                class="flex group hover:bg-red-500 hover:shadow-lg hover-dark-shadow rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8"
-                                                id={ d.format(date_format).to_string() }
-                                                onclick={ onclick_date.clone() }
-                                                >
-                                                <p
-                                                    class="text-white group-hover:text-gray-100 my-auto group-hover:font-bold transition-all duration-300"
-                                                    id={ d.format(date_format).to_string() }
-                                                    >
-                                                    { d.format("%-d") } </p>
-                                            </div>
-                                        </div>
-                                    }
-                                }
-                            }
-                        </div>
+                        <div class="flex items-center px-1">{ calendar_day(*d == *selected_date, d) }</div>
                     </div>
                 }).collect::<Html>()
             }
@@ -281,6 +273,7 @@ pub fn home() -> Html {
                                         autocomplete="off"
                                         id={ idx.to_string() }
                                         type="time"
+                                        //type="text"
                                         //onfocus={ onfocus_time.clone() }
                                         //onblur={ onblur_time.clone() }
                                         oninput={ oninput.clone() }

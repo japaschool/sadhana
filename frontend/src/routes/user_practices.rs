@@ -2,12 +2,14 @@ use std::collections::HashSet;
 
 use gloo_dialogs::confirm;
 use wasm_bindgen_futures::spawn_local;
-use web_sys::HtmlInputElement;
+use web_sys::{HtmlElement, HtmlInputElement};
 use yew::prelude::*;
 use yew_hooks::{use_async, use_mount, use_set};
 use yew_router::prelude::*;
 
 use crate::{
+    components::{blank_page::BlankPage, list_errors::ListErrors},
+    css::*,
     i18n::Locale,
     model::UserPractice,
     services::{delete_user_practice, get_user_practices, update_user_practice_activity},
@@ -105,47 +107,62 @@ pub fn user_practices() -> Html {
         Callback::from(move |e: MouseEvent| {
             e.prevent_default();
             if confirm(Locale::current().delete_practice_warning().as_str()) {
-                let input: HtmlInputElement = e.target_unchecked_into();
-                let practice = input.name();
+                let input: HtmlElement = e.target_unchecked_into();
+
+                let practice = input.id();
 
                 log::debug!("Deleting user practice {:?}", practice);
                 spawn_local(async move { delete_user_practice(&practice).await.unwrap() });
 
+                //FIXME: reload can well run before delete.
                 // Reload the state from backend
                 all_practices.run();
             }
         })
     };
 
+    let navigator = use_navigator().unwrap();
+    let onclick_done = {
+        let navigator = navigator.clone();
+        Callback::from(move |_| {
+            navigator.push(&AppRoute::Home);
+        })
+    };
+
+    // TODO: UI Improvements
+    // replace checkbox with eye icon. On toggle it should be grayed out
+    // Add another icon - pen, to rename a practice
     html! {
-        <div>
-            <h1>{ Locale::current().select_practices() }</h1>
-            <form> {
-                all_practices.data.as_ref().unwrap_or(&vec![]).iter().map ( |p| {
-                    html! {
-                        <div>
-                            <input
-                                oninput={ oninput.clone() }
-                                name={ p.practice.clone() }
-                                type="checkbox"
-                                checked={ selected_practices.current().contains(&p.practice) }
-                                />
-                            <label>{ p.practice.clone() }</label>
-                            <button name={ p.practice.clone() } onclick={ delete.clone() }>{ Locale::current().delete() }</button>
-                        </div>
-                    }}).collect::<Html>()
-                }
-            </form>
-            <p>
-                <Link<AppRoute> to={AppRoute::Home}>
-                    { Locale::current().done() }
-                </Link<AppRoute>>
-            </p>
-            <p>
-                <Link<AppRoute> to={AppRoute::NewUserPractice}>
-                    { Locale::current().add_new_practice() }
-                </Link<AppRoute>>
-            </p>
-        </div>
+        <BlankPage header_label={ Locale::current().select_practices() }>
+            <ListErrors error={all_practices.error.clone()} />
+            <div class={ BODY_DIV_CSS }>
+                <form> {
+                    all_practices.data.as_ref().unwrap_or(&vec![]).iter().map ( |p| {
+                        html! {
+                            <div class="relative flex">
+                                <label class="flex w-full justify-between whitespace-nowrap mb-6">
+                                    <span class="">{ p.practice.clone() }</span>
+                                    <input
+                                        oninput={ oninput.clone() }
+                                        name={ p.practice.clone() }
+                                        type="checkbox"
+                                        checked={ selected_practices.current().contains(&p.practice) }
+                                        />
+                                </label>
+                                <label class="px-5"><i onclick={ delete.clone() } id={ p.practice.clone() } class="fa fa-trash"></i></label>
+                            </div>
+                        }}).collect::<Html>()
+                    }
+                </form>
+                <div class="relative flex justify-center">
+                    <Link<AppRoute> classes={ LINK_CSS } to={AppRoute::NewUserPractice}>
+                        { Locale::current().add_new_practice() }
+                    </Link<AppRoute>>
+                </div>
+                <div class="relative">
+                    <button onclick={ onclick_done.clone() } class={ SUBMIT_BTN_CSS }>{ Locale::current().done() }</button>
+                </div>
+            </div>
+        </BlankPage>
     }
 }

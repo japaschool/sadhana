@@ -66,7 +66,7 @@ pub async fn send_signup_link(
 
     send_email_smtp(form.email.as_str(), "Complete your registration", html_text).await?;
 
-    Ok(HttpResponse::Ok().finish())
+    Ok(HttpResponse::Ok().json(()))
 }
 
 type ConfirmationIdSlug = Uuid;
