@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="/app.css">
     <link data-trunk rel="copy-file" href="images/logo.png">
     <link data-trunk rel="copy-file" href="images/background.jpg">
+    <!-- <link data-trunk rel="copy-file" href="js/masking-input.min.js">
+    <link data-trunk rel="copy-file" href="styles/masking-input.css"> -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;600;700&display=swap"
@@ -19,39 +21,18 @@
     <!-- <script src="https://kit.fontawesome.com/b13047cc4b.js" crossorigin="anonymous"></script> -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
         crossorigin="anonymous" />
-    <!-- <script>
-        // This code empowers all input tags having a placeholder and data-slots attribute
-        // source: https://stackoverflow.com/questions/12578507/implement-an-input-with-a-mask
-        document.addEventListener('DOMContentLoaded', () => {
-            for (const el of document.querySelectorAll("[placeholder][data-slots]")) {
-                const pattern = el.getAttribute("placeholder"),
-                    slots = new Set(el.dataset.slots || "_"),
-                    prev = (j => Array.from(pattern, (c, i) => slots.has(c) ? j = i + 1 : j))(0),
-                    first = [...pattern].findIndex(c => slots.has(c)),
-                    accept = new RegExp(el.dataset.accept || "\\d", "g"),
-                    clean = input => {
-                        input = input.match(accept) || [];
-                        return Array.from(pattern, c =>
-                            input[0] === c || slots.has(c) ? input.shift() || c : c
-                        );
-                    },
-                    format = () => {
-                        const [i, j] = [el.selectionStart, el.selectionEnd].map(i => {
-                            i = clean(el.value.slice(0, i)).findIndex(c => slots.has(c));
-                            return i < 0 ? prev[prev.length - 1] : back ? prev[i - 1] || first : i;
-                        });
-                        el.value = clean(el.value).join``;
-                        el.setSelectionRange(i, j);
-                        back = false;
-                    };
-                let back = false;
-                el.addEventListener("keydown", (e) => back = e.key === "Backspace");
-                el.addEventListener("input", format);
-                el.addEventListener("focus", format);
-                el.addEventListener("blur", () => el.value === pattern && (el.value = ""));
-            }
-        }); -->
-    </script>
+    <!-- <script src="/masking-input.js" data-autoinit="true"></script> -->
+    <!-- <link rel="stylesheet" href="/masking-input.css" /> -->
+
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/pulltorefreshjs/0.1.22/index.umd.min.js"></script> -->
+    <!-- <script type='text/javascript'>
+        
+        PullToRefresh.init({
+            mainElement: 'body',
+            onRefresh: function () { window.location.reload(); }
+        });
+        
+    </script> -->
     <title>Sadhana Pro</title>
 </head>
 

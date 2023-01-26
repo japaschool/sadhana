@@ -1,7 +1,9 @@
 use chrono::{prelude::*, Days};
+use lazy_static::lazy_static;
+use regex::Regex;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
-use yew_hooks::{use_async, use_list, use_timeout};
+use yew_hooks::{use_async, use_list};
 use yew_router::prelude::*;
 
 use crate::{
@@ -58,18 +60,6 @@ pub fn home() -> Html {
         })
     };
 
-    // Saves local changes to backend after a timeout.
-    // Required to avoid saving while user typing.
-    let delayed_save = {
-        let save_diary_day = save_diary_day.clone();
-        use_timeout(
-            move || {
-                save_diary_day.run();
-            },
-            1000,
-        )
-    };
-
     {
         // Fetch data from server on date change
         let diary_entry = diary_entry.clone();
@@ -96,13 +86,13 @@ pub fn home() -> Html {
         );
     }
 
-    let date_format = "%Y-%m-%d";
+    const DATE_FORMAT: &'static str = "%Y-%m-%d";
 
     let onclick_date = {
         let selected_date = selected_date.clone();
         Callback::from(move |ev: MouseEvent| {
             let input: HtmlInputElement = ev.target_unchecked_into();
-            let new_date = NaiveDate::parse_from_str(input.id().as_str(), date_format).unwrap();
+            let new_date = NaiveDate::parse_from_str(input.id().as_str(), DATE_FORMAT).unwrap();
             selected_date.set(new_date);
         })
     };
@@ -127,10 +117,8 @@ pub fn home() -> Html {
     let checkbox_onclick = {
         let change_buffer = local_diary_entry.clone();
         let ref_diary_entry = static_diary_entry.clone();
-        let delayed_save = delayed_save.clone();
+        let save_diary_day = save_diary_day.clone();
         Callback::from(move |ev: MouseEvent| {
-            delayed_save.reset();
-
             let input: HtmlInputElement = ev.target_unchecked_into();
             let idx: usize = input.id().parse().unwrap();
             let mut current = ref_diary_entry[idx].clone();
@@ -138,16 +126,15 @@ pub fn home() -> Html {
 
             current.value = new_val;
             change_buffer.update(idx, current);
+            save_diary_day.run();
         })
     };
 
-    let oninput = {
+    let onchange = {
         let change_buffer = local_diary_entry.clone();
         let ref_diary_entry = static_diary_entry.clone();
-        let delayed_save = delayed_save.clone();
-        Callback::from(move |e: InputEvent| {
-            delayed_save.reset();
-
+        let save_diary_day = save_diary_day.clone();
+        Callback::from(move |e: Event| {
             let input: HtmlInputElement = e.target_unchecked_into();
             let idx: usize = input.id().parse().unwrap();
             let mut current = ref_diary_entry[idx].clone();
@@ -155,38 +142,118 @@ pub fn home() -> Html {
 
             current.value = new_val;
             change_buffer.update(idx, current);
+            save_diary_day.run();
         })
     };
 
-    // // Equivalent of `onfocus="(this.type='time')"`
-    // let onfocus_time = {
-    //     Callback::from(move |e: FocusEvent| {
-    //         let input: HtmlInputElement = e.target_unchecked_into();
-    //         input.set_type("time");
-    //     })
-    // };
+    lazy_static! {
+        static ref REJECT: Regex = Regex::new(r"[^\d]").unwrap();
+    };
 
-    // // Equivalent of `onblur="if(!this.value) this.type='text'"`
-    // let onblur_time = {
-    //     Callback::from(move |e: FocusEvent| {
-    //         let input: HtmlInputElement = e.target_unchecked_into();
-    //         if input.value().is_empty() {
-    //             input.set_type("text");
-    //         }
-    //     })
-    // };
+    let backspace_key_pressed = use_mut_ref(|| false);
 
-    let hover_today_date_div_css = "flex group hover:bg-red-500 hover:shadow-lg hover-dark-shadow rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
-    let hover_date_div_css = "flex group hover:bg-slate-800 hover:shadow-lg hover-dark-shadow rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
-    let selected_today_date_div_css = "flex group bg-red-500 shadow-lg dark-shadow rounded-full mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
-    let selected_date_div_css = "flex group bg-slate-800 shadow-lg dark-shadow rounded-full mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
+    let format_time = |input: &mut HtmlInputElement, back: bool| {
+        let sel_start = input.selection_start().unwrap().unwrap();
+        let sel_end = input.selection_end().unwrap().unwrap();
+        let input_value = input.value();
+
+        let sanitized = REJECT.replace_all(&input_value, "");
+
+        let mut sanitized_iter = sanitized.chars();
+        let mut next_input_char = sanitized_iter.next();
+        let mut res = String::with_capacity(TIME_PATTERN.len());
+
+        for c in TIME_PATTERN.chars() {
+            let x = next_input_char
+                .map(|i| {
+                    if c == i || c == '-' {
+                        next_input_char = sanitized_iter.next();
+                        i
+                    } else {
+                        c
+                    }
+                })
+                .unwrap_or(c);
+            res.push(x);
+        }
+
+        let [new_start, new_end] = [sel_start, sel_end].map(|i| {
+            if back {
+                res.char_indices()
+                    .rev()
+                    .skip(TIME_PATTERN.len() - i as usize)
+                    .find_map(|(idx, c)| if c == ':' { None } else { Some(idx + 1) })
+                    .unwrap_or(0)
+            } else {
+                res.char_indices()
+                    .skip(i as usize)
+                    .find_map(|(idx, c)| if c == '-' { Some(idx) } else { None })
+                    .unwrap_or(TIME_PATTERN.len())
+            }
+        });
+
+        input.set_value(res.as_str());
+        let _ = input.set_selection_start(Some(new_start as u32));
+        let _ = input.set_selection_end(Some(new_end as u32));
+    };
+
+    let oninput_time = {
+        let back = backspace_key_pressed.clone();
+        Callback::from(move |e: InputEvent| {
+            let mut input: HtmlInputElement = e.target_unchecked_into();
+            format_time(&mut input, *back.borrow());
+        })
+    };
+
+    let onkeydown_time = {
+        let back = backspace_key_pressed.clone();
+        Callback::from(move |e: KeyboardEvent| {
+            *back.borrow_mut() = e.key() == "Backspace";
+        })
+    };
+
+    let onblur_time = {
+        let change_buffer = local_diary_entry.clone();
+        let ref_diary_entry = static_diary_entry.clone();
+        let save_diary_day = save_diary_day.clone();
+        Callback::from(move |e: FocusEvent| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+            if input.value() == TIME_PATTERN {
+                input.set_value("");
+            }
+
+            // Safari does not seem to fire onchange when there is oninput: https://developer.apple.com/forums/thread/698078
+            // Hence have to update state on blur
+            let idx: usize = input.id().parse().unwrap();
+            let mut current = ref_diary_entry[idx].clone();
+            let new_val = get_new_val(&input, &current);
+
+            current.value = new_val;
+            change_buffer.update(idx, current);
+            save_diary_day.run();
+        })
+    };
+
+    const TIME_PATTERN: &'static str = "--:--";
+
+    let onfocus_time = {
+        Callback::from(move |e: FocusEvent| {
+            let mut input: HtmlInputElement = e.target_unchecked_into();
+            format_time(&mut input, false);
+        })
+    };
+
+    const HOVER_TODAY_DATE_DIV_CSS: &'static str = "flex group hover:bg-red-500 hover:shadow-lg hover-dark-shadow rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
+    const HOVER_DATE_DIV_CSS: &'static str = "flex group hover:bg-slate-800 hover:shadow-lg hover-dark-shadow rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
+    const SELECTED_TODAY_DATE_DIV_CSS: &'static str = "flex group bg-red-500 shadow-lg dark-shadow rounded-full mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
+    const SELECTED_DATE_DIV_CSS: &'static str = "flex group bg-slate-800 shadow-lg dark-shadow rounded-full mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
 
     let calendar_day = |for_selected_date: bool, d: &NaiveDate| -> Html {
         let date_css = match (for_selected_date, *d == today) {
-            (true, true) => selected_today_date_div_css,
-            (true, false) => selected_date_div_css,
-            (false, true) => hover_today_date_div_css,
-            (false, false) => hover_date_div_css,
+            (true, true) => SELECTED_TODAY_DATE_DIV_CSS,
+            (true, false) => SELECTED_DATE_DIV_CSS,
+            (false, true) => HOVER_TODAY_DATE_DIV_CSS,
+            (false, false) => HOVER_DATE_DIV_CSS,
         };
         let weekday_label_css = if for_selected_date {
             "text-white text-sm font-semibold"
@@ -199,7 +266,7 @@ pub fn home() -> Html {
             "text-white group-hover:text-gray-100 my-auto group-hover:font-bold transition-all duration-300"
         };
 
-        let id = d.format(date_format);
+        let id = d.format(DATE_FORMAT);
 
         html! {
             <div class="text-center">
@@ -238,7 +305,7 @@ pub fn home() -> Html {
                             PracticeDataType::Int => html! {
                                 <div class="relative" key={ practice.clone() } >
                                     <input
-                                        oninput={ oninput.clone() }
+                                        onchange={ onchange.clone() }
                                         type="number"
                                         pattern="[0-9]*"
                                         id={ idx.to_string() }
@@ -272,11 +339,12 @@ pub fn home() -> Html {
                                     <input
                                         autocomplete="off"
                                         id={ idx.to_string() }
-                                        type="time"
-                                        //type="text"
-                                        //onfocus={ onfocus_time.clone() }
-                                        //onblur={ onblur_time.clone() }
-                                        oninput={ oninput.clone() }
+                                        type="text"
+                                        pattern="[0-9]*"
+                                        onblur={ onblur_time.clone()}
+                                        onfocus={ onfocus_time.clone() }
+                                        oninput={ oninput_time.clone() }
+                                        onkeydown={ onkeydown_time.clone() }
                                         value={ value.iter().find_map(|v| v.as_time_str()).unwrap_or_default() }
                                         class={ INPUT_CSS }
                                         placeholder={ idx.to_string() }
@@ -295,7 +363,7 @@ pub fn home() -> Html {
                                         maxlength="1024"
                                         rows="4"
                                         placeholder={ idx.to_string() }
-                                        oninput={ oninput.clone() }
+                                        onchange={ onchange.clone() }
                                         value={ value.iter().find_map(|v| v.as_text()).unwrap_or_default() }
                                         >
                                     </textarea>
