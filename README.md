@@ -66,3 +66,10 @@ Start it when changing css classes as follows:
 
 ### Add a practice to all users
 `insert into user_practices (user_id, practice, data_type) select id, 'Rounds, Total', 'int' from users;`
+
+### Docker
+1. Make sure .env is filled in
+2. Build:
+`docker build -t sadhanapro .`
+2. Run:
+`docker run -p8080:80 -t -e 'SERVER_ADDRESS=0.0.0.0:80' -e 'API_ROOT=http://192.168.68.102:8080/api' -e 'JWT_KEY=xyz' sadhana_pro`
