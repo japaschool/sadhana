@@ -4,8 +4,6 @@ create table confirmations (
   expires_at timestamp not null
 );
 
-select diesel_manage_updated_at('confirmations');
-
 CREATE FUNCTION confirmations_delete_old_rows() RETURNS trigger
     LANGUAGE plpgsql
     AS $$

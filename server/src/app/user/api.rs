@@ -59,7 +59,7 @@ pub async fn send_signup_link(
         "Please click on the link below to complete registration. <br/>
                 <a href=\"{domain}/register/{id}\">Complete registration</a> <br/>
                 This link expires on <strong>{expires}</strong>",
-        domain = vars::server_address(),
+        domain = vars::public_server_address(),
         id = confirmation.id,
         expires = confirmation.expires_at
     );
