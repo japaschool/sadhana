@@ -23,7 +23,7 @@ pub fn blank_page(props: &Props) -> Html {
                             <div class="relative">
                                 <div class="relative sm:max-w-xl sm:mx-auto">
                                     <div class="relative flex py-10 sm:p-20">
-                                        <span class="text-white"><i class="fa fa-arrow-left"></i>
+                                        <span class="text-white"><i class="fa-solid fa-chevron-left"></i>
                                             <Link<AppRoute> classes={ LINK_CSS } to={ route.clone() }>
                                                 { format!(" {}", label) }
                                             </Link<AppRoute>>

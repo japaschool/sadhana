@@ -660,6 +660,10 @@ video {
   width: 2.25rem;
 }
 
+.w-14 {
+  width: 3.5rem;
+}
+
 @keyframes ping {
   75%, 100% {
     transform: scale(2);
@@ -681,6 +685,10 @@ video {
 
 .items-center {
   align-items: center;
+}
+
+.justify-end {
+  justify-content: flex-end;
 }
 
 .justify-center {

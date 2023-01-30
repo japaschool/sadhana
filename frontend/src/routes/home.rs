@@ -243,6 +243,20 @@ pub fn home() -> Html {
         })
     };
 
+    let next_week_onclick = {
+        let selected_date = selected_date.clone();
+        Callback::from(move |_: MouseEvent| {
+            selected_date.set(selected_date.checked_add_days(Days::new(7)).unwrap());
+        })
+    };
+
+    let prev_week_onclick = {
+        let selected_date = selected_date.clone();
+        Callback::from(move |_: MouseEvent| {
+            selected_date.set(selected_date.checked_sub_days(Days::new(7)).unwrap());
+        })
+    };
+
     const HOVER_TODAY_DATE_DIV_CSS: &'static str = "flex group hover:bg-red-500 hover:shadow-lg hover-dark-shadow rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
     const HOVER_DATE_DIV_CSS: &'static str = "flex group hover:bg-slate-800 hover:shadow-lg hover-dark-shadow rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
     const SELECTED_TODAY_DATE_DIV_CSS: &'static str = "flex group bg-red-500 shadow-lg dark-shadow rounded-full mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
@@ -280,14 +294,20 @@ pub fn home() -> Html {
 
     let calendar = html! {
         <div class="relative mt-4 py-2">
-            <div class="flex justify-center overflow-x-scroll mx-auto px-2">
-            {
-                week.iter().map(|d| html! {
-                    <div class="flex group justify-center w-16">
-                        <div class="flex items-center px-1">{ calendar_day(*d == *selected_date, d) }</div>
-                    </div>
-                }).collect::<Html>()
-            }
+            <div class="flex justify-center overflow-x-scroll mx-auto">
+                <div class="flex text-white group w-16" onclick={ prev_week_onclick.clone() }>
+                    <div class="flex items-center"><i class="fa-solid fa-chevron-left"></i></div>
+                </div>
+                {
+                    week.iter().map(|d| html! {
+                        <div class="flex group justify-center w-16">
+                            <div class="flex items-center">{ calendar_day(*d == *selected_date, d) }</div>
+                        </div>
+                    }).collect::<Html>()
+                }
+                <div class="flex text-white justify-end group w-16" onclick={ next_week_onclick.clone() }>
+                    <div class="flex items-center"><i class="fa-solid fa-chevron-right"></i></div>
+                </div>
             </div>
         </div>
     };
