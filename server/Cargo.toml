@@ -20,6 +20,8 @@ dotenv_codegen = "0.15"
 log = "0.4"
 env_logger = "0.10"
 diesel = { version = "2.0", features = ["postgres", "r2d2", "chrono", "serde_json", "uuid"] }
+diesel_migrations = "2.0"
+diesel-derive-enum = { version = "2.0.0-rc.0", features = ["postgres"] }
 validator = { version = "0.16", features = ["derive"] }
 bcrypt = { version = "0.13" }
 uuid = { version = "1.2", features = ["serde", "v4"] }
@@ -29,5 +31,4 @@ futures = { version = "0.3" }
 chrono = { version = "0.4", features = ["serde"] }
 lazy_static = "1.4"
 # derive_more = "0.99"
-diesel-derive-enum = { version = "2.0.0-rc.0", features = ["postgres"] }
 lettre = { version = "0.10", default-features = false, features = ["smtp-transport", "tokio1-rustls-tls", "hostname", "builder"] }

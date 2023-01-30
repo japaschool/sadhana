@@ -1,4 +1,5 @@
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
+use diesel_migrations::*;
 use dotenv::dotenv;
 
 #[macro_use]
@@ -23,10 +24,20 @@ async fn main() -> std::io::Result<()> {
 
     env_logger::init_from_env(env_logger::Env::default().default_filter_or("debug"));
 
+    const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
+
     HttpServer::new(move || {
+        let app_state = middleware::state::AppState::init();
+
+        app_state
+            .get_conn()
+            .unwrap()
+            .run_pending_migrations(MIGRATIONS)
+            .unwrap();
+
         App::new()
             .wrap(Logger::default())
-            .app_data(Data::new(middleware::state::AppState::init()))
+            .app_data(Data::new(app_state))
             .wrap(middleware::cors::cors())
             .wrap(middleware::auth::Authentication)
             .configure(routes::routes)

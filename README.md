@@ -60,6 +60,9 @@ cargo install diesel_cli --no-default-features --features postgres
 ```
 4. Run: `make run`
 5. Open in chrome localhost:8080
+6. Install tailwindcss. 
+Start it when changing css classes as follows:
+`cd frontend && tailwindcss -i styles/tailwind.css -o styles/app.css` 
 
 ### Add a practice to all users
 `insert into user_practices (user_id, practice, data_type) select id, 'Rounds, Total', 'int' from users;`
