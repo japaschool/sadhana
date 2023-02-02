@@ -69,7 +69,11 @@ pub fn new_user_practice() -> Html {
     };
 
     html! {
-        <BlankPage header_label={ Locale::current().select_practices() } prev_link={ (Locale::current().cancel(), AppRoute::UserPractices) }>
+        <BlankPage
+            header_label={ Locale::current().select_practices() }
+            prev_link={ (Locale::current().cancel(), AppRoute::UserPractices) }
+            loading={ save.loading }
+            >
             <ListErrors error={save.error.clone()} />
             <form {onsubmit}>
                 <div class={ BODY_DIV_CSS }>

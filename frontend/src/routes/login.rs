@@ -68,7 +68,7 @@ pub fn login() -> Html {
     };
 
     html! {
-        <BlankPage header_label={ Locale::current().login() }>
+        <BlankPage header_label={ Locale::current().login() } loading={ user_login.loading }>
             <ListErrors error={user_login.error.clone()} />
             <form {onsubmit}>
                 <div class={ BODY_DIV_CSS }>

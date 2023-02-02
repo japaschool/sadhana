@@ -103,7 +103,7 @@ pub fn register_with_id(props: &Props) -> Html {
     };
 
     html! {
-        <BlankPage header_label={ Locale::current().register() }>
+        <BlankPage header_label={ Locale::current().register() } loading={ user_register.loading }>
             <ListErrors error={signup_confirmation.error.clone()} />
             <ListErrors error={user_register.error.clone()} />
             <form {onsubmit}>

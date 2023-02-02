@@ -9,6 +9,8 @@ pub struct Props {
     pub header_label: Option<String>,
     #[prop_or_default]
     pub prev_link: Option<(String, AppRoute)>,
+    #[prop_or(false)]
+    pub loading: bool,
     pub children: Children,
 }
 
@@ -16,6 +18,12 @@ pub struct Props {
 pub fn blank_page(props: &Props) -> Html {
     html! {
         <div class="bg-hero bg-no-repeat bg-cover bg-center min-h-screen justify-center py-6 sm:py-12">
+            if props.loading {
+                <div class="bg-gray-500 bg-opacity-50 absolute left-0 top-0 z-50 h-full w-full overflow-hidden flex">
+                    <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-10 w-10 m-auto">
+                    </div>
+                </div>
+            }
             <div class="w-full text-center relative">
                 { props.prev_link.iter().map(|(label, route)|
                     html! {
