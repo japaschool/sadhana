@@ -34,3 +34,9 @@ input::-webkit-calendar-picker-indicator {
         transform: rotate(360deg);
     }
 }
+
+body {
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}

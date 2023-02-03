@@ -42,7 +42,7 @@ pub fn blank_page(props: &Props) -> Html {
                         </div>
                     }).collect::<Html>()
                 }
-                <img class="h-20 inline-block" src="/logo.png" />
+                <img class="h-20 inline-block" src="/images/logo.png" />
             </div>
             <div class="relative py-3 sm:max-w-xl sm:mx-auto">
                 <div class="relative px-4 py-4 sm:rounded-3xl sm:p-20">

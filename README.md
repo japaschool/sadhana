@@ -13,6 +13,7 @@
 
 ### iOS
 - How to [make web app look like a native iOS app](https://medium.com/appscope/designing-native-like-progressive-web-apps-for-ios-1b3cdda1d0e8)
+- https://samselikoff.com/blog/8-tips-to-make-your-website-feel-like-an-ios-app#tip-5:-make-the-status-bar-transparent
 
 ## TODO List
 ### Bugs
@@ -73,3 +74,10 @@ Start it when changing css classes as follows:
 `docker build -t sadhanapro .`
 2. Run:
 `docker run -p8080:80 -t -e 'SERVER_ADDRESS=0.0.0.0:80' -e 'API_ROOT=http://192.168.68.102:8080/api' -e 'JWT_KEY=xyz' sadhana_pro`
+
+### Splash screen generation for iOS
+1. `npm install pwa-asset-generator`
+2. Run
+```
+npx pwa-asset-generator images/logo.png images -m site.webmanifest --padding "calc(50vh - 25%) calc(50vw - 25%)" -b "linear-gradient(135deg, #7c6d63, #2f293b)" -q 100 -i asset-generator-changes.html --favicon
+```

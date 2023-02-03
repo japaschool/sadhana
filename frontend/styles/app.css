@@ -819,7 +819,7 @@ video {
 }
 
 .bg-hero {
-  background-image: linear-gradient(rgba(73, 50, 34, 0.7), #1a1631), url('background.jpg');
+  background-image: linear-gradient(rgba(73, 50, 34, 0.7), #1a1631), url('images/background.jpg');
 }
 
 .bg-gradient-to-t {
@@ -903,8 +903,16 @@ video {
   padding-bottom: 1rem;
 }
 
+.pt-safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
 .pb-5 {
   padding-bottom: 1.25rem;
+}
+
+.pt-0 {
+  padding-top: 0px;
 }
 
 .text-center {
@@ -1020,6 +1028,12 @@ input::-webkit-calendar-picker-indicator {
   100% {
     transform: rotate(360deg);
   }
+}
+
+body {
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 
 .hover\:bg-red-500:hover {
