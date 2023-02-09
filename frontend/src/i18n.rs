@@ -14,6 +14,7 @@ static LANG: Lazy<String> = Lazy::new(|| {
 impl Locale {
     pub fn current() -> Self {
         match LANG.as_str() {
+            "ru" => Locale::Ru,
             _ => Locale::En,
         }
     }
