@@ -112,11 +112,14 @@ pub fn user_practices() -> Html {
                 let practice = input.id();
 
                 log::debug!("Deleting user practice {:?}", practice);
-                spawn_local(async move { delete_user_practice(&practice).await.unwrap() });
 
-                //FIXME: reload can well run before delete.
-                // Reload the state from backend
-                all_practices.run();
+                let all_practices = all_practices.clone();
+                spawn_local(async move {
+                    delete_user_practice(&practice)
+                        .await
+                        .and_then(|_| Ok(all_practices.run()))
+                        .unwrap()
+                });
             }
         })
     };

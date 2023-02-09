@@ -24,22 +24,23 @@ pub fn new_user_practice() -> Html {
     let form_data = use_state(|| FormData::default());
     let save = {
         let form = form_data.clone();
+        let user_ctx = user_ctx.clone();
         use_async(async move {
             let new_practice = CreateUserPractice {
                 practice: form.practice.clone(),
                 data_type: form.data_type.as_str().try_into().unwrap(),
             };
-            create_user_practice(&new_practice).await
+            create_user_practice(&new_practice)
+                .await
+                .and_then(|_| Ok(user_ctx.redirect_to(&AppRoute::UserPractices)))
         })
     };
 
     let onsubmit = {
         let save = save.clone();
-        let user_ctx = user_ctx.clone();
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
             save.run();
-            user_ctx.redirect_to(&AppRoute::UserPractices);
         })
     };
 
