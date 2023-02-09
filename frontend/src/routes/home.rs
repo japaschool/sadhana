@@ -52,8 +52,9 @@ pub fn home() -> Html {
         let local = local_diary_entry.clone();
         let cob = selected_date.clone();
         use_async(async move {
+            let diary_day = local.current().to_owned();
             save_diary(DiaryDay {
-                diary_day: local.current().to_owned(),
+                diary_day,
                 cob_date: *cob,
             })
             .await
@@ -78,8 +79,10 @@ pub fn home() -> Html {
         let local2 = static_diary_entry.clone();
         use_effect_with_deps(
             move |je| {
-                je.data.iter().for_each(|data| local.set(data.clone()));
-                local2.set(local.current().clone());
+                je.data.iter().for_each(|data| {
+                    local.set(data.clone());
+                    local2.set(data.clone());
+                });
                 || ()
             },
             diary_entry.clone(),
@@ -319,7 +322,7 @@ pub fn home() -> Html {
             { calendar }
             <div class={ BODY_DIV_CSS }>
             {
-                local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, value})| {
+                for local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, value})| {
                     html! {
                         match data_type {
                             PracticeDataType::Int => html! {
@@ -394,7 +397,7 @@ pub fn home() -> Html {
                                 </div>
                             }
                     }}
-                }).collect::<Html>()
+                })
             }
                 <div class="relative flex justify-center">
                     <Link<AppRoute> classes={ LINK_CSS } to={AppRoute::UserPractices}>
