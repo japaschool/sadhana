@@ -132,11 +132,13 @@ pub fn user_practices() -> Html {
         Callback::from(move |e: MouseEvent| {
             e.prevent_default();
 
-            if let Some(new_name) =
-                prompt(Locale::current().enter_new_practice_name().as_str(), None)
-            {
-                let input: HtmlElement = e.target_unchecked_into();
-                let practice = input.id();
+            let input: HtmlElement = e.target_unchecked_into();
+            let practice = input.id();
+
+            if let Some(new_name) = prompt(
+                Locale::current().enter_new_practice_name().as_str(),
+                Some(&practice),
+            ) {
                 let is_active = selected.current().contains(&practice);
                 let all_practices = all_practices.clone();
 
