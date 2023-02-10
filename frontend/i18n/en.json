@@ -18,6 +18,7 @@
     "time": "Time",
     "text": "Text",
     "delete_practice_warning": "Are you sure you want to delete? Any logged data associated with this practice will be lost.",
+    "enter_new_practice_name": "Rename practice to:",
     "select_practices": "Select Practices",
     "add_new_practice": "Add new practice",
     "practice_name": "Practice name",

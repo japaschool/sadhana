@@ -159,3 +159,8 @@ pub struct CreateUserPractice {
     pub practice: String,
     pub data_type: PracticeDataType,
 }
+
+#[derive(Debug, Serialize)]
+pub struct UpdateUserPractice {
+    pub user_practice: UserPractice,
+}

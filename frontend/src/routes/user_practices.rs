@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 
-use gloo_dialogs::confirm;
+use gloo_dialogs::{confirm, prompt};
 use wasm_bindgen_futures::spawn_local;
-use web_sys::{HtmlElement, HtmlInputElement};
+use web_sys::HtmlElement;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_mount, use_set};
 use yew_router::prelude::*;
@@ -12,7 +12,7 @@ use crate::{
     css::*,
     i18n::Locale,
     model::UserPractice,
-    services::{delete_user_practice, get_user_practices, update_user_practice_activity},
+    services::{delete_user_practice, get_user_practices, update_user_practice},
 };
 
 use super::AppRoute;
@@ -79,25 +79,28 @@ pub fn user_practices() -> Html {
         );
     }
 
-    let oninput = {
+    let toggle_hidden = {
         let selected = selected_practices.clone();
-        Callback::from(move |e: InputEvent| {
+        Callback::from(move |e: MouseEvent| {
             e.prevent_default();
 
-            let input: HtmlInputElement = e.target_unchecked_into();
-            let nm = input.name();
+            let input: HtmlElement = e.target_unchecked_into();
+            let practice = input.id();
+            let is_active = !selected.current().contains(&practice);
+
             let up = UserPractice {
-                practice: nm.clone(),
-                is_active: input.checked(),
+                practice: practice.clone(),
+                is_active: is_active,
             };
 
             // TODO: possibly a better way to use Suspense with use_future once on yew 0.20
-            spawn_local(async move { update_user_practice_activity(&up).await.unwrap() });
+            let p = practice.clone();
+            spawn_local(async move { update_user_practice(&p, up).await.unwrap() });
 
-            if input.checked() {
-                selected.insert(nm);
+            if is_active {
+                selected.insert(practice);
             } else {
-                selected.remove(&nm);
+                selected.remove(&practice);
             }
         })
     };
@@ -108,7 +111,6 @@ pub fn user_practices() -> Html {
             e.prevent_default();
             if confirm(Locale::current().delete_practice_warning().as_str()) {
                 let input: HtmlElement = e.target_unchecked_into();
-
                 let practice = input.id();
 
                 log::debug!("Deleting user practice {:?}", practice);
@@ -116,6 +118,35 @@ pub fn user_practices() -> Html {
                 let all_practices = all_practices.clone();
                 spawn_local(async move {
                     delete_user_practice(&practice)
+                        .await
+                        .and_then(|_| Ok(all_practices.run()))
+                        .unwrap()
+                });
+            }
+        })
+    };
+
+    let rename = {
+        let all_practices = all_practices.clone();
+        let selected = selected_practices.clone();
+        Callback::from(move |e: MouseEvent| {
+            e.prevent_default();
+
+            if let Some(new_name) =
+                prompt(Locale::current().enter_new_practice_name().as_str(), None)
+            {
+                let input: HtmlElement = e.target_unchecked_into();
+                let practice = input.id();
+                let is_active = selected.current().contains(&practice);
+                let all_practices = all_practices.clone();
+
+                let up = UserPractice {
+                    practice: new_name.clone(),
+                    is_active,
+                };
+
+                spawn_local(async move {
+                    update_user_practice(&practice, up)
                         .await
                         .and_then(|_| Ok(all_practices.run()))
                         .unwrap()
@@ -132,9 +163,6 @@ pub fn user_practices() -> Html {
         })
     };
 
-    // TODO: UI Improvements
-    // replace checkbox with eye icon. On toggle it should be grayed out
-    // Add another icon - pen, to rename a practice
     html! {
         <BlankPage header_label={ Locale::current().select_practices() }>
             <ListErrors error={all_practices.error.clone()} />
@@ -144,15 +172,20 @@ pub fn user_practices() -> Html {
                         html! {
                             <div class="relative flex">
                                 <label class="flex w-full justify-between whitespace-nowrap mb-6">
-                                    <span class="">{ p.practice.clone() }</span>
-                                    <input
-                                        oninput={ oninput.clone() }
-                                        name={ p.practice.clone() }
-                                        type="checkbox"
-                                        checked={ selected_practices.current().contains(&p.practice) }
+                                    <span>{ p.practice.clone() }</span>
+                                </label>
+                                <label class="px-2" disabled=true >
+                                    <i onclick={ toggle_hidden.clone() }
+                                        id={ p.practice.clone() }
+                                        class={ if selected_practices.current().contains(&p.practice) {"fa fa-eye"} else {"fa fa-eye-slash"}}
                                         />
                                 </label>
-                                <label class="px-5"><i onclick={ delete.clone() } id={ p.practice.clone() } class="fa fa-trash"></i></label>
+                                <label class="px-2">
+                                    <i onclick={ rename.clone() } id={ p.practice.clone() } class="fa fa-pen-to-square"/>
+                                </label>
+                                <label class="px-2">
+                                    <i onclick={ delete.clone() } id={ p.practice.clone() } class="fa fa-trash"/>
+                                </label>
                             </div>
                         }}).collect::<Html>()
                     }

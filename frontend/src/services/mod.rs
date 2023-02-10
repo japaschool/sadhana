@@ -3,7 +3,7 @@ use common::error::AppError;
 
 use crate::model::{
     AllUserPractices, CreateUserPractice, DiaryDay, LoginInfoWrapper, RegisterInfoWrapper,
-    SendSignupLink, SignupLinkDetailsWrapper, UserInfoWrapper, UserPractice,
+    SendSignupLink, SignupLinkDetailsWrapper, UpdateUserPractice, UserInfoWrapper, UserPractice,
 };
 
 use self::requests::*;
@@ -52,20 +52,19 @@ pub async fn get_user_practices() -> Result<AllUserPractices, AppError> {
     request_get("/user/practices".to_string()).await
 }
 
-/// Update is_active flag on a user practice
-pub async fn update_user_practice_activity(data: &UserPractice) -> Result<(), AppError> {
+/// Updates a user practice
+pub async fn update_user_practice(practice: &str, data: UserPractice) -> Result<(), AppError> {
     request_put(
-        format!(
-            "/user/practice/{}?is_active={}",
-            data.practice, data.is_active
-        ),
-        (),
+        format!("/user/practice/{}", practice),
+        &UpdateUserPractice {
+            user_practice: data,
+        },
     )
     .await
 }
 
 /// Delete user practice
-pub async fn delete_user_practice(practice: &String) -> Result<(), AppError> {
+pub async fn delete_user_practice(practice: &str) -> Result<(), AppError> {
     request_delete(format!("/user/practice/{}", practice)).await
 }
 

@@ -10,7 +10,7 @@ use crate::middleware::auth;
 use crate::middleware::state::AppState;
 use crate::schema::user_practices;
 
-#[derive(Debug, QueryableByName, Serialize)]
+#[derive(Debug, QueryableByName, Serialize, Deserialize)]
 pub struct UserPractice {
     #[diesel(sql_type = Text)]
     pub practice: String,
@@ -37,32 +37,28 @@ impl UserPractice {
         Ok(res)
     }
 
-    pub fn update_is_active(
+    pub fn update(
         conn: &mut PgConnection,
         user_id: &Uuid,
-        practice: &Self,
+        practice: &str,
+        new_name: &str,
+        is_active: bool,
     ) -> Result<(), AppError> {
-        sql_query(
-            r#"
-        update user_practices
-        set is_active = $1
-        where practice = $2
-        and user_id = $3
-        "#,
-        )
-        .bind::<Bool, _>(&practice.is_active)
-        .bind::<Text, _>(&practice.practice)
-        .bind::<DieselUuid, _>(user_id)
-        .execute(conn)?;
-
+        diesel::update(user_practices::table)
+            .set((
+                user_practices::practice.eq(new_name),
+                user_practices::is_active.eq(is_active),
+            ))
+            .filter(
+                user_practices::user_id
+                    .eq(user_id)
+                    .and(user_practices::practice.eq(practice)),
+            )
+            .execute(conn)?;
         Ok(())
     }
 
-    pub fn delete(
-        conn: &mut PgConnection,
-        user_id: &Uuid,
-        practice: &String,
-    ) -> Result<(), AppError> {
+    pub fn delete(conn: &mut PgConnection, user_id: &Uuid, practice: &str) -> Result<(), AppError> {
         conn.transaction(|conn| {
             sql_query(
                 r#"
@@ -130,27 +126,6 @@ pub struct IsActiveParams {
     is_active: bool,
 }
 
-/// Updates is active state on user practice
-pub async fn set_is_active(
-    state: web::Data<AppState>,
-    req: HttpRequest,
-    path: web::Path<PracticeSlug>,
-    params: web::Query<IsActiveParams>,
-) -> Result<HttpResponse, AppError> {
-    let mut conn = state.get_conn()?;
-    let practice = UserPractice {
-        practice: path.into_inner(),
-        is_active: params.is_active,
-    };
-    let user_id = auth::get_current_user(&req)?.id;
-
-    log::debug!("Updating practice activity to {:?}", practice);
-
-    UserPractice::update_is_active(&mut conn, &user_id, &practice)?;
-
-    Ok(HttpResponse::Ok().json(()))
-}
-
 /// Deletes a user practice
 /// Note it also deletes any dependent diary entries
 pub async fn delete_user_practice(
@@ -163,6 +138,28 @@ pub async fn delete_user_practice(
     let practice = path.into_inner();
 
     UserPractice::delete(&mut conn, &user_id, &practice)?;
+
+    Ok(HttpResponse::Ok().json(()))
+}
+
+/// Updates a user practice
+pub async fn update_user_practice(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    path: web::Path<PracticeSlug>,
+    form: web::Json<UpdateUserPracticeRequest>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
+    let practice = path.into_inner();
+
+    UserPractice::update(
+        &mut conn,
+        &user_id,
+        &practice,
+        &form.0.user_practice.practice,
+        form.0.user_practice.is_active,
+    )?;
 
     Ok(HttpResponse::Ok().json(()))
 }
@@ -198,4 +195,9 @@ pub struct NewUserPractice {
 pub struct NewUserPracticeRequest {
     practice: String,
     data_type: PracticeDataType,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateUserPracticeRequest {
+    user_practice: UserPractice,
 }

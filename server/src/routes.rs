@@ -34,7 +34,7 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                             )
                             .route(
                                 "{practice}",
-                                web::put().to(app::user_practices::set_is_active),
+                                web::put().to(app::user_practices::update_user_practice),
                             ),
                     )
                     .route("", web::get().to(app::user::api::me)),
