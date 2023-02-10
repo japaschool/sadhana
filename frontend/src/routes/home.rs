@@ -160,7 +160,17 @@ pub fn home() -> Html {
         let sel_end = input.selection_end().unwrap().unwrap();
         let input_value = input.value();
 
-        let sanitized = REJECT.replace_all(&input_value, "");
+        let mut sanitized = REJECT.replace_all(&input_value, "").to_string();
+
+        if sanitized.len() == 1 && sanitized.parse::<u32>().unwrap() > 2 {
+            sanitized.insert(0, '0');
+        } else if sanitized.len() == 2 && sanitized.parse::<u32>().unwrap() > 24 {
+            sanitized.remove(1);
+        } else if sanitized.len() == 3
+            && sanitized.chars().nth(2).unwrap().to_digit(10).unwrap() > 5
+        {
+            sanitized.insert(2, '0');
+        }
 
         let mut sanitized_iter = sanitized.chars();
         let mut next_input_char = sanitized_iter.next();
@@ -189,7 +199,7 @@ pub fn home() -> Html {
                     .unwrap_or(0)
             } else {
                 res.char_indices()
-                    .skip(i as usize)
+                    .skip(sanitized.len())
                     .find_map(|(idx, c)| if c == '-' { Some(idx) } else { None })
                     .unwrap_or(TIME_PATTERN.len())
             }
@@ -287,7 +297,7 @@ pub fn home() -> Html {
 
         html! {
             <div class="text-center">
-                <p class={ weekday_label_css }>{ &Locale::current().day_of_week(d)[0..1] }</p>
+                <p class={ weekday_label_css }>{ &Locale::current().day_of_week(d).chars().nth(0).unwrap() }</p>
                 <div class={ date_css } id={ id.to_string() } onclick={ onclick_date.clone() }>
                     <p id={ id.to_string() } class={ date_label_css }>{ d.format("%-d") }</p>
                 </div>
@@ -369,7 +379,7 @@ pub fn home() -> Html {
                                         oninput={ oninput_time.clone() }
                                         onkeydown={ onkeydown_time.clone() }
                                         value={ value.iter().find_map(|v| v.as_time_str()).unwrap_or_default() }
-                                        class={ INPUT_CSS }
+                                        class={ format!("{} text-center", INPUT_CSS) }
                                         placeholder={ idx.to_string() }
                                         />
                                     <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
