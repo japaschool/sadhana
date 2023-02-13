@@ -1,0 +1,1 @@
+ALTER TABLE user_practices ALTER COLUMN is_active DROP NOT NULL;

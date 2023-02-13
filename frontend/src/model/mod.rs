@@ -146,6 +146,7 @@ impl PracticeEntryValue {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct UserPractice {
     pub practice: String,
+    pub data_type: PracticeDataType,
     pub is_active: bool,
 }
 
@@ -156,8 +157,7 @@ pub struct AllUserPractices {
 
 #[derive(Debug, Serialize)]
 pub struct CreateUserPractice {
-    pub practice: String,
-    pub data_type: PracticeDataType,
+    pub user_practice: UserPractice,
 }
 
 #[derive(Debug, Serialize)]

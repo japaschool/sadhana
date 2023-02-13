@@ -44,7 +44,7 @@ diesel::table! {
         user_id -> Uuid,
         practice -> Text,
         data_type -> PracticeDataTypeEnum,
-        is_active -> Nullable<Bool>,
+        is_active -> Bool,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }

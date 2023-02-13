@@ -53,12 +53,13 @@ pub async fn get_user_practices() -> Result<AllUserPractices, AppError> {
 }
 
 /// Updates a user practice
-pub async fn update_user_practice(practice: &str, data: UserPractice) -> Result<(), AppError> {
+pub async fn update_user_practice(
+    practice: &str,
+    user_practice: UserPractice,
+) -> Result<(), AppError> {
     request_put(
         format!("/user/practice/{}", practice),
-        &UpdateUserPractice {
-            user_practice: data,
-        },
+        &UpdateUserPractice { user_practice },
     )
     .await
 }
@@ -69,6 +70,10 @@ pub async fn delete_user_practice(practice: &str) -> Result<(), AppError> {
 }
 
 /// Create a new user practice
-pub async fn create_user_practice(data: &CreateUserPractice) -> Result<(), AppError> {
-    request_post("/user/practices".to_string(), data).await
+pub async fn create_user_practice(user_practice: UserPractice) -> Result<(), AppError> {
+    request_post(
+        "/user/practices".to_string(),
+        &CreateUserPractice { user_practice },
+    )
+    .await
 }

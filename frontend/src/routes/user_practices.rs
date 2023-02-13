@@ -11,7 +11,7 @@ use crate::{
     components::{blank_page::BlankPage, list_errors::ListErrors},
     css::*,
     i18n::Locale,
-    model::UserPractice,
+    model::{PracticeDataType, UserPractice},
     services::{delete_user_practice, get_user_practices, update_user_practice},
 };
 
@@ -90,6 +90,7 @@ pub fn user_practices() -> Html {
 
             let up = UserPractice {
                 practice: practice.clone(),
+                data_type: PracticeDataType::Bool, //Adding to satisfy constructor but is actually never used
                 is_active: is_active,
             };
 
@@ -144,6 +145,7 @@ pub fn user_practices() -> Html {
 
                 let up = UserPractice {
                     practice: new_name.clone(),
+                    data_type: PracticeDataType::Bool, //Adding to satisfy constructor but is actually never used
                     is_active,
                 };
 

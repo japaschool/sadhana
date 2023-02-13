@@ -7,7 +7,7 @@ use crate::{
     css::*,
     hooks::use_user_context,
     i18n::Locale,
-    model::CreateUserPractice,
+    model::UserPractice,
     routes::AppRoute,
     services::create_user_practice,
 };
@@ -26,11 +26,12 @@ pub fn new_user_practice() -> Html {
         let form = form_data.clone();
         let user_ctx = user_ctx.clone();
         use_async(async move {
-            let new_practice = CreateUserPractice {
+            let new_practice = UserPractice {
                 practice: form.practice.clone(),
                 data_type: form.data_type.as_str().try_into().unwrap(),
+                is_active: true,
             };
-            create_user_practice(&new_practice)
+            create_user_practice(new_practice)
                 .await
                 .and_then(|_| Ok(user_ctx.redirect_to(&AppRoute::UserPractices)))
         })

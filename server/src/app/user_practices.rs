@@ -10,10 +10,12 @@ use crate::middleware::auth;
 use crate::middleware::state::AppState;
 use crate::schema::user_practices;
 
-#[derive(Debug, QueryableByName, Serialize, Deserialize)]
+#[derive(Debug, Queryable, Serialize, Deserialize)]
 pub struct UserPractice {
     #[diesel(sql_type = Text)]
     pub practice: String,
+    #[diesel(sql_type = PracticeDataTypeEnum)]
+    pub data_type: PracticeDataType,
     #[diesel(sql_type = Bool)]
     pub is_active: bool,
 }
@@ -23,16 +25,14 @@ impl UserPractice {
         conn: &mut PgConnection,
         user_id: &Uuid,
     ) -> Result<Vec<Self>, AppError> {
-        let res = sql_query(
-            r#"
-        select up.practice, up.is_active
-        from user_practices up
-        where up.user_id = $1
-        order by up.practice
-        "#,
-        )
-        .bind::<DieselUuid, _>(user_id)
-        .load(conn)?;
+        let res = user_practices::table
+            .select((
+                user_practices::practice,
+                user_practices::data_type,
+                user_practices::is_active,
+            ))
+            .filter(user_practices::user_id.eq(user_id))
+            .load(conn)?;
 
         Ok(res)
     }
@@ -121,11 +121,6 @@ impl From<Vec<UserPractice>> for AllUserPracticesResponse {
 
 type PracticeSlug = String;
 
-#[derive(Deserialize, Debug)]
-pub struct IsActiveParams {
-    is_active: bool,
-}
-
 /// Deletes a user practice
 /// Note it also deletes any dependent diary entries
 pub async fn delete_user_practice(
@@ -157,8 +152,8 @@ pub async fn update_user_practice(
         &mut conn,
         &user_id,
         &practice,
-        &form.0.user_practice.practice,
-        form.0.user_practice.is_active,
+        &form.user_practice.practice,
+        form.user_practice.is_active,
     )?;
 
     Ok(HttpResponse::Ok().json(()))
@@ -174,9 +169,9 @@ pub async fn add_new(
     let user_id = auth::get_current_user(&req)?.id;
     let record = NewUserPractice {
         user_id,
-        practice: form.practice.clone(),
-        data_type: form.data_type.clone(),
-        is_active: true,
+        practice: form.user_practice.practice.clone(),
+        data_type: form.user_practice.data_type.clone(),
+        is_active: form.user_practice.is_active,
     };
     UserPractice::create(&mut conn, &record)?;
     Ok(HttpResponse::Ok().json(()))
@@ -193,8 +188,7 @@ pub struct NewUserPractice {
 
 #[derive(Debug, Deserialize)]
 pub struct NewUserPracticeRequest {
-    practice: String,
-    data_type: PracticeDataType,
+    user_practice: UserPractice,
 }
 
 #[derive(Debug, Deserialize)]
