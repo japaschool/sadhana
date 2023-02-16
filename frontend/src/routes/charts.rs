@@ -149,7 +149,7 @@ pub fn charts() -> Html {
     }
 
     html! {
-        <BlankPage>
+        <BlankPage show_footer=true >
             <ListErrors error={all_practices.error.clone()} />
             <ListErrors error={report_data.error.clone()} />
             <div class={ BODY_DIV_CSS }>

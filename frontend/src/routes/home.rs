@@ -326,7 +326,7 @@ pub fn home() -> Html {
     };
 
     html! {
-        <BlankPage>
+        <BlankPage show_footer=true >
             <ListErrors error={diary_entry.error.clone()} />
             <ListErrors error={save_diary_day.error.clone()} />
             { calendar }
