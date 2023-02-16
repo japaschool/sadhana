@@ -41,6 +41,7 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
             )
             .service(
                 web::scope("/diary")
+                    .route("/report", web::get().to(app::diary::api::get_report_data))
                     .route("", web::post().to(app::diary::api::upsert_diary_day))
                     .route("", web::get().to(app::diary::api::get_diary_day)),
             ),

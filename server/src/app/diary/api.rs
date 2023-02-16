@@ -1,13 +1,13 @@
 use crate::middleware::{auth, state::AppState};
 use actix_web::{web, HttpRequest, HttpResponse};
 use chrono::NaiveDate;
-use common::error::AppError;
+use common::{error::AppError, ReportDuration};
 use serde::Deserialize;
 
 use super::{
-    model::{DiaryDayEntry, DiaryEntryUpdate},
+    model::{DiaryDayEntry, DiaryEntryUpdate, ReportEntry},
     request,
-    response::DiaryDayResponse,
+    response::{DiaryDayResponse, ReportResponse},
 };
 
 #[derive(Deserialize, Debug)]
@@ -57,6 +57,28 @@ pub async fn get_diary_day(
 
     let res = web::block(move || DiaryDayEntry::get_diary_day(&mut conn, &cob, &user_id)).await??;
     Ok(HttpResponse::Ok().json(DiaryDayResponse::from((params.cob_date, res))))
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ReportDataQueryParams {
+    practice: String,
+    duration: ReportDuration,
+}
+
+/// Retrieves user report data
+pub async fn get_report_data(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    params: web::Query<ReportDataQueryParams>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
+
+    let data = web::block(move || {
+        ReportEntry::get_report_data(&mut conn, &user_id, &params.practice, &params.duration)
+    })
+    .await??;
+    Ok(HttpResponse::Ok().json(ReportResponse::from(data)))
 }
 
 //TODO: add tests

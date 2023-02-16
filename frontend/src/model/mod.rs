@@ -75,7 +75,7 @@ pub struct DiaryEntry {
     pub value: Option<PracticeEntryValue>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Copy, Deserialize)]
 pub enum PracticeDataType {
     Int,
     Bool,
@@ -163,4 +163,15 @@ pub struct CreateUserPractice {
 #[derive(Debug, Serialize)]
 pub struct UpdateUserPractice {
     pub user_practice: UserPractice,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReportData {
+    pub values: Vec<ReportDataEntry>,
+}
+
+#[derive(Debug, Deserialize, Clone, PartialEq)]
+pub struct ReportDataEntry {
+    pub cob_date: NaiveDate,
+    pub value: Option<PracticeEntryValue>,
 }

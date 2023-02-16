@@ -1,4 +1,4 @@
-use super::model::DiaryDayEntry;
+use super::model::{DiaryDayEntry, ReportEntry};
 use chrono::NaiveDate;
 use serde::Serialize;
 
@@ -15,5 +15,16 @@ impl From<(NaiveDate, Vec<DiaryDayEntry>)> for DiaryDayResponse {
             diary_day,
             cob_date,
         }
+    }
+}
+
+#[derive(Serialize, Debug)]
+pub struct ReportResponse {
+    pub values: Vec<ReportEntry>,
+}
+
+impl From<Vec<ReportEntry>> for ReportResponse {
+    fn from(values: Vec<ReportEntry>) -> Self {
+        Self { values }
     }
 }

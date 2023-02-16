@@ -2,10 +2,11 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 
 use self::{
-    home::Home, login::Login, new_user_practice::NewUserPractice, register::Register,
-    register_with_id::RegisterWithId, user_practices::UserPractices,
+    charts::Charts, home::Home, login::Login, new_user_practice::NewUserPractice,
+    register::Register, register_with_id::RegisterWithId, user_practices::UserPractices,
 };
 
+pub mod charts;
 pub mod home;
 pub mod login;
 pub mod new_user_practice;
@@ -27,6 +28,8 @@ pub enum AppRoute {
     UserPractices,
     #[at("/user/practice/new")]
     NewUserPractice,
+    #[at("/charts")]
+    Charts,
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -40,6 +43,7 @@ pub fn switch(routes: AppRoute) -> Html {
         AppRoute::Login => html! { <Login /> },
         AppRoute::UserPractices => html! { <UserPractices /> },
         AppRoute::NewUserPractice => html! { <NewUserPractice /> },
+        AppRoute::Charts => html! { <Charts/> },
         AppRoute::NotFound => html! { <h1>{ "404" }</h1> },
     }
 }

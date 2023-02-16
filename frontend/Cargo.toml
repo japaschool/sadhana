@@ -28,6 +28,7 @@ wasm-bindgen-futures = "0.4"
 i18n_codegen = "0.1"
 once_cell = "1.17"
 regex = "1"
+yew-plotly = "0.2"
 
 [dependencies.web-sys]
 version = "0.3"
@@ -39,3 +40,15 @@ features = [
   "HtmlCollection",
   "HtmlInputElement",
 ]
+
+[profile.release]
+# less code to include into binary
+panic = 'abort'
+# optimization over all codebase ( better optimization, slower build )
+codegen-units = 1
+# optimization for size ( more aggressive )
+opt-level = 'z'
+# optimization for size
+# opt-level = 's'
+# link time optimization using using whole-program analysis
+lto = true

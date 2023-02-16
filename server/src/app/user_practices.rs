@@ -104,7 +104,7 @@ pub async fn get_user_practices(
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
 
-    let res = UserPractice::all_user_practices(&mut conn, &user_id)?;
+    let res = web::block(move || UserPractice::all_user_practices(&mut conn, &user_id)).await??;
     Ok(HttpResponse::Ok().json(AllUserPracticesResponse::from(res)))
 }
 
@@ -132,7 +132,7 @@ pub async fn delete_user_practice(
     let user_id = auth::get_current_user(&req)?.id;
     let practice = path.into_inner();
 
-    UserPractice::delete(&mut conn, &user_id, &practice)?;
+    web::block(move || UserPractice::delete(&mut conn, &user_id, &practice)).await??;
 
     Ok(HttpResponse::Ok().json(()))
 }
@@ -148,13 +148,16 @@ pub async fn update_user_practice(
     let user_id = auth::get_current_user(&req)?.id;
     let practice = path.into_inner();
 
-    UserPractice::update(
-        &mut conn,
-        &user_id,
-        &practice,
-        &form.user_practice.practice,
-        form.user_practice.is_active,
-    )?;
+    web::block(move || {
+        UserPractice::update(
+            &mut conn,
+            &user_id,
+            &practice,
+            &form.user_practice.practice,
+            form.user_practice.is_active,
+        )
+    })
+    .await??;
 
     Ok(HttpResponse::Ok().json(()))
 }
@@ -173,7 +176,7 @@ pub async fn add_new(
         data_type: form.user_practice.data_type.clone(),
         is_active: form.user_practice.is_active,
     };
-    UserPractice::create(&mut conn, &record)?;
+    web::block(move || UserPractice::create(&mut conn, &record)).await??;
     Ok(HttpResponse::Ok().json(()))
 }
 

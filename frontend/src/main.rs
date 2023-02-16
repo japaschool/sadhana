@@ -1,7 +1,6 @@
 // Fix for now: https://github.com/rustwasm/wasm-bindgen/issues/2774
 // #![allow(clippy::unused_unit)]
 
-use dotenv_codegen::dotenv;
 use yew::prelude::*;
 use yew_router::prelude::*;
 

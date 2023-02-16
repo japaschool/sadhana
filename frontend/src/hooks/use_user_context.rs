@@ -2,7 +2,7 @@ use std::fmt;
 use std::ops::Deref;
 
 use yew::prelude::*;
-use yew_router::{history::*, prelude::*};
+use yew_router::prelude::*;
 
 use crate::{model::UserInfo, services::requests::set_token, AppRoute};
 

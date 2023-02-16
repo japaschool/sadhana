@@ -1,6 +1,6 @@
 use crate::{db_types::PracticeDataType, schema::sql_types::PracticeDataTypeEnum};
 use chrono::NaiveDate;
-use common::error::AppError;
+use common::{error::AppError, ReportDuration};
 use diesel::{prelude::*, sql_query, sql_types::Uuid as DieselUuid, sql_types::*};
 use serde::Serialize;
 use serde_json::Value as JsonValue;
@@ -98,6 +98,60 @@ pub struct DiaryEntryUpdate<'a> {
     pub user_id: &'a Uuid,
     pub practice: &'a str,
     pub value: Option<&'a JsonValue>,
+}
+
+#[derive(Serialize, Debug, QueryableByName)]
+pub struct ReportEntry {
+    #[diesel(sql_type = Date)]
+    cob_date: NaiveDate,
+    #[diesel(sql_type = Nullable<Jsonb>)]
+    value: Option<JsonValue>,
+}
+
+impl ReportEntry {
+    pub fn get_report_data(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        practice: &str,
+        duration: &ReportDuration,
+    ) -> Result<Vec<ReportEntry>, AppError> {
+        use diesel::pg::expression::extensions::IntervalDsl;
+
+        let interval = match duration {
+            ReportDuration::Last30Days => 30.days(),
+            ReportDuration::Last90Days => 90.days(),
+            ReportDuration::Last365Days => 365.days(),
+        };
+
+        let res = sql_query(
+            r#"
+        with dates as (
+            select t.cob_date::date
+            from   generate_series(now() - $3, now(), interval '1 day') as t(cob_date)
+        ),
+        diary as (
+            select d.cob_date, d.value
+            from   user_practices up
+            left   join diary d
+            on     up.user_id = d.user_id 
+            and    up.id = d.practice_id
+            where  up.user_id = $1
+            and    up.practice = $2
+        )
+        select dt.cob_date, d.value
+        from   dates dt
+        left   join diary d
+        on     d.cob_date = dt.cob_date
+        order  by dt.cob_date
+        "#,
+        )
+        .bind::<DieselUuid, _>(user_id)
+        .bind::<Text, _>(practice)
+        .bind::<Interval, _>(interval)
+        .load::<Self>(conn)?;
+
+        Ok(res)
+    }
 }
 
 //TODO: test `upsert` that empty values are not inserted (and deleted if a value becomes empty) from diary

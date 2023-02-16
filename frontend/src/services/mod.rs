@@ -1,9 +1,10 @@
 use chrono::NaiveDate;
-use common::error::AppError;
+use common::{error::AppError, ReportDuration};
 
 use crate::model::{
     AllUserPractices, CreateUserPractice, DiaryDay, LoginInfoWrapper, RegisterInfoWrapper,
-    SendSignupLink, SignupLinkDetailsWrapper, UpdateUserPractice, UserInfoWrapper, UserPractice,
+    ReportData, SendSignupLink, SignupLinkDetailsWrapper, UpdateUserPractice, UserInfoWrapper,
+    UserPractice,
 };
 
 use self::requests::*;
@@ -76,4 +77,13 @@ pub async fn create_user_practice(user_practice: UserPractice) -> Result<(), App
         &CreateUserPractice { user_practice },
     )
     .await
+}
+
+/// Get chart data for a practice
+pub async fn get_chart_data(
+    practice: &str,
+    duration: &ReportDuration,
+) -> Result<ReportData, AppError> {
+    request_get(format!("/diary/report?practice={}&duration={}", practice, duration).to_string())
+        .await
 }

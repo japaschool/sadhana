@@ -332,7 +332,7 @@ pub fn home() -> Html {
             { calendar }
             <div class={ BODY_DIV_CSS }>
             {
-                for local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, value})| {
+                for local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, value})|
                     html! {
                         match data_type {
                             PracticeDataType::Int => html! {
@@ -407,7 +407,7 @@ pub fn home() -> Html {
                                 </div>
                             }
                     }}
-                })
+                )
             }
                 <div class="relative flex justify-center">
                     <Link<AppRoute> classes={ LINK_CSS } to={AppRoute::UserPractices}>
