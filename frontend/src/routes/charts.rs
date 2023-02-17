@@ -4,7 +4,7 @@ use crate::{
     components::{blank_page::BlankPage, chart::Chart, list_errors::ListErrors},
     css::*,
     i18n::Locale,
-    model::PracticeDataType,
+    model::{PracticeDataType, PracticeEntryValue},
     services::{get_chart_data, get_user_practices},
 };
 use common::ReportDuration;
@@ -129,7 +129,24 @@ pub fn charts() -> Html {
                                         .and_then(|v| v.as_time_str())
                                         .map(|s| format!("2020-01-01 {}:00", s))
                                         .unwrap_or_default(),
-                                    _ => p
+                                    PracticeDataType::Duration => p
+                                        .value
+                                        .as_ref()
+                                        .and_then(|v| match v {
+                                            PracticeEntryValue::Duration(minutes) => {
+                                                let h = minutes / 60;
+                                                let m = minutes % 60;
+                                                Some(format!(
+                                                    "2020-01-01 {:0width$}:{:0width$}:00",
+                                                    h,
+                                                    m,
+                                                    width = 2
+                                                ))
+                                            }
+                                            _ => None,
+                                        })
+                                        .unwrap_or_default(),
+                                    PracticeDataType::Text | PracticeDataType::Bool => p
                                         .value
                                         .as_ref()
                                         .map(|_| "1".to_string())

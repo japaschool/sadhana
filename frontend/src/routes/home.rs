@@ -100,22 +100,40 @@ pub fn home() -> Html {
         })
     };
 
-    fn get_new_val(input: &HtmlInputElement, entry: &DiaryEntry) -> Option<PracticeEntryValue> {
-        match entry.data_type {
-            PracticeDataType::Bool => Some(PracticeEntryValue::Bool(input.checked())),
-            PracticeDataType::Int => input
-                .value()
-                .parse()
-                .map(|v| PracticeEntryValue::Int(v))
-                .ok(),
-            PracticeDataType::Text => Some(PracticeEntryValue::Text(input.value())),
-            PracticeDataType::Time => input.value().split_once(":").and_then(|(h, m)| {
-                let h = h.parse().ok()?;
-                let m = m.parse().ok()?;
-                Some(PracticeEntryValue::Time { h, m })
-            }),
-        }
-    }
+    lazy_static! {
+        static ref DURATION_R: Regex = Regex::new(r#"(?:(\d+)[^\d]+)?(\d+)[^\d]+"#).unwrap();
+    };
+
+    let get_new_val = |input: &HtmlInputElement, entry: &DiaryEntry| match entry.data_type {
+        PracticeDataType::Bool => Some(PracticeEntryValue::Bool(input.checked())),
+        PracticeDataType::Int => input
+            .value()
+            .parse()
+            .map(|v| PracticeEntryValue::Int(v))
+            .ok(),
+        PracticeDataType::Text => Some(PracticeEntryValue::Text(input.value())),
+        PracticeDataType::Duration => DURATION_R
+            .captures_iter(&input.value())
+            .filter_map(|cap| {
+                cap.get(2).and_then(|m_str| {
+                    m_str.as_str().parse().ok().map(|m: u16| {
+                        PracticeEntryValue::Duration(
+                            m + 60
+                                * cap
+                                    .get(1)
+                                    .and_then(|h_str| h_str.as_str().parse::<u16>().ok())
+                                    .unwrap_or_default(),
+                        )
+                    })
+                })
+            })
+            .next(),
+        PracticeDataType::Time => input.value().split_once(":").and_then(|(h, m)| {
+            let h = h.parse().ok()?;
+            let m = m.parse().ok()?;
+            Some(PracticeEntryValue::Time { h, m })
+        }),
+    };
 
     let checkbox_onclick = {
         let change_buffer = local_diary_entry.clone();
@@ -150,18 +168,93 @@ pub fn home() -> Html {
     };
 
     lazy_static! {
-        static ref REJECT: Regex = Regex::new(r"[^\d]").unwrap();
+        static ref REJECT_TIME_R: Regex = Regex::new(r"[^\d]").unwrap();
+        static ref VALID_DURATION_R: Regex =
+            // There are 3 mutually exclusive regex patterns here.
+            // (1) 3 digits representing minutes. No hours are allowed.
+            // (2) Number up to 23 for hours only when no minutes are entered.
+            // (3) Number between 0 and 23 for hours when minutes are also present.
+            // (4) Optional separator between hours and minutes.
+            // (5) 2 digits for minutes in presence of hours. Limited to the number 59.
+            //
+            //                |---1---|    |--------2--------|             |---------3--------||----4----| |-----5-----|
+            Regex::new(r#"^(?:(\d{1,3})m?|([0-1]?[0-9]|2[0-3])(?:h?\s?|:)?|([0-1]?[0-9]|2[0-3])(?:h?\s?|:)?([0-5]?[0-9])m?)$"#)
+                .unwrap();
     };
 
+    // use_mut_ref is to avoid re-rendering on every key press
     let backspace_key_pressed = use_mut_ref(|| false);
+
+    let format_duration = |input: &mut HtmlInputElement| {
+        let input_value = input.value();
+
+        if input_value.is_empty() {
+            return;
+        }
+
+        VALID_DURATION_R
+            .captures_iter(&input.value())
+            .for_each(|cap| {
+                let (hours, minutes) = match (cap.get(1), cap.get(2), cap.get(3), cap.get(4)) {
+                    (Some(minutes_only), _, _, _) => {
+                        let mins = minutes_only.as_str().parse::<u32>().unwrap();
+                        ((mins / 60).to_string(), (mins % 60).to_string())
+                    }
+                    (_, Some(hours_only), _, _) => (hours_only.as_str().to_owned(), "0".into()),
+                    (_, _, Some(hours), Some(minutes)) => {
+                        (hours.as_str().to_owned(), minutes.as_str().to_owned())
+                    }
+                    _ => unreachable!(),
+                };
+                let hours_str = if hours == "0" {
+                    String::new()
+                } else {
+                    format!("{}{}", hours, Locale::current().hours_label(),)
+                };
+                input.set_value(&format!(
+                    "{}{}{}",
+                    hours_str,
+                    minutes,
+                    Locale::current().minutes_label()
+                ));
+            });
+    };
+
+    let oninput_duration = {
+        let back = backspace_key_pressed.clone();
+        Callback::from(move |e: InputEvent| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+
+            if *back.borrow() {
+                return;
+            }
+
+            let idx = input.selection_start().unwrap().unwrap();
+            let mut s = input.value();
+            while !VALID_DURATION_R.is_match(&s) {
+                let mut new_s = String::with_capacity(s.len());
+                let mut i = 0;
+                for ch in s.chars() {
+                    i += 1;
+                    if idx != i {
+                        new_s.push(ch);
+                    }
+                }
+                s = new_s;
+            }
+            input.set_value(&s);
+        })
+    };
 
     let format_time = |input: &mut HtmlInputElement, back: bool| {
         let sel_start = input.selection_start().unwrap().unwrap();
         let sel_end = input.selection_end().unwrap().unwrap();
         let input_value = input.value();
 
-        let mut sanitized = REJECT.replace_all(&input_value, "").to_string();
+        // Remove anything but digits
+        let mut sanitized = REJECT_TIME_R.replace_all(&input_value, "").to_string();
 
+        // Inject zeroes in the relevant places
         if sanitized.len() == 1 && sanitized.parse::<u32>().unwrap() > 2 {
             sanitized.insert(0, '0');
         } else if sanitized.len() == 2 && sanitized.parse::<u32>().unwrap() > 24 {
@@ -176,6 +269,7 @@ pub fn home() -> Html {
         let mut next_input_char = sanitized_iter.next();
         let mut res = String::with_capacity(TIME_PATTERN.len());
 
+        // overlay the time pattern over the user input
         for c in TIME_PATTERN.chars() {
             let x = next_input_char
                 .map(|i| {
@@ -190,6 +284,7 @@ pub fn home() -> Html {
             res.push(x);
         }
 
+        // Derive the new cursor position
         let [new_start, new_end] = [sel_start, sel_end].map(|i| {
             if back {
                 res.char_indices()
@@ -205,6 +300,7 @@ pub fn home() -> Html {
             }
         });
 
+        // Update the input
         input.set_value(res.as_str());
         let _ = input.set_selection_start(Some(new_start as u32));
         let _ = input.set_selection_end(Some(new_end as u32));
@@ -218,21 +314,34 @@ pub fn home() -> Html {
         })
     };
 
-    let onkeydown_time = {
+    let onkeydown_time_dur = {
         let back = backspace_key_pressed.clone();
         Callback::from(move |e: KeyboardEvent| {
             *back.borrow_mut() = e.key() == "Backspace";
         })
     };
 
-    let onblur_time = {
+    const TIME_PATTERN: &'static str = "--:--";
+
+    let onfocus_time = {
+        Callback::from(move |e: FocusEvent| {
+            let mut input: HtmlInputElement = e.target_unchecked_into();
+            format_time(&mut input, false);
+        })
+    };
+
+    let onblur_time_dur = |for_time: bool| {
         let change_buffer = local_diary_entry.clone();
         let ref_diary_entry = static_diary_entry.clone();
         let save_diary_day = save_diary_day.clone();
         Callback::from(move |e: FocusEvent| {
-            let input: HtmlInputElement = e.target_unchecked_into();
-            if input.value() == TIME_PATTERN {
-                input.set_value("");
+            let mut input: HtmlInputElement = e.target_unchecked_into();
+            if for_time {
+                if input.value() == TIME_PATTERN {
+                    input.set_value("");
+                }
+            } else {
+                format_duration(&mut input)
             }
 
             // Safari does not seem to fire onchange when there is oninput: https://developer.apple.com/forums/thread/698078
@@ -247,14 +356,8 @@ pub fn home() -> Html {
         })
     };
 
-    const TIME_PATTERN: &'static str = "--:--";
-
-    let onfocus_time = {
-        Callback::from(move |e: FocusEvent| {
-            let mut input: HtmlInputElement = e.target_unchecked_into();
-            format_time(&mut input, false);
-        })
-    };
+    let onblur_duration = onblur_time_dur(false);
+    let onblur_time = onblur_time_dur(true);
 
     let next_week_onclick = {
         let selected_date = selected_date.clone();
@@ -367,6 +470,27 @@ pub fn home() -> Html {
                                     </label>
                                 </div>
                                 },
+                            PracticeDataType::Duration => html! {
+                                <div class="relative" key={ practice.clone() } >
+                                    <input
+                                        autocomplete="off"
+                                        id={ idx.to_string() }
+                                        type="text"
+                                        pattern="[0-9]*"
+                                        onblur={ onblur_duration.clone() }
+                                        //onfocus={ onfocus_time.clone() }
+                                        oninput={ oninput_duration.clone() }
+                                        onkeydown={ onkeydown_time_dur.clone() }
+                                        value={ value.iter().find_map(|v| v.as_duration_str()).unwrap_or_default() }
+                                        class={ format!("{} text-center", INPUT_CSS) }
+                                        placeholder={ idx.to_string() }
+                                        />
+                                    <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
+                                        <i class="fa fa-clock"></i>
+                                        { format!(" {}: ", practice) }
+                                    </label>
+                                </div>
+                                },
                             PracticeDataType::Time => html! {
                                 <div class="relative" key={ practice.clone() } >
                                     <input
@@ -374,10 +498,10 @@ pub fn home() -> Html {
                                         id={ idx.to_string() }
                                         type="text"
                                         pattern="[0-9]*"
-                                        onblur={ onblur_time.clone()}
+                                        onblur={ onblur_time.clone() }
                                         onfocus={ onfocus_time.clone() }
                                         oninput={ oninput_time.clone() }
-                                        onkeydown={ onkeydown_time.clone() }
+                                        onkeydown={ onkeydown_time_dur.clone() }
                                         value={ value.iter().find_map(|v| v.as_time_str()).unwrap_or_default() }
                                         class={ format!("{} text-center", INPUT_CSS) }
                                         placeholder={ idx.to_string() }

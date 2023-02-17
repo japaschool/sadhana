@@ -1,6 +1,8 @@
 use chrono::{naive::NaiveDate, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 
+use crate::i18n::Locale;
+
 //FIXME: break up into sub modules
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct UserInfo {
@@ -81,6 +83,7 @@ pub enum PracticeDataType {
     Bool,
     Time,
     Text,
+    Duration,
 }
 
 impl TryFrom<&str> for PracticeDataType {
@@ -92,6 +95,7 @@ impl TryFrom<&str> for PracticeDataType {
             "bool" => Ok(PracticeDataType::Bool),
             "time" => Ok(PracticeDataType::Time),
             "text" => Ok(PracticeDataType::Text),
+            "duration" => Ok(PracticeDataType::Duration),
             _ => Err(format!("Unknown PracticeDataType value {}", value)),
         }
     }
@@ -109,6 +113,7 @@ pub enum PracticeEntryValue {
     Bool(bool),
     Time { h: u8, m: u8 },
     Text(String),
+    Duration(u16),
 }
 
 impl PracticeEntryValue {
@@ -130,6 +135,32 @@ impl PracticeEntryValue {
         match self {
             &PracticeEntryValue::Time { h, m } => {
                 Some(format!("{:0width$}:{:0width$}", h, m, width = 2))
+            }
+            _ => None,
+        }
+    }
+
+    pub fn as_duration_str(&self) -> Option<String> {
+        match self {
+            &PracticeEntryValue::Duration(mins) => {
+                let hours = mins / 60;
+                let minutes = mins % 60;
+                let res = if hours > 0 {
+                    format!(
+                        "{hours}{hours_label} {minutes}{minutes_label}",
+                        hours = hours,
+                        minutes = minutes,
+                        hours_label = Locale::current().hours_label(),
+                        minutes_label = Locale::current().minutes_label()
+                    )
+                } else {
+                    format!(
+                        "{minutes}{minutes_label}",
+                        minutes = minutes,
+                        minutes_label = Locale::current().minutes_label()
+                    )
+                };
+                Some(res)
             }
             _ => None,
         }

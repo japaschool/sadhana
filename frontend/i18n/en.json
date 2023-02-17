@@ -17,6 +17,7 @@
     "boolean": "Boolean",
     "time": "Time",
     "text": "Text",
+    "duration": "Duration",
     "delete_practice_warning": "Are you sure you want to delete? Any logged data associated with this practice will be lost.",
     "enter_new_practice_name": "Rename practice to:",
     "select_practices": "Select Practices",
@@ -34,8 +35,9 @@
     "register": "Register",
     "login": "Login",
     "cancel": "Cancel",
-    "duration": "Duration",
     "last_month": "Last 30 Days",
     "last_quarter": "Last 90 Days",
-    "last_year": "Last 365 Days"
+    "last_year": "Last 365 Days",
+    "hours_label": "h",
+    "minutes_label": "m"
 }

@@ -9,4 +9,5 @@ pub enum PracticeDataType {
     Bool,
     Time,
     Text,
+    Duration,
 }

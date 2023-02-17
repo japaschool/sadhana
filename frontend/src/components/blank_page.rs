@@ -68,7 +68,7 @@ pub fn blank_page(props: &Props) -> Html {
                     <div class="bg-transparent justify-center">
                         <div class="relative py-3 sm:max-w-xl sm:mx-auto">
                             <div class="relative px-8 sm:rounded-3xl sm:px-20">
-                                <div class="text-white text-3xl flex justify-between whitespace-nowrap items-center">
+                                <div class="text-white text-2xl flex justify-between whitespace-nowrap items-center">
                                     <span><Link<AppRoute> to={AppRoute::Home}><i class="fa-solid fa-house" /></Link<AppRoute>></span>
                                     <span><Link<AppRoute> to={AppRoute::Charts}><i class="fa-solid fa-chart-column" /></Link<AppRoute>></span>
                                     <span><a href="#" class=""><i class="fa-solid fa-gear" /></a></span>

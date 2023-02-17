@@ -105,6 +105,7 @@ pub fn new_user_practice() -> Html {
                             <option value="time">{ Locale::current().time() }</option>
                             <option value="bool">{ Locale::current().boolean() }</option>
                             <option value="text">{ Locale::current().text() }</option>
+                            <option value="duration">{ Locale::current().duration() }</option>
                         </select>
                         <label for="data_type" class={ INPUT_LABEL_CSS }>
                             <i class="fa"></i>

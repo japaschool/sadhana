@@ -29,7 +29,7 @@ pub fn chart(props: &Props) -> Html {
         .margin(Margin::new().left(40).right(20).top(10))
         .auto_size(true);
 
-    if let Some(PracticeDataType::Time) = props.y_axis_type {
+    if let Some(PracticeDataType::Time | PracticeDataType::Duration) = props.y_axis_type {
         layout = layout.y_axis(Axis::new().tick_format("%H:%M"))
     }
 
