@@ -478,7 +478,6 @@ pub fn home() -> Html {
                                         type="text"
                                         pattern="[0-9]*"
                                         onblur={ onblur_duration.clone() }
-                                        //onfocus={ onfocus_time.clone() }
                                         oninput={ oninput_duration.clone() }
                                         onkeydown={ onkeydown_time_dur.clone() }
                                         value={ value.iter().find_map(|v| v.as_duration_str()).unwrap_or_default() }

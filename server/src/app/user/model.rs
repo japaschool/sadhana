@@ -50,8 +50,8 @@ impl User {
         conn.transaction(|conn| {
             sql_query(
                 r#"
-            insert into user_practices (user_id, practice, data_type, is_active)
-                select $1, practice, data_type, true
+            insert into user_practices (user_id, practice, data_type, is_active, order_key)
+                select $1, practice, data_type, true, row_number() over (order by practice) - 1
                 from default_user_practices
             "#,
             )

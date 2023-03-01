@@ -3,8 +3,8 @@ use common::{error::AppError, ReportDuration};
 
 use crate::model::{
     AllUserPractices, CreateUserPractice, DiaryDay, LoginInfoWrapper, RegisterInfoWrapper,
-    ReportData, SendSignupLink, SignupLinkDetailsWrapper, UpdateUserPractice, UserInfoWrapper,
-    UserPractice,
+    ReportData, SendSignupLink, SignupLinkDetailsWrapper, UpdateUserPractice,
+    UpdateUserPracticesOrderKey, UserInfoWrapper, UserPractice,
 };
 
 use self::requests::*;
@@ -61,6 +61,15 @@ pub async fn update_user_practice(
     request_put(
         format!("/user/practice/{}", practice),
         &UpdateUserPractice { user_practice },
+    )
+    .await
+}
+
+/// Reorder user practices
+pub async fn reorder_user_practices(practices: Vec<String>) -> Result<(), AppError> {
+    request_put(
+        "/user/practices/reorder".to_string(),
+        UpdateUserPracticesOrderKey { practices },
     )
     .await
 }

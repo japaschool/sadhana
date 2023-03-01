@@ -52,7 +52,7 @@ pub fn new_user_practice() -> Html {
 
             let input: HtmlInputElement = e.target_unchecked_into();
             let mut form = (*form_data).clone();
-            form.practice = input.value();
+            form.practice = input.value().trim().to_owned();
             form_data.set(form);
             log::debug!("Form data has changed: {:?}", *form_data);
         })
@@ -100,12 +100,12 @@ pub fn new_user_practice() -> Html {
                             id="data_type"
                             onchange={ data_type_onchange }
                             required=true >
-                            <option value="" selected=true style="display:none">{ Locale::current().select_data_type() }</option>
                             <option value="int">{ Locale::current().integer() }</option>
                             <option value="time">{ Locale::current().time() }</option>
                             <option value="bool">{ Locale::current().boolean() }</option>
                             <option value="text">{ Locale::current().text() }</option>
                             <option value="duration">{ Locale::current().duration() }</option>
+                            <option value="" selected=true disabled=true style="display:none">{ Locale::current().select_data_type() }</option>
                         </select>
                         <label for="data_type" class={ INPUT_LABEL_CSS }>
                             <i class="fa"></i>

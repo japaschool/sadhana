@@ -1,0 +1,1 @@
+alter table user_practices drop column if exists order_key;

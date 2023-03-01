@@ -14,8 +14,14 @@ use yew_hooks::{use_async, use_mount};
 
 #[function_component(Charts)]
 pub fn charts() -> Html {
-    let all_practices =
-        use_async(async move { get_user_practices().await.map(|res| res.user_practices) });
+    let all_practices = use_async(async move {
+        get_user_practices().await.map(|res| {
+            res.user_practices
+                .into_iter()
+                .filter(|p| p.is_active)
+                .collect::<Vec<_>>()
+        })
+    });
 
     {
         // Load state on mount

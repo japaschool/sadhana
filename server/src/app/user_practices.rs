@@ -32,6 +32,7 @@ impl UserPractice {
                 user_practices::is_active,
             ))
             .filter(user_practices::user_id.eq(user_id))
+            .order(user_practices::order_key)
             .load(conn)?;
 
         Ok(res)
@@ -58,6 +59,26 @@ impl UserPractice {
         Ok(())
     }
 
+    pub fn update_order_key(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        data: &Vec<UpdateUserPracticeOrderKey>,
+    ) -> Result<(), AppError> {
+        conn.transaction(|conn| {
+            for row in data {
+                diesel::update(user_practices::table)
+                    .set(user_practices::order_key.eq(row.order_key))
+                    .filter(
+                        user_practices::user_id
+                            .eq(user_id)
+                            .and(user_practices::practice.eq(&row.practice)),
+                    )
+                    .execute(conn)?;
+            }
+            Ok(())
+        })
+    }
+
     pub fn delete(conn: &mut PgConnection, user_id: &Uuid, practice: &str) -> Result<(), AppError> {
         conn.transaction(|conn| {
             sql_query(
@@ -74,25 +95,37 @@ impl UserPractice {
             .bind::<Text, _>(practice)
             .execute(conn)?;
 
-            sql_query(
-                r#"
-                delete from user_practices 
-                where user_id = $1 and practice = $2
-            "#,
-            )
-            .bind::<DieselUuid, _>(user_id)
-            .bind::<Text, _>(practice)
-            .execute(conn)
+            diesel::delete(user_practices::table)
+                .filter(
+                    user_practices::user_id
+                        .eq(user_id)
+                        .and(user_practices::practice.eq(practice)),
+                )
+                .execute(conn)
         })?;
 
         Ok(())
     }
 
     pub fn create(conn: &mut PgConnection, record: &NewUserPractice) -> Result<(), AppError> {
-        diesel::insert_into(user_practices::table)
-            .values(record)
-            .execute(conn)?;
-        Ok(())
+        use crate::schema::user_practices::dsl::*;
+
+        conn.transaction(|conn| {
+            let cnt: i64 = user_practices
+                .select(diesel::dsl::count_star())
+                .first(conn)?;
+
+            diesel::insert_into(user_practices)
+                .values((
+                    user_id.eq(record.user_id),
+                    practice.eq(&record.practice),
+                    data_type.eq(&record.data_type),
+                    is_active.eq(record.is_active),
+                    order_key.eq(cnt as i32),
+                ))
+                .execute(conn)?;
+            Ok(())
+        })
     }
 }
 
@@ -162,6 +195,29 @@ pub async fn update_user_practice(
     Ok(HttpResponse::Ok().json(()))
 }
 
+/// Updates order key for all practices of a particular user
+pub async fn update_user_practice_order_key(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    form: web::Json<UpdateUserPracticeOrderKeyRequest>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
+
+    let data = form
+        .practices
+        .iter()
+        .enumerate()
+        .map(|(idx, practice)| UpdateUserPracticeOrderKey {
+            practice: practice.clone(),
+            order_key: idx as i32,
+        })
+        .collect();
+
+    web::block(move || UserPractice::update_order_key(&mut conn, &user_id, &data)).await??;
+    Ok(HttpResponse::Ok().json(()))
+}
+
 /// Adds a new user practice
 pub async fn add_new(
     state: web::Data<AppState>,
@@ -197,4 +253,15 @@ pub struct NewUserPracticeRequest {
 #[derive(Debug, Deserialize)]
 pub struct UpdateUserPracticeRequest {
     user_practice: UserPractice,
+}
+
+#[derive(Debug)]
+pub struct UpdateUserPracticeOrderKey {
+    pub practice: String,
+    pub order_key: i32,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateUserPracticeOrderKeyRequest {
+    practices: Vec<String>,
 }

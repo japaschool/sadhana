@@ -196,6 +196,11 @@ pub struct UpdateUserPractice {
     pub user_practice: UserPractice,
 }
 
+#[derive(Debug, Serialize)]
+pub struct UpdateUserPracticesOrderKey {
+    pub practices: Vec<String>,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct ReportData {
     pub values: Vec<ReportDataEntry>,

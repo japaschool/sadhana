@@ -24,6 +24,10 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                     .service(
                         web::scope("/practices")
                             .route("", web::post().to(app::user_practices::add_new))
+                            .route(
+                                "/reorder",
+                                web::put().to(app::user_practices::update_user_practice_order_key),
+                            )
                             .route("", web::get().to(app::user_practices::get_user_practices)),
                     )
                     .service(

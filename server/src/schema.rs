@@ -47,6 +47,7 @@ diesel::table! {
         is_active -> Bool,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+        order_key -> Int4,
     }
 }
 
