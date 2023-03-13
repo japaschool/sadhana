@@ -41,6 +41,7 @@ features = [
   "HtmlCollection",
   "HtmlInputElement",
   "CssStyleDeclaration",
+  "DomRect"
 ]
 
 [profile.release]

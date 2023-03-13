@@ -216,7 +216,10 @@ pub fn user_practices() -> Html {
         Callback::from(move |e: DragEvent| {
             e.prevent_default();
             let target = get_div(e.target_unchecked_into());
-            let offset = target.client_top() + target.client_height() / 2;
+            let rect = target.get_bounding_client_rect();
+            let offset = (rect.y() + rect.height() / 2.0)
+                .round()
+                .rem_euclid(2f64.powi(32)) as u32 as i32;
             if e.client_y() - offset > 0 {
                 target
                     .style()
@@ -248,6 +251,7 @@ pub fn user_practices() -> Html {
             e.prevent_default();
             let target: HtmlElement = get_div(e.target_unchecked_into());
             let dragging = dragging.borrow_mut().take().unwrap();
+            let mut moving_below_target = true;
             if !target
                 .style()
                 .get_property_value("border-bottom")
@@ -257,14 +261,23 @@ pub fn user_practices() -> Html {
                 target.style().set_property("border-bottom", "").unwrap();
             } else {
                 target.style().set_property("border-top", "").unwrap();
+                moving_below_target = false;
             }
             let dragging_idx: usize = dragging.id().parse().unwrap();
             let mut target_idx: usize = target.id().parse().unwrap();
-            // If moving up need to adjust the new index by 1.
-            // This is cause we draw only the bottom line.
-            if target_idx < dragging_idx {
+
+            // When moving _below_ an element, and that element is _above_ the one being dragged,
+            // add 1 to target index to indicate it goes below the one we are dropping it onto
+            if moving_below_target && target_idx < dragging_idx {
                 target_idx += 1;
             }
+
+            // When moving _above_ an element and that element is _above_ the one being dragged
+            // take away 1 from target index to indicate it goes above the one we are dropping it onto
+            if !moving_below_target && target_idx > dragging_idx {
+                target_idx -= 1;
+            }
+
             let p = ordered.remove(dragging_idx);
             ordered.insert(target_idx, p);
         })
