@@ -1,3 +1,4 @@
+use common::error::AppError;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::use_async;
@@ -6,7 +7,7 @@ use crate::{
     components::{blank_page::BlankPage, list_errors::ListErrors},
     css::*,
     hooks::use_user_context,
-    i18n::Locale,
+    i18n::*,
     model::UserPractice,
     routes::AppRoute,
     services::create_user_practice,
@@ -59,6 +60,7 @@ pub fn new_user_practice() -> Html {
     };
 
     let data_type_onchange = {
+        let form_data = form_data.clone();
         Callback::from(move |e: Event| {
             e.prevent_default();
 
@@ -70,13 +72,25 @@ pub fn new_user_practice() -> Html {
         })
     };
 
+    let error_formatter = {
+        let form = form_data.clone();
+        Callback::from(move |err| match err {
+            AppError::UnprocessableEntity(err)
+                if err.iter().find(|s| s.contains("already exists.")).is_some() =>
+            {
+                Some(Locale::current().practice_already_exists(PracticeName(&form.practice)))
+            }
+            _ => None,
+        })
+    };
+
     html! {
         <BlankPage
             header_label={ Locale::current().select_practices() }
             prev_link={ (Locale::current().cancel(), AppRoute::UserPractices) }
             loading={ save.loading }
             >
-            <ListErrors error={save.error.clone()} />
+            <ListErrors error={save.error.clone()} {error_formatter} />
             <form {onsubmit}>
                 <div class={ BODY_DIV_CSS }>
                     <div class="relative">

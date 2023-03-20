@@ -39,5 +39,11 @@
     "last_quarter": "Последние 90 дней",
     "last_year": "Последние 365 дней",
     "hours_label": "ч",
-    "minutes_label": "м"
+    "minutes_label": "м",
+    "login_not_found": "Пользотель с адресом {email} не найден",
+    "request_error": "Сервер недосягаем",
+    "internal_server_error": "Снутренняя ошибка",
+    "unauthorized": "Неверно введен пароль",
+    "practice_already_exists": "Практика с именем {practice_name} уже существует",
+    "invalid_signup_link": "Неправильный или просроченный адрес для создания пользователя"
 }

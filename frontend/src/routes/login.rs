@@ -1,3 +1,4 @@
+use common::error::AppError;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::prelude::*;
@@ -7,7 +8,7 @@ use crate::{
     components::{blank_page::BlankPage, list_errors::ListErrors},
     css::*,
     hooks::use_user_context,
-    i18n::Locale,
+    i18n::*,
     model::*,
     services, AppRoute,
 };
@@ -67,9 +68,18 @@ pub fn login() -> Html {
         })
     };
 
+    let error_formatter = {
+        let login_info = login_info.clone();
+        Callback::from(move |err| match err {
+            AppError::NotFound => Some(Locale::current().login_not_found(Email(&login_info.email))),
+            _ => None,
+        })
+    };
+
     html! {
         <BlankPage header_label={ Locale::current().login() } loading={ user_login.loading }>
-            <ListErrors error={user_login.error.clone()} />
+            <ListErrors error={ user_login.error.clone() } error_formatter={ error_formatter }
+            />
             <form {onsubmit}>
                 <div class={ BODY_DIV_CSS }>
                     <div class="relative">
