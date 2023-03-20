@@ -1,3 +1,4 @@
+use common::error::AppError;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_mount};
@@ -102,10 +103,17 @@ pub fn register_with_id(props: &Props) -> Html {
         })
     };
 
+    let error_formatter = {
+        Callback::from(move |err| match err {
+            AppError::NotFound => Some(Locale::current().invalid_signup_link()),
+            _ => None,
+        })
+    };
+
     html! {
         <BlankPage header_label={ Locale::current().register() } loading={ user_register.loading }>
-            <ListErrors error={signup_confirmation.error.clone()} />
-            <ListErrors error={user_register.error.clone()} />
+            <ListErrors error={signup_confirmation.error.clone()} error_formatter={ error_formatter.clone() } />
+            <ListErrors error={user_register.error.clone()} error_formatter={ error_formatter.clone() } />
             <form {onsubmit}>
                 <div class={ BODY_DIV_CSS }>
                     <div class="relative">
@@ -132,6 +140,7 @@ pub fn register_with_id(props: &Props) -> Html {
                                 value={ register_info.name.clone() }
                                 oninput={ oninput_name }
                                 required = true
+                                minlength="3"
                                 />
                             <label for="name"
                                 class={ INPUT_LABEL_CSS }>
@@ -147,6 +156,7 @@ pub fn register_with_id(props: &Props) -> Html {
                                 value={ register_info.password.clone() }
                                 oninput={ oninput_password }
                                 required = true
+                                minlength="5"
                                 />
                             <label for="password"
                                 class={ INPUT_LABEL_CSS }>
