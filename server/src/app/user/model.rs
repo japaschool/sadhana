@@ -121,6 +121,16 @@ impl Confirmation {
 
     /// Creates a new Confirmation in the DB for an email. If the email already exists resets its expiry time.
     pub fn create(conn: &mut PgConnection, email: &str) -> Result<Self, AppError> {
+        if let Ok(_) = users::table
+            .filter(users::email.eq(email))
+            .first::<User>(conn)
+        {
+            return Err(AppError::UnprocessableEntity(vec![format!(
+                "User with email {} already exists.",
+                email
+            )]));
+        }
+
         let res: Self = diesel::insert_into(confirmations::table)
             .values((
                 &confirmations::email.eq(email),
