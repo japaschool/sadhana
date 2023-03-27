@@ -10,6 +10,8 @@ WORKDIR /usr/src/sadhana-pro
 
 COPY . .
 
+COPY env.template .env
+
 RUN cd frontend && trunk build --release
 RUN cargo build --release
 
@@ -47,7 +49,7 @@ COPY --from=build /lib/x86_64-linux-gnu/libkeyutils.so.1.9 /lib/x86_64-linux-gnu
 
 COPY --from=build /usr/src/sadhana-pro/target/release/server /usr/local/bin/server
 COPY --from=build /usr/src/sadhana-pro/dist /usr/local/bin/dist
-COPY --from=build /usr/src/sadhana-pro/env.template /usr/local/bin/.env
+COPY --from=build /usr/src/sadhana-pro/.env /usr/local/bin/.env
 
 WORKDIR /usr/local/bin
 CMD [ "server" ]
