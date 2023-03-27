@@ -1,4 +1,5 @@
 use crate::css::*;
+use common::error::AppError;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::prelude::*;
@@ -6,7 +7,7 @@ use yew_router::prelude::*;
 
 use crate::{
     components::{blank_page::BlankPage, list_errors::ListErrors},
-    i18n::Locale,
+    i18n::*,
     model::SendSignupLink,
     services, AppRoute,
 };
@@ -45,12 +46,27 @@ pub fn register() -> Html {
         })
     };
 
+    let error_formatter = {
+        let email = signup_email.clone();
+        Callback::from(move |err| match err {
+            AppError::UnprocessableEntity(err)
+                if err
+                    .iter()
+                    .find(|s| s.ends_with("already exists."))
+                    .is_some() =>
+            {
+                Some(Locale::current().user_already_exists(Email(&*email)))
+            }
+            _ => None,
+        })
+    };
+
     html! {
         <BlankPage header_label={ Locale::current().register() }>
-            <ListErrors error={send_signup_email.error.clone()} />
+            <ListErrors error={send_signup_email.error.clone()} {error_formatter} />
             <form onsubmit={onsubmit_signup}>
                 <div class={ BODY_DIV_CSS }>
-                    if *email_sent {
+                    if *email_sent && send_signup_email.error.is_none() {
                         <div class="relative">
                             <label>{ Locale::current().signup_email_sent() }</label>
                         </div>

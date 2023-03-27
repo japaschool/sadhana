@@ -45,5 +45,6 @@
     "internal_server_error": "Снутренняя ошибка",
     "unauthorized": "Неверно введен пароль",
     "practice_already_exists": "Практика с именем {practice_name} уже существует",
-    "invalid_signup_link": "Неправильный или просроченный адрес для создания пользователя"
+    "invalid_signup_link": "Неправильный или просроченный адрес для создания пользователя",
+    "user_already_exists": "Пользователь с адресом {email} уже существует."
 }

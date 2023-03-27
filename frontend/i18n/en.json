@@ -45,5 +45,6 @@
     "internal_server_error": "Internal server error",
     "unauthorized": "Invalid password",
     "practice_already_exists": "Practice {practice_name} already exists",
-    "invalid_signup_link": "Invalid or expired signup link"
+    "invalid_signup_link": "Invalid or expired signup link",
+    "user_already_exists": "User with email {email} already exists. Please log in or reset password."
 }
