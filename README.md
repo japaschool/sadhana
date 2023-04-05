@@ -69,12 +69,13 @@ Start it when changing css classes as follows:
 `insert into user_practices (user_id, practice, data_type) select id, 'Rounds, Total', 'int' from users;`
 
 ### Docker
-1. Make sure .env is filled in
-2. Build:
-`docker build -t sadhanapro .`
-2. Run:
-`docker run -p8080:80 -t -e 'SERVER_ADDRESS=0.0.0.0:80' -e 'API_ROOT=http://192.168.68.102:8080/api' -e 'JWT_KEY=xyz' sadhana_pro`
+For the UI (that runs in user's browser) to know the backend address we have to bake it in during build phase. Therefore we have to pass API_ROOT variable to docker build command. The complete command is as follows (note /api at the end of API_ROOT):
+`docker build --build-arg API_ROOT="https://bi.antonoal.duckdns.org/api" -t sadhanapro .`
 
+To run the container use the following command as an example:
+`docker run -p4242:80 -d --name sadhanapro -t -e 'SERVER_ADDRESS=0.0.0.0:80' -e 'JWT_KEY=xyz' -v "$(pwd)"/env.template:/usr/local/bin/.env sadhanapro`
+
+The required environment variables can be either passed down with `-e` flag or in a mapped `.env` file.
 ### Splash screen generation for iOS
 1. `npm install pwa-asset-generator`
 2. Run
