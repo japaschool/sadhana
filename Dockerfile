@@ -1,5 +1,7 @@
 FROM rust:1.68 as build
 
+ARG API_ROOT
+
 RUN apt update
 RUN apt install -y libpq5
 
@@ -10,8 +12,7 @@ WORKDIR /usr/src/sadhana-pro
 
 COPY . .
 
-COPY env.template .env
-
+RUN touch .env
 RUN cd frontend && trunk build --release
 RUN cargo build --release
 
