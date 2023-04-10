@@ -1,0 +1,21 @@
+name: Merge Event Action
+on:
+  push:
+    branches:
+      - main
+jobs:
+  merge-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: {%- raw -%} ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
+      - name: Adding Known Hosts
+        run: ssh-keyscan -H ${{ secrets.SSH_HOST }}{% endraw%} >> ~/.ssh/known_hosts
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Deploy with rsync
+        if: github.event_name == 'push' && contains(github.ref, 'refs/heads/main')
+        run: rsync -avz ./ admin@${{ secrets.SSH_HOST }}:/sadhana/
