@@ -1,7 +1,7 @@
-use yew::prelude::*;
+use yew::{html::onclick::Event, prelude::*};
 use yew_router::prelude::*;
 
-use crate::{css::*, routes::AppRoute};
+use crate::{css::*, i18n::Locale, routes::AppRoute};
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
@@ -9,11 +9,86 @@ pub struct Props {
     pub header_label: Option<String>,
     #[prop_or_default]
     pub prev_link: Option<(String, AppRoute)>,
+    #[prop_or_default]
+    pub left_button: Option<HeaderButtonProps>,
+    #[prop_or_default]
+    pub right_button: Option<HeaderButtonProps>,
     #[prop_or(false)]
     pub loading: bool,
     #[prop_or(false)]
     pub show_footer: bool,
     pub children: Children,
+}
+
+#[derive(Clone, PartialEq)]
+pub enum ButtonType {
+    Button,
+    Submit,
+    Reset,
+}
+impl ButtonType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ButtonType::Button => "button",
+            ButtonType::Submit => "submit",
+            ButtonType::Reset => "reset",
+        }
+    }
+}
+
+#[derive(Clone, PartialEq)]
+pub struct HeaderButtonProps {
+    label: String,
+    icon_css: Option<String>,
+    onclick: Callback<Event>,
+    btn_type: ButtonType,
+}
+
+impl HeaderButtonProps {
+    pub fn new<S: Into<String>>(
+        label: S,
+        onclick: Callback<Event>,
+        icon_css: Option<String>,
+        btn_type: ButtonType,
+    ) -> Self {
+        HeaderButtonProps {
+            label: label.into(),
+            icon_css,
+            onclick,
+            btn_type,
+        }
+    }
+
+    pub fn edit(onclick: Callback<Event>) -> Self {
+        Self::new(Locale::current().edit(), onclick, None, ButtonType::Button)
+    }
+
+    pub fn submit<S: Into<String>>(label: S) -> Self {
+        Self::new(label.into(), Callback::default(), None, ButtonType::Submit)
+    }
+
+    pub fn reset<S: Into<String>>(label: S) -> Self {
+        Self::new(label.into(), Callback::default(), None, ButtonType::Reset)
+    }
+
+    pub fn blank() -> Self {
+        Self::new("", Callback::default(), None, ButtonType::Button)
+    }
+}
+
+fn header_button(props: &Option<HeaderButtonProps>) -> Html {
+    if let Some(ref rb) = props {
+        html! {
+            <span class="text-white">
+                <button type={ rb.btn_type.as_str() } class={ LINK_CSS } onclick={ rb.onclick.clone() }>
+                    <i class={ format!("fa-solid {}", rb.icon_css.to_owned().unwrap_or_default()) }></i>
+                    { &rb.label }
+                </button>
+            </span>
+        }
+    } else {
+        html! {}
+    }
 }
 
 #[function_component(BlankPage)]
@@ -30,23 +105,29 @@ pub fn blank_page(props: &Props) -> Html {
                         </div>
                     }
                     <div class="w-full text-center relative">
-                        { props.prev_link.iter().map(|(label, route)|
-                            html! {
-                                <div class="absolute flex w-full h-full flex-col justify-center px-4">
-                                    <div class="relative">
-                                        <div class="relative sm:max-w-xl sm:mx-auto">
-                                            <div class="relative flex py-10 sm:p-20">
-                                                <span class="text-white"><i class="fa-solid fa-chevron-left"></i>
-                                                    <Link<AppRoute> classes={ LINK_CSS } to={ route.clone() }>
-                                                        { format!(" {}", label) }
-                                                    </Link<AppRoute>>
-                                                </span>
-                                            </div>
-                                        </div>
+                        <div class="absolute flex w-full h-full flex-col justify-center px-4">
+                            <div class="relative">
+                                <div class="relative sm:max-w-xl sm:mx-auto">
+                                    <div class="relative flex justify-between py-10 sm:p-20">
+                                        {
+                                            if let Some((ref label, ref route)) = props.prev_link {
+                                                html! {
+                                                    <span class="text-white">
+                                                        <Link<AppRoute> classes={ LINK_CSS } to={ route.clone() }>
+                                                            <i class="fa-solid fa-chevron-left"></i>
+                                                            { format!(" {}", label) }
+                                                        </Link<AppRoute>>
+                                                    </span>
+                                                }
+                                            } else {
+                                                header_button(&props.left_button)
+                                            }
+                                        }
+                                        { header_button(&props.right_button) }
                                     </div>
                                 </div>
-                            }).collect::<Html>()
-                        }
+                            </div>
+                        </div>
                         <img class="h-20 inline-block" src="/images/logo.png" />
                     </div>
                     <div class="relative py-3 sm:max-w-xl sm:mx-auto">
@@ -71,7 +152,7 @@ pub fn blank_page(props: &Props) -> Html {
                                 <div class="text-white text-2xl flex justify-between whitespace-nowrap items-center">
                                     <span><Link<AppRoute> to={AppRoute::Home}><i class="fa-solid fa-house" /></Link<AppRoute>></span>
                                     <span><Link<AppRoute> to={AppRoute::Charts}><i class="fa-solid fa-chart-column" /></Link<AppRoute>></span>
-                                    <span><a href="#" class=""><i class="fa-solid fa-gear" /></a></span>
+                                    <span><Link<AppRoute> to={AppRoute::Settings}><i class="fa-solid fa-gear" /></Link<AppRoute>></span>
                                 </div>
                             </div>
                         </div>

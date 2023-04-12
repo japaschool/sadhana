@@ -41,7 +41,8 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                                 web::put().to(app::user_practices::update_user_practice),
                             ),
                     )
-                    .route("", web::get().to(app::user::api::me)),
+                    .route("", web::get().to(app::user::api::me))
+                    .route("", web::put().to(app::user::api::update_user)),
             )
             .service(
                 web::scope("/diary")

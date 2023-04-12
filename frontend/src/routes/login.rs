@@ -113,7 +113,7 @@ pub fn login() -> Html {
                         </label>
                     </div>
                     <div class="relative flex justify-between sm:text-sm">
-                        <a>{"Forgot password?"}</a>
+                        <a>{ Locale::current().forgot_password() }</a>
                         <Link<AppRoute>
                             classes={ LINK_CSS }
                             to={AppRoute::Register}>{ Locale::current().need_an_account() }

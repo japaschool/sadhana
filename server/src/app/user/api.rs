@@ -73,7 +73,6 @@ type ConfirmationIdSlug = Uuid;
 
 pub async fn signup_link_details(
     state: web::Data<AppState>,
-    // req: HttpRequest,
     path: web::Path<ConfirmationIdSlug>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
@@ -88,6 +87,17 @@ pub async fn me(req: HttpRequest) -> Result<HttpResponse, AppError> {
     let token = user.generate_token()?;
     let res = UserResponse::from((user, token));
     Ok(HttpResponse::Ok().json(res))
+}
+
+pub async fn update_user(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    form: web::Json<request::UpdateUserRequest>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let user = auth::get_current_user(&req)?;
+    web::block(move || User::update(&mut conn, user.id, &form.user.name)).await??;
+    Ok(HttpResponse::Ok().json(()))
 }
 
 #[cfg(test)]
