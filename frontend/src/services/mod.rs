@@ -3,8 +3,8 @@ use common::{error::AppError, ReportDuration};
 
 use crate::model::{
     AllUserPractices, CreateUserPractice, DiaryDay, LoginInfoWrapper, RegisterInfoWrapper,
-    ReportData, SendSignupLink, SignupLinkDetailsWrapper, UpdateUserPractice,
-    UpdateUserPracticesOrderKey, UserInfoWrapper, UserPractice,
+    ReportData, SendSignupLink, SignupLinkDetailsWrapper, UpdateUser, UpdateUserPractice,
+    UpdateUserPracticesOrderKey, UpdateUserWrapper, UserInfoWrapper, UserPractice,
 };
 
 use self::requests::*;
@@ -34,6 +34,11 @@ pub async fn register(register_info: RegisterInfoWrapper) -> Result<UserInfoWrap
 /// Get current user info
 pub async fn current() -> Result<UserInfoWrapper, AppError> {
     request_get("/user".to_string()).await
+}
+
+/// Update user
+pub async fn update_user(user: UpdateUser) -> Result<(), AppError> {
+    request_put("/user".to_string(), UpdateUserWrapper { user }).await
 }
 
 /// Get diary data for a date

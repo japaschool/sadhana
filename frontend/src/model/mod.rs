@@ -22,6 +22,21 @@ pub struct UserInfoWrapper {
     pub user: UserInfo,
 }
 
+#[derive(Serialize, Debug, Default, Clone)]
+pub struct UpdateUser {
+    pub name: String,
+}
+impl UpdateUser {
+    pub fn new<S: Into<String>>(name: S) -> Self {
+        UpdateUser { name: name.into() }
+    }
+}
+
+#[derive(Serialize, Debug)]
+pub struct UpdateUserWrapper {
+    pub user: UpdateUser,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct LoginInfoWrapper {
     pub user: LoginInfo,

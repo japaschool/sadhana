@@ -96,6 +96,14 @@ impl User {
         let user = users::table.find(id).first(conn)?;
         Ok(user)
     }
+
+    pub fn update(conn: &mut PgConnection, id: Uuid, name: &str) -> Result<(), AppError> {
+        diesel::update(users::table)
+            .filter(users::id.eq(id))
+            .set(users::name.eq(name))
+            .execute(conn)?;
+        Ok(())
+    }
 }
 
 #[derive(Insertable, Debug)]

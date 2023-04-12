@@ -33,3 +33,13 @@ pub struct SigninUser {
     pub email: String,
     pub password: String,
 }
+
+#[derive(Deserialize, Debug)]
+pub struct UpdateUser {
+    pub name: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct UpdateUserRequest {
+    pub user: UpdateUser,
+}
