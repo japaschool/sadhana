@@ -10,7 +10,7 @@ use crate::{
     hooks::use_user_context,
     i18n::*,
     model::*,
-    services, AppRoute,
+    services, BaseRoute,
 };
 
 #[function_component(Login)]
@@ -113,11 +113,14 @@ pub fn login() -> Html {
                         </label>
                     </div>
                     <div class="relative flex justify-between sm:text-sm">
-                        <a>{ Locale::current().forgot_password() }</a>
-                        <Link<AppRoute>
+                        <Link<BaseRoute>
                             classes={ LINK_CSS }
-                            to={AppRoute::Register}>{ Locale::current().need_an_account() }
-                        </Link<AppRoute>>
+                            to={BaseRoute::PasswordReset}>{ Locale::current().forgot_password() }
+                        </Link<BaseRoute>>
+                        <Link<BaseRoute>
+                            classes={ LINK_CSS }
+                            to={BaseRoute::Register}>{ Locale::current().need_an_account() }
+                        </Link<BaseRoute>>
                     </div>
                     <div class="relative">
                         <button class={ SUBMIT_BTN_CSS }>{ Locale::current().sign_in() }</button>

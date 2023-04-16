@@ -2,28 +2,44 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 
 use self::{
-    charts::Charts, home::Home, login::Login, new_user_practice::NewUserPractice,
-    register::Register, register_with_id::RegisterWithId, settings::Settings,
-    user_practices::UserPractices,
+    charts::Charts, confirmation::Confirmation, home::Home, login::Login,
+    new_user_practice::NewUserPractice, pwd_reset::PwdReset, register_with_id::RegisterWithId,
+    settings::Settings, user_practices::UserPractices,
 };
+use crate::{components::user_context_provider::UserContextProvider, model::ConfirmationType};
 
 pub mod charts;
+pub mod confirmation;
 pub mod home;
 pub mod login;
 pub mod new_user_practice;
-pub mod register;
+pub mod pwd_reset;
 pub mod register_with_id;
 pub mod settings;
 pub mod user_practices;
 
+/// Routes that need not user cntext to be loaded
+#[derive(Clone, Routable, PartialEq)]
+pub enum BaseRoute {
+    #[at("/reset")]
+    PasswordReset,
+    #[at("/reset/:id")]
+    PasswordResetWithConfirmationId { id: String },
+    #[at("/register")]
+    Register,
+    #[at("/*")]
+    AppRoute,
+    #[at("/")]
+    Home,
+}
+
+/// Routes that depend on user context being loaded
 #[derive(Clone, Routable, PartialEq)]
 pub enum AppRoute {
     #[at("/")]
     Home,
-    #[at("/register")]
-    Register,
     #[at("/register/:id")]
-    RegisterWithId { id: String },
+    RegisterWithConfirmationId { id: String },
     #[at("/login")]
     Login,
     #[at("/settings")]
@@ -39,16 +55,30 @@ pub enum AppRoute {
     NotFound,
 }
 
-pub fn switch(routes: AppRoute) -> Html {
+fn app_switch(routes: AppRoute) -> Html {
     match routes {
         AppRoute::Home => html! { <Home /> },
-        AppRoute::Register => html! { <Register /> },
-        AppRoute::RegisterWithId { id } => html! { <RegisterWithId id = {id} /> },
+        AppRoute::RegisterWithConfirmationId { id } => html! { <RegisterWithId id={id} /> },
         AppRoute::Login => html! { <Login /> },
         AppRoute::Settings => html! { <Settings /> },
         AppRoute::UserPractices => html! { <UserPractices /> },
         AppRoute::NewUserPractice => html! { <NewUserPractice /> },
         AppRoute::Charts => html! { <Charts/> },
         AppRoute::NotFound => html! { <h1>{ "404" }</h1> },
+    }
+}
+
+pub fn switch(routes: BaseRoute) -> Html {
+    match routes {
+        BaseRoute::PasswordReset => {
+            html! { <Confirmation confirmation_type={ConfirmationType::PasswordReset} /> }
+        }
+        BaseRoute::PasswordResetWithConfirmationId { id } => html! { <PwdReset id={id} /> },
+        BaseRoute::Register => {
+            html! { <Confirmation confirmation_type={ConfirmationType::Registration} /> }
+        }
+        BaseRoute::Home | BaseRoute::AppRoute => {
+            html! { <UserContextProvider><Switch<AppRoute> render={app_switch} /></UserContextProvider> }
+        }
     }
 }

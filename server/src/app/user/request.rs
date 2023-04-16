@@ -8,11 +8,6 @@ pub struct Signup {
     // pub confirmation_id: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct SendSignupLink {
-    pub email: String,
-}
-
 #[derive(Clone, Deserialize, Serialize, Debug, Validate)]
 pub struct SignupUser {
     #[validate(email(message = "email is malformed"))]
@@ -42,4 +37,32 @@ pub struct UpdateUser {
 #[derive(Deserialize, Debug)]
 pub struct UpdateUserRequest {
     pub user: UpdateUser,
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
+pub enum ConfirmationType {
+    Registration,
+    PasswordReset,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SendConfirmationLink {
+    pub email: String,
+    pub confirmation_type: ConfirmationType,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SendConfirmationLinkWrapper {
+    pub data: SendConfirmationLink,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct PwdResetWrapper {
+    pub data: PwdReset,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct PwdReset {
+    pub email: String,
+    pub password: String,
 }

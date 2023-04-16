@@ -104,6 +104,26 @@ impl User {
             .execute(conn)?;
         Ok(())
     }
+
+    pub fn reset_pwd(
+        conn: &mut PgConnection,
+        email: &str,
+        naive_password: &str,
+    ) -> Result<(), AppError> {
+        let hashed_password = hasher::hash_password(naive_password)?;
+
+        diesel::update(users::table)
+            .filter(users::email.eq(email))
+            .set(users::hash.eq(hashed_password))
+            .execute(conn)?;
+
+        // Cleanup confirmations
+        sql_query("delete from confirmations where email = $1")
+            .bind::<Text, _>(email)
+            .execute(conn)?;
+
+        Ok(())
+    }
 }
 
 #[derive(Insertable, Debug)]
@@ -128,15 +148,21 @@ impl Confirmation {
     }
 
     /// Creates a new Confirmation in the DB for an email. If the email already exists resets its expiry time.
-    pub fn create(conn: &mut PgConnection, email: &str) -> Result<Self, AppError> {
-        if let Ok(_) = users::table
-            .filter(users::email.eq(email))
-            .first::<User>(conn)
-        {
-            return Err(AppError::UnprocessableEntity(vec![format!(
-                "User with email {} already exists.",
-                email
-            )]));
+    pub fn create(
+        conn: &mut PgConnection,
+        email: &str,
+        fail_if_user_exists: bool,
+    ) -> Result<Self, AppError> {
+        if fail_if_user_exists {
+            if let Ok(_) = users::table
+                .filter(users::email.eq(email))
+                .first::<User>(conn)
+            {
+                return Err(AppError::UnprocessableEntity(vec![format!(
+                    "User with email {} already exists.",
+                    email
+                )]));
+            }
         }
 
         let res: Self = diesel::insert_into(confirmations::table)

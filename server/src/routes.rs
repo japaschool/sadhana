@@ -12,12 +12,16 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
             .service(
                 web::scope("/users")
                     .service(
-                        web::scope("/signup_link")
-                            .route("/{id}", web::get().to(app::user::api::signup_link_details))
-                            .route("", web::post().to(app::user::api::send_signup_link)),
+                        web::scope("/confirmation")
+                            .route("/{id}", web::get().to(app::user::api::confirmation_details))
+                            .route("", web::post().to(app::user::api::send_confirmation_link)),
                     )
                     .route("/login", web::post().to(app::user::api::signin))
                     .route("", web::post().to(app::user::api::signup)),
+            )
+            .service(
+                web::scope("/password-reset")
+                    .route("", web::put().to(app::user::api::reset_password)),
             )
             .service(
                 web::scope("/user")

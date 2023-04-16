@@ -86,6 +86,7 @@ pub fn settings() -> Html {
                 show_footer=true
                 left_button={ if *editing { HeaderButtonProps::reset(Locale::current().cancel()) } else { HeaderButtonProps::blank() }}
                 right_button={ if *editing { HeaderButtonProps::submit(Locale::current().save()) } else { HeaderButtonProps::edit(edit_onclick) }}
+                loading={ update_user.loading }
                 >
                 <ListErrors error={update_user.error.clone()} />
                 <div class={ BODY_DIV_CSS }>
@@ -97,8 +98,8 @@ pub fn settings() -> Html {
                             class={ INPUT_CSS }
                             value={ user_info.name.clone() }
                             oninput={ name_oninput.clone() }
-                            required = true
-                            readonly = { !*editing }
+                            required=true
+                            readonly={ !*editing }
                             minlength="3"
                             />
                         <label for="name"
@@ -114,7 +115,7 @@ pub fn settings() -> Html {
                             class={ INPUT_CSS }
                             value={ user_ctx.email.clone() }
                             disabled=true
-                            required = true
+                            required=true
                             />
                         <label for="email"
                             class={ INPUT_LABEL_CSS }>

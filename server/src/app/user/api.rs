@@ -10,7 +10,7 @@ use validator::Validate;
 
 use super::{
     model::{Confirmation, User},
-    request,
+    request::{self, ConfirmationType},
     response::{ConfirmationResponse, UserResponse},
 };
 
@@ -46,32 +46,60 @@ pub async fn signup(
     Ok(HttpResponse::Ok().json(res))
 }
 
-pub async fn send_signup_link(
+pub async fn reset_password(
     state: web::Data<AppState>,
-    form: web::Json<request::SendSignupLink>,
+    form: web::Json<request::PwdResetWrapper>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
-    let email = form.email.clone();
 
-    let confirmation = web::block(move || Confirmation::create(&mut conn, &email)).await??;
+    let email = form.data.email.clone();
+    let pwd = form.data.password.clone();
 
+    web::block(move || User::reset_pwd(&mut conn, &email, &pwd)).await??;
+
+    Ok(HttpResponse::Ok().json(()))
+}
+
+pub async fn send_confirmation_link(
+    state: web::Data<AppState>,
+    form: web::Json<request::SendConfirmationLinkWrapper>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let email = form.data.email.clone();
+    let fail_if_user_exists = form.data.confirmation_type == ConfirmationType::Registration;
+
+    let confirmation =
+        web::block(move || Confirmation::create(&mut conn, &email, fail_if_user_exists)).await??;
+
+    let segment = match form.data.confirmation_type {
+        ConfirmationType::Registration => "register",
+        ConfirmationType::PasswordReset => "reset",
+    };
+
+    //FIXME: email subject & body must be mended respectively
     let html_text = format!(
         "Please click on the link below to complete registration. <br/>
-                <a href=\"{domain}/register/{id}\">Complete registration</a> <br/>
+                <a href=\"{domain}/{segment}/{id}\">Complete registration</a> <br/>
                 This link expires on <strong>{expires}</strong>",
         domain = vars::public_server_address(),
+        segment = segment,
         id = confirmation.id,
         expires = confirmation.expires_at
     );
 
-    send_email_smtp(form.email.as_str(), "Complete your registration", html_text).await?;
+    send_email_smtp(
+        form.data.email.as_str(),
+        "Complete your registration",
+        html_text,
+    )
+    .await?;
 
     Ok(HttpResponse::Ok().json(()))
 }
 
 type ConfirmationIdSlug = Uuid;
 
-pub async fn signup_link_details(
+pub async fn confirmation_details(
     state: web::Data<AppState>,
     path: web::Path<ConfirmationIdSlug>,
 ) -> Result<HttpResponse, AppError> {
