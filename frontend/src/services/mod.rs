@@ -2,9 +2,10 @@ use chrono::NaiveDate;
 use common::{error::AppError, ReportDuration};
 
 use crate::model::{
-    AllUserPractices, CreateUserPractice, DiaryDay, LoginInfoWrapper, RegisterInfoWrapper,
-    ReportData, SendSignupLink, SignupLinkDetailsWrapper, UpdateUser, UpdateUserPractice,
-    UpdateUserPracticesOrderKey, UpdateUserWrapper, UserInfoWrapper, UserPractice,
+    AllUserPractices, CreateUserPractice, DiaryDay, LoginInfoWrapper, PwdReset, PwdResetWrapper,
+    RegisterInfoWrapper, ReportData, SendConfirmationLink, SendConfirmationLinkWrapper,
+    SignupLinkDetailsWrapper, UpdateUser, UpdateUserPractice, UpdateUserPracticesOrderKey,
+    UpdateUserWrapper, UserInfoWrapper, UserPractice,
 };
 
 use self::requests::*;
@@ -17,18 +18,27 @@ pub async fn login(login_info: LoginInfoWrapper) -> Result<UserInfoWrapper, AppE
 }
 
 /// Send registration form link email
-pub async fn send_signup_link(payload: SendSignupLink) -> Result<(), AppError> {
-    request_post("/users/signup_link".to_string(), payload).await
+pub async fn send_confirmation_link(data: SendConfirmationLink) -> Result<(), AppError> {
+    request_post(
+        "/users/confirmation".to_string(),
+        SendConfirmationLinkWrapper { data },
+    )
+    .await
 }
 
 /// Get details by signup link id
 pub async fn get_signup_link_details(id: &str) -> Result<SignupLinkDetailsWrapper, AppError> {
-    request_get(format!("/users/signup_link/{}", id)).await
+    request_get(format!("/users/confirmation/{}", id)).await
 }
 
 /// Register a user
 pub async fn register(register_info: RegisterInfoWrapper) -> Result<UserInfoWrapper, AppError> {
     request_post("/users".to_string(), register_info).await
+}
+
+/// Reset password
+pub async fn reset_pwd(data: PwdReset) -> Result<(), AppError> {
+    request_put("/password-reset".to_string(), PwdResetWrapper { data }).await
 }
 
 /// Get current user info

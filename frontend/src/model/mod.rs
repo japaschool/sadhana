@@ -37,6 +37,17 @@ pub struct UpdateUserWrapper {
     pub user: UpdateUser,
 }
 
+#[derive(Serialize, Debug)]
+pub struct PwdResetWrapper {
+    pub data: PwdReset,
+}
+
+#[derive(Serialize, Debug)]
+pub struct PwdReset {
+    pub email: String,
+    pub password: String,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct LoginInfoWrapper {
     pub user: LoginInfo,
@@ -56,9 +67,21 @@ pub struct RegisterInfo {
     pub name: String,
 }
 
+#[derive(Clone, PartialEq, Serialize, Debug)]
+pub enum ConfirmationType {
+    Registration,
+    PasswordReset,
+}
+
 #[derive(Debug, Serialize)]
-pub struct SendSignupLink {
+pub struct SendConfirmationLink {
     pub email: String,
+    pub confirmation_type: ConfirmationType,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SendConfirmationLinkWrapper {
+    pub data: SendConfirmationLink,
 }
 
 #[derive(Debug, Deserialize, Clone)]

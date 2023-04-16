@@ -5,7 +5,7 @@ use yew_hooks::{use_async, use_mount};
 use yew_router::prelude::*;
 
 use crate::{
-    components::{blank_page::BlankPage, list_errors::ListErrors},
+    components::{blank_page::BlankPage, list_errors::ListErrors, pwd::Pwd},
     css::*,
     hooks::use_user_context,
     i18n::Locale,
@@ -44,8 +44,6 @@ pub fn register_with_id(props: &Props) -> Html {
     };
 
     {
-        //FIXME: remove this?
-        // Load confirmation from the backend
         let signup_confirmation = signup_confirmation.clone();
         use_mount(move || signup_confirmation.run());
     }
@@ -95,10 +93,9 @@ pub fn register_with_id(props: &Props) -> Html {
     };
     let oninput_password = {
         let register_info = register_info.clone();
-        Callback::from(move |e: InputEvent| {
-            let input: HtmlInputElement = e.target_unchecked_into();
+        Callback::from(move |pwd: String| {
             let mut info = (*register_info).clone();
-            info.password = input.value();
+            info.password = pwd;
             register_info.set(info);
         })
     };
@@ -114,66 +111,53 @@ pub fn register_with_id(props: &Props) -> Html {
         <BlankPage header_label={ Locale::current().register() } loading={ user_register.loading }>
             <ListErrors error={signup_confirmation.error.clone()} error_formatter={ error_formatter.clone() } />
             <ListErrors error={user_register.error.clone()} error_formatter={ error_formatter.clone() } />
-            <form {onsubmit}>
-                <div class={ BODY_DIV_CSS }>
-                    <div class="relative">
-                        <input
-                            id="email"
-                            type="email"
-                            placeholder="Email"
-                            class={ INPUT_CSS }
-                            value={ register_info.email.clone() }
-                            disabled=true
-                            required = true
-                            />
-                        <label for="email"
-                            class={ INPUT_LABEL_CSS }>
-                            <i class="fa fa-envelope"></i>{ format!(" {}", Locale::current().email_address()) }
-                        </label>
+            if signup_confirmation.error.is_none() {
+                <form {onsubmit}>
+                    <div class={ BODY_DIV_CSS }>
+                        <div class="relative">
+                            <input
+                                id="email"
+                                type="email"
+                                placeholder="Email"
+                                class={ INPUT_CSS }
+                                value={ register_info.email.clone() }
+                                disabled=true
+                                required = true
+                                />
+                            <label for="email"
+                                class={ INPUT_LABEL_CSS }>
+                                <i class="fa fa-envelope"></i>{ format!(" {}", Locale::current().email_address()) }
+                            </label>
+                        </div>
+                        <div class="relative">
+                            <input
+                                id="name"
+                                type="text"
+                                placeholder="Name"
+                                class={ INPUT_CSS }
+                                value={ register_info.name.clone() }
+                                oninput={ oninput_name }
+                                required = true
+                                minlength="3"
+                                />
+                            <label for="name"
+                                class={ INPUT_LABEL_CSS }>
+                                <i class="fa fa-user"></i>{ format!(" {}", Locale::current().name()) }
+                            </label>
+                        </div>
+                        <Pwd on_change={ oninput_password }/>
+                        <div class="relative flex justify-between sm:text-sm">
+                            <Link<AppRoute>
+                                classes={ LINK_CSS }
+                                to={AppRoute::Login}>{ Locale::current().have_an_account() }
+                            </Link<AppRoute>>
+                        </div>
+                        <div class="relative">
+                            <button class={ SUBMIT_BTN_CSS }>{ Locale::current().sign_up() }</button>
+                        </div>
                     </div>
-                    <div class="relative">
-                        <input
-                            id="name"
-                            type="text"
-                            placeholder="Name"
-                            class={ INPUT_CSS }
-                            value={ register_info.name.clone() }
-                            oninput={ oninput_name }
-                            required = true
-                            minlength="3"
-                            />
-                        <label for="name"
-                            class={ INPUT_LABEL_CSS }>
-                            <i class="fa fa-user"></i>{ format!(" {}", Locale::current().name()) }
-                        </label>
-                    </div>
-                    <div class="relative">
-                        <input
-                            id="password"
-                            type="password"
-                            placeholder="Password"
-                            class={ INPUT_CSS }
-                            value={ register_info.password.clone() }
-                            oninput={ oninput_password }
-                            required = true
-                            minlength="5"
-                            />
-                        <label for="password"
-                            class={ INPUT_LABEL_CSS }>
-                            <i class="fa fa-key"></i>{ format!(" {}", Locale::current().password()) }
-                        </label>
-                    </div>
-                    <div class="relative flex justify-between sm:text-sm">
-                        <Link<AppRoute>
-                            classes={ LINK_CSS }
-                            to={AppRoute::Login}>{ Locale::current().have_an_account() }
-                        </Link<AppRoute>>
-                    </div>
-                    <div class="relative">
-                        <button class={ SUBMIT_BTN_CSS }>{ Locale::current().sign_up() }</button>
-                    </div>
-                </div>
-            </form>
+                </form>
+            }
         </BlankPage>
     }
 }
