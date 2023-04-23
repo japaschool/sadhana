@@ -1,7 +1,8 @@
 use common::error::AppError;
+use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
-use yew_hooks::use_async;
+use yew_hooks::{use_async, use_mount};
 
 use crate::{
     components::{blank_page::BlankPage, list_errors::ListErrors},
@@ -55,7 +56,6 @@ pub fn new_user_practice() -> Html {
             let mut form = (*form_data).clone();
             form.practice = input.value().trim().to_owned();
             form_data.set(form);
-            log::debug!("Form data has changed: {:?}", *form_data);
         })
     };
 
@@ -65,12 +65,28 @@ pub fn new_user_practice() -> Html {
             e.prevent_default();
 
             let input: HtmlInputElement = e.target_unchecked_into();
+
+            if !input.value().is_empty() {
+                input.set_custom_validity("");
+            }
+
             let mut form = (*form_data).clone();
             form.data_type = input.value();
             form_data.set(form);
-            log::debug!("Form data has changed: {:?}", *form_data);
         })
     };
+
+    {
+        use_mount(move || {
+            if let Some(element) = web_sys::window()
+                .and_then(|w| w.document())
+                .and_then(|d| d.get_element_by_id("data_type"))
+            {
+                let html: HtmlInputElement = element.unchecked_into();
+                html.set_custom_validity(&Locale::current().data_type_cant_be_empty());
+            }
+        });
+    }
 
     let error_formatter = {
         let form = form_data.clone();

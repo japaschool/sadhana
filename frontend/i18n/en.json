@@ -57,5 +57,6 @@
     "user_already_exists": "User with email {email} already exists. Please log in or reset password.",
     "password_reset": "Password Reset",
     "passwords_dont_match": "Passwords don't match",
-    "reset_success_alert": "Password has been successfully reset. Please login."
+    "reset_success_alert": "Password has been successfully reset. Please login.",
+    "data_type_cant_be_empty": "Please fill in this field."
 }
