@@ -52,10 +52,10 @@ pub async fn reset_password(
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
 
-    let email = form.data.email.clone();
+    let confirmation_id = form.data.confirmation_id.clone();
     let pwd = form.data.password.clone();
 
-    web::block(move || User::reset_pwd(&mut conn, &email, &pwd)).await??;
+    web::block(move || User::reset_pwd(&mut conn, &confirmation_id, &pwd)).await??;
 
     Ok(HttpResponse::Ok().json(()))
 }
@@ -124,7 +124,8 @@ pub async fn update_user(
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user = auth::get_current_user(&req)?;
-    web::block(move || User::update(&mut conn, user.id, &form.user.name)).await??;
+    web::block(move || User::update(&mut conn, user.id, &form.user.name, &form.user.password))
+        .await??;
     Ok(HttpResponse::Ok().json(()))
 }
 

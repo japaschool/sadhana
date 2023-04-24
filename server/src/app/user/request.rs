@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use validator::Validate;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -32,6 +33,7 @@ pub struct SigninUser {
 #[derive(Deserialize, Debug)]
 pub struct UpdateUser {
     pub name: String,
+    pub password: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -63,6 +65,6 @@ pub struct PwdResetWrapper {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct PwdReset {
-    pub email: String,
+    pub confirmation_id: Uuid,
     pub password: String,
 }

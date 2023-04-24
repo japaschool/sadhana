@@ -49,7 +49,7 @@ pub fn pwd_reset(props: &Props) -> Html {
         let finished = finished.clone();
         use_async(async move {
             services::reset_pwd(model::PwdReset {
-                email: email.data.as_ref().unwrap().confirmation.email.clone(),
+                confirmation_id: email.data.as_ref().unwrap().confirmation.id.clone(),
                 password: (*pwd).clone(),
             })
             .await
@@ -86,12 +86,12 @@ pub fn pwd_reset(props: &Props) -> Html {
             loading={ email.loading || reset_pwd.loading }
             prev_link={ (Locale::current().cancel(), AppRoute::Home) }
             >
-            <ListErrors error={ email.error.clone() } {error_formatter} />
-            <ListErrors error={ reset_pwd.error.clone() } />
+            <ListErrors error={ email.error.clone() } error_formatter = { error_formatter.clone() } />
+            <ListErrors error={ reset_pwd.error.clone() } error_formatter = { error_formatter.clone() } />
             if email.error.is_none() {
                 <form {onsubmit}>
                     <div class={ BODY_DIV_CSS }>
-                        <Pwd on_change={ pwd_onchange }/>
+                        <Pwd onchange={ pwd_onchange }/>
                         <div class="relative">
                             <button class={ SUBMIT_BTN_CSS }>{ Locale::current().save() }</button>
                         </div>

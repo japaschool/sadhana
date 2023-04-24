@@ -4,7 +4,9 @@ use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
-    pub on_change: Callback<String>,
+    pub onchange: Callback<String>,
+    #[prop_or(false)]
+    pub readonly: bool,
 }
 
 #[function_component(Pwd)]
@@ -27,7 +29,7 @@ pub fn pwd(props: &Props) -> Html {
     let oninput =
         |input_pwd: UseStateHandle<String>, confirm_pwd: UseStateHandle<String>, emit: bool| {
             let confirm_pwd_html = confirm_pwd_html.clone();
-            let onchange = props.on_change.clone();
+            let onchange = props.onchange.clone();
             Callback::from(move |e: InputEvent| {
                 let target: HtmlInputElement = e.target_unchecked_into();
 
@@ -66,6 +68,8 @@ pub fn pwd(props: &Props) -> Html {
                     required=true
                     autocomplete="off"
                     minlength="5"
+                    maxlength="256"
+                    readonly={ props.readonly }
                     />
                 <label for="new_pwd"
                     class={ INPUT_LABEL_CSS }>
@@ -84,6 +88,8 @@ pub fn pwd(props: &Props) -> Html {
                     required=true
                     autocomplete="off"
                     minlength="5"
+                    maxlength="256"
+                    readonly={ props.readonly }
                     />
                 <label for="confirm_pwd"
                     class={ INPUT_LABEL_CSS }>

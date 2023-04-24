@@ -117,6 +117,8 @@ pub fn new_user_practice() -> Html {
                             oninput={ practice_oninput.clone() }
                             class={ INPUT_CSS }
                             placeholder="practice_name"
+                            pattern="^[^\\s].*"
+                            maxlength="64"
                             required=true
                             />
                         <label for="practice_name" class={ INPUT_LABEL_CSS }>
