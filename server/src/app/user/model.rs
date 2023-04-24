@@ -6,7 +6,7 @@ use crate::{
 use chrono::{DateTime, Duration, NaiveDateTime, Utc};
 use common::error::AppError;
 use diesel::{
-    pg::PgConnection, prelude::*, sql_query, sql_types::Text, sql_types::Uuid as DieselUuid,
+    pg::PgConnection, prelude::*, sql_query, sql_types::Uuid as DieselUuid,
     upsert::excluded,
 };
 use serde::{Deserialize, Serialize};
@@ -59,8 +59,8 @@ impl User {
             .execute(conn)?;
 
             // Cleanup confirmations
-            sql_query("delete from confirmations where email = $1")
-                .bind::<Text, _>(email)
+            diesel::delete(confirmations::table)
+                .filter(confirmations::email.eq(&email))
                 .execute(conn)
         })?;
 
@@ -97,29 +97,54 @@ impl User {
         Ok(user)
     }
 
-    pub fn update(conn: &mut PgConnection, id: Uuid, name: &str) -> Result<(), AppError> {
-        diesel::update(users::table)
-            .filter(users::id.eq(id))
-            .set(users::name.eq(name))
-            .execute(conn)?;
+    pub fn update(
+        conn: &mut PgConnection,
+        id: Uuid,
+        name: &str,
+        naive_password: &Option<String>,
+    ) -> Result<(), AppError> {
+        let hashed_password = match naive_password {
+            Some(ref pwd) => Some(hasher::hash_password(pwd)?),
+            None => None,
+        };
+
+        conn.transaction(|conn| {
+            if let Some(ref pwd) = hashed_password {
+                diesel::update(users::table)
+                    .filter(users::id.eq(&id))
+                    .set(users::hash.eq(pwd))
+                    .execute(conn)?;
+            }
+
+            diesel::update(users::table)
+                .filter(users::id.eq(id))
+                .set(users::name.eq(name))
+                .execute(conn)
+        })?;
+
         Ok(())
     }
 
     pub fn reset_pwd(
         conn: &mut PgConnection,
-        email: &str,
+        confirmation_id: &Uuid,
         naive_password: &str,
     ) -> Result<(), AppError> {
         let hashed_password = hasher::hash_password(naive_password)?;
 
+        let email = confirmations::table
+            .select(confirmations::email)
+            .filter(confirmations::id.eq(confirmation_id))
+            .first::<String>(conn)?;
+
         diesel::update(users::table)
-            .filter(users::email.eq(email))
+            .filter(users::email.eq(&email))
             .set(users::hash.eq(hashed_password))
             .execute(conn)?;
 
         // Cleanup confirmations
-        sql_query("delete from confirmations where email = $1")
-            .bind::<Text, _>(email)
+        diesel::delete(confirmations::table)
+            .filter(confirmations::email.eq(&email))
             .execute(conn)?;
 
         Ok(())

@@ -160,7 +160,7 @@ pub fn user_practices() -> Html {
                 Locale::current().enter_new_practice_name().as_str(),
                 Some(&practice),
             )
-            .filter(|s| !s.is_empty())
+            .filter(|s| !s.trim().is_empty())
             {
                 let is_active = selected.current().contains(&practice);
                 let all_practices = all_practices.clone();

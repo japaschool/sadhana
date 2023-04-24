@@ -2,6 +2,7 @@ use crate::{
     components::{
         blank_page::{BlankPage, HeaderButtonProps},
         list_errors::ListErrors,
+        pwd::Pwd,
     },
     css::*,
     hooks::use_user_context,
@@ -23,7 +24,7 @@ pub fn settings() -> Html {
         let user_info = user_info.clone();
         use_effect_with_deps(
             move |ctx| {
-                user_info.set(UpdateUser::new(&ctx.name));
+                user_info.set(UpdateUser::new(&ctx.name, None));
                 || ()
             },
             user_ctx.clone(),
@@ -55,7 +56,18 @@ pub fn settings() -> Html {
         let user_info = user_info.clone();
         Callback::from(move |e: InputEvent| {
             let input: HtmlInputElement = e.target_unchecked_into();
-            user_info.set(UpdateUser::new(input.value()));
+            let mut new_info = (*user_info).clone();
+            new_info.name = input.value();
+            user_info.set(new_info);
+        })
+    };
+
+    let pwd_onchange = {
+        let user_info = user_info.clone();
+        Callback::from(move |new_pwd: String| {
+            let mut new_info = (*user_info).clone();
+            new_info.password = Some(new_pwd);
+            user_info.set(new_info);
         })
     };
 
@@ -65,7 +77,7 @@ pub fn settings() -> Html {
         let ctx = user_ctx.clone();
         Callback::from(move |e: Event| {
             e.prevent_default();
-            user_info.set(UpdateUser::new(&ctx.name));
+            user_info.set(UpdateUser::new(&ctx.name, None));
             editing.toggle();
         })
     };
@@ -122,6 +134,7 @@ pub fn settings() -> Html {
                             <i class="fa fa-envelope"></i>{ format!(" {}", Locale::current().email_address()) }
                         </label>
                     </div>
+                    <Pwd onchange={ pwd_onchange.clone() } readonly={ !*editing } />
                     <div class="relative flex justify-center sm:text-sm">
                         <a href="/login"
                             class={ LINK_CSS }

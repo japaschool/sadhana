@@ -87,7 +87,7 @@ pub fn register_with_id(props: &Props) -> Html {
         Callback::from(move |e: InputEvent| {
             let input: HtmlInputElement = e.target_unchecked_into();
             let mut info = (*register_info).clone();
-            info.name = input.value();
+            info.name = input.value().trim().to_string();
             register_info.set(info);
         })
     };
@@ -134,18 +134,20 @@ pub fn register_with_id(props: &Props) -> Html {
                                 id="name"
                                 type="text"
                                 placeholder="Name"
+                                pattern="^[^\\s].*"
                                 class={ INPUT_CSS }
                                 value={ register_info.name.clone() }
                                 oninput={ oninput_name }
                                 required = true
                                 minlength="3"
+                                maxlength="256"
                                 />
                             <label for="name"
                                 class={ INPUT_LABEL_CSS }>
                                 <i class="fa fa-user"></i>{ format!(" {}", Locale::current().name()) }
                             </label>
                         </div>
-                        <Pwd on_change={ oninput_password }/>
+                        <Pwd onchange={ oninput_password }/>
                         <div class="relative flex justify-between sm:text-sm">
                             <Link<AppRoute>
                                 classes={ LINK_CSS }
