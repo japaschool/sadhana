@@ -1,6 +1,8 @@
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
 use diesel_migrations::*;
 use dotenv::dotenv;
+#[cfg(not(target_env = "msvc"))]
+use jemallocator::Jemalloc;
 
 #[macro_use]
 extern crate log;
@@ -17,6 +19,10 @@ mod routes;
 mod schema;
 mod utils;
 mod vars;
+
+#[cfg(not(target_env = "msvc"))]
+#[global_allocator]
+static GLOBAL: Jemalloc = Jemalloc;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
