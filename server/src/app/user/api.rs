@@ -1,6 +1,6 @@
 use crate::{
     middleware::{auth, state::AppState},
-    utils::emails::send_email_smtp,
+    utils::email::send_email_smtp,
     vars,
 };
 use actix_web::{web, HttpRequest, HttpResponse};
@@ -76,15 +76,28 @@ pub async fn send_confirmation_link(
         ConfirmationType::PasswordReset => "reset",
     };
 
-    //FIXME: email subject & body must be mended respectively
-    let html_text = format!(
-        "Please click on the link below to complete registration. <br/>
-                <a href=\"{domain}/{segment}/{id}\">Complete registration</a> <br/>
-                This link expires on <strong>{expires}</strong>",
+    let action_url = format!(
+        "{domain}/{segment}/{id}",
         domain = vars::public_server_address(),
         segment = segment,
-        id = confirmation.id,
-        expires = confirmation.expires_at
+        id = confirmation.id
+    );
+
+    let body = match form.data.confirmation_type {
+        ConfirmationType::Registration => format!(
+            include_str!("../../utils/email/templates/register_email_body.tmpl"),
+            action_url = action_url
+        ),
+        ConfirmationType::PasswordReset => format!(
+            include_str!("../../utils/email/templates/reset_email_body.tmpl"),
+            action_url = action_url
+        ),
+    };
+
+    let html_text = format!(
+        "{}\n{}",
+        include_str!("../../utils/email/templates/email_head.tmpl"),
+        body,
     );
 
     send_email_smtp(
