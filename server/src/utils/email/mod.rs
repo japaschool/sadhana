@@ -1,6 +1,7 @@
 use crate::vars;
 use common::error::AppError;
 use lettre::{
+    message::{header::ContentType, MultiPartBuilder, SinglePart, SinglePartBuilder},
     transport::smtp::{authentication::Credentials, client::Tls},
     AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
 };
@@ -22,7 +23,11 @@ pub async fn send_email_smtp(to: &str, subject: &str, body: String) -> Result<()
         .from(vars::smtp_sender_name().parse()?)
         .to(to.parse()?)
         .subject(subject)
-        .body(body)?;
+        .singlepart(
+            SinglePartBuilder::new()
+                .content_type(ContentType::TEXT_HTML)
+                .body(body),
+        )?;
 
     mailer_builder.build().send(email).await?;
 
