@@ -49,6 +49,22 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                     .route("", web::put().to(app::user::api::update_user)),
             )
             .service(
+                web::scope("/shares")
+                    .route("", web::post().to(app::shared::create_share_report_link))
+                    .route("", web::get().to(app::shared::get_share_report_links)),
+            )
+            .service(
+                web::scope("/share")
+                    .route(
+                        "/{share_id}",
+                        web::delete().to(app::shared::delete_share_report_link),
+                    )
+                    .route(
+                        "/{share_id}",
+                        web::get().to(app::shared::get_shared_report_data),
+                    ),
+            )
+            .service(
                 web::scope("/diary")
                     .route("/report", web::get().to(app::diary::api::get_report_data))
                     .route("", web::post().to(app::diary::api::upsert_diary_day))

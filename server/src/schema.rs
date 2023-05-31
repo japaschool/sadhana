@@ -21,6 +21,7 @@ diesel::table! {
     default_user_practices (practice) {
         practice -> Text,
         data_type -> PracticeDataTypeEnum,
+        order_key -> Nullable<Int4>,
     }
 }
 
@@ -32,6 +33,13 @@ diesel::table! {
         value -> Nullable<Jsonb>,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    shares (id) {
+        id -> Uuid,
+        user_id -> Uuid,
     }
 }
 
@@ -70,6 +78,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     confirmations,
     default_user_practices,
     diary,
+    shares,
     user_practices,
     users,
 );
