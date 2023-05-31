@@ -71,9 +71,9 @@ pub async fn send_confirmation_link(
     let confirmation =
         web::block(move || Confirmation::create(&mut conn, &email, fail_if_user_exists)).await??;
 
-    let segment = match form.data.confirmation_type {
-        ConfirmationType::Registration => "register",
-        ConfirmationType::PasswordReset => "reset",
+    let (segment, subject) = match form.data.confirmation_type {
+        ConfirmationType::Registration => ("register", "Продолжить регистрацию"),
+        ConfirmationType::PasswordReset => ("reset", "Сбросить пароль"),
     };
 
     let action_url = format!(
@@ -100,12 +100,7 @@ pub async fn send_confirmation_link(
         body,
     );
 
-    send_email_smtp(
-        form.data.email.as_str(),
-        "Complete your registration",
-        html_text,
-    )
-    .await?;
+    send_email_smtp(form.data.email.as_str(), subject, html_text).await?;
 
     Ok(HttpResponse::Ok().json(()))
 }

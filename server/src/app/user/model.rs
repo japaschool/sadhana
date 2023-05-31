@@ -51,7 +51,7 @@ impl User {
             sql_query(
                 r#"
             insert into user_practices (user_id, practice, data_type, is_active, order_key)
-                select $1, practice, data_type, true, row_number() over (order by practice) - 1
+                select $1, practice, data_type, true, order_key
                 from default_user_practices
             "#,
             )

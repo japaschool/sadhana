@@ -1,7 +1,7 @@
 use crate::vars;
 use common::error::AppError;
 use lettre::{
-    message::{header::ContentType, MultiPartBuilder, SinglePart, SinglePartBuilder},
+    message::{header::ContentType, SinglePartBuilder},
     transport::smtp::{authentication::Credentials, client::Tls},
     AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
 };
