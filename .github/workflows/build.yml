@@ -23,4 +23,4 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           
     - name: Executing update script
-      run: ssh 'bash -s < ~/sadhana_update.sh'
+      run: ssh sadhana 'bash -s < /home/sadhana/sadhana_update.sh'
