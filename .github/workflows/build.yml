@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Configure SSH
-        run: |
+      run: |
           mkdir -p ~/.ssh/
           echo "$SSH_KEY" > ~/.ssh/sadhana.key
           chmod 600 ~/.ssh/sadhana.key
@@ -17,7 +17,7 @@ jobs:
             IdentityFile ~/.ssh/sadhana.key
             StrictHostKeyChecking no
           END
-        env:
+      env:
           SSH_USER: ${{ secrets.SSH_USERNAME }}
           SSH_KEY: ${{ secrets.SSH_KEY }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
