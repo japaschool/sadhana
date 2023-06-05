@@ -132,12 +132,12 @@ pub fn new_user_practice() -> Html {
                             id="data_type"
                             onchange={ data_type_onchange }
                             required=true >
-                            <option value="int">{ Locale::current().integer() }</option>
-                            <option value="time">{ Locale::current().time() }</option>
-                            <option value="bool">{ Locale::current().boolean() }</option>
-                            <option value="text">{ Locale::current().text() }</option>
-                            <option value="duration">{ Locale::current().duration() }</option>
-                            <option value="" selected=true disabled=true style="display:none">{ Locale::current().select_data_type() }</option>
+                            <option class={ "text-black" } value="int">{ Locale::current().integer() }</option>
+                            <option class={ "text-black" } value="time">{ Locale::current().time() }</option>
+                            <option class={ "text-black" } value="bool">{ Locale::current().boolean() }</option>
+                            <option class={ "text-black" } value="text">{ Locale::current().text() }</option>
+                            <option class={ "text-black" } value="duration">{ Locale::current().duration() }</option>
+                            <option class={ "text-black" } value="" selected=true disabled=true style="display:none">{ Locale::current().select_data_type() }</option>
                         </select>
                         <label for="data_type" class={ INPUT_LABEL_CSS }>
                             <i class="fa"></i>

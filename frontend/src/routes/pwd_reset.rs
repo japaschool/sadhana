@@ -48,7 +48,7 @@ pub fn pwd_reset(props: &Props) -> Html {
         let pwd = pwd.clone();
         let finished = finished.clone();
         use_async(async move {
-            services::reset_pwd(model::PwdReset {
+            services::reset_pwd(model::ResetPassword {
                 confirmation_id: email.data.as_ref().unwrap().confirmation.id.clone(),
                 password: (*pwd).clone(),
             })

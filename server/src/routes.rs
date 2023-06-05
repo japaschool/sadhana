@@ -46,7 +46,11 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                             ),
                     )
                     .route("", web::get().to(app::user::api::me))
-                    .route("", web::put().to(app::user::api::update_user)),
+                    .route("", web::put().to(app::user::api::update_user))
+                    .route(
+                        "/password",
+                        web::put().to(app::user::api::update_user_password),
+                    ),
             )
             .service(
                 web::scope("/shares")
