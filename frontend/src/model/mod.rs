@@ -25,14 +25,11 @@ pub struct UserInfoWrapper {
 #[derive(Serialize, Debug, Default, Clone)]
 pub struct UpdateUser {
     pub name: String,
-    pub password: Option<String>,
 }
+
 impl UpdateUser {
-    pub fn new<S: Into<String>>(name: S, password: Option<String>) -> Self {
-        UpdateUser {
-            name: name.into(),
-            password,
-        }
+    pub fn new(name: impl Into<String>) -> Self {
+        UpdateUser { name: name.into() }
     }
 }
 
@@ -42,12 +39,17 @@ pub struct UpdateUserWrapper {
 }
 
 #[derive(Serialize, Debug)]
-pub struct PwdResetWrapper {
-    pub data: PwdReset,
+pub struct UpdateUserPassword {
+    pub password: String,
 }
 
 #[derive(Serialize, Debug)]
-pub struct PwdReset {
+pub struct ResetPasswordWrapper {
+    pub data: ResetPassword,
+}
+
+#[derive(Serialize, Debug)]
+pub struct ResetPassword {
     pub confirmation_id: String,
     pub password: String,
 }

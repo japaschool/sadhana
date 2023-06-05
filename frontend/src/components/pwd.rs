@@ -7,6 +7,8 @@ pub struct Props {
     pub onchange: Callback<String>,
     #[prop_or(false)]
     pub readonly: bool,
+    #[prop_or(true)]
+    pub required: bool,
 }
 
 #[function_component(Pwd)]
@@ -65,7 +67,7 @@ pub fn pwd(props: &Props) -> Html {
                     class={ INPUT_CSS }
                     value={ (*new_pwd).clone() }
                     oninput={ new_pwd_oninput }
-                    required=true
+                    required={ props.required }
                     autocomplete="off"
                     minlength="5"
                     maxlength="256"
@@ -85,7 +87,7 @@ pub fn pwd(props: &Props) -> Html {
                     oninput={ confirm_pwd_oninput }
                     { onfocus }
                     value={ (*confirm_pwd).clone() }
-                    required=true
+                    required={ props.required }
                     autocomplete="off"
                     minlength="5"
                     maxlength="256"

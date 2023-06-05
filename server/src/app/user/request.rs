@@ -33,12 +33,16 @@ pub struct SigninUser {
 #[derive(Deserialize, Debug)]
 pub struct UpdateUser {
     pub name: String,
-    pub password: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct UpdateUserRequest {
     pub user: UpdateUser,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct UpdateUserPasswordRequest {
+    pub password: String,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]

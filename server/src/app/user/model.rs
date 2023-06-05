@@ -6,8 +6,7 @@ use crate::{
 use chrono::{DateTime, Duration, NaiveDateTime, Utc};
 use common::error::AppError;
 use diesel::{
-    pg::PgConnection, prelude::*, sql_query, sql_types::Uuid as DieselUuid,
-    upsert::excluded,
+    pg::PgConnection, prelude::*, sql_query, sql_types::Uuid as DieselUuid, upsert::excluded,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -97,30 +96,26 @@ impl User {
         Ok(user)
     }
 
-    pub fn update(
+    pub fn update(conn: &mut PgConnection, id: Uuid, name: &str) -> Result<(), AppError> {
+        diesel::update(users::table)
+            .filter(users::id.eq(id))
+            .set(users::name.eq(name))
+            .execute(conn)?;
+
+        Ok(())
+    }
+
+    pub fn update_password(
         conn: &mut PgConnection,
         id: Uuid,
-        name: &str,
-        naive_password: &Option<String>,
+        naive_password: &str,
     ) -> Result<(), AppError> {
-        let hashed_password = match naive_password {
-            Some(ref pwd) => Some(hasher::hash_password(pwd)?),
-            None => None,
-        };
+        let hashed_password = hasher::hash_password(naive_password)?;
 
-        conn.transaction(|conn| {
-            if let Some(ref pwd) = hashed_password {
-                diesel::update(users::table)
-                    .filter(users::id.eq(&id))
-                    .set(users::hash.eq(pwd))
-                    .execute(conn)?;
-            }
-
-            diesel::update(users::table)
-                .filter(users::id.eq(id))
-                .set(users::name.eq(name))
-                .execute(conn)
-        })?;
+        diesel::update(users::table)
+            .filter(users::id.eq(&id))
+            .set(users::hash.eq(&hashed_password))
+            .execute(conn)?;
 
         Ok(())
     }

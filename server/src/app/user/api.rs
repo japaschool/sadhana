@@ -132,8 +132,18 @@ pub async fn update_user(
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user = auth::get_current_user(&req)?;
-    web::block(move || User::update(&mut conn, user.id, &form.user.name, &form.user.password))
-        .await??;
+    web::block(move || User::update(&mut conn, user.id, &form.user.name)).await??;
+    Ok(HttpResponse::Ok().json(()))
+}
+
+pub async fn update_user_password(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    form: web::Json<request::UpdateUserPasswordRequest>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let user = auth::get_current_user(&req)?;
+    web::block(move || User::update_password(&mut conn, user.id, &form.password)).await??;
     Ok(HttpResponse::Ok().json(()))
 }
 

@@ -2,10 +2,11 @@ use chrono::NaiveDate;
 use common::{error::AppError, ReportDuration};
 
 use crate::model::{
-    AllUserPractices, CreateUserPractice, DiaryDay, LoginInfoWrapper, PwdReset, PwdResetWrapper,
-    RegisterInfoWrapper, ReportData, SendConfirmationLink, SendConfirmationLinkWrapper,
-    SignupLinkDetailsWrapper, UpdateUser, UpdateUserPractice, UpdateUserPracticesOrderKey,
-    UpdateUserWrapper, UserInfoWrapper, UserPractice,
+    AllUserPractices, CreateUserPractice, DiaryDay, LoginInfoWrapper, RegisterInfoWrapper,
+    ReportData, ResetPassword, ResetPasswordWrapper, SendConfirmationLink,
+    SendConfirmationLinkWrapper, SignupLinkDetailsWrapper, UpdateUser, UpdateUserPassword,
+    UpdateUserPractice, UpdateUserPracticesOrderKey, UpdateUserWrapper, UserInfoWrapper,
+    UserPractice,
 };
 
 use self::requests::*;
@@ -37,8 +38,8 @@ pub async fn register(register_info: RegisterInfoWrapper) -> Result<UserInfoWrap
 }
 
 /// Reset password
-pub async fn reset_pwd(data: PwdReset) -> Result<(), AppError> {
-    request_put("/password-reset".to_string(), PwdResetWrapper { data }).await
+pub async fn reset_pwd(data: ResetPassword) -> Result<(), AppError> {
+    request_put("/password-reset".to_string(), ResetPasswordWrapper { data }).await
 }
 
 /// Get current user info
@@ -49,6 +50,17 @@ pub async fn current() -> Result<UserInfoWrapper, AppError> {
 /// Update user
 pub async fn update_user(user: UpdateUser) -> Result<(), AppError> {
     request_put("/user".to_string(), UpdateUserWrapper { user }).await
+}
+
+/// Update user password
+pub async fn update_user_password(password: impl Into<String>) -> Result<(), AppError> {
+    request_put(
+        "/user/password".to_string(),
+        UpdateUserPassword {
+            password: password.into(),
+        },
+    )
+    .await
 }
 
 /// Get diary data for a date
