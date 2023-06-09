@@ -179,7 +179,7 @@ pub fn charts() -> Html {
                 <div class="relative">
                     <select class={ INPUT_CSS } id="practices" onchange={ practice_onchange.clone() }>
                         { for all_practices.data.iter().flat_map(|inner| inner.iter()).map(|p| html!{
-                            <option
+                            <option class={ "text-black" }
                                 selected={ selected_practice.as_ref().map(|inner| inner.practice == p.practice).unwrap_or(false) }
                                 value={ p.practice.clone() }
                                 >{ p.practice.clone() }</option>
@@ -192,9 +192,9 @@ pub fn charts() -> Html {
                 </div>
                 <div class="relative">
                     <select class={ INPUT_CSS } id="duration" onchange={ duration_onchange.clone() }>
-                        <option selected=true value={ ReportDuration::Last30Days.to_string() }>{ Locale::current().last_month() }</option>
-                        <option value={ ReportDuration::Last90Days.to_string() }>{ Locale::current().last_quarter() }</option>
-                        <option value={ ReportDuration::Last365Days.to_string() }>{ Locale::current().last_year() }</option>
+                        <option class={ "text-black" } selected=true value={ ReportDuration::Last30Days.to_string() }>{ Locale::current().last_month() }</option>
+                        <option class={ "text-black" } value={ ReportDuration::Last90Days.to_string() }>{ Locale::current().last_quarter() }</option>
+                        <option class={ "text-black" } value={ ReportDuration::Last365Days.to_string() }>{ Locale::current().last_year() }</option>
                     </select>
                     <label for="duration" class={ INPUT_LABEL_CSS }>
                         <i class="fa"></i>
