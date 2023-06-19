@@ -2,9 +2,15 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 
 use self::{
-    charts::Charts, confirmation::Confirmation, home::Home, login::Login,
-    new_user_practice::NewUserPractice, pwd_reset::PwdReset, register_with_id::RegisterWithId,
-    settings::Settings, user_practices::UserPractices,
+    charts::{Charts, SharedCharts},
+    confirmation::Confirmation,
+    home::Home,
+    login::Login,
+    new_user_practice::NewUserPractice,
+    pwd_reset::PwdReset,
+    register_with_id::RegisterWithId,
+    settings::Settings,
+    user_practices::UserPractices,
 };
 use crate::{components::user_context_provider::UserContextProvider, model::ConfirmationType};
 
@@ -27,6 +33,8 @@ pub enum BaseRoute {
     PasswordResetWithConfirmationId { id: String },
     #[at("/register")]
     Register,
+    #[at("/shared/:id")]
+    SharedCharts { id: String },
     #[at("/*")]
     AppRoute,
     #[at("/")]
@@ -77,6 +85,7 @@ pub fn switch(routes: BaseRoute) -> Html {
         BaseRoute::Register => {
             html! { <Confirmation confirmation_type={ConfirmationType::Registration} /> }
         }
+        BaseRoute::SharedCharts { id } => html! { <SharedCharts share_id={id}/> },
         BaseRoute::Home | BaseRoute::AppRoute => {
             html! { <UserContextProvider><Switch<AppRoute> render={app_switch} /></UserContextProvider> }
         }

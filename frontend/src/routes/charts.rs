@@ -5,7 +5,7 @@ use crate::{
     css::*,
     i18n::Locale,
     model::{PracticeDataType, PracticeEntryValue, ReportDataEntry, UserPractice},
-    services::{get_chart_data, get_shared_practices, get_user_practices},
+    services::{get_chart_data, get_shared_chart_data, get_shared_practices, get_user_practices},
 };
 use common::ReportDuration;
 use web_sys::HtmlInputElement;
@@ -74,7 +74,7 @@ pub fn charts() -> Html {
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct SharedChartsProps {
-    share_id: AttrValue,
+    pub share_id: AttrValue,
 }
 
 #[function_component(SharedCharts)]
@@ -91,21 +91,24 @@ pub fn shared_charts(props: &SharedChartsProps) -> Html {
         })
     };
 
-    let selected_practice = use_state(|| {
-        Some(UserPractice {
-            practice: "Books".into(),
-            data_type: PracticeDataType::Duration,
-            is_active: true,
-        })
-    });
+    {
+        // Load state on mount
+        let all_practices = all_practices.clone();
+        use_mount(move || {
+            all_practices.run();
+        });
+    }
+
+    let selected_practice = use_state(|| None as Option<UserPractice>);
     let duration = use_state(|| ReportDuration::Last30Days);
 
     let report_data = {
         let practice = selected_practice.clone();
         let duration = duration.clone();
+        let share_id = props.share_id.clone();
         use_async(async move {
             match &*practice {
-                Some(p) => get_chart_data(&p.practice, &*duration)
+                Some(p) => get_shared_chart_data(&share_id, &p.practice, &*duration)
                     .await
                     .map(|res| res.values),
                 None => Ok(vec![]),
@@ -114,9 +117,9 @@ pub fn shared_charts(props: &SharedChartsProps) -> Html {
     };
 
     let pull_data = {
+        let report_data = report_data.clone();
         let duration = duration.clone();
         let selected_practice = selected_practice.clone();
-        let report_data = report_data.clone();
         Callback::from(move |(practice, dur)| {
             duration.set(dur);
             selected_practice.set(Some(practice));
@@ -125,12 +128,15 @@ pub fn shared_charts(props: &SharedChartsProps) -> Html {
     };
 
     html! {
-        <BlankPage show_footer=true >
+        <BlankPage show_footer=true loading={all_practices.data.is_none()}>
+            <ListErrors error={all_practices.error.clone()} />
             <ListErrors error={report_data.error.clone()} />
-            <ChartsBase
-                practices={all_practices.data.clone().unwrap_or_default()}
-                report_data={report_data.data.clone().unwrap_or_default()}
-                {pull_data}/>
+            if all_practices.data.is_some(){
+                <ChartsBase
+                    practices={all_practices.data.clone().unwrap_or_default()}
+                    report_data={report_data.data.clone().unwrap_or_default()}
+                    {pull_data}/>
+            }
         </BlankPage>
     }
 }
