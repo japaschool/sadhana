@@ -7,7 +7,7 @@ extern crate log;
 
 pub mod error;
 
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, PartialEq, Deserialize, Clone)]
 pub enum ReportDuration {
     Last30Days,
     Last90Days,
