@@ -123,3 +123,24 @@ pub async fn get_chart_data(
     request_get(format!("/diary/report?practice={}&duration={}", practice, duration).to_string())
         .await
 }
+
+/// Get shared chart data for a practice
+pub async fn get_shared_chart_data(
+    share_id: &str,
+    practice: &str,
+    duration: &ReportDuration,
+) -> Result<ReportData, AppError> {
+    request_get(
+        format!("/diary/share/{share_id}?practice={practice}&duration={duration}").to_string(),
+    )
+    .await
+}
+
+/// Get shared practices
+pub async fn get_shared_practices(share_id: &str) -> Result<AllUserPractices, AppError> {
+    todo!()
+    // request_get(
+    //     format!("/diary/share/{share_id}?practice={practice}&duration={duration}").to_string(),
+    // )
+    // .await
+}
