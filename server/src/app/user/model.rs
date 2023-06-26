@@ -188,9 +188,8 @@ impl Confirmation {
         let res: Self = diesel::insert_into(confirmations::table)
             .values((
                 &confirmations::email.eq(email),
-                &confirmations::expires_at.eq(Self::now()
-                    .checked_add_signed(Duration::minutes(15))
-                    .unwrap()),
+                &confirmations::expires_at
+                    .eq(Self::now().checked_add_signed(Duration::hours(48)).unwrap()),
             ))
             .on_conflict(confirmations::email)
             .do_update()
