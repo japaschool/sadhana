@@ -169,7 +169,9 @@ pub fn home() -> Html {
 
     lazy_static! {
         static ref REJECT_TIME_R: Regex = Regex::new(r"[^\d]").unwrap();
-        static ref VALID_DURATION_R: Regex =
+        static ref VALID_DURATION_R: Regex = {
+            let h = Locale::current().hours_label();
+            let m = Locale::current().minutes_label();
             // There are 3 mutually exclusive regex patterns here.
             // (1) 3 digits representing minutes. No hours are allowed.
             // (2) Number up to 23 for hours only when no minutes are entered.
@@ -177,9 +179,10 @@ pub fn home() -> Html {
             // (4) Optional separator between hours and minutes.
             // (5) 2 digits for minutes in presence of hours. Limited to the number 59.
             //
-            //                |---1---|    |--------2--------|             |---------3--------||----4----| |-----5-----|
-            Regex::new(r#"^(?:(\d{1,3})m?|([0-1]?[0-9]|2[0-3])(?:h?\s?|:)?|([0-1]?[0-9]|2[0-3])(?:h?\s?|:)?([0-5]?[0-9])m?)$"#)
-                .unwrap();
+            //                  |------1-----|     |---------2--------|               |---------3--------||-----4-----| |-----5-----|
+            let r = format!(r#"^(?:(\d{{1,3}}){m}?|([0-1]?[0-9]|2[0-3])(?:{h}?\s?|:)?|([0-1]?[0-9]|2[0-3])(?:{h}?\s?|:)?([0-5]?[0-9]){m}?)$"#);
+            Regex::new(&r).unwrap()
+        };
     };
 
     // use_mut_ref is to avoid re-rendering on every key press
