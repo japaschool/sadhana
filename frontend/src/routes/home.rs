@@ -234,6 +234,8 @@ pub fn home() -> Html {
 
             let idx = input.selection_start().unwrap().unwrap();
             let mut s = input.value();
+
+            // Remove any invalid characters
             while !VALID_DURATION_R.is_match(&s) {
                 let mut new_s = String::with_capacity(s.len());
                 let mut i = 0;
@@ -243,7 +245,14 @@ pub fn home() -> Html {
                         new_s.push(ch);
                     }
                 }
+
+                let stop = s == new_s;
+
                 s = new_s;
+
+                if stop {
+                    break;
+                }
             }
             input.set_value(&s);
         })
