@@ -93,7 +93,7 @@ pub fn login() -> Html {
                             required = true
                             />
                         <label for="email" class={ INPUT_LABEL_CSS }>
-                            <i class="fa fa-envelope"></i>{ format!(" {}", Locale::current().email_address()) }
+                            <i class="fas fa-envelope"></i>{ format!(" {}", Locale::current().email_address()) }
                         </label>
                     </div>
                     <div class="relative">
@@ -109,8 +109,11 @@ pub fn login() -> Html {
                             />
                         <label for="password"
                             class={ INPUT_LABEL_CSS }>
-                            <i class="fa fa-key"></i>{ format!(" {}", Locale::current().password()) }
+                            <i class="fas fa-key"></i>{ format!(" {}", Locale::current().password()) }
                         </label>
+                    </div>
+                    <div class="relative">
+                        <button class={ SUBMIT_BTN_CSS }>{ Locale::current().sign_in() }</button>
                     </div>
                     <div class="relative flex justify-between sm:text-sm">
                         <Link<BaseRoute>
@@ -118,12 +121,9 @@ pub fn login() -> Html {
                             to={BaseRoute::PasswordReset}>{ Locale::current().forgot_password() }
                         </Link<BaseRoute>>
                         <Link<BaseRoute>
-                            classes={ LINK_CSS }
+                            classes={ LINK_CSS_NEW_ACC }
                             to={BaseRoute::Register}>{ Locale::current().need_an_account() }
                         </Link<BaseRoute>>
-                    </div>
-                    <div class="relative">
-                        <button class={ SUBMIT_BTN_CSS }>{ Locale::current().sign_in() }</button>
                     </div>
                 </div>
             </form>

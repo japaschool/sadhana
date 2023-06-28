@@ -126,7 +126,7 @@ pub fn register_with_id(props: &Props) -> Html {
                                 />
                             <label for="email"
                                 class={ INPUT_LABEL_CSS }>
-                                <i class="fa fa-envelope"></i>{ format!(" {}", Locale::current().email_address()) }
+                                <i class="fas fa-envelope"></i>{ format!(" {}", Locale::current().email_address()) }
                             </label>
                         </div>
                         <div class="relative">
@@ -144,7 +144,7 @@ pub fn register_with_id(props: &Props) -> Html {
                                 />
                             <label for="name"
                                 class={ INPUT_LABEL_CSS }>
-                                <i class="fa fa-user"></i>{ format!(" {}", Locale::current().name()) }
+                                <i class="fas fa-user"></i>{ format!(" {}", Locale::current().name()) }
                             </label>
                         </div>
                         <Pwd onchange={ oninput_password }/>

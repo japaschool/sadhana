@@ -307,16 +307,16 @@ pub fn user_practices() -> Html {
                                 <label class="px-2 py-1" >
                                     <i onclick={ toggle_hidden.clone() }
                                         id={ p.clone() }
-                                        class={ if selected_practices.current().contains(p) {"fa fa-eye"} else {"fa fa-eye-slash"}}
+                                        class={ if selected_practices.current().contains(p) {"fas fa-eye"} else {"fas fa-eye-slash"}}
                                         />
                                 </label>
                                 <label class="px-2 py-1">
-                                    <i onclick={ rename.clone() } id={ p.clone() } class="fa fa-pen-to-square"/>
+                                    <i onclick={ rename.clone() } id={ p.clone() } class="fas fa-pen-to-square"/>
                                 </label>
                                 <label class="px-2 py-1">
-                                    <i onclick={ delete.clone() } id={ p.clone() } class="fa fa-trash"/>
+                                    <i onclick={ delete.clone() } id={ p.clone() } class="fas fa-trash"/>
                                 </label>
-                                <label draggable="true" class="px-2 py-1 touch-none"><i class="fa-solid fa-bars"></i></label>
+                                <label draggable="true" class="px-2 py-1 touch-none"><i class="fas fa-bars"></i></label>
                             </div>
                         }}).collect::<Html>()
                     }

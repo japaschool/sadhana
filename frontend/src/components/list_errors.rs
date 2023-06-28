@@ -11,7 +11,7 @@ pub struct Props {
 }
 
 fn p<S: Display>(text: S) -> Html {
-    html! { <p class="text-white left-2">{ text }</p> }
+    html! { <p class="text-gray dark:text-white left-2">{ text }</p> }
 }
 
 fn default(error: &AppError) -> Html {
