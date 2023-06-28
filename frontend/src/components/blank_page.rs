@@ -79,9 +79,9 @@ impl HeaderButtonProps {
 fn header_button(props: &Option<HeaderButtonProps>) -> Html {
     if let Some(ref rb) = props {
         html! {
-            <span class="text-white">
+            <span class="text-gray ">
                 <button type={ rb.btn_type.as_str() } class={ LINK_CSS } onclick={ rb.onclick.clone() }>
-                    <i class={ format!("fa-solid {}", rb.icon_css.to_owned().unwrap_or_default()) }></i>
+                    <i class={ format!(" {}", rb.icon_css.to_owned().unwrap_or_default()) }></i>
                     { &rb.label }
                 </button>
             </span>
@@ -95,7 +95,7 @@ fn header_button(props: &Option<HeaderButtonProps>) -> Html {
 pub fn blank_page(props: &Props) -> Html {
     html! {
         <>
-            <div class="bg-hero bg-no-repeat bg-cover bg-center h-screen w-full fixed -z-10" />
+            <div class="bg-hero dark:bg-herod bg-no-repeat bg-cover bg-center h-screen w-full fixed -z-10" />
             <div id="content" class={ format!("absolute top-0 bottom-{} left-0 right-0 overflow-auto", if props.show_footer {"20"} else {"0"}) }>
                 <div class="bg-transparent min-h-screen justify-center py-6 sm:py-12">
                     if props.loading {
@@ -112,9 +112,9 @@ pub fn blank_page(props: &Props) -> Html {
                                         {
                                             if let Some((ref label, ref route)) = props.prev_link {
                                                 html! {
-                                                    <span class="text-white">
+                                                    <span class="text-gray ">
                                                         <Link<AppRoute> classes={ LINK_CSS } to={ route.clone() }>
-                                                            <i class="fa-solid fa-chevron-left"></i>
+                                                            <i class="fas fa-chevron-left"></i>
                                                             { format!(" {}", label) }
                                                         </Link<AppRoute>>
                                                     </span>
@@ -128,14 +128,14 @@ pub fn blank_page(props: &Props) -> Html {
                                 </div>
                             </div>
                         </div>
-                        <img class="h-20 inline-block" src="/images/logo.png" />
+                        <img class="logo h-20 inline-block" src="/images/logo.png" />
                     </div>
                     <div class="relative py-3 sm:max-w-xl sm:mx-auto">
                         <div class="relative px-4 py-4 sm:rounded-3xl sm:px-20">
                             { props.header_label.iter().map(|l| {
                                 html! {
                                     <div class="pb-5">
-                                        <h1 class="text-2xl text-white">{ l }</h1>
+                                        <h1 class="text-center text-4xl font-light leading-9 tracking-tight logo">{ l }</h1>
                                     </div>
                                 }}).collect::<Html>()
                             }
@@ -149,10 +149,10 @@ pub fn blank_page(props: &Props) -> Html {
                     <div class="bg-transparent justify-center">
                         <div class="relative py-3 sm:max-w-xl sm:mx-auto">
                             <div class="relative px-8 sm:rounded-3xl sm:px-20">
-                                <div class="text-white text-2xl flex justify-between whitespace-nowrap items-center">
-                                    <span><Link<AppRoute> to={AppRoute::Home}><i class="fa-solid fa-house" /></Link<AppRoute>></span>
-                                    <span><Link<AppRoute> to={AppRoute::Charts}><i class="fa-solid fa-chart-column" /></Link<AppRoute>></span>
-                                    <span><Link<AppRoute> to={AppRoute::Settings}><i class="fa-solid fa-gear" /></Link<AppRoute>></span>
+                                <div class="text-gray dark:text-white text-2xl flex justify-between whitespace-nowrap items-center">
+                                    <span><Link<AppRoute> to={AppRoute::Home}><i class="fas fa-house" /></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::Charts}><i class="fas fa-chart-column" /></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::Settings}><i class="fas fa-gear" /></Link<AppRoute>></span>
                                 </div>
                             </div>
                         </div>
