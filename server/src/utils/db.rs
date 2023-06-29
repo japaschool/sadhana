@@ -8,7 +8,7 @@ pub type DbPool = Pool<ConnectionManager<PgConnection>>;
 fn init_pool(database_url: &str) -> Result<DbPool, PoolError> {
     let manager = ConnectionManager::<PgConnection>::new(database_url);
     log::debug!("Creating a pg conn pool");
-    Pool::builder().max_size(5).build(manager)
+    Pool::builder().build(manager)
 }
 
 pub fn establish_connection() -> DbPool {
