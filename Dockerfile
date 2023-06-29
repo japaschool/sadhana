@@ -1,7 +1,5 @@
 FROM rust:1.68 as build
 
-ARG API_ROOT
-
 RUN apt update
 RUN apt install -y libpq5
 

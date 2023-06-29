@@ -1,21 +1,23 @@
 use common::error::*;
-use dotenv_codegen::dotenv;
 use gloo::storage::{LocalStorage, Storage};
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
 use serde::{de::DeserializeOwned, Serialize};
 
-const API_ROOT: &str = dotenv!("API_ROOT");
 const TOKEN_KEY: &str = "yew.token";
 
 lazy_static! {
     /// Jwt token read from local storage.
-    pub static ref TOKEN: RwLock<Option<String>> = {
+    static ref TOKEN: RwLock<Option<String>> = {
         if let Ok(token) = LocalStorage::get(TOKEN_KEY) {
             RwLock::new(Some(token))
         } else {
             RwLock::new(None)
         }
+    };
+
+    static ref API_ROOT: String = {
+        format!("{}/api", web_sys::window().expect("API_ROOT is not set").origin())
     };
 }
 
@@ -42,7 +44,7 @@ where
     T: DeserializeOwned + 'static + std::fmt::Debug,
     B: Serialize + std::fmt::Debug,
 {
-    let url = format!("{}{}", API_ROOT, url);
+    let url = format!("{}{}", API_ROOT.as_str(), url);
 
     log::debug!("Sending {} request to {}", method, url);
 
