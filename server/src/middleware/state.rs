@@ -1,9 +1,9 @@
 use crate::utils;
 use common::error::AppError;
 use diesel::pg::PgConnection;
-use diesel::r2d2::{ConnectionManager, PooledConnection};
+use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 
-type AppConn = PooledConnection<ConnectionManager<PgConnection>>;
+type PgConn = ConnectionManager<PgConnection>;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -11,13 +11,12 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn get_conn(&self) -> Result<AppConn, AppError> {
+    pub fn get_conn(&self) -> Result<PooledConnection<PgConn>, AppError> {
         let conn = self.pool.get()?;
         Ok(conn)
     }
 
-    pub fn init() -> Self {
-        let pool = utils::db::establish_connection();
+    pub fn init(pool: Pool<PgConn>) -> Self {
         AppState { pool }
     }
 }

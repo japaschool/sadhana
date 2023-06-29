@@ -32,8 +32,10 @@ async fn main() -> std::io::Result<()> {
 
     const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 
+    let pool = utils::db::establish_connection();
+
     HttpServer::new(move || {
-        let app_state = middleware::state::AppState::init();
+        let app_state = middleware::state::AppState::init(pool.clone());
 
         app_state
             .get_conn()
