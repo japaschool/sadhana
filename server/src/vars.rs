@@ -44,8 +44,3 @@ pub fn public_server_address() -> String {
     dotenv().ok();
     var("PUBLIC_SERVER_ADDRESS").expect("PUBLIC_SERVER_ADDRESS is not set")
 }
-
-pub fn api_root() -> String {
-    dotenv().ok();
-    var("API_ROOT").expect("API_ROOT is not set")
-}

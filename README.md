@@ -20,28 +20,6 @@
 - How to [make web app look like a native iOS app](https://medium.com/appscope/designing-native-like-progressive-web-apps-for-ios-1b3cdda1d0e8)
 - https://samselikoff.com/blog/8-tips-to-make-your-website-feel-like-an-ios-app#tip-5:-make-the-status-bar-transparent
 
-## TODO List
-
-### Bugs
-
-- [x] Server needs to send errors in a format UI can understand
-
-### Features
-
-- [ ] Validate email upon registration #auth
-- [ ] Magic link login #auth
-- [ ] Update user details #api
-- [ ] Delete user #api
-- [x] Extract errors.rs from frontend and backend into a separate crate. #tech_debt
-- [ ] https support #tech_debt
-- [ ] script up spinning up local docker instance for postgres #tech_debt
-- [ ] tests #tech_debt
-- [ ] refactor frontend to have similar structure to backend #tech_debt
-- [ ] validate confirmation on backend when creating a new user. Frontend should send conf id for that.
-- [x] choosing practices #feature
-- [x] adding custom practices #feature
-- [x] automatically add default practices to new users #feature
-
 ## Learning Rust
 
 - [Niko Matsakis: What's unique about Rust?](https://www.youtube.com/watch?v=jQOZX0xkrWA)
@@ -76,9 +54,6 @@ cargo install diesel_cli --no-default-features --features postgres
 
 4. Run: `make run`
 5. Open in chrome localhost:8080
-6. Install tailwindcss.
-   Start it when changing css classes as follows:
-   `cd frontend && tailwindcss -i styles/tailwind.css -o styles/app.css`
 
 ### Add a practice to all users
 
@@ -86,8 +61,8 @@ cargo install diesel_cli --no-default-features --features postgres
 
 ### Docker
 
-For the UI (that runs in user's browser) to know the backend address we have to bake it in during build phase. Therefore we have to pass API_ROOT variable to docker build command. The complete command is as follows (note /api at the end of API_ROOT):
-`docker build --build-arg API_ROOT="https://bi.antonoal.duckdns.org/api" -t sadhanapro .`
+To build a container run:
+`docker build -t sadhanapro .`
 
 To run the container use the following command as an example:
 `docker run -p4242:80 -d --name sadhanapro -t -e 'SERVER_ADDRESS=0.0.0.0:80' -e 'JWT_KEY=xyz' -v "$(pwd)"/env.template:/usr/local/bin/.env sadhanapro`
