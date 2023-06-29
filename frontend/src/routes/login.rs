@@ -115,7 +115,7 @@ pub fn login() -> Html {
                     <div class="relative">
                         <button class={ SUBMIT_BTN_CSS }>{ Locale::current().sign_in() }</button>
                     </div>
-                    <div class="relative flex justify-between sm:text-sm">
+                    <div class={ LINKS_CSS }>
                         <Link<BaseRoute>
                             classes={ LINK_CSS }
                             to={BaseRoute::PasswordReset}>{ Locale::current().forgot_password() }

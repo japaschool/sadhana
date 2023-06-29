@@ -112,7 +112,7 @@ pub fn confirmation(props: &Props) -> Html {
                             </label>
                         </div>
                         if props.confirmation_type == ConfirmationType::Registration {
-                            <div class="relative flex justify-between sm:text-sm">
+                            <div class="relative flex justify-between sm:text-base">
                                 <Link<AppRoute>
                                     classes={ LINK_CSS }
                                     to={AppRoute::Login}>{ Locale::current().have_an_account() }

@@ -385,10 +385,10 @@ pub fn home() -> Html {
         })
     };
 
-    const HOVER_TODAY_DATE_DIV_CSS: &'static str = "flex group hover:bg-red-500 hover:shadow-lg hover-dark-shadow rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
-    const HOVER_DATE_DIV_CSS: &'static str = "flex group hover:bg-slate-800 hover:shadow-lg hover-dark-shadow rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
-    const SELECTED_TODAY_DATE_DIV_CSS: &'static str = "flex group bg-red-500 shadow-lg dark-shadow rounded-full mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
-    const SELECTED_DATE_DIV_CSS: &'static str = "flex group bg-slate-800 shadow-lg dark-shadow rounded-full mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
+    const HOVER_TODAY_DATE_DIV_CSS: &'static str = "flex group dark:hover:bg-orange-400 hover:shadow-lg hover-dark-shadow rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
+    const HOVER_DATE_DIV_CSS: &'static str = "flex group hover:bg-zinc-300 dark:hover:bg-slate-800 hover:shadow-lg hover-dark-shadow rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
+    const SELECTED_TODAY_DATE_DIV_CSS: &'static str = "flex group text-white bg-orange-400 dark:bg-orange-400 shadow-lg dark-shadow rounded-full mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
+    const SELECTED_DATE_DIV_CSS: &'static str = "flex group text-white bg-orange-300 bg-slate-800 shadow-lg dark-shadow rounded-full mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
 
     let calendar_day = |for_selected_date: bool, d: &NaiveDate| -> Html {
         let date_css = match (for_selected_date, *d == today) {
@@ -398,14 +398,14 @@ pub fn home() -> Html {
             (false, false) => HOVER_DATE_DIV_CSS,
         };
         let weekday_label_css = if for_selected_date {
-            "text-gray dark:text-white text-sm font-semibold"
+            "text-zinc-500  dark:text-white text-base font-semibold"
         } else {
-            "text-gray dark:text-white text-sm"
+            "text-zinc-500  dark:text-white text-base"
         };
         let date_label_css = if for_selected_date {
-            "text-gray dark:text-white my-auto font-bold"
+            "text-zinc-500  dark:text-white my-auto font-bold"
         } else {
-            "text-gray dark:text-white dark:group-hover:text-white group-hover:text-gray-100 my-auto group-hover:font-bold transition-all duration-300"
+            "text-zinc-500  dark:text-white dark:group-hover:text-white group-hover:text-zinc-100 my-auto group-hover:font-bold transition-all duration-300"
         };
 
         let id = d.format(DATE_FORMAT);
@@ -423,7 +423,7 @@ pub fn home() -> Html {
     let calendar = html! {
         <div class="relative mt-4 py-2">
             <div class="flex justify-center overflow-x-scroll mx-auto">
-                <div class="flex text-gray dark:text-white group w-16" onclick={ prev_week_onclick.clone() }>
+                <div class="flex text-zinc-500 dark:text-white group w-16" onclick={ prev_week_onclick.clone() }>
                     <div class="flex items-center"><i class="fas fa-chevron-left"></i></div>
                 </div>
                 {
@@ -433,7 +433,7 @@ pub fn home() -> Html {
                         </div>
                     }).collect::<Html>()
                 }
-                <div class="flex text-gray dark:text-white justify-end group w-16" onclick={ next_week_onclick.clone() }>
+                <div class="flex text-zinc-500 dark:text-white justify-end group w-16" onclick={ next_week_onclick.clone() }>
                     <div class="flex items-center"><i class="fas fa-chevron-right"></i></div>
                 </div>
             </div>

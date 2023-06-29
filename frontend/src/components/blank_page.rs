@@ -79,7 +79,7 @@ impl HeaderButtonProps {
 fn header_button(props: &Option<HeaderButtonProps>) -> Html {
     if let Some(ref rb) = props {
         html! {
-            <span class="text-gray ">
+            <span>
                 <button type={ rb.btn_type.as_str() } class={ LINK_CSS } onclick={ rb.onclick.clone() }>
                     <i class={ format!(" {}", rb.icon_css.to_owned().unwrap_or_default()) }></i>
                     { &rb.label }
@@ -112,7 +112,7 @@ pub fn blank_page(props: &Props) -> Html {
                                         {
                                             if let Some((ref label, ref route)) = props.prev_link {
                                                 html! {
-                                                    <span class="text-gray ">
+                                                    <span>
                                                         <Link<AppRoute> classes={ LINK_CSS } to={ route.clone() }>
                                                             <i class="fas fa-chevron-left"></i>
                                                             { format!(" {}", label) }
@@ -149,8 +149,8 @@ pub fn blank_page(props: &Props) -> Html {
                     <div class="bg-transparent justify-center">
                         <div class="relative py-3 sm:max-w-xl sm:mx-auto">
                             <div class="relative px-8 sm:rounded-3xl sm:px-20">
-                                <div class="text-gray dark:text-white text-2xl flex justify-between whitespace-nowrap items-center">
-                                    <span><Link<AppRoute> to={AppRoute::Home}><i class="fas fa-house" /></Link<AppRoute>></span>
+                                <div class={ MENU_CSS }>
+                                    <span><Link<AppRoute> to={AppRoute::Home}><i class="fas fa-house-user" /></Link<AppRoute>></span>
                                     <span><Link<AppRoute> to={AppRoute::Charts}><i class="fas fa-chart-column" /></Link<AppRoute>></span>
                                     <span><Link<AppRoute> to={AppRoute::Settings}><i class="fas fa-gear" /></Link<AppRoute>></span>
                                 </div>
