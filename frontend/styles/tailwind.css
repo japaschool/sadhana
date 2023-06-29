@@ -19,6 +19,10 @@ input::-webkit-calendar-picker-indicator {
     filter: brightness(0) saturate(100%) invert(66%) sepia(65%) saturate(439%) hue-rotate(358deg) brightness(101%) contrast(92%);
 }
 
+.links {
+    margin-top: 5px !important;
+}
+
 @-webkit-keyframes spinner {
     0% {
         -webkit-transform: rotate(0deg);

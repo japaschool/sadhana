@@ -150,7 +150,7 @@ pub fn settings() -> Html {
                         </label>
                     </div>
                     <Pwd onchange={ pwd_onchange.clone() } readonly={ !*editing } required={ !user_password.is_empty() }/>
-                    <div class="relative flex justify-center sm:text-sm">
+                    <div class="relative flex justify-center sm:text-base">
                         <a href="/login"
                             class={ LINK_CSS }
                             onclick={ onclick_logout.clone() }

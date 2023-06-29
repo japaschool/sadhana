@@ -148,7 +148,7 @@ pub fn register_with_id(props: &Props) -> Html {
                             </label>
                         </div>
                         <Pwd onchange={ oninput_password }/>
-                        <div class="relative flex justify-between sm:text-sm">
+                        <div class="relative flex justify-between sm:text-base">
                             <Link<AppRoute>
                                 classes={ LINK_CSS }
                                 to={AppRoute::Login}>{ Locale::current().have_an_account() }
