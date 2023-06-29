@@ -5,11 +5,13 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use crate::{middleware::state::AppState, routes::routes};
 
+use super::db;
+
 pub async fn get_service(
 ) -> impl Service<Request, Response = ServiceResponse<BoxBody>, Error = Error> {
     test::init_service(
         App::new()
-            .app_data(Data::new(AppState::init()))
+            .app_data(Data::new(AppState::init(db::establish_connection())))
             .configure(routes),
     )
     .await
