@@ -25,7 +25,7 @@ pub fn chart(props: &Props) -> Html {
     let mut layout = Layout::new()
         .paper_background_color(NamedColor::Transparent)
         .plot_background_color(NamedColor::Transparent)
-        .font(Font::new().color(NamedColor::White))
+        .font(Font::new().color(NamedColor::Gray))
         .margin(Margin::new().left(40).right(20).top(10))
         .auto_size(true);
 

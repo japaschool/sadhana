@@ -385,10 +385,10 @@ pub fn home() -> Html {
         })
     };
 
-    const HOVER_TODAY_DATE_DIV_CSS: &'static str = "flex group dark:hover:bg-orange-400 hover:shadow-lg hover-dark-shadow rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
-    const HOVER_DATE_DIV_CSS: &'static str = "flex group hover:bg-zinc-300 dark:hover:bg-slate-800 hover:shadow-lg hover-dark-shadow rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
-    const SELECTED_TODAY_DATE_DIV_CSS: &'static str = "flex group text-white bg-orange-400 dark:bg-orange-400 shadow-lg dark-shadow rounded-full mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
-    const SELECTED_DATE_DIV_CSS: &'static str = "flex group text-white bg-orange-300 bg-slate-800 shadow-lg dark-shadow rounded-full mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
+    const HOVER_TODAY_DATE_DIV_CSS: &'static str = "flex group dark:hover:bg-orange-400 rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
+    const HOVER_DATE_DIV_CSS: &'static str = "flex group hover:bg-zinc-300 dark:hover:bg-slate-800 rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
+    const SELECTED_TODAY_DATE_DIV_CSS: &'static str = "flex group text-white bg-orange-400 rounded-full mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
+    const SELECTED_DATE_DIV_CSS: &'static str = "flex group text-white rounded-full border-2 border-orange-400 mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
 
     let calendar_day = |for_selected_date: bool, d: &NaiveDate| -> Html {
         let date_css = match (for_selected_date, *d == today) {
@@ -421,7 +421,7 @@ pub fn home() -> Html {
     };
 
     let calendar = html! {
-        <div class="relative mt-4 py-2">
+        <div class="relative">
             <div class="flex justify-center overflow-x-scroll mx-auto">
                 <div class="flex text-zinc-500 dark:text-white group w-16" onclick={ prev_week_onclick.clone() }>
                     <div class="flex items-center"><i class="fas fa-chevron-left"></i></div>
@@ -464,14 +464,14 @@ pub fn home() -> Html {
                                         class={ format!("{} text-center", INPUT_CSS) }
                                         />
                                     <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
-                                        <i class="fas fa-input-numeric"></i>{ format!(" {}: ", practice) }
+                                        <i class="fas fa-arrow-down-wide-short icon"></i>{ format!(" {}: ", practice) }
                                     </label>
                                 </div>
                                 },
                             PracticeDataType::Bool => html! {
                                 <div class="relative" key={ practice.clone() } >
                                     <label class="flex justify-between whitespace-nowrap">
-                                        <span class=""><i class="fa"></i>{ format!(" {}: ", practice) }</span>
+                                        <span class=""><i class="fas fa-arrow-down-wide-short icon"></i>{ format!(" {}: ", practice) }</span>
                                         <input
                                             id="checkbox"
                                             type="checkbox"
@@ -497,7 +497,7 @@ pub fn home() -> Html {
                                         placeholder={ idx.to_string() }
                                         />
                                     <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
-                                        <i class="fas fa-clock"></i>
+                                        <i class="fas fa-moon icon"></i>
                                         { format!(" {}: ", practice) }
                                     </label>
                                 </div>
@@ -518,7 +518,7 @@ pub fn home() -> Html {
                                         placeholder={ idx.to_string() }
                                         />
                                     <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
-                                        <i class="fas fa-clock"></i>
+                                        <i class="fas fa-sun icon"></i>
                                         { format!(" {}: ", practice) }
                                     </label>
                                 </div>
@@ -536,7 +536,7 @@ pub fn home() -> Html {
                                         >
                                     </textarea>
                                     <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
-                                        <i class="fa"></i>
+                                        <i class="fas fa-file-lines icon"></i>
                                         { format!(" {}: ", practice) }
                                     </label>
                                 </div>
