@@ -150,7 +150,7 @@ pub fn blank_page(props: &Props) -> Html {
                         <div class="relative py-3 sm:max-w-xl sm:mx-auto">
                             <div class="relative px-8 sm:rounded-3xl sm:px-20">
                                 <div class={ MENU_CSS }>
-                                    <span><Link<AppRoute> to={AppRoute::Home}><i class="a-house-user inline-flex flex-col items-center justify-center px-5 group menu" /></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::Home}><i class="fas fa-house-user inline-flex flex-col items-center justify-center px-5 group menu" /></Link<AppRoute>></span>
                                     <span><Link<AppRoute> to={AppRoute::Charts}><i class="fas fa-chart-column inline-flex flex-col items-center justify-center px-5 group menu" /></Link<AppRoute>></span>
                                     <span><Link<AppRoute> to={AppRoute::Settings}><i class="fas fa-gear inline-flex flex-col items-center justify-center px-5  group menu" /></Link<AppRoute>></span>
                                 </div>
