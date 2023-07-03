@@ -135,7 +135,7 @@ pub fn blank_page(props: &Props) -> Html {
                             { props.header_label.iter().map(|l| {
                                 html! {
                                     <div class="pb-5">
-                                        <h1 class="text-center text-4xl font-light leading-9 tracking-tight logo">{ l }</h1>
+                                        <h1 class="text-center text-2xl font-medium leading-9 tracking-tight logo">{ l }</h1>
                                     </div>
                                 }}).collect::<Html>()
                             }
@@ -145,14 +145,14 @@ pub fn blank_page(props: &Props) -> Html {
                 </div>
             </div>
             if props.show_footer {
-                <div id="footer" class="absolute bottom-0 h-20 left-0 right-0 overflow-hidden">
+                <div id="footer" class="fixed bottom-0 left-0 z-50 w-full h-16 bg-white/50  border-t border-zinc-200/50 dark:bg-zinc-700/50  dark:border-zinc-700/50">
                     <div class="bg-transparent justify-center">
                         <div class="relative py-3 sm:max-w-xl sm:mx-auto">
                             <div class="relative px-8 sm:rounded-3xl sm:px-20">
                                 <div class={ MENU_CSS }>
-                                    <span><Link<AppRoute> to={AppRoute::Home}><i class="fas fa-house-user menu" /></Link<AppRoute>></span>
-                                    <span><Link<AppRoute> to={AppRoute::Charts}><i class="fas fa-chart-column menu" /></Link<AppRoute>></span>
-                                    <span><Link<AppRoute> to={AppRoute::Settings}><i class="fas fa-gear menu" /></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::Home}><i class="a-house-user inline-flex flex-col items-center justify-center px-5 group menu" /></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::Charts}><i class="fas fa-chart-column inline-flex flex-col items-center justify-center px-5 group menu" /></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::Settings}><i class="fas fa-gear inline-flex flex-col items-center justify-center px-5  group menu" /></Link<AppRoute>></span>
                                 </div>
                             </div>
                         </div>
