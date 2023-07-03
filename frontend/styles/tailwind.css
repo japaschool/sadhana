@@ -25,8 +25,11 @@ input::-webkit-calendar-picker-indicator {
 }
 
 .menu {
-    margin-right: 8px;
-    margin-left: 8px;
+    color: #a1a1aa;
+}
+
+.menu:hover {
+    color: #f59e0b !important;
 }
 
 .links {
