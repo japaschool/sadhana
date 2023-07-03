@@ -15,7 +15,7 @@ module.exports = {
         "safe-right": "env(safe-area-inset-right)"
       },
       backgroundImage: {
-        hero: "linear-gradient(rgba(255, 252, 250, 0.65), #ffffff), url('images/background.jpg')",
+        hero: "linear-gradient(rgba(255, 252, 250, 0.6), #f9fafb), url('images/background.jpg')",
         herod:
           "linear-gradient(rgba(73, 50, 34, 0.6), #1a1631), url('images/background.jpg')"
       }

@@ -128,14 +128,14 @@ pub fn blank_page(props: &Props) -> Html {
                                 </div>
                             </div>
                         </div>
-                        <img class="logo dark:logo-white h-20 inline-block" src="/images/logo.png" />
+                        <img class="logo h-20 inline-block" src="/images/logo.png" />
                     </div>
                     <div class="relative py-3 sm:max-w-xl sm:mx-auto">
                         <div class="relative px-4 py-4 sm:rounded-3xl sm:px-20">
                             { props.header_label.iter().map(|l| {
                                 html! {
                                     <div class="pb-5">
-                                        <h1 class="text-center text-4xl font-light leading-9 tracking-tight logo dark:logo-white">{ l }</h1>
+                                        <h1 class="text-center text-4xl font-light leading-9 tracking-tight logo">{ l }</h1>
                                     </div>
                                 }}).collect::<Html>()
                             }
@@ -150,9 +150,9 @@ pub fn blank_page(props: &Props) -> Html {
                         <div class="relative py-3 sm:max-w-xl sm:mx-auto">
                             <div class="relative px-8 sm:rounded-3xl sm:px-20">
                                 <div class={ MENU_CSS }>
-                                    <span><Link<AppRoute> to={AppRoute::Home}><i class="fas fa-house-user active:fill-orange-400 focus:fill-orange-400" /></Link<AppRoute>></span>
-                                    <span><Link<AppRoute> to={AppRoute::Charts}><i class="fas fa-chart-column" /></Link<AppRoute>></span>
-                                    <span><Link<AppRoute> to={AppRoute::Settings}><i class="fas fa-gear" /></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::Home}><i class="fas fa-house-user menu" /></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::Charts}><i class="fas fa-chart-column menu" /></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::Settings}><i class="fas fa-gear menu" /></Link<AppRoute>></span>
                                 </div>
                             </div>
                         </div>

@@ -16,14 +16,15 @@ input::-webkit-calendar-picker-indicator {
 }
 
 .logo {
-    filter: brightness(0) saturate(100%) invert(66%) sepia(65%) saturate(439%) hue-rotate(358deg) brightness(101%) contrast(92%);
-}
-
-.logo-white {
-    filter: brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(7467%) hue-rotate(360deg) brightness(108%) contrast(107%)
+    filter: brightness(0) saturate(100%) invert(66%) sepia(65%) saturate(439%) hue-rotate(358deg) brightness(110%) contrast(97%);
 }
 
 .icon {
+    margin-right: 8px;
+    margin-left: 8px;
+}
+
+.menu {
     margin-right: 8px;
     margin-left: 8px;
 }

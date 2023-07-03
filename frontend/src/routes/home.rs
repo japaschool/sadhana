@@ -385,10 +385,10 @@ pub fn home() -> Html {
         })
     };
 
-    const HOVER_TODAY_DATE_DIV_CSS: &'static str = "flex group dark:hover:bg-orange-400 rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
+    const HOVER_TODAY_DATE_DIV_CSS: &'static str = "flex group dark:hover:bg-amber-400 rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
     const HOVER_DATE_DIV_CSS: &'static str = "flex group hover:bg-zinc-300 dark:hover:bg-slate-800 rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
-    const SELECTED_TODAY_DATE_DIV_CSS: &'static str = "flex group text-white bg-orange-400 rounded-full mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
-    const SELECTED_DATE_DIV_CSS: &'static str = "flex group text-white rounded-full border-2 border-orange-400 mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
+    const SELECTED_TODAY_DATE_DIV_CSS: &'static str = "flex group text-white bg-amber-400 rounded-full mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
+    const SELECTED_DATE_DIV_CSS: &'static str = "flex group text-white rounded-full border-2 border-amber-400 mt-2 mx-1 cursor-pointer justify-center h-9 w-9";
 
     let calendar_day = |for_selected_date: bool, d: &NaiveDate| -> Html {
         let date_css = match (for_selected_date, *d == today) {
