@@ -714,6 +714,10 @@ video {
   overflow-x: scroll;
 }
 
+.overscroll-auto {
+  overscroll-behavior: auto;
+}
+
 .whitespace-nowrap {
   white-space: nowrap;
 }
@@ -814,7 +818,7 @@ video {
 }
 
 .bg-hero {
-  background-image: linear-gradient(rgba(255, 252, 250, 0.6), #f9fafb), url('images/background.jpg');
+  background-image: linear-gradient(rgba(255, 252, 250, 0.4), #f9fafb), url('images/background.jpg');
 }
 
 .from-amber-400 {
