@@ -15,5 +15,5 @@ dark:-active:bg-orange-900
 active:translate-y-1";
 
 
-pub const BODY_DIV_CSS: &'static str ="pt-12 text-base leading-6 space-y-10 text-zinc-500 dark:text-zinc-100 sm:leading-7 overscroll-auto";
+pub const BODY_DIV_CSS: &'static str ="pt-12 text-base leading-6 space-y-10 text-zinc-500 dark:text-zinc-100 sm:leading-7 overflow-x-hidden overflow-y-auto scrolling-touch lg:max-h-sm scrollbar-w-2 scrollbar-track-gray-lighter scrollbar-thumb-rounded scrollbar-thumb-gray";
 pub const MENU_CSS: &'static str ="text-zinc-500  dark:text-text-zinc-100 text-2xl flex justify-between whitespace-nowrap items-center";
