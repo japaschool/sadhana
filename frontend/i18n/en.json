@@ -24,6 +24,7 @@
     "text": "Text",
     "duration": "Duration",
     "delete_practice_warning": "Are you sure you want to delete? Any logged data associated with this practice will be lost.",
+    "delete_warning": "Are you sure you want to delete?",
     "enter_new_practice_name": "Rename practice to:",
     "select_practices": "Select Practices",
     "add_new_practice": "Add new practice",
@@ -59,5 +60,9 @@
     "password_reset": "Password Reset",
     "passwords_dont_match": "Passwords don't match",
     "reset_success_alert": "Password has been successfully reset. Please login.",
-    "data_type_cant_be_empty": "Please fill in this field."
+    "data_type_cant_be_empty": "Please fill in this field.",
+    "sharing_links": "Charts Links",
+    "add_new": "Add New",
+    "short_description": "Short Description",
+    "copied": "Copied!"
 }

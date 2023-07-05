@@ -24,6 +24,7 @@
   "text": "Текст",
   "duration": "Продолжительность",
   "delete_practice_warning": "Вы действительно хотите удалить? Все записи касающиеся этой практики будут перманентно удалены.",
+  "delete_warning": "Вы действительно хотите удалить?",
   "enter_new_practice_name": "Переименовать в:",
   "select_practices": "Выберите практики",
   "add_new_practice": "Создать практику",
@@ -49,7 +50,7 @@
   "hours_label": "ч",
   "minutes_label": "м",
   "login_not_found": "Пользотель с адресом {email} не найден",
-  "request_error": "Сервер недосягаем",
+  "request_error": "Сервер недоступен",
   "internal_server_error": "Внутренняя ошибка",
   "unauthorized": "Неверно введен пароль",
   "practice_already_exists": "Практика с именем {practice_name} уже существует",
@@ -59,5 +60,9 @@
   "password_reset": "Сброс пароля",
   "passwords_dont_match": "Пароли не совпадают",
   "reset_success_alert": "Пароль был успешно изменен. Пожалуйста, войдите используя новый пароль.",
-  "data_type_cant_be_empty": "Пожалуйста, заполните это поле."
+  "data_type_cant_be_empty": "Пожалуйста, заполните это поле.",
+  "sharing_links": "Ссылки на графики",
+  "add_new": "Добавить",
+  "short_description": "Краткое описание",
+  "copied": "Скопировано!"
 }

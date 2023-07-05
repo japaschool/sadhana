@@ -26,6 +26,15 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
             .service(
                 web::scope("/user")
                     .service(
+                        web::scope("/shares")
+                            .route("", web::post().to(app::shared::create_share_report_link))
+                            .route("", web::get().to(app::shared::get_share_report_links)),
+                    )
+                    .service(web::scope("/share").route(
+                        "/{share_id}",
+                        web::delete().to(app::shared::delete_share_report_link),
+                    ))
+                    .service(
                         web::scope("/practices")
                             .route("", web::post().to(app::user_practices::add_new))
                             .route(
@@ -53,15 +62,10 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                     ),
             )
             .service(
-                web::scope("/shares")
-                    .route("", web::post().to(app::shared::create_share_report_link))
-                    .route("", web::get().to(app::shared::get_share_report_links)),
-            )
-            .service(
                 web::scope("/share")
                     .route(
-                        "/{share_id}",
-                        web::delete().to(app::shared::delete_share_report_link),
+                        "/{share_id}/practices",
+                        web::get().to(app::shared::get_shared_report_practices),
                     )
                     .route(
                         "/{share_id}",
@@ -71,7 +75,7 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
             .service(
                 web::scope("/diary")
                     .route("/report", web::get().to(app::diary::api::get_report_data))
-                    .route("", web::post().to(app::diary::api::upsert_diary_day))
+                    .route("", web::put().to(app::diary::api::upsert_diary_day))
                     .route("", web::get().to(app::diary::api::get_diary_day)),
             ),
     )

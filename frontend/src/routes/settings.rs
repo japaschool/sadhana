@@ -129,7 +129,7 @@ pub fn settings() -> Html {
     html! {
         <form {onsubmit} {onreset} >
             <BlankPage
-                show_footer=true
+                show_footer={ !*editing }
                 left_button={ if *editing { HeaderButtonProps::reset(Locale::current().cancel()) } else { HeaderButtonProps::blank() }}
                 right_button={ if *editing { HeaderButtonProps::submit(Locale::current().save()) } else { HeaderButtonProps::edit(edit_onclick) }}
                 loading={ update_user.loading || update_password.loading }

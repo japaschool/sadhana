@@ -255,3 +255,19 @@ pub struct ReportDataEntry {
     pub cob_date: NaiveDate,
     pub value: Option<PracticeEntryValue>,
 }
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct UserShare {
+    pub id: String,
+    pub description: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct AllUserShares {
+    pub shares: Vec<UserShare>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CreateUserShare {
+    pub description: String,
+}

@@ -40,6 +40,7 @@ diesel::table! {
     shares (id) {
         id -> Uuid,
         user_id -> Uuid,
+        description -> Text,
     }
 }
 
@@ -72,6 +73,7 @@ diesel::table! {
 
 diesel::joinable!(diary -> user_practices (practice_id));
 diesel::joinable!(diary -> users (user_id));
+diesel::joinable!(shares -> users (user_id));
 diesel::joinable!(user_practices -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
