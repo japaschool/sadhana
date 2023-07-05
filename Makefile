@@ -22,6 +22,9 @@ migrate:
 redo_migrate:
 	DATABASE_URL=$(db_url) diesel migration redo --migration-dir=migrations
 
+undo_migrate:
+	DATABASE_URL=$(db_url) diesel migration revert --migration-dir=migrations
+
 reset_db:
 	DATABASE_URL=$(db_url) diesel database reset --migration-dir=migrations
 

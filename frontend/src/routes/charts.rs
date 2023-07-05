@@ -128,7 +128,7 @@ pub fn shared_charts(props: &SharedChartsProps) -> Html {
     };
 
     html! {
-        <BlankPage show_footer=true loading={all_practices.data.is_none()}>
+        <BlankPage show_footer=false loading={all_practices.data.is_none()}>
             <ListErrors error={all_practices.error.clone()} />
             <ListErrors error={report_data.error.clone()} />
             if all_practices.data.is_some(){
