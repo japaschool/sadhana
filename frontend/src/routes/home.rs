@@ -398,14 +398,14 @@ pub fn home() -> Html {
             (false, false) => HOVER_DATE_DIV_CSS,
         };
         let weekday_label_css = if for_selected_date {
-            "text-zinc-500  dark:text-white text-base font-semibold"
+            "text-zinc-500  dark:text-zinc-100 text-base font-semibold"
         } else {
-            "text-zinc-500  dark:text-white text-base"
+            "text-zinc-500  dark:text-zinc-100 text-base"
         };
         let date_label_css = if for_selected_date {
-            "text-zinc-500  dark:text-white my-auto font-bold"
+            "text-zinc-500  dark:text-zinc-100 my-auto font-bold"
         } else {
-            "text-zinc-500  dark:text-white dark:group-hover:text-white group-hover:text-zinc-100 my-auto group-hover:font-bold transition-all duration-300"
+            "text-zinc-500  dark:text-zinc-100 dark:group-hover:text-white group-hover:text-zinc-100 my-auto group-hover:font-bold transition-all duration-300"
         };
 
         let id = d.format(DATE_FORMAT);
@@ -423,7 +423,7 @@ pub fn home() -> Html {
     let calendar = html! {
         <div class="relative">
             <div class="flex justify-center overflow-x-scroll mx-auto">
-                <div class="flex text-zinc-500 dark:text-white group w-16" onclick={ prev_week_onclick.clone() }>
+                <div class="flex text-zinc-500 dark:text-zinc-100 group w-16" onclick={ prev_week_onclick.clone() }>
                     <div class="flex items-center"><i class="fas fa-chevron-left"></i></div>
                 </div>
                 {
@@ -433,7 +433,7 @@ pub fn home() -> Html {
                         </div>
                     }).collect::<Html>()
                 }
-                <div class="flex text-zinc-500 dark:text-white justify-end group w-16" onclick={ next_week_onclick.clone() }>
+                <div class="flex text-zinc-500 dark:text-zinc-100 justify-end group w-16" onclick={ next_week_onclick.clone() }>
                     <div class="flex items-center"><i class="fas fa-chevron-right"></i></div>
                 </div>
             </div>
@@ -544,8 +544,8 @@ pub fn home() -> Html {
                     }}
                 )
             }
-                <div class="relative flex justify-center">
-                    <Link<AppRoute> classes={ LINK_CSS } to={AppRoute::UserPractices}>
+                <div class="relative flex justify-center links">
+                    <Link<AppRoute> classes={ LINK_CSS_NEW_ACC } to={AppRoute::UserPractices}>
                         { Locale::current().modify_practices() }
                     </Link<AppRoute>>
                 </div>
