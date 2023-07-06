@@ -1027,7 +1027,7 @@ input::-webkit-calendar-picker-indicator {
 }
 
 .menu {
-  color: #a1a1aa;
+  color: #a2a2ab;
 }
 
 .menu:hover {
@@ -1193,11 +1193,6 @@ body {
   .dark\:text-amber-400 {
     --tw-text-opacity: 1;
     color: rgb(251 191 36 / var(--tw-text-opacity));
-  }
-
-  .dark\:text-white {
-    --tw-text-opacity: 1;
-    color: rgb(255 255 255 / var(--tw-text-opacity));
   }
 
   .dark\:text-zinc-100 {

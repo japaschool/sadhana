@@ -25,8 +25,8 @@ pub fn chart(props: &Props) -> Html {
     let mut layout = Layout::new()
         .paper_background_color(NamedColor::Transparent)
         .plot_background_color(NamedColor::Transparent)
-        .font(Font::new().color(NamedColor::Gray))
-        .margin(Margin::new().left(40).right(20).top(10))
+        .font(Font::new().color(NamedColor::DarkGray  ))
+        .margin(Margin::new().left(40).right(40).top(10))
         .auto_size(true);
 
     if let Some(PracticeDataType::Time | PracticeDataType::Duration) = props.y_axis_type {
@@ -38,7 +38,7 @@ pub fn chart(props: &Props) -> Html {
         .static_plot(true);
 
     let trace = Bar::new(props.x_values.clone(), props.y_values.clone())
-        .marker(Marker::new().color(NamedColor::White))
+        .marker(Marker::new().color(NamedColor::DarkOrange ))
         .opacity(0.5);
 
     plot.add_trace(trace);
