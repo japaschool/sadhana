@@ -96,7 +96,7 @@ pub fn blank_page(props: &Props) -> Html {
     html! {
         <>
             <div class="bg-hero dark:bg-herod bg-no-repeat bg-cover bg-center h-screen w-full fixed -z-10" />
-            <div id="content" class={ format!("absolute top-0 bottom-{} left-0 right-0 overflow-hidden", if props.show_footer {"20"} else {"0"}) }>
+            <div id="content" class={ format!("fixed top-0 {} left-0 right-0 overflow-y-auto", if props.show_footer {"bottom-16"} else {"bottom-0"}) }>
                 <div class="bg-transparent min-h-screen justify-center py-6 sm:py-12">
                     if props.loading {
                         <div class="bg-gray-500 bg-opacity-50 absolute left-0 top-0 z-50 h-full w-full overflow-hidden flex">
@@ -145,14 +145,14 @@ pub fn blank_page(props: &Props) -> Html {
                 </div>
             </div>
             if props.show_footer {
-                <div id="footer" class="fixed bottom-0 left-0 z-50 w-full h-16 bg-white/50  border-t border-zinc-200/50 dark:bg-zinc-700/50  dark:border-zinc-700/50">
+                <div id="footer" class="fixed bottom-0 left-0 z-50 w-full h-16 bg-white/50 border-t border-zinc-200/50 dark:bg-zinc-700/50  dark:border-zinc-700/50">
                     <div class="bg-transparent justify-center">
                         <div class="relative py-3 sm:max-w-xl sm:mx-auto">
                             <div class="relative px-8 sm:rounded-3xl sm:px-20">
                                 <div class={ MENU_CSS }>
                                     <span><Link<AppRoute> to={AppRoute::Home}><i class="fas fa-house-user inline-flex flex-col items-center justify-center px-5 group dark:text-zinc-100 menu" /></Link<AppRoute>></span>
                                     <span><Link<AppRoute> to={AppRoute::Charts}><i class="fas fa-chart-column inline-flex flex-col items-center justify-center px-5 group dark:text-zinc-100 menu" /></Link<AppRoute>></span>
-                                    <span><Link<AppRoute> to={AppRoute::Settings}><i class="fas fa-gear inline-flex flex-col items-center justify-center px-5  group dark:text-zinc-100 menu" /></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::Settings}><i class="fas fa-gear inline-flex flex-col items-center justify-center px-5 group dark:text-zinc-100 menu" /></Link<AppRoute>></span>
                                 </div>
                             </div>
                         </div>
