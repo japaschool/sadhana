@@ -1,8 +1,25 @@
-FROM rust:1.68 as build
+FROM rust:1.70 as chef
+# Installing cargo-chef that helps to cache rust dependencies
+RUN cargo install cargo-chef
+WORKDIR /usr/src/sadhana-pro
 
+FROM chef AS planner
+COPY . .
+# Compiling the dependencies list
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM chef AS build
+
+# Installing postgres lib
 RUN apt update
 RUN apt install -y libpq5
 
+# Building dependencies in a caching layer
+COPY --from=planner /usr/src/sadhana-pro/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
+
+# TODO: download `trunk` instead of building it. See: https://github.com/LukeMathWalker/cargo-chef/issues/63
+# If works, do the same to download cargo-chef
 RUN rustup target add wasm32-unknown-unknown
 RUN cargo install trunk wasm-bindgen-cli
 
