@@ -32,7 +32,7 @@ pub fn charts() -> Html {
     }
 
     let selected_practice = use_state(|| None as Option<UserPractice>);
-    let duration = use_state(|| ReportDuration::Last30Days);
+    let duration = use_state(|| ReportDuration::Last7Days);
 
     let report_data = {
         let practice = selected_practice.clone();
@@ -153,7 +153,7 @@ pub struct ChartBaseProps {
 #[function_component(ChartsBase)]
 fn charts_base(props: &ChartBaseProps) -> Html {
     let selected_practice = use_state(|| props.practices.first().cloned());
-    let duration = use_state(|| ReportDuration::Last30Days);
+    let duration = use_state(|| ReportDuration::Last7Days);
 
     let duration_onchange = {
         let dur = duration.clone();
@@ -261,7 +261,8 @@ fn charts_base(props: &ChartBaseProps) -> Html {
                 </div>
                 <div class="relative">
                     <select class={ INPUT_CSS } id="duration" onchange={ duration_onchange.clone() }>
-                        <option class={ "text-black" } selected=true value={ ReportDuration::Last30Days.to_string() }>{ Locale::current().last_month() }</option>
+                        <option class={ "text-black" } selected=true value={ ReportDuration::Last7Days.to_string() }>{ Locale::current().last_week() }</option>
+                        <option class={ "text-black" } value={ ReportDuration::Last30Days.to_string() }>{ Locale::current().last_month() }</option>
                         <option class={ "text-black" } value={ ReportDuration::Last90Days.to_string() }>{ Locale::current().last_quarter() }</option>
                         <option class={ "text-black" } value={ ReportDuration::Last365Days.to_string() }>{ Locale::current().last_year() }</option>
                     </select>

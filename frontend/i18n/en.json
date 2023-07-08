@@ -42,6 +42,7 @@
     "login": "Login",
     "logout": "Logout",
     "cancel": "Cancel",
+    "last_week": "Last 7 Days",
     "last_month": "Last 30 Days",
     "last_quarter": "Last 90 Days",
     "last_year": "Last 365 Days",

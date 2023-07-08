@@ -118,6 +118,7 @@ impl ReportEntry {
         use diesel::pg::expression::extensions::IntervalDsl;
 
         let interval = match duration {
+            ReportDuration::Last7Days => 7.days(),
             ReportDuration::Last30Days => 30.days(),
             ReportDuration::Last90Days => 90.days(),
             ReportDuration::Last365Days => 365.days(),
