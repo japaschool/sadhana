@@ -36,6 +36,16 @@ input::-webkit-calendar-picker-indicator {
     margin-top: 5px !important;
 }
 
+.toggle-checkbox:checked {
+    @apply: right-0 border-amber-400;
+    right: 0;
+    border-color: #f59e0b;
+  }
+  .toggle-checkbox:checked + .toggle-label {
+    @apply: bg-amber-400;
+    background-color: #ffffff;
+  }
+
 @-webkit-keyframes spinner {
     0% {
         -webkit-transform: rotate(0deg);
