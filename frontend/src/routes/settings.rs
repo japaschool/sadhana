@@ -157,13 +157,12 @@ pub fn settings() -> Html {
                             >
                             { Locale::current().logout() }
                         </a>
-                    // <hr class="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700">
                     </div>
                     <div class="relative flex space-x-2.5 justify-center sm:text-base">
                     <label for="toggle"><i class="fas fa-moon icon"></i>{"Dark mode"}</label>
                     <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
                     <input type="checkbox" name="toggle" id="toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
-                    <label for="toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                    <label for="toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-400 dark:bg-zinc-300 cursor-pointer"></label>
                     </div>
                     </div>
 </div>
