@@ -89,13 +89,27 @@
   <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
   <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
   <script>
-    // On page load or when changing themes, best to add inline in `head` to avoid FOUC
-    if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    // Dark/Light mode automatic switch
+    // Inspired by https://www.ditdot.hr/en/dark-mode-website-tutorial
+    // Should be kept inine in this file to avoid FOUC
+
+    // Dark mode OS media selector
+    const useDark = window.matchMedia("(prefers-color-scheme: dark)");
+
+    function toggleDarkMode() {
+      if (localStorage.getItem('color-theme') === '"dark"' || (!('color-theme' in localStorage) && useDark.matches)) {
         document.documentElement.classList.add('dark');
-    } else {
-        document.documentElement.classList.remove('dark')
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     }
-</script>
+
+    // On page load set the theme
+    toggleDarkMode();
+
+    // Event listener to respond to the OS changes 
+    useDark.addListener((evt) => toggleDarkMode());
+  </script>
   <title>Sadhana Pro</title>
 </head>
 

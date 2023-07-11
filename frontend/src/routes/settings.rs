@@ -10,6 +10,7 @@ use crate::{
     model::UpdateUser,
     services,
 };
+use gloo::storage::{LocalStorage, Storage};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_bool_toggle};
@@ -107,6 +108,24 @@ pub fn settings() -> Html {
         })
     };
 
+    let dark_mode_onclick = {
+        Callback::from(move |ev: MouseEvent| {
+            let input: HtmlInputElement = ev.target_unchecked_into();
+            if let Some(de) = web_sys::window()
+                .and_then(|w| w.document())
+                .and_then(|d| d.document_element())
+            {
+                if input.checked() {
+                    LocalStorage::set("color-theme", "dark").unwrap();
+                    de.class_list().add_1("dark").unwrap();
+                } else {
+                    LocalStorage::delete("color-theme");
+                    de.class_list().remove_1("dark").unwrap();
+                }
+            }
+        })
+    };
+
     html! {
         <form {onsubmit} {onreset} >
             <BlankPage
@@ -159,14 +178,23 @@ pub fn settings() -> Html {
                         </a>
                     </div>
                     <div class="relative flex space-x-2.5 justify-center sm:text-base">
-                    <label for="toggle"><i class="fas fa-moon icon"></i>{"Dark mode"}</label>
-                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                    <input type="checkbox" name="toggle" id="toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
-                    <label for="toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-400 dark:bg-zinc-300 cursor-pointer"></label>
+                        <label for="toggle"><i class="fas fa-moon icon"></i>{"Dark mode"}</label>
+                        <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                            <input
+                                type="checkbox"
+                                name="dark_toggle"
+                                id="dark_toggle"
+                                onclick={ dark_mode_onclick.clone() }
+                                checked={ LocalStorage::get("color-theme").map(|v: String| v == "dark").unwrap_or(false) }
+                                class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+                                />
+                            <label
+                                for="dark_toggle"
+                                class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-400 dark:bg-zinc-300 cursor-pointer">
+                            </label>
+                        </div>
                     </div>
-                    </div>
-</div>
-                
+                </div>
             </BlankPage>
         </form>
     }

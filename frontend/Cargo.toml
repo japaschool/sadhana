@@ -42,5 +42,6 @@ features = [
   "HtmlInputElement",
   "CssStyleDeclaration",
   "DomRect",
-  "Document"
+  "Document",
+  "DomTokenList"
 ]
