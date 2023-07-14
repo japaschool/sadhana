@@ -15,6 +15,7 @@ use self::{
     register_with_id::RegisterWithId,
     settings::Settings,
     user_practices::UserPractices,
+    yatras::Yatras,
 };
 use crate::{components::user_context_provider::UserContextProvider, model::ConfirmationType};
 
@@ -31,6 +32,7 @@ pub mod pwd_reset;
 pub mod register_with_id;
 pub mod settings;
 pub mod user_practices;
+pub mod yatras;
 
 /// Routes that need not user cntext to be loaded
 #[derive(Clone, Routable, PartialEq)]
@@ -74,6 +76,8 @@ pub enum AppRoute {
     NewUserPractice,
     #[at("/charts")]
     Charts,
+    #[at("/yatras")]
+    Yatras,
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -92,6 +96,7 @@ fn app_switch(routes: AppRoute) -> Html {
         AppRoute::UserPractices => html! { <UserPractices /> },
         AppRoute::NewUserPractice => html! { <NewUserPractice /> },
         AppRoute::Charts => html! { <Charts/> },
+        AppRoute::Yatras => html! { <Yatras/> },
         AppRoute::NotFound => html! { <h1>{ "404" }</h1> },
     }
 }
