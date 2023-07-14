@@ -195,7 +195,7 @@ mod tests {
     }
 }
 
-const SKIP_AUTH_API_ROUTES: [SkipAuthRoute; 6] = [
+const SKIP_AUTH_API_ROUTES: [SkipAuthRoute; 7] = [
     SkipAuthRoute {
         path: "/api/users",
         method: Method::POST,
@@ -218,6 +218,10 @@ const SKIP_AUTH_API_ROUTES: [SkipAuthRoute; 6] = [
     },
     SkipAuthRoute {
         path: "/api/share/{share_id}",
+        method: Method::GET,
+    },
+    SkipAuthRoute {
+        path: "/api/share/{share_id}/practices",
         method: Method::GET,
     },
 ];
