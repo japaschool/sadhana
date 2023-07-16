@@ -93,7 +93,7 @@ pub fn login() -> Html {
                             required = true
                             />
                         <label for="email" class={ INPUT_LABEL_CSS }>
-                            <i class="icon-mail icon"></i>{ format!(" {}", Locale::current().email_address()) }
+                            <i class="icon-mail"></i>{ format!(" {}", Locale::current().email_address()) }
                         </label>
                     </div>
                     <div class="relative">
@@ -109,12 +109,12 @@ pub fn login() -> Html {
                             />
                         <label for="password"
                             class={ INPUT_LABEL_CSS }>
-                            <i class="icon-key icon"></i>{ format!(" {}", Locale::current().password()) }
+                            <i class="icon-key"></i>{ format!(" {}", Locale::current().password()) }
                         </label>
                     </div>
                     <div class="relative">
                         <button class={ SUBMIT_BTN_CSS }>
-                        <i class="fas fa-arrow-right-to-bracket icon"></i>{ format!(" {}", Locale::current().sign_in()) }</button>
+                        <i class="fas fa-arrow-right-to-bracket"></i>{ format!(" {}", Locale::current().sign_in()) }</button>
                     </div>
                     <div class={ LINKS_CSS }>
                         <Link<BaseRoute>

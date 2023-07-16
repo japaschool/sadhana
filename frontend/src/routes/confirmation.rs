@@ -108,7 +108,7 @@ pub fn confirmation(props: &Props) -> Html {
                                 />
                             <label for="email"
                                 class={ INPUT_LABEL_CSS }>
-                                <i class="icon-mail icon"></i>{ format!(" {}", Locale::current().email_address()) }
+                                <i class="icon-mail"></i>{ format!(" {}", Locale::current().email_address()) }
                             </label>
                         </div>
                         if props.confirmation_type == ConfirmationType::Registration {
