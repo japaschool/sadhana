@@ -149,7 +149,7 @@ pub fn settings() -> Html {
                             />
                         <label for="email"
                             class={ INPUT_LABEL_CSS }>
-                            <i class="icon-mail icon"></i>{ format!(" {}", Locale::current().email_address()) }
+                            <i class="icon-mail"></i>{ format!(" {}", Locale::current().email_address()) }
                         </label>
                     </div>
                     <div class="relative">
@@ -165,7 +165,7 @@ pub fn settings() -> Html {
                             />
                         <label for="name"
                             class={ INPUT_LABEL_CSS }>
-                            <i class="icon-user icon"></i>{ format!(" {}", Locale::current().name()) }
+                            <i class="icon-user"></i>{ format!(" {}", Locale::current().name()) }
                         </label>
                     </div>
                     <Pwd onchange={ pwd_onchange.clone() } readonly={ !*editing } required={ !user_password.is_empty() }/>
@@ -178,7 +178,7 @@ pub fn settings() -> Html {
                         </a>
                     </div>
                     <div class="relative flex space-x-2.5 justify-center sm:text-base">
-                        <label for="toggle"><i class="icon-moon icon"></i>{"Dark mode"}</label>
+                        <label for="toggle"><i class="icon-moon"></i>{ Locale::current().dark_mode() }</label>
                         <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
                             <input
                                 type="checkbox"
