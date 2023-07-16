@@ -75,7 +75,7 @@ pub fn pwd(props: &Props) -> Html {
                     />
                 <label for="new_pwd"
                     class={ INPUT_LABEL_CSS }>
-                    <i class="fas fa-key icon"></i>{ format!(" {}", Locale::current().new_password()) }
+                    <i class="icon-key icon"></i>{ format!(" {}", Locale::current().new_password()) }
                 </label>
             </div>
             <div class="relative">
@@ -95,7 +95,7 @@ pub fn pwd(props: &Props) -> Html {
                     />
                 <label for="confirm_pwd"
                     class={ INPUT_LABEL_CSS }>
-                    <i class="fas fa-key icon"></i>{ format!(" {}", Locale::current().confirm_password()) }
+                    <i class="icon-key icon"></i>{ format!(" {}", Locale::current().confirm_password()) }
                 </label>
             </div>
         </>

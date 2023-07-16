@@ -77,3 +77,9 @@ The required environment variables can be either passed down with `-e` flag or i
 ```
 npx pwa-asset-generator images/logo.png images -m site.webmanifest --padding "calc(50vh - 25%) calc(50vw - 25%)" -b "linear-gradient(135deg, #7c6d63, #2f293b)" -q 100 -i asset-generator-changes.html --favicon
 ```
+
+### Icons
+
+[Free svg icons](https://heroicons.com/)
+[Fix stocks to fills](https://docs.oslllo.com/svg-fixer/master/#/getting-started/cli?id=svgfixer-cli-installation)
+[Svg to ttl](https://icomoon.io/app/#/select/font)

@@ -464,14 +464,14 @@ pub fn home() -> Html {
                                         class={ format!("{} text-center", INPUT_CSS) }
                                         />
                                     <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
-                                        <i class="fas fa-arrow-down-wide-short icon"></i>{ format!(" {}: ", practice) }
+                                        <i class="icon-rounds icon"></i>{ format!(" {}: ", practice) }
                                     </label>
                                 </div>
                                 },
                             PracticeDataType::Bool => html! {
                                 <div class="relative" key={ practice.clone() } >
                                     <label class="flex justify-between whitespace-nowrap">
-                                        <span class=""><i class="fas fa-square-check icon"></i>{ format!(" {}: ", practice) }</span>
+                                        <span class=""><i class="icon-tick icon"></i>{ format!(" {}: ", practice) }</span>
                                         <input
                                             id="checkbox"
                                             type="checkbox"
@@ -497,7 +497,7 @@ pub fn home() -> Html {
                                         placeholder={ idx.to_string() }
                                         />
                                     <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
-                                        <i class="fas fa-stopwatch icon"></i>
+                                        <i class="icon-clock icon"></i>
                                         { format!(" {}: ", practice) }
                                     </label>
                                 </div>
@@ -518,7 +518,7 @@ pub fn home() -> Html {
                                         placeholder={ idx.to_string() }
                                         />
                                     <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
-                                        <i class="fas fa-clock icon"></i>
+                                        <i class="icon-clock icon"></i>
                                         { format!(" {}: ", practice) }
                                     </label>
                                 </div>
@@ -536,7 +536,7 @@ pub fn home() -> Html {
                                         >
                                     </textarea>
                                     <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
-                                    <i class="fas fa-file-lines icon"></i>
+                                    <i class="icon-doc icon"></i>
                                                                             { format!(" {}: ", practice) }
                                                                      </label>
                                                                   </div>

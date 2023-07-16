@@ -150,10 +150,10 @@ pub fn blank_page(props: &Props) -> Html {
                         <div class="relative py-3 sm:max-w-xl sm:mx-auto">
                             <div class="relative px-8 sm:rounded-3xl sm:px-20">
                                 <div class={ MENU_CSS }>
-                                    <span><Link<AppRoute> to={AppRoute::Home}><i class={ format!("fa-house-user {FOOTER_ICON_CSS}") }/></Link<AppRoute>></span>
-                                    <span><Link<AppRoute> to={AppRoute::Charts}><i class={ format!("fa-chart-column {FOOTER_ICON_CSS}") }/></Link<AppRoute>></span>
-                                    <span><Link<AppRoute> to={AppRoute::UserShares}><i class={ format!("fa-share-from-square {FOOTER_ICON_CSS}") }/></Link<AppRoute>></span>
-                                    <span><Link<AppRoute> to={AppRoute::Settings}><i class={ format!("fa-gear {FOOTER_ICON_CSS}") }/></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::Home}><i class={ format!("icon-home {FOOTER_ICON_CSS}") }/></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::Charts}><i class={ format!("icon-graph {FOOTER_ICON_CSS}") }/></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::UserShares}><i class={ format!("icon-share {FOOTER_ICON_CSS}") }/></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::Settings}><i class={ format!("icon-settings {FOOTER_ICON_CSS}") }/></Link<AppRoute>></span>
                                 </div>
                             </div>
                         </div>

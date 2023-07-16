@@ -157,10 +157,10 @@ pub fn user_shares() -> Html {
                                 <span>{ share.description.clone() }</span>
                             </label>
                             <label class="px-2 py-1">
-                                <i onclick={ copy.clone() } id={ share.id.clone() } class="fa fa-copy"/>
+                                <i onclick={ copy.clone() } id={ share.id.clone() } class="icon-doc icon"/>
                             </label>
                             <label class="px-2 py-1">
-                                <i onclick={ delete.clone() } id={ share.id.clone() } class="fa fa-trash"/>
+                                <i onclick={ delete.clone() } id={ share.id.clone() } class="icon-bin icon"/>
                             </label>
                         </div>
                     })

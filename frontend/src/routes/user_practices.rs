@@ -307,16 +307,16 @@ pub fn user_practices() -> Html {
                                 <label class="px-2 py-1" >
                                     <i onclick={ toggle_hidden.clone() }
                                         id={ p.clone() }
-                                        class={ if selected_practices.current().contains(p) {"fas fa-eye icon"} else {"fas fa-eye-slash icon"}}
+                                        class={ if selected_practices.current().contains(p) {"icon-eye icon"} else {"icon-eye-cross icon"}}
                                         />
                                 </label>
                                 <label class="px-2 py-1">
-                                    <i onclick={ rename.clone() } id={ p.clone() } class="fas fa-pen-to-square icon"/>
+                                    <i onclick={ rename.clone() } id={ p.clone() } class="icon-edit icon"/>
                                 </label>
                                 <label class="px-2 py-1">
-                                    <i onclick={ delete.clone() } id={ p.clone() } class="fas fa-trash icon"/>
+                                    <i onclick={ delete.clone() } id={ p.clone() } class="icon-bin icon"/>
                                 </label>
-                                <label draggable="true" class="px-2 py-1 touch-none"><i class="fas fa-bars icon"></i></label>
+                                <label draggable="true" class="px-2 py-1 touch-none"><i class="icon-bars icon"></i></label>
                             </div>
                         }}).collect::<Html>()
                     }
@@ -328,7 +328,7 @@ pub fn user_practices() -> Html {
                 </div>
                 <div>
                 
-                    <button onclick={ onclick_done.clone() } class={ SUBMIT_BTN_CSS }><i class="fas fa-check icon"></i>{ format!(" {}", Locale::current().done()) }</button>
+                    <button onclick={ onclick_done.clone() } class={ SUBMIT_BTN_CSS }><i class="icon-tick icon"></i>{ format!(" {}", Locale::current().done()) }</button>
                 </div>
             </div>
         </BlankPage>

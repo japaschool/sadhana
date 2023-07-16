@@ -93,7 +93,7 @@ pub fn login() -> Html {
                             required = true
                             />
                         <label for="email" class={ INPUT_LABEL_CSS }>
-                            <i class="fas fa-envelope icon"></i>{ format!(" {}", Locale::current().email_address()) }
+                            <i class="icon-mail icon"></i>{ format!(" {}", Locale::current().email_address()) }
                         </label>
                     </div>
                     <div class="relative">
@@ -109,7 +109,7 @@ pub fn login() -> Html {
                             />
                         <label for="password"
                             class={ INPUT_LABEL_CSS }>
-                            <i class="fas fa-key icon"></i>{ format!(" {}", Locale::current().password()) }
+                            <i class="icon-key icon"></i>{ format!(" {}", Locale::current().password()) }
                         </label>
                     </div>
                     <div class="relative">
