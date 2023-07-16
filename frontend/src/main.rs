@@ -18,7 +18,7 @@ mod services;
 fn app() -> Html {
     html! {
         <BrowserRouter>
-            <Switch<BaseRoute> render={switch} />
+        <Switch<BaseRoute> render={switch} />
         </BrowserRouter>
     }
 }
