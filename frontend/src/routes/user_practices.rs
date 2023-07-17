@@ -298,25 +298,25 @@ pub fn user_practices() -> Html {
                                 ondrop={ ondrop.clone() }
                                 ondragover={ ondragover.clone() }
                                 ondragleave={ ondragleave.clone() }
-                                class="flex w-full"
+                                class="flex w-full justify-center align-baseline"
                                 id={ idx.to_string() }
                                 >
                                 <label class="flex w-full justify-between whitespace-nowrap mb-6">
                                     <span>{ p.clone() }</span>
                                 </label>
-                                <label class="px-2 py-1" >
+                                <label >
                                     <i onclick={ toggle_hidden.clone() }
                                         id={ p.clone() }
                                         class={ if selected_practices.current().contains(p) {"icon-eye"} else {"icon-eye-cross"}}
                                         />
                                 </label>
-                                <label class="px-2 py-1">
+                                <label>
                                     <i onclick={ rename.clone() } id={ p.clone() } class="icon-edit"/>
                                 </label>
-                                <label class="px-2 py-1">
+                                <label>
                                     <i onclick={ delete.clone() } id={ p.clone() } class="icon-bin"/>
                                 </label>
-                                <label draggable="true" class="px-2 py-1 touch-none"><i class="icon-bars"></i></label>
+                                <label draggable="true" class="touch-none"><i class="icon-bars"></i></label>
                             </div>
                         }}).collect::<Html>()
                     }

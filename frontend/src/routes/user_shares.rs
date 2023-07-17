@@ -137,7 +137,7 @@ pub fn user_shares() -> Html {
             <ListErrors error={delete_sharing_link.error.clone()} />
             <ListErrors error={create_sharing_link.error.clone()} />
             <div
-                class={ format!("{} absolute left-0 top-0 flex h-full w-full items-center justify-center z-50", if *show_tooltip {"inline"} else {"hidden"}) }>
+                class={ format!("{} absolute left-0 top-0 flex h-full w-full justify-center z-50", if *show_tooltip {"inline"} else {"hidden"}) }>
                 <span class="bg-slate-600 bg-opacity-50 rounded-2xl border p-4 text-white text-2xl">{ Locale::current().copied() }</span>
             </div>
             <div class={ BODY_DIV_CSS }>
@@ -149,17 +149,17 @@ pub fn user_shares() -> Html {
                     .iter()
                     .map(|share| html! {
                         <div
-                            class="flex w-full"
+                            class="flex w-full justify-center align-baseline"
                             id={ share.id.clone() }
                             >
                             // FIXME: fix horizontally into the screen as they could get long
                             <label class="flex w-full justify-between whitespace-nowrap mb-6">
                                 <span>{ share.description.clone() }</span>
                             </label>
-                            <label class="px-2 py-1">
+                            <label>
                                 <i onclick={ copy.clone() } id={ share.id.clone() } class="icon-doc icon"/>
                             </label>
-                            <label class="px-2 py-1">
+                            <label>
                                 <i onclick={ delete.clone() } id={ share.id.clone() } class="icon-bin icon"/>
                             </label>
                         </div>

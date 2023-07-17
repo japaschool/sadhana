@@ -470,7 +470,7 @@ pub fn home() -> Html {
                                 },
                             PracticeDataType::Bool => html! {
                                 <div class="relative" key={ practice.clone() } >
-                                    <label class="flex justify-between whitespace-nowrap">
+                                    <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
                                         <span class=""><i class="icon-tick"></i>{ format!(" {}: ", practice) }</span>
                                         <input
                                             id="checkbox"

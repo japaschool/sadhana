@@ -21,7 +21,7 @@ input::-webkit-calendar-picker-indicator {
 
 .menu {
     color: #a2a2ab;
-    font-size:7vw !important;
+    font-size: 1.5em;
 }
 
 .menu:hover {
