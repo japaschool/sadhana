@@ -105,7 +105,7 @@ pub fn blank_page(props: &Props) -> Html {
                         </div>
                     }
                     <div class="w-full text-center relative">
-                        <div class="absolute flex w-full h-full flex-col justify-center items-center px-4">
+                        <div class="absolute flex w-full h-full flex-col justify-center px-4">
                             <div class="relative">
                                 <div class="relative sm:max-w-xl sm:mx-auto">
                                     <div class="relative flex justify-between py-10 sm:p-20">
