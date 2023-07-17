@@ -13,12 +13,17 @@
 [class^="icon-"], [class*=" icon-"] {
   /* use !important to prevent issues with browser extensions that change fonts */
   font-family: 'icomoon' !important;
+  font-size: 1.15em;
   speak: never;
   font-style: normal;
   font-weight: normal;
   font-variant: normal;
   text-transform: none;
   line-height: 1;
+  margin-right: 8px;
+  margin-left: 8px;
+  vertical-align: middle;
+  text-align: center;
 
   /* Better Font Rendering =========== */
   -webkit-font-smoothing: antialiased;
