@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'icomoon';
-  src:  url('fonts/icomoon.eot?ae4esa');
-  src:  url('fonts/icomoon.eot?ae4esa#iefix') format('embedded-opentype'),
-    url('fonts/icomoon.ttf?ae4esa') format('truetype'),
-    url('fonts/icomoon.woff?ae4esa') format('woff'),
-    url('fonts/icomoon.svg?ae4esa#icomoon') format('svg');
+  src:  url('fonts/icomoon.eot?g60mtq');
+  src:  url('fonts/icomoon.eot?g60mtq#iefix') format('embedded-opentype'),
+    url('fonts/icomoon.ttf?g60mtq') format('truetype'),
+    url('fonts/icomoon.woff?g60mtq') format('woff'),
+    url('fonts/icomoon.svg?g60mtq#icomoon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -13,168 +13,146 @@
 [class^="icon-"], [class*=" icon-"] {
   /* use !important to prevent issues with browser extensions that change fonts */
   font-family: 'icomoon' !important;
+  font-size: 1.15em;
   speak: never;
   font-style: normal;
   font-weight: normal;
   font-variant: normal;
   text-transform: none;
   line-height: 1;
+  margin-right: 8px;
+  margin-left: 8px;
+  vertical-align: middle;
+  text-align: center;
 
   /* Better Font Rendering =========== */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-.icon-user:before {
+.icon-timer:before {
   content: "\e900";
 }
-.icon-user-solid:before {
+.icon-user:before {
   content: "\e901";
 }
-.icon-user-group:before {
+.icon-user-solid:before {
   content: "\e902";
 }
-.icon-user-group-solid:before {
+.icon-user-group:before {
   content: "\e903";
 }
-.icon-user-circle:before {
+.icon-user-group-solid:before {
   content: "\e904";
 }
-.icon-timer:before {
+.icon-timer-solid:before {
   content: "\e905";
 }
-.icon-timer-solid:before {
+.icon-tick:before {
   content: "\e906";
 }
-.icon-tick:before {
+.icon-tick-solid:before {
   content: "\e907";
 }
-.icon-tick-solid:before {
+.icon-share:before {
   content: "\e908";
 }
-.icon-table:before {
+.icon-share-solid:before {
   content: "\e909";
 }
-.icon-share:before {
+.icon-settings:before {
   content: "\e90a";
 }
-.icon-share-solid:before {
+.icon-settings-solid:before {
   content: "\e90b";
 }
-.icon-settings:before {
+.icon-send:before {
   content: "\e90c";
 }
-.icon-settings-solid:before {
+.icon-send-solid:before {
   content: "\e90d";
 }
-.icon-send:before {
+.icon-rounds:before {
   content: "\e90e";
 }
-.icon-send-solid:before {
+.icon-rounds-solid:before {
   content: "\e90f";
 }
-.icon-rounds:before {
+.icon-moon:before {
   content: "\e910";
 }
-.icon-rounds-solid:before {
+.icon-moon-solid:before {
   content: "\e911";
 }
-.icon-moon:before {
+.icon-mail:before {
   content: "\e912";
 }
-.icon-moon-solid:before {
+.icon-mail-solid:before {
   content: "\e913";
 }
-.icon-mail:before {
+.icon-key:before {
   content: "\e914";
 }
-.icon-mail-solid:before {
+.icon-key-solid:before {
   content: "\e915";
 }
-.icon-list:before {
+.icon-home:before {
   content: "\e916";
 }
-.icon-lang:before {
+.icon-home-solid:before {
   content: "\e917";
 }
-.icon-key:before {
+.icon-graph:before {
   content: "\e918";
 }
-.icon-key-solid:before {
+.icon-graph-solid:before {
   content: "\e919";
 }
-.icon-home:before {
+.icon-eye:before {
   content: "\e91a";
 }
-.icon-home-solid:before {
+.icon-eye-solid:before {
   content: "\e91b";
 }
-.icon-graph:before {
+.icon-eye-cross:before {
   content: "\e91c";
 }
-.icon-graph-solid:before {
+.icon-eye-cross-solid:before {
   content: "\e91d";
 }
-.icon-eye:before {
+.icon-edit:before {
   content: "\e91e";
 }
-.icon-eye-solid:before {
+.icon-edit-solid:before {
   content: "\e91f";
 }
-.icon-eye-cross:before {
+.icon-doc:before {
   content: "\e920";
 }
-.icon-eye-cross-solid:before {
+.icon-doc-solid:before {
   content: "\e921";
 }
-.icon-edit:before {
+.icon-clock:before {
   content: "\e922";
 }
-.icon-edit-solid:before {
+.icon-clock-solid:before {
   content: "\e923";
 }
-.icon-doc:before {
+.icon-calendar:before {
   content: "\e924";
 }
-.icon-doc-solid:before {
+.icon-calendar-solid:before {
   content: "\e925";
 }
-.icon-doc-dup:before {
+.icon-bin:before {
   content: "\e926";
 }
-.icon-clock:before {
+.icon-bin-solid:before {
   content: "\e927";
 }
-.icon-clock-solid:before {
+.icon-bars:before {
   content: "\e928";
 }
-.icon-chevron-right:before {
-  content: "\e929";
-}
-.icon-chevron-left:before {
-  content: "\e92a";
-}
-.icon-chevron-down:before {
-  content: "\e92b";
-}
-.icon-calendar:before {
-  content: "\e92c";
-}
-.icon-calendar-solid:before {
-  content: "\e92d";
-}
-.icon-bin:before {
-  content: "\e92e";
-}
-.icon-bin-solid:before {
-  content: "\e92f";
-}
-.icon-bars:before {
-  content: "\e930";
-}
 .icon-bars-solid:before {
-  content: "\e931";
-}
-.icon-adjust:before {
-  content: "\e932";
+  content: "\e929";
 }
