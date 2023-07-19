@@ -39,6 +39,7 @@ pub fn confirmation(props: &Props) -> Html {
             services::send_confirmation_link(SendConfirmationLink {
                 email: (*signup_email).clone(),
                 confirmation_type,
+                server_address: services::requests::SERVER_ADDRESS.to_owned(),
             })
             .await
         })

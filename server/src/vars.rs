@@ -39,8 +39,3 @@ pub fn server_address() -> String {
     dotenv().ok();
     var("SERVER_ADDRESS").expect("SERVER_ADDRESS is not set")
 }
-
-pub fn public_server_address() -> String {
-    dotenv().ok();
-    var("PUBLIC_SERVER_ADDRESS").expect("PUBLIC_SERVER_ADDRESS is not set")
-}

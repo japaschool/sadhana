@@ -84,6 +84,7 @@ pub enum ConfirmationType {
 pub struct SendConfirmationLink {
     pub email: String,
     pub confirmation_type: ConfirmationType,
+    pub server_address: String,
 }
 
 #[derive(Debug, Serialize)]

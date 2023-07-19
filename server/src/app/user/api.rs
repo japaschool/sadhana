@@ -66,6 +66,7 @@ pub async fn send_confirmation_link(
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let email = form.data.email.clone();
+    let server_address = form.data.server_address.clone();
     let fail_if_user_exists = form.data.confirmation_type == ConfirmationType::Registration;
 
     let confirmation =
@@ -78,7 +79,7 @@ pub async fn send_confirmation_link(
 
     let action_url = format!(
         "{domain}/{segment}/{id}",
-        domain = vars::public_server_address(),
+        domain = server_address,
         segment = segment,
         id = confirmation.id
     );
