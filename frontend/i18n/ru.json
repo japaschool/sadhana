@@ -1,5 +1,5 @@
 {
-  "sadhana_pro": "Садхана Про",
+  "sadhana_pro": "Садхана",
   "modify_practices": "Изменить практики",
   "need_an_account": "Создать пользователя?",
   "have_an_account": "Зарегистрированы?",
@@ -65,5 +65,7 @@
   "add_new": "Добавить",
   "short_description": "Краткое описание",
   "copied": "Скопировано!",
-  "dark_mode": "Темный режим"
+  "dark_mode": "Темный режим",
+  "language": "Язык интерфейса",
+  "default_language": "Автоматический"
 }

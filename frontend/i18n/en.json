@@ -1,5 +1,5 @@
 {
-  "sadhana_pro": "Sadhana Pro",
+  "sadhana_pro": "Sadhana",
   "modify_practices": "Modify practices",
   "need_an_account": "Need an account?",
   "have_an_account": "Have an account?",
@@ -65,5 +65,7 @@
   "add_new": "Add New",
   "short_description": "Short Description",
   "copied": "Copied!",
-  "dark_mode": "Dark mode"
+  "dark_mode": "Dark mode",
+  "language": "Language",
+  "default_language": "System default"
 }
