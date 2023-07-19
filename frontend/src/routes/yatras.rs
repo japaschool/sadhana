@@ -1,7 +1,10 @@
+use chrono::{Days, Local, NaiveDate};
 use yew::prelude::*;
 
 use crate::{
-    components::{blank_page::BlankPage, chart::Chart, list_errors::ListErrors},
+    components::{
+        blank_page::BlankPage, calendar::Calendar, chart::Chart, list_errors::ListErrors,
+    },
     css::*,
     i18n::Locale,
     model::{PracticeDataType, PracticeEntryValue, ReportDataEntry, UserPractice},
@@ -42,11 +45,27 @@ pub fn yatras() -> Html {
         })
         .collect::<Html>();
 
+    let selected_date = use_state(|| Local::now().date_naive());
+    let selected_date_onchange = { Callback::from(move |new_date: NaiveDate| {}) };
+
     html! {
             <BlankPage show_footer=true /*loading={all_practices.data.is_none()}*/>
+                <Calendar selected_date={ *selected_date } date_onchange={ selected_date_onchange }/>
                 // <ListErrors error={all_practices.error.clone()} />
                 // <ListErrors error={report_data.error.clone()} />
                 <div class={ BODY_DIV_CSS }>
+                    <div class="relative">
+                        <select
+                            class={ INPUT_CSS }
+                            id="yatra"
+                            required=true >
+                            <option class="text-black">{ "Sangam Ru" }</option>
+                        </select>
+                        <label for="yatra" class={ INPUT_LABEL_CSS }>
+                            <i class="fa"></i>
+                            { "Yatra" }
+                        </label>
+                    </div>
 
     <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
     <div class="flex items-center justify-between pb-4 bg-white bg-opacity-50 dark:bg-gray-900">
