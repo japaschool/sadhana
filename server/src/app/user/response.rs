@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use super::model::{Confirmation, User};
 
@@ -11,6 +12,7 @@ impl From<(User, String)> for UserResponse {
     fn from((user, token): (User, String)) -> Self {
         Self {
             user: AuthUser {
+                id: user.id,
                 email: user.email,
                 token,
                 name: user.name,
@@ -21,6 +23,7 @@ impl From<(User, String)> for UserResponse {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct AuthUser {
+    pub id: Uuid,
     pub email: String,
     pub token: String,
     pub name: String,

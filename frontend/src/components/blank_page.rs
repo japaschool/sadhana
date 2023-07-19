@@ -152,7 +152,6 @@ pub fn blank_page(props: &Props) -> Html {
                                 <div class={ MENU_CSS }>
                                     <span><Link<AppRoute> to={AppRoute::Home}><i class={ format!("icon-home {FOOTER_ICON_CSS}") }/></Link<AppRoute>></span>
                                     <span><Link<AppRoute> to={AppRoute::Charts}><i class={ format!("icon-graph {FOOTER_ICON_CSS}") }/></Link<AppRoute>></span>
-                                    <span><Link<AppRoute> to={AppRoute::UserShares}><i class={ format!("icon-share {FOOTER_ICON_CSS}") }/></Link<AppRoute>></span>
                                     <span><Link<AppRoute> to={AppRoute::Settings}><i class={ format!("icon-adjust {FOOTER_ICON_CSS}") }/></Link<AppRoute>></span>
                                 </div>
                             </div>

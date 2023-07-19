@@ -6,6 +6,7 @@ use crate::i18n::Locale;
 //FIXME: break up into sub modules
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct UserInfo {
+    pub id: String,
     pub email: String,
     pub token: String,
     pub name: String,
@@ -254,20 +255,4 @@ pub struct ReportData {
 pub struct ReportDataEntry {
     pub cob_date: NaiveDate,
     pub value: Option<PracticeEntryValue>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct UserShare {
-    pub id: String,
-    pub description: String,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct AllUserShares {
-    pub shares: Vec<UserShare>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct CreateUserShare {
-    pub description: String,
 }
