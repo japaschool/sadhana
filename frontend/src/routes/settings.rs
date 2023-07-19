@@ -6,7 +6,7 @@ use crate::{
     },
     css::*,
     hooks::use_user_context,
-    i18n::Locale,
+    i18n::{Locale, DEFAULT_LANGUAGE_KEY, USER_LANGUAGE_STORAGE_KEY},
     model::UpdateUser,
     services,
 };
@@ -14,6 +14,9 @@ use gloo::storage::{LocalStorage, Storage};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_bool_toggle};
+
+static LANGUAGE_DATA: [(&'static str, &'static str); 3] =
+    [("en", "English"), ("ru", "Русский"), ("ua", "Українська")];
 
 #[function_component(Settings)]
 pub fn settings() -> Html {
@@ -126,6 +129,30 @@ pub fn settings() -> Html {
         })
     };
 
+    let stored_language = LocalStorage::get::<String>(USER_LANGUAGE_STORAGE_KEY)
+        .unwrap_or(DEFAULT_LANGUAGE_KEY.to_owned());
+
+    let is_checked_lang = |s: &str| -> bool { stored_language == s };
+
+    let reload = use_force_update();
+
+    let language_onchange = {
+        let reload = reload.clone();
+        Callback::from(move |e: Event| {
+            e.prevent_default();
+
+            let input: HtmlInputElement = e.target_unchecked_into();
+
+            if input.value() == DEFAULT_LANGUAGE_KEY {
+                LocalStorage::delete(USER_LANGUAGE_STORAGE_KEY);
+            } else {
+                LocalStorage::set(USER_LANGUAGE_STORAGE_KEY, input.value()).unwrap();
+            }
+
+            reload.force_update();
+        })
+    };
+
     html! {
         <form {onsubmit} {onreset} >
             <BlankPage
@@ -169,6 +196,28 @@ pub fn settings() -> Html {
                         </label>
                     </div>
                     <Pwd onchange={ pwd_onchange.clone() } readonly={ !*editing } required={ !user_password.is_empty() }/>
+                    <div class="relative flex space-x-2.5 justify-center sm:text-base">
+                        <select
+                            class={ INPUT_CSS }
+                            id="language"
+                            onchange={ language_onchange }
+                            required=true
+                            >
+                            <option class={ "text-black" } value={ DEFAULT_LANGUAGE_KEY } selected={ is_checked_lang(DEFAULT_LANGUAGE_KEY) }>{ Locale::current().default_language().as_str() }</option>
+                            {
+                                LANGUAGE_DATA
+                                    .iter()
+                                    .map(|(s, s_full)| html! {
+                                        <option class={ "text-black" } value={ s.to_owned() } selected={ is_checked_lang(s) }>{ s_full }</option>
+                                    })
+                                    .collect::<Html>()
+                            }
+                        </select>
+                        <label for="language" class={ INPUT_LABEL_CSS }>
+                            <i class="fas fa-earth-europe"></i>
+                            { format!(" {}: ", Locale::current().language()) }
+                        </label>
+                    </div>
                     <div class="relative flex space-x-2.5 justify-center sm:text-base">
                         <a href="/login"
                             class={ LINK_CSS }
