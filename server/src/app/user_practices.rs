@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::db_types::PracticeDataType;
 use crate::middleware::auth;
 use crate::middleware::state::AppState;
-use crate::schema::{shares, user_practices};
+use crate::schema::user_practices;
 
 #[derive(Debug, Queryable, Serialize, Deserialize)]
 pub struct UserPractice {
@@ -32,25 +32,6 @@ impl UserPractice {
                 user_practices::is_active,
             ))
             .filter(user_practices::user_id.eq(user_id))
-            .order(user_practices::order_key)
-            .load(conn)?;
-
-        Ok(res)
-    }
-
-    pub fn all_user_practices_by_share_id(
-        conn: &mut PgConnection,
-        share_id: &Uuid,
-    ) -> Result<Vec<Self>, AppError> {
-        let res = user_practices::table
-            .inner_join(shares::table.on(shares::user_id.eq(user_practices::user_id)))
-            .filter(shares::id.eq(&share_id))
-            .filter(user_practices::is_active.eq(true))
-            .select((
-                user_practices::practice,
-                user_practices::data_type,
-                user_practices::is_active,
-            ))
             .order(user_practices::order_key)
             .load(conn)?;
 

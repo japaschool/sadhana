@@ -327,8 +327,13 @@ pub fn user_practices() -> Html {
                     </Link<AppRoute>>
                 </div>
                 <div>
-
-                    <button onclick={ onclick_done.clone() } class={ SUBMIT_BTN_CSS }><i class="icon-tick"></i>{ format!(" {}", Locale::current().done()) }</button>
+                    <button
+                        onclick={ onclick_done.clone() }
+                        class={ SUBMIT_BTN_CSS }
+                        >
+                        <i class="icon-tick"></i>
+                        { format!(" {}", Locale::current().done()) }
+                    </button>
                 </div>
             </div>
         </BlankPage>

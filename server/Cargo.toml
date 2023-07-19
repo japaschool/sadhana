@@ -6,10 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-common = { path = "../common", features = ["backend"]}
-actix-web ="4"
+common = { path = "../common", features = ["backend"] }
+actix-web = "4"
 actix-http = "3"
-actix-cors ="0.6"
+actix-cors = "0.6"
 actix-service = "2"
 actix-rt = "2"
 actix-files = "0.6"
@@ -19,7 +19,13 @@ dotenv = "0.15"
 dotenv_codegen = "0.15"
 log = "0.4"
 env_logger = "0.10"
-diesel = { version = "2.0", features = ["postgres", "r2d2", "chrono", "serde_json", "uuid"] }
+diesel = { version = "2.0", features = [
+    "postgres",
+    "r2d2",
+    "chrono",
+    "serde_json",
+    "uuid",
+] }
 diesel_migrations = "2.0"
 diesel-derive-enum = { version = "2.0.0-rc.0", features = ["postgres"] }
 validator = { version = "0.16", features = ["derive"] }
@@ -31,6 +37,11 @@ futures = { version = "0.3" }
 chrono = { version = "0.4", features = ["serde"] }
 lazy_static = "1.4"
 # derive_more = "0.99"
-lettre = { version = "0.10", default-features = false, features = ["smtp-transport", "tokio1-rustls-tls", "hostname", "builder"] }
+lettre = { version = "0.10", default-features = false, features = [
+    "smtp-transport",
+    "tokio1-rustls-tls",
+    "hostname",
+    "builder",
+] }
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
 jemallocator = "0.5"

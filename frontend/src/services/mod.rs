@@ -2,11 +2,11 @@ use chrono::NaiveDate;
 use common::{error::AppError, ReportDuration};
 
 use crate::model::{
-    AllUserPractices, AllUserShares, CreateUserPractice, CreateUserShare, DiaryDay,
-    LoginInfoWrapper, RegisterInfoWrapper, ReportData, ResetPassword, ResetPasswordWrapper,
-    SendConfirmationLink, SendConfirmationLinkWrapper, SignupLinkDetailsWrapper, UpdateUser,
-    UpdateUserPassword, UpdateUserPractice, UpdateUserPracticesOrderKey, UpdateUserWrapper,
-    UserInfoWrapper, UserPractice,
+    AllUserPractices, CreateUserPractice, DiaryDay, LoginInfoWrapper, RegisterInfoWrapper,
+    ReportData, ResetPassword, ResetPasswordWrapper, SendConfirmationLink,
+    SendConfirmationLinkWrapper, SignupLinkDetailsWrapper, UpdateUser, UpdateUserPassword,
+    UpdateUserPractice, UpdateUserPracticesOrderKey, UpdateUserWrapper, UserInfoWrapper,
+    UserPractice,
 };
 
 use self::requests::*;
@@ -126,36 +126,15 @@ pub async fn get_chart_data(
 
 /// Get shared chart data for a practice
 pub async fn get_shared_chart_data(
-    share_id: &str,
+    user_id: &str,
     practice: &str,
     duration: &ReportDuration,
 ) -> Result<ReportData, AppError> {
-    request_get(format!("/share/{share_id}?practice={practice}&duration={duration}").to_string())
+    request_get(format!("/share/{user_id}?practice={practice}&duration={duration}").to_string())
         .await
 }
 
 /// Get shared practices
-pub async fn get_shared_practices(share_id: &str) -> Result<AllUserPractices, AppError> {
-    request_get(format!("/share/{share_id}/practices").to_string()).await
-}
-
-/// Get user shares
-pub async fn get_user_shares() -> Result<AllUserShares, AppError> {
-    request_get("/user/shares".to_string()).await
-}
-
-/// Create sharing link
-pub async fn create_user_share(description: &str) -> Result<(), AppError> {
-    request_post(
-        "/user/shares".to_string(),
-        CreateUserShare {
-            description: description.to_owned(),
-        },
-    )
-    .await
-}
-
-/// Delete sharing link
-pub async fn delete_user_share(share_id: &str) -> Result<(), AppError> {
-    request_delete(format!("/user/share/{}", share_id)).await
+pub async fn get_shared_practices(user_id: &str) -> Result<AllUserPractices, AppError> {
+    request_get(format!("/share/{user_id}/practices").to_string()).await
 }
