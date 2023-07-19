@@ -16,8 +16,12 @@ lazy_static! {
         }
     };
 
+    pub static ref SERVER_ADDRESS: String = {
+        web_sys::window().expect("API_ROOT is not set").origin()
+    };
+
     static ref API_ROOT: String = {
-        format!("{}/api", web_sys::window().expect("API_ROOT is not set").origin())
+        format!("{}/api", *SERVER_ADDRESS)
     };
 }
 
