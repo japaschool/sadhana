@@ -424,7 +424,7 @@ pub fn home() -> Html {
         <div class="relative">
             <div class="flex justify-center overflow-x-scroll mx-auto">
                 <div class="flex text-zinc-500 dark:text-zinc-100 group w-16" onclick={ prev_week_onclick.clone() }>
-                    <div class="flex items-center"><i class="fas fa-chevron-left"></i></div>
+                    <div class="flex items-center"><i class="icon-chevron-left"></i></div>
                 </div>
                 {
                     week.iter().map(|d| html! {
@@ -434,7 +434,7 @@ pub fn home() -> Html {
                     }).collect::<Html>()
                 }
                 <div class="flex text-zinc-500 dark:text-zinc-100 justify-end group w-16" onclick={ next_week_onclick.clone() }>
-                    <div class="flex items-center"><i class="fas fa-chevron-right"></i></div>
+                    <div class="flex items-center"><i class="icon-chevron-right"></i></div>
                 </div>
             </div>
         </div>

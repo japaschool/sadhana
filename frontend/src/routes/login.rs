@@ -114,7 +114,7 @@ pub fn login() -> Html {
                     </div>
                     <div class="relative">
                         <button class={ SUBMIT_BTN_CSS }>
-                        <i class="fas fa-arrow-right-to-bracket"></i>{ format!(" {}", Locale::current().sign_in()) }</button>
+                        <i class="icon-logout"></i>{ format!(" {}", Locale::current().sign_in()) }</button>
                     </div>
                     <div class={ LINKS_CSS }>
                         <Link<BaseRoute>

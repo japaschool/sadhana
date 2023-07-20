@@ -114,7 +114,7 @@ pub fn blank_page(props: &Props) -> Html {
                                                 html! {
                                                     <span>
                                                         <Link<AppRoute> classes={ LINK_CSS } to={ route.clone() }>
-                                                            <i class="fas fa-chevron-left icon"></i>
+                                                            <i class="icon-chevron-left"></i>
                                                             { format!(" {}", label) }
                                                         </Link<AppRoute>>
                                                     </span>
