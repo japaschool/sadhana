@@ -151,97 +151,94 @@ pub fn settings() -> Html {
     };
 
     html! {
-        <form {onsubmit} {onreset} >
-            <BlankPage
-                show_footer={ !*editing }
-                left_button={ if *editing { HeaderButtonProps::reset(Locale::current().cancel()) } else { HeaderButtonProps::blank() }}
-                right_button={ if *editing { HeaderButtonProps::submit(Locale::current().save()) } else { HeaderButtonProps::edit(edit_onclick) }}
-                loading={ update_user.loading || update_password.loading }
-                >
-                <ListErrors error={update_user.error.clone()} />
-                <ListErrors error={update_password.error.clone()} />
-                <div class={ BODY_DIV_CSS }>
-                    <div class="relative">
-                        <input
-                            id="email"
-                            type="email"
-                            placeholder="Email"
-                            class={ INPUT_CSS }
-                            value={ user_ctx.email.clone() }
-                            disabled=true
-                            required=true
-                            />
-                        <label for="email"
-                            class={ INPUT_LABEL_CSS }>
-                            <i class="icon-mail"></i>{ format!(" {}", Locale::current().email_address()) }
-                        </label>
+            <form {onsubmit} {onreset} >
+                <BlankPage
+                    show_footer={ !*editing }
+                    loading={ update_user.loading || update_password.loading }
+                    >
+                    <ListErrors error={update_user.error.clone()} />
+                    <ListErrors error={update_password.error.clone()} />
+
+    <div class="w-full max-w-sm">
+    <div class="flex flex-col items-center">
+        <h5 class="mb-1 text-xl font-medium text-zinc-500 dark:text-zinc-100">{ format!(" {}", Locale::current().name()) }</h5>
+        <span class="text-sm text-zinc-300 dark:text-zinc-200">{"Bla-bla"}</span>
+    </div>
+    </div>
+
+                    <div class={ BODY_DIV_CSS }>
+                    <ul class="flex items-center w-full max-w-md pt-4 mt-1 space-y-2 font-medium border-t border-gray-200 dark:border-zinc-500">
+                            <li>
+                                <div class="relative flex space-x-48 items-center sm:text-base align-baseline">
+                                <label>
+                                    <i class="icon-user flex-shrink-0 w-5"></i>
+                                    { "User details" }
+                                </label>
+                                </div>
+                            </li>
+                        </ul>
+                    <ul class="flex items-center w-full max-w-md pt-4 mt-1 space-y-2 font-medium border-t border-gray-200 dark:border-zinc-500">
+                            <li>
+                                <div class="relative flex space-x-48 items-center sm:text-base align-baseline">
+                                <label>
+                                    <i class="icon-edit flex-shrink-0 w-5"></i>
+                                    { "Change password" }
+                                </label>
+                                </div>
+                            </li>
+                        </ul>
+                <ul class="pt-4 mt-1 space-y-2 font-medium border-t border-gray-200 dark:border-zinc-500">
+                            <li>
+                                <div class="relative flex space-x-48 items-center sm:text-base align-baseline">
+                                <label for="language">
+                                    <i class="icon-lang  flex-shrink-0 w-5"></i>
+                                    { format!(" {}: ", Locale::current().language()) }
+                                </label>
+                                </div>
+                            </li>
+                        </ul>
+                        <ul class="pt-4 mt-1 space-y-2 font-medium border-t border-gray-200 dark:border-zinc-500">
+                            <li>
+                                <div class="relative flex space-x-48 items-center sm:text-base align-baseline">
+                                    <label for="toggle"><i class="icon-moon flex-shrink-0 w-5"></i>{ Locale::current().dark_mode() }</label>
+                                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in ml-7">
+                                        <input
+                                            type="checkbox"
+                                            name="dark_toggle"
+                                            id="dark_toggle"
+                                            onclick={ dark_mode_onclick.clone() }
+                                            checked={ LocalStorage::get("color-theme").map(|v: String| v == "dark").unwrap_or(false) }
+                                            class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+                                            />
+                                        <label
+                                            for="dark_toggle"
+                                            class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-400 dark:bg-zinc-300 cursor-pointer">
+                                        </label>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                        <ul class="pt-4 mt-1 space-y-2 font-medium border-t border-gray-200 dark:border-zinc-500">
+                        <li>
+                            <div class="relative flex space-x-48 items-center sm:text-base align-baseline">
+                                <label><i class="icon-help flex-shrink-0 w-5"></i>{"Help and support"}</label>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="relative flex space-x-48 items-center sm:text-base align-baseline">
+                                <label><i class="icon-info flex-shrink-0 w-5"></i>{"About" }</label>
+                                // <i class="icon-chevron-right flex-shrink-0 w-5  ml-7"></i>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="relative flex space-x-48 items-center sm:text-base align-baseline">
+                                <label href="/login" onclick={ onclick_logout.clone() } for="toggle"><i class="icon-logout flex-shrink-0 w-5"></i>{ Locale::current().logout() }</label>
+                            </div>
+                        </li>
+                    </ul>
+
                     </div>
-                    <div class="relative">
-                        <input
-                            id="name"
-                            type="text"
-                            placeholder="Name"
-                            class={ INPUT_CSS }
-                            value={ user_info.name.clone() }
-                            oninput={ name_oninput.clone() }
-                            readonly={ !*editing }
-                            minlength="3"
-                            />
-                        <label for="name"
-                            class={ INPUT_LABEL_CSS }>
-                            <i class="icon-user"></i>{ format!(" {}", Locale::current().name()) }
-                        </label>
-                    </div>
-                    <Pwd onchange={ pwd_onchange.clone() } readonly={ !*editing } required={ !user_password.is_empty() }/>
-                    <div class="relative">
-                        <select
-                            class={ INPUT_CSS }
-                            id="language"
-                            onchange={ language_onchange }
-                            required=true
-                            >
-                            <option class={ "text-black" } value={ DEFAULT_LANGUAGE_KEY } selected={ is_checked_lang(DEFAULT_LANGUAGE_KEY) }>{ Locale::current().default_language().as_str() }</option>
-                            {
-                                LANGUAGE_DATA
-                                    .iter()
-                                    .map(|(s, s_full)| html! {
-                                        <option class={ "text-black" } value={ s.to_owned() } selected={ is_checked_lang(s) }>{ s_full }</option>
-                                    })
-                                    .collect::<Html>()
-                            }
-                        </select>
-                        <label for="language" class={ INPUT_LABEL_CSS }>
-                            <i class="icon-lang"></i>
-                            { format!(" {}: ", Locale::current().language()) }
-                        </label>
-                    </div>
-                    <div class="relative flex space-x-2.5 justify-center sm:text-base">
-                        <a href="/login"
-                            class={ LINK_CSS }
-                            onclick={ onclick_logout.clone() }
-                            >
-                            { Locale::current().logout() }
-                        </a>
-                    </div>
-                    <div class="relative flex space-x-2.5 justify-center sm:text-base">
-                        <label for="toggle"><i class="icon-moon"></i>{ Locale::current().dark_mode() }</label>
-                        <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                            <input
-                                type="checkbox"
-                                name="dark_toggle"
-                                id="dark_toggle"
-                                onclick={ dark_mode_onclick.clone() }
-                                checked={ LocalStorage::get("color-theme").map(|v: String| v == "dark").unwrap_or(false) }
-                                class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
-                                />
-                            <label
-                                for="dark_toggle"
-                                class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-400 dark:bg-zinc-300 cursor-pointer">
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </BlankPage>
-        </form>
-    }
+                </BlankPage>
+            </form>
+        }
 }
