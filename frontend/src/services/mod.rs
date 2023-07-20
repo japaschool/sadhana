@@ -6,7 +6,7 @@ use crate::model::{
     ReportData, ResetPassword, ResetPasswordWrapper, SendConfirmationLink,
     SendConfirmationLinkWrapper, SignupLinkDetailsWrapper, UpdateUser, UpdateUserPassword,
     UpdateUserPractice, UpdateUserPracticesOrderKey, UpdateUserWrapper, UserInfoWrapper,
-    UserPractice,
+    UserPractice, YatraData, Yatras,
 };
 
 use self::requests::*;
@@ -137,4 +137,15 @@ pub async fn get_shared_chart_data(
 /// Get shared practices
 pub async fn get_shared_practices(user_id: &str) -> Result<AllUserPractices, AppError> {
     request_get(format!("/share/{user_id}/practices").to_string()).await
+}
+
+/// Get yatra data
+pub async fn get_yatra_data(yatra_id: &str, cob_date: &NaiveDate) -> Result<YatraData, AppError> {
+    request_get(format!("/yatra/{yatra_id}/data?cob_date={}", cob_date.format("%F")).to_string())
+        .await
+}
+
+/// Get user yatras
+pub async fn get_user_yatras() -> Result<Yatras, AppError> {
+    request_get("/yatras".to_string()).await
 }

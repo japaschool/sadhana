@@ -257,3 +257,26 @@ pub struct ReportDataEntry {
     pub cob_date: NaiveDate,
     pub value: Option<PracticeEntryValue>,
 }
+
+#[derive(Debug, Deserialize, Clone, PartialEq)]
+pub struct Yatra {
+    pub id: String,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Yatras {
+    pub yatras: Vec<Yatra>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct YatraPractice {
+    pub practice: String,
+    pub data_type: PracticeDataType,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+pub struct YatraData {
+    pub practices: Vec<YatraPractice>,
+    pub data: Vec<(String, Vec<Option<PracticeEntryValue>>)>,
+}

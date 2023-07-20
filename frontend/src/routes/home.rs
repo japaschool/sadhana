@@ -345,7 +345,6 @@ pub fn home() -> Html {
     let selected_date_onchange = {
         let selected = selected_date.clone();
         Callback::from(move |new_date: NaiveDate| {
-            log::debug!("Setting date to {:?}", new_date);
             selected.set(new_date);
         })
     };
