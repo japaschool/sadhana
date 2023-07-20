@@ -159,17 +159,17 @@ pub fn settings() -> Html {
                     <ListErrors error={update_user.error.clone()} />
                     <ListErrors error={update_password.error.clone()} />
 
-    <div class="w-full max-w-sm">
-    <div class="flex flex-col items-center">
+    <div class="w-full text-center relative mt-3">
+    <div class="absolute flex w-full h-full flex-col justify-center px-4">
         <h5 class="mb-1 text-xl font-medium text-zinc-500 dark:text-zinc-100">{ format!(" {}", Locale::current().name()) }</h5>
         <span class="text-sm text-zinc-300 dark:text-zinc-200">{"Bla-bla"}</span>
     </div>
     </div>
 
-                    <div class={ BODY_DIV_CSS }>
+                    <div class={ BODY_SET_CSS }>
                     <ul class="flex items-center w-full max-w-md pt-4 mt-1 space-y-2 font-medium border-t border-gray-200 dark:border-zinc-500">
                             <li>
-                                <div class="relative flex space-x-48 items-center sm:text-base align-baseline">
+                                <div class="relative flex justify-between items-center sm:text-base align-baseline">
                                 <label>
                                     <i class="icon-user flex-shrink-0 w-5"></i>
                                     { "User details" }
@@ -179,7 +179,7 @@ pub fn settings() -> Html {
                         </ul>
                     <ul class="flex items-center w-full max-w-md pt-4 mt-1 space-y-2 font-medium border-t border-gray-200 dark:border-zinc-500">
                             <li>
-                                <div class="relative flex space-x-48 items-center sm:text-base align-baseline">
+                                <div class="relative flex justify-between items-center sm:text-base align-baseline">
                                 <label>
                                     <i class="icon-edit flex-shrink-0 w-5"></i>
                                     { "Change password" }
@@ -189,7 +189,7 @@ pub fn settings() -> Html {
                         </ul>
                 <ul class="pt-4 mt-1 space-y-2 font-medium border-t border-gray-200 dark:border-zinc-500">
                             <li>
-                                <div class="relative flex space-x-48 items-center sm:text-base align-baseline">
+                                <div class="relative flex justify-between items-center sm:text-base align-baseline">
                                 <label for="language">
                                     <i class="icon-lang  flex-shrink-0 w-5"></i>
                                     { format!(" {}: ", Locale::current().language()) }
@@ -199,7 +199,7 @@ pub fn settings() -> Html {
                         </ul>
                         <ul class="pt-4 mt-1 space-y-2 font-medium border-t border-gray-200 dark:border-zinc-500">
                             <li>
-                                <div class="relative flex space-x-48 items-center sm:text-base align-baseline">
+                                <div class="relative flex justify-between items-center sm:text-base align-baseline">
                                     <label for="toggle"><i class="icon-moon flex-shrink-0 w-5"></i>{ Locale::current().dark_mode() }</label>
                                     <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in ml-7">
                                         <input
@@ -220,18 +220,17 @@ pub fn settings() -> Html {
                         </ul>
                         <ul class="pt-4 mt-1 space-y-2 font-medium border-t border-gray-200 dark:border-zinc-500">
                         <li>
-                            <div class="relative flex space-x-48 items-center sm:text-base align-baseline">
+                            <div class="relative flex justify-between items-center sm:text-base align-baseline">
                                 <label><i class="icon-help flex-shrink-0 w-5"></i>{"Help and support"}</label>
                             </div>
                         </li>
                         <li>
-                            <div class="relative flex space-x-48 items-center sm:text-base align-baseline">
+                            <div class="relative flex justify-between items-center sm:text-base align-baseline">
                                 <label><i class="icon-info flex-shrink-0 w-5"></i>{"About" }</label>
-                                // <i class="icon-chevron-right flex-shrink-0 w-5  ml-7"></i>
                             </div>
                         </li>
                         <li>
-                            <div class="relative flex space-x-48 items-center sm:text-base align-baseline">
+                            <div class="relative flex justify-between items-center sm:text-base align-baseline">
                                 <label href="/login" onclick={ onclick_logout.clone() } for="toggle"><i class="icon-logout flex-shrink-0 w-5"></i>{ Locale::current().logout() }</label>
                             </div>
                         </li>
