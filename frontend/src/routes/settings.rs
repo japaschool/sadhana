@@ -6,7 +6,7 @@ use crate::{
     },
     css::*,
     hooks::use_user_context,
-    i18n::{Locale, DEFAULT_LANGUAGE_KEY, USER_LANGUAGE_STORAGE_KEY},
+    i18n::{Locale, DEFAULT_LANGUAGE_KEY, LANGUAGE_DATA, USER_LANGUAGE_STORAGE_KEY},
     model::UpdateUser,
     services,
 };
@@ -14,9 +14,6 @@ use gloo::storage::{LocalStorage, Storage};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_bool_toggle};
-
-static LANGUAGE_DATA: [(&'static str, &'static str); 3] =
-    [("en", "English"), ("ru", "Русский"), ("ua", "Українська")];
 
 #[function_component(Settings)]
 pub fn settings() -> Html {

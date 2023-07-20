@@ -8,9 +8,20 @@ i18n!("i18n");
 pub const USER_LANGUAGE_STORAGE_KEY: &'static str = "user_language";
 pub const DEFAULT_LANGUAGE_KEY: &'static str = "sys";
 
+pub static LANGUAGE_DATA: [(&'static str, &'static str); 3] =
+    [("en", "English"), ("ru", "Русский"), ("uk", "Українська")];
+
 static LANG: Lazy<String> = Lazy::new(|| {
     web_sys::window()
-        .and_then(|w| w.navigator().language())
+        .and_then(|w| {
+            w.navigator().language().or_else(|| {
+                w.navigator()
+                    .languages()
+                    .iter()
+                    .next()
+                    .and_then(|x| x.as_string())
+            })
+        })
         .and_then(|l| l.split("_").next().map(|x| x.to_owned()))
         .unwrap_or("ru".to_string())
 });
@@ -22,10 +33,10 @@ impl Locale {
             .as_ref()
             .filter(|&v| v != DEFAULT_LANGUAGE_KEY)
             .map(|s| s.as_str())
-            .unwrap_or(LANG.as_str())
+            .unwrap_or(&LANG.as_str()[..2])
         {
             "ru" => Locale::Ru,
-            "ua" => Locale::Ua,
+            "uk" => Locale::Ua,
             _ => Locale::En,
         }
     }

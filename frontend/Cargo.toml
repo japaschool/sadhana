@@ -47,4 +47,5 @@ features = [
   "DomRect",
   "Document",
   "DomTokenList",
+  "Navigator",
 ]
