@@ -124,8 +124,8 @@ pub fn charts() -> Html {
                 <span class="bg-slate-600 bg-opacity-50 rounded-2xl my-auto border p-4 text-white text-2xl">{ Locale::current().copied() }</span>
             </div>
             <div class="relative">
-                <button onclick={ copy_link_onclick.clone() } class={ SUBMIT_BTN_CSS }>
-                <i class="icon-doc icon"></i>{ format!(" {}", "Share link to charts") }</button>
+                <button onclick={ copy_link_onclick.clone() } class={ BTN_CSS }>
+                <i class="icon-doc-dup"></i>{ format!(" {}", "Share link to charts") }</button>
             </div>
         </BlankPage>
     }
