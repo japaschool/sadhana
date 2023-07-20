@@ -63,6 +63,11 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                         web::get().to(app::shared::get_shared_report_data),
                     ),
             )
+            .service(web::scope("/yatras").route("", web::get().to(app::yatras::user_yatras)))
+            .service(
+                web::scope("/yatra")
+                    .route("{yatra_id}/data", web::get().to(app::yatras::yatra_data)),
+            )
             .service(
                 web::scope("/diary")
                     .route("/report", web::get().to(app::diary::api::get_report_data))

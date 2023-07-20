@@ -63,9 +63,50 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::PracticeDataTypeEnum;
+
+    yatra_practices (id) {
+        id -> Uuid,
+        yatra_id -> Uuid,
+        practice -> Text,
+        data_type -> PracticeDataTypeEnum,
+        order_key -> Int4,
+    }
+}
+
+diesel::table! {
+    yatra_user_practices (yatra_practice_id, user_practice_id) {
+        yatra_practice_id -> Uuid,
+        user_practice_id -> Uuid,
+    }
+}
+
+diesel::table! {
+    yatra_users (yatra_id, user_id) {
+        yatra_id -> Uuid,
+        user_id -> Uuid,
+    }
+}
+
+diesel::table! {
+    yatras (id) {
+        id -> Uuid,
+        name -> Text,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
 diesel::joinable!(diary -> user_practices (practice_id));
 diesel::joinable!(diary -> users (user_id));
 diesel::joinable!(user_practices -> users (user_id));
+diesel::joinable!(yatra_practices -> yatras (yatra_id));
+diesel::joinable!(yatra_user_practices -> user_practices (user_practice_id));
+diesel::joinable!(yatra_user_practices -> yatra_practices (yatra_practice_id));
+diesel::joinable!(yatra_users -> users (user_id));
+diesel::joinable!(yatra_users -> yatras (yatra_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     confirmations,
@@ -73,4 +114,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     diary,
     user_practices,
     users,
+    yatra_practices,
+    yatra_user_practices,
+    yatra_users,
+    yatras,
 );
