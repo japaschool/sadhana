@@ -196,7 +196,7 @@ pub fn settings() -> Html {
                         </label>
                     </div>
                     <Pwd onchange={ pwd_onchange.clone() } readonly={ !*editing } required={ !user_password.is_empty() }/>
-                    <div class="relative flex space-x-2.5 justify-center sm:text-base">
+                    <div class="relative">
                         <select
                             class={ INPUT_CSS }
                             id="language"
@@ -214,7 +214,7 @@ pub fn settings() -> Html {
                             }
                         </select>
                         <label for="language" class={ INPUT_LABEL_CSS }>
-                            <i class="fas fa-earth-europe"></i>
+                            <i class="icon-lang"></i>
                             { format!(" {}: ", Locale::current().language()) }
                         </label>
                     </div>
