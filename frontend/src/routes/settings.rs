@@ -8,12 +8,14 @@ use crate::{
     hooks::use_user_context,
     i18n::{Locale, DEFAULT_LANGUAGE_KEY, LANGUAGE_DATA, USER_LANGUAGE_STORAGE_KEY},
     model::UpdateUser,
+    routes::AppRoute,
     services,
 };
 use gloo::storage::{LocalStorage, Storage};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_bool_toggle};
+use yew_router::prelude::use_navigator;
 
 #[function_component(Settings)]
 pub fn settings() -> Html {
@@ -150,6 +152,14 @@ pub fn settings() -> Html {
         })
     };
 
+    let nav = use_navigator().unwrap();
+
+    let edit_user_onclick = {
+        Callback::from(move |_: MouseEvent| {
+            nav.push(&AppRoute::EditUser);
+        })
+    };
+
     html! {
             <form {onsubmit} {onreset} >
                 <BlankPage
@@ -168,7 +178,7 @@ pub fn settings() -> Html {
 
                     <div class={ BODY_SET_CSS }>
                     <ul class="flex items-center w-full max-w-md pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
-                            <li>
+                            <li onclick={ edit_user_onclick }>
                                 <div class="relative flex justify-between items-center sm:text-base align-baseline">
                                 <label>
                                     <i class="icon-user flex-none w-5"></i>
