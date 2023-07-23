@@ -167,37 +167,37 @@ pub fn settings() -> Html {
     </div>
 
                     <div class={ BODY_SET_CSS }>
-                    <ul class="flex items-center w-full max-w-md pt-4 mt-1 space-y-2 font-medium border-t border-gray-200 dark:border-zinc-500">
+                    <ul class="flex items-center w-full max-w-md pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
                             <li>
                                 <div class="relative flex justify-between items-center sm:text-base align-baseline">
                                 <label>
-                                    <i class="icon-user flex-shrink-0 w-5"></i>
+                                    <i class="icon-user flex-none w-5"></i>
                                     { "User details" }
                                 </label>
                                 </div>
                             </li>
                         </ul>
-                    <ul class="flex items-center w-full max-w-md pt-4 mt-1 space-y-2 font-medium border-t border-gray-200 dark:border-zinc-500">
+                    <ul class="flex items-center w-full max-w-md pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
                             <li>
                                 <div class="relative flex justify-between items-center sm:text-base align-baseline">
                                 <label>
-                                    <i class="icon-edit flex-shrink-0 w-5"></i>
+                                    <i class="icon-edit flex-none w-5"></i>
                                     { "Change password" }
                                 </label>
                                 </div>
                             </li>
                         </ul>
-                <ul class="pt-4 mt-1 space-y-2 font-medium border-t border-gray-200 dark:border-zinc-500">
+                <ul class="pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
                             <li>
                                 <div class="relative flex justify-between items-center sm:text-base align-baseline">
                                 <label for="language">
                                     <i class="icon-lang  flex-shrink-0 w-5"></i>
-                                    { format!(" {}: ", Locale::current().language()) }
+                                    { format!(" {} ", Locale::current().language()) }
                                 </label>
                                 </div>
                             </li>
                         </ul>
-                        <ul class="pt-4 mt-1 space-y-2 font-medium border-t border-gray-200 dark:border-zinc-500">
+                        <ul class="pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
                             <li>
                                 <div class="relative flex justify-between items-center sm:text-base align-baseline">
                                     <label for="toggle"><i class="icon-moon flex-shrink-0 w-5"></i>{ Locale::current().dark_mode() }</label>
@@ -218,7 +218,7 @@ pub fn settings() -> Html {
                                 </div>
                             </li>
                         </ul>
-                        <ul class="pt-4 mt-1 space-y-2 font-medium border-t border-gray-200 dark:border-zinc-500">
+                        <ul class="pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
                         <li>
                             <div class="relative flex justify-between items-center sm:text-base align-baseline">
                                 <label><i class="icon-help flex-shrink-0 w-5"></i>{"Help and support"}</label>
