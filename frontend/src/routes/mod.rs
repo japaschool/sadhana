@@ -4,6 +4,7 @@ use yew_router::prelude::*;
 use self::{
     charts::{Charts, SharedCharts},
     confirmation::Confirmation,
+    edit_user::EditUser,
     home::Home,
     login::Login,
     new_user_practice::NewUserPractice,
@@ -16,6 +17,7 @@ use crate::{components::user_context_provider::UserContextProvider, model::Confi
 
 pub mod charts;
 pub mod confirmation;
+pub mod edit_user;
 pub mod home;
 pub mod login;
 pub mod new_user_practice;
@@ -52,6 +54,8 @@ pub enum AppRoute {
     Login,
     #[at("/settings")]
     Settings,
+    #[at("/edit-user")]
+    EditUser,
     #[at("/user/practices")]
     UserPractices,
     #[at("/user/practice/new")]
@@ -69,6 +73,7 @@ fn app_switch(routes: AppRoute) -> Html {
         AppRoute::RegisterWithConfirmationId { id } => html! { <RegisterWithId id={id} /> },
         AppRoute::Login => html! { <Login /> },
         AppRoute::Settings => html! { <Settings /> },
+        AppRoute::EditUser => html! { <EditUser/> },
         AppRoute::UserPractices => html! { <UserPractices /> },
         AppRoute::NewUserPractice => html! { <NewUserPractice /> },
         AppRoute::Charts => html! { <Charts/> },
