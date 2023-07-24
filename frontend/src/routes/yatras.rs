@@ -96,10 +96,10 @@ pub fn yatras() -> Html {
     };
 
     let grid = html! {
-        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-            <div class="flex items-center justify-between pb-4 bg-white bg-opacity-50 dark:bg-gray-900">
-                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400 table-auto">
-                    <thead class="text-xs uppercase bg-gray-50 bg-opacity-50 dark:bg-gray-700 dark:bg-opacity-50 dark:text-gray-400">
+        <div class="relative scroll-smooth hover:scroll-auto overflow-x-auto shadow-md border dark:border-zinc-200 border-zinc-400 rounded-lg">
+            <div class="flex items-center justify-between pb-4">
+                <table class="w-full text-sm text-left text-zinc-400 dark:text-zinc-200 table-auto bg-white dark:bg-zinc-700 bg-opacity-40 dark:bg-opacity-40">
+                    <thead class="text-xs uppercase dark:bg-zinc-500 dark:text-zinc-200 text-zinc-400 bg-opacity-40 dark:bg-opacity-40">
                         <tr>
                             <th scope="col" class="px-6 py-3">{"Sadhaka"}</th>
                             { data.data.iter().flat_map(|d| d.practices.iter()).map(|p| html! { <th scope="col" class="px-6 py-3">{ p.practice.clone() }</th> }).collect::<Html>() }
@@ -145,9 +145,9 @@ pub fn yatras() -> Html {
                                     }).collect::<Html>();
 
                                     html! {
-                                        <tr class="bg-white bg-opacity-50 border-b dark:bg-gray-800 dark:bg-opacity-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                            <th scope="row" class="flex items-center px-6 py-4 text-gray-400 whitespace-nowrap dark:text-gray-300">
-                                                <div class="text-sm font-semibold">{ user_name.clone() }</div>
+                                        <tr class="bg-white bg-opacity-40 dark:bg-opacity-40 dark:bg-zinc-800 dark:border-zinc-700 border-b hover:bg-zinc-50 dark:hover:bg-zinc-600">
+                                            <th scope="row" class="flex items-center px-6 py-4 text-zinc-400 whitespace-nowrap dark:text-zinc-300">
+                                                <div class="text-sm font-normal">{ user_name.clone() }</div>
                                             </th>
                                             { data_columns }
                                         </tr>
