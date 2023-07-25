@@ -112,6 +112,7 @@ impl UserPractice {
 
         conn.transaction(|conn| {
             let cnt: i64 = user_practices
+                .filter(user_id.eq(&record.user_id))
                 .select(diesel::dsl::count_star())
                 .first(conn)?;
 
