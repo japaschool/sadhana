@@ -303,40 +303,40 @@ fn charts_base(props: &ChartBaseProps) -> Html {
         .unzip();
 
     html! {
-            <div class={ BODY_DIV_CSS }>
-                <div class="relative">
-                    <select  class={ INPUT_CSS } id="practices" onchange={ practice_onchange.clone() }>
-                        { for props.practices.iter().map(|p| html!{
-                            <option class={ "text-black" }
-                                selected={ selected_practice.as_ref().map(|inner| inner.practice == p.practice).unwrap_or(false) }
-                                value={ p.practice.clone() }
-                                >{ p.practice.clone() }</option>
-                        })}
-                    </select>
-                    <label for="practices" class={ INPUT_LABEL_CSS }>
-                        <i class="fa"></i>
-                        { format!(" {}: ", Locale::current().practice()) }
-                    </label>
-                </div>
-                <div class="relative">
-                    <select class={ INPUT_CSS } id="duration" onchange={ duration_onchange.clone() }>
-                        <option class={ "text-black" } selected=true value={ ReportDuration::Last7Days.to_string() }>{ Locale::current().last_week() }</option>
-                        <option class={ "text-black" } value={ ReportDuration::Last30Days.to_string() }>{ Locale::current().last_month() }</option>
-                        <option class={ "text-black" } value={ ReportDuration::Last90Days.to_string() }>{ Locale::current().last_quarter() }</option>
-                        <option class={ "text-black" } value={ ReportDuration::Last365Days.to_string() }>{ Locale::current().last_year() }</option>
-                    </select>
-                    <label for="duration" class={ INPUT_LABEL_CSS }>
-                        <i class="fa"></i>
-                        { format!(" {}: ", Locale::current().duration()) }
-                    </label>
-                </div>
-                <div class="relative">
-                    <Chart
-                        { x_values }
-                        { y_values }
-                        y_axis_type={ selected_practice.as_ref().map(|p| p.data_type) }
-                        />
-                </div>
+        <div class={ BODY_DIV_CSS }>
+            <div class="relative">
+                <select  class={ INPUT_CSS } id="practices" onchange={ practice_onchange.clone() }>
+                    { for props.practices.iter().map(|p| html!{
+                        <option class={ "text-black" }
+                            selected={ selected_practice.as_ref().map(|inner| inner.practice == p.practice).unwrap_or(false) }
+                            value={ p.practice.clone() }
+                            >{ p.practice.clone() }</option>
+                    })}
+                </select>
+                <label for="practices" class={ INPUT_LABEL_CSS }>
+                    <i class="fa"></i>
+                    { format!(" {}: ", Locale::current().practice()) }
+                </label>
             </div>
+            <div class="relative">
+                <select class={ INPUT_CSS } id="duration" onchange={ duration_onchange.clone() }>
+                    <option class={ "text-black" } selected=true value={ ReportDuration::Last7Days.to_string() }>{ Locale::current().last_week() }</option>
+                    <option class={ "text-black" } value={ ReportDuration::Last30Days.to_string() }>{ Locale::current().last_month() }</option>
+                    <option class={ "text-black" } value={ ReportDuration::Last90Days.to_string() }>{ Locale::current().last_quarter() }</option>
+                    <option class={ "text-black" } value={ ReportDuration::Last365Days.to_string() }>{ Locale::current().last_year() }</option>
+                </select>
+                <label for="duration" class={ INPUT_LABEL_CSS }>
+                    <i class="fa"></i>
+                    { format!(" {}: ", Locale::current().duration()) }
+                </label>
+            </div>
+            <div class="relative">
+                <Chart
+                    { x_values }
+                    { y_values }
+                    y_axis_type={ selected_practice.as_ref().map(|p| p.data_type) }
+                    />
+            </div>
+        </div>
     }
 }
