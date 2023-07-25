@@ -1,21 +1,28 @@
 use chrono::{Local, NaiveDate};
+use common::error::AppError;
 use gloo::storage::{LocalStorage, Storage};
+use gloo_dialogs::prompt;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_mount};
+use yew_router::prelude::*;
 
 use crate::{
     components::{blank_page::BlankPage, calendar::Calendar, list_errors::ListErrors},
     css::*,
     i18n::Locale,
     model::{PracticeDataType, Yatra, YatraData},
-    services::{get_user_yatras, get_yatra_data},
+    routes::AppRoute,
+    services::{create_yatra, get_user_yatras, get_yatra_data},
 };
+
+pub mod settings;
 
 const SELECTED_YATRA_ID_KEY: &'static str = "selected_yatra";
 
 #[function_component(Yatras)]
 pub fn yatras() -> Html {
+    let nav = use_navigator().unwrap();
     let yatras = use_async(async move { get_user_yatras().await.map(|y| y.yatras) });
     let selected_yatra = use_state(|| None::<Yatra>);
     let selected_date = use_state(|| Local::now().date_naive());
@@ -30,12 +37,36 @@ pub fn yatras() -> Html {
             }
         })
     };
+    let new_yatra = use_async(async move {
+        if let Some(yatra_name) = prompt(
+            "New Yatra Name", //FIXME: localise
+            None,
+        )
+        .filter(|s| !s.trim().is_empty())
+        {
+            create_yatra(yatra_name).await.map(|res| res.yatra)
+        } else {
+            Err(AppError::UnprocessableEntity(vec![]))
+        }
+    });
 
     {
         let yatras = yatras.clone();
         use_mount(move || {
             yatras.run();
         });
+    }
+
+    {
+        use_effect_with_deps(
+            move |res| {
+                res.data
+                    .iter()
+                    .for_each(|y| nav.push(&AppRoute::YatraSettings { id: y.id.clone() }));
+                || ()
+            },
+            new_yatra.clone(),
+        );
     }
 
     {
@@ -92,6 +123,13 @@ pub fn yatras() -> Html {
             });
 
             selected.set(yatra);
+        })
+    };
+
+    let create_yatra_onclick = {
+        let create = new_yatra.clone();
+        Callback::from(move |_: MouseEvent| {
+            create.run();
         })
     };
 
@@ -171,10 +209,11 @@ pub fn yatras() -> Html {
 
     let grid_body = html! {
         <>
-        <Calendar selected_date={ *selected_date } date_onchange={ selected_date_onchange }/>
         <ListErrors error={yatras.error.clone()} />
         <ListErrors error={data.error.clone()} />
+        <ListErrors error={new_yatra.error.clone()} />
         <div class={ BODY_DIV_CSS }>
+            <Calendar selected_date={ *selected_date } date_onchange={ selected_date_onchange }/>
             <div class="relative">
                 <select
                     class={ INPUT_CSS }
@@ -197,6 +236,14 @@ pub fn yatras() -> Html {
                     <i class="icon-user-group"></i>
                     { format!(" {}: ", Locale::current().yatra()) }
                 </label>
+            </div>
+            <div class="relative">
+                <div class={ LINKS_CSS }>
+                    <Link<AppRoute>
+                        to={AppRoute::YatraSettings { id: selected_yatra.as_ref().map(|y|y.id.clone()).unwrap_or_default() }}>{ "Modify" } //FIXME: translate
+                    </Link<AppRoute>>
+                    <a onclick={ create_yatra_onclick }>{ "Create New" }</a>
+                </div>
             </div>
             { grid }
         </div>

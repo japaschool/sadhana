@@ -17,6 +17,7 @@ create table yatra_practices (
 create table yatra_users (
   yatra_id uuid not null references yatras (id),
   user_id uuid not null references users (id),
+  is_admin boolean default false not null,
   primary key (yatra_id, user_id)
 );
 

@@ -280,3 +280,13 @@ pub struct YatraData {
     pub practices: Vec<YatraPractice>,
     pub data: Vec<(String, Vec<Option<PracticeEntryValue>>)>,
 }
+
+#[derive(Debug, Serialize)]
+pub struct CreateYatra {
+    pub name: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct CreateYatraResponse {
+    pub yatra: Yatra,
+}
