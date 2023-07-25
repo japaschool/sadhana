@@ -2,11 +2,11 @@ use chrono::NaiveDate;
 use common::{error::AppError, ReportDuration};
 
 use crate::model::{
-    AllUserPractices, CreateUserPractice, DiaryDay, LoginInfoWrapper, RegisterInfoWrapper,
-    ReportData, ResetPassword, ResetPasswordWrapper, SendConfirmationLink,
-    SendConfirmationLinkWrapper, SignupLinkDetailsWrapper, UpdateUser, UpdateUserPassword,
-    UpdateUserPractice, UpdateUserPracticesOrderKey, UpdateUserWrapper, UserInfoWrapper,
-    UserPractice, YatraData, Yatras,
+    AllUserPractices, CreateUserPractice, CreateYatra, CreateYatraResponse, DiaryDay,
+    LoginInfoWrapper, RegisterInfoWrapper, ReportData, ResetPassword, ResetPasswordWrapper,
+    SendConfirmationLink, SendConfirmationLinkWrapper, SignupLinkDetailsWrapper, UpdateUser,
+    UpdateUserPassword, UpdateUserPractice, UpdateUserPracticesOrderKey, UpdateUserWrapper,
+    UserInfoWrapper, UserPractice, Yatra, YatraData, Yatras,
 };
 
 use self::requests::*;
@@ -148,4 +148,9 @@ pub async fn get_yatra_data(yatra_id: &str, cob_date: &NaiveDate) -> Result<Yatr
 /// Get user yatras
 pub async fn get_user_yatras() -> Result<Yatras, AppError> {
     request_get("/yatras".to_string()).await
+}
+
+/// Create a new yatra
+pub async fn create_yatra(name: String) -> Result<CreateYatraResponse, AppError> {
+    request_post("/yatras".to_string(), &CreateYatra { name }).await
 }

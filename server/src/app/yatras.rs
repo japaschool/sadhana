@@ -20,6 +20,26 @@ pub struct Yatra {
 }
 
 impl Yatra {
+    pub fn create(conn: &mut PgConnection, name: String, user_id: &Uuid) -> Result<Self, AppError> {
+        let id = conn.transaction(|conn| {
+            let id = diesel::insert_into(yatras::table)
+                .values(yatras::name.eq(&name))
+                .returning(yatras::id)
+                .get_result(conn)?;
+
+            diesel::insert_into(yatra_users::table)
+                .values((
+                    yatra_users::yatra_id.eq(&id),
+                    yatra_users::user_id.eq(&user_id),
+                ))
+                .execute(conn)?;
+
+            Ok::<_, diesel::result::Error>(id)
+        })?;
+
+        Ok(Yatra { id, name })
+    }
+
     pub fn get_user_yatras(conn: &mut PgConnection, user_id: &Uuid) -> Result<Vec<Self>, AppError> {
         let res = yatras::table
             .inner_join(yatra_users::table)
@@ -141,11 +161,31 @@ pub async fn user_yatras(
     Ok(HttpResponse::Ok().json(YatrasResponse { yatras }))
 }
 
+/// Create a new yatra
+pub async fn create_yatra(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    form: web::Json<CreateYatraForm>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let name = form.name.clone();
+    let user_id = auth::get_current_user(&req)?.id;
+
+    let yatra = web::block(move || Yatra::create(&mut conn, name, &user_id)).await??;
+
+    Ok(HttpResponse::Ok().json(CreateYatraResponse { yatra }))
+}
+
 type YatraIdSlug = Uuid;
 
 #[derive(Deserialize, Debug)]
 pub struct YatraDataQueryParams {
     cob_date: NaiveDate,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CreateYatraForm {
+    name: String,
 }
 
 #[derive(Serialize, Debug)]
@@ -191,4 +231,9 @@ impl From<(Vec<YatraPractice>, Vec<YatraDataRow>)> for YatraDataResponse {
 #[derive(Serialize, Debug)]
 pub struct YatrasResponse {
     pub yatras: Vec<Yatra>,
+}
+
+#[derive(Serialize, Debug)]
+pub struct CreateYatraResponse {
+    pub yatra: Yatra,
 }

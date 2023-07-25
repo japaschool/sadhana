@@ -353,9 +353,9 @@ pub fn home() -> Html {
         <BlankPage show_footer=true >
             <ListErrors error={diary_entry.error.clone()} />
             <ListErrors error={save_diary_day.error.clone()} />
-            <Calendar selected_date={ *selected_date } date_onchange={ selected_date_onchange }/>
             <div class={ BODY_DIV_CSS }>
-            {
+                <Calendar selected_date={ *selected_date } date_onchange={ selected_date_onchange }/>
+                {
                 for local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, value})|
                     html! {
                         match data_type {

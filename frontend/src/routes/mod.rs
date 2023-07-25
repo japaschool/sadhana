@@ -15,7 +15,7 @@ use self::{
     register_with_id::RegisterWithId,
     settings::Settings,
     user_practices::UserPractices,
-    yatras::Yatras,
+    yatras::{settings::YatraSettings, Yatras},
 };
 use crate::{components::user_context_provider::UserContextProvider, model::ConfirmationType};
 
@@ -78,6 +78,8 @@ pub enum AppRoute {
     Charts,
     #[at("/yatras")]
     Yatras,
+    #[at("/yatra/:id/settings")]
+    YatraSettings { id: String },
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -97,6 +99,7 @@ fn app_switch(routes: AppRoute) -> Html {
         AppRoute::NewUserPractice => html! { <NewUserPractice /> },
         AppRoute::Charts => html! { <Charts/> },
         AppRoute::Yatras => html! { <Yatras/> },
+        AppRoute::YatraSettings { id } => html! { <YatraSettings yatra_id={id}/> },
         AppRoute::NotFound => html! { <h1>{ "404" }</h1> },
     }
 }
