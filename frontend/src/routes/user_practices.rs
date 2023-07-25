@@ -1,15 +1,12 @@
 use std::collections::HashSet;
 
-use gloo_dialogs::{confirm, prompt};
-use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::spawn_local;
-use web_sys::HtmlElement;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_list, use_mount, use_set};
 use yew_router::prelude::*;
 
 use crate::{
-    components::{blank_page::BlankPage, list_errors::ListErrors},
+    components::{blank_page::BlankPage, draggable_list::DraggableList, list_errors::ListErrors},
     css::*,
     i18n::Locale,
     model::{PracticeDataType, UserPractice},
@@ -27,6 +24,11 @@ pub fn user_practices() -> Html {
     let ordered_practices = use_list(vec![]);
     let all_practices =
         use_async(async move { get_user_practices().await.map(|res| res.user_practices) });
+
+    let reorder_practices = {
+        let op = ordered_practices.clone();
+        use_async(async move { reorder_user_practices(op.current().to_owned()).await })
+    };
 
     {
         // TODO: This is a hack that forces the state to reload from backend when we redirect
@@ -51,12 +53,9 @@ pub fn user_practices() -> Html {
         });
     }
 
-    let navigator = use_navigator().unwrap();
-
     {
         // Refresh active practices when all_practices change
         let selected = selected_practices.clone();
-        let ordered = ordered_practices.clone();
         use_effect_with_deps(
             move |all| {
                 log::debug!("All Practices loaded. Initialising active practices");
@@ -75,37 +74,20 @@ pub fn user_practices() -> Html {
                         })
                         .collect::<HashSet<String>>(),
                 );
-                ordered.set(
-                    all.data
-                        .as_ref()
-                        .unwrap_or(&vec![])
-                        .iter()
-                        .map(|p| p.practice.clone())
-                        .collect::<Vec<_>>(),
-                );
                 || ()
             },
             all_practices.clone(),
         );
     }
 
-    let reorder_practices_and_leave = {
-        let ordered_practices = ordered_practices.clone();
-        let navigator = navigator.clone();
-        use_async(async move {
-            reorder_user_practices(ordered_practices.current().to_owned())
-                .await
-                .map(|_| navigator.push(&AppRoute::Home))
-        })
+    let is_hidden = {
+        let selected = selected_practices.clone();
+        Callback::from(move |practice: String| !selected.current().contains(&practice))
     };
 
     let toggle_hidden = {
         let selected = selected_practices.clone();
-        Callback::from(move |e: MouseEvent| {
-            e.prevent_default();
-
-            let input: HtmlElement = e.target_unchecked_into();
-            let practice = input.id();
+        Callback::from(move |practice: String| {
             let is_active = !selected.current().contains(&practice);
 
             let up = UserPractice {
@@ -114,7 +96,6 @@ pub fn user_practices() -> Html {
                 is_active: is_active,
             };
 
-            // TODO: possibly a better way to use Suspense with use_future once on yew 0.20
             let p = practice.clone();
             spawn_local(async move { update_user_practice(&p, up).await.unwrap() });
 
@@ -128,212 +109,84 @@ pub fn user_practices() -> Html {
 
     let delete = {
         let all_practices = all_practices.clone();
-        Callback::from(move |e: MouseEvent| {
-            e.prevent_default();
-            if confirm(Locale::current().delete_practice_warning().as_str()) {
-                let input: HtmlElement = e.target_unchecked_into();
-                let practice = input.id();
+        Callback::from(move |practice: String| {
+            log::debug!("Deleting user practice {:?}", practice);
 
-                log::debug!("Deleting user practice {:?}", practice);
-
-                let all_practices = all_practices.clone();
-                spawn_local(async move {
-                    delete_user_practice(&practice)
-                        .await
-                        .and_then(|_| Ok(all_practices.run()))
-                        .unwrap()
-                });
-            }
+            let all_practices = all_practices.clone();
+            spawn_local(async move {
+                delete_user_practice(&practice)
+                    .await
+                    .and_then(|_| Ok(all_practices.run()))
+                    .unwrap()
+            });
         })
     };
 
     let rename = {
         let all_practices = all_practices.clone();
         let selected = selected_practices.clone();
-        Callback::from(move |e: MouseEvent| {
-            e.prevent_default();
+        Callback::from(move |(from, to): (String, String)| {
+            let is_active = selected.current().contains(&from);
+            let all_practices = all_practices.clone();
 
-            let input: HtmlElement = e.target_unchecked_into();
-            let practice = input.id();
+            let up = UserPractice {
+                practice: to.trim().to_owned(),
+                data_type: PracticeDataType::Bool, //Adding to satisfy constructor but is actually never used
+                is_active,
+            };
 
-            if let Some(new_name) = prompt(
-                Locale::current().enter_new_practice_name().as_str(),
-                Some(&practice),
-            )
-            .filter(|s| !s.trim().is_empty())
-            {
-                let is_active = selected.current().contains(&practice);
-                let all_practices = all_practices.clone();
-
-                let up = UserPractice {
-                    practice: new_name.trim().to_owned(),
-                    data_type: PracticeDataType::Bool, //Adding to satisfy constructor but is actually never used
-                    is_active,
-                };
-
-                spawn_local(async move {
-                    update_user_practice(&practice, up)
-                        .await
-                        .and_then(|_| Ok(all_practices.run()))
-                        .unwrap()
-                });
-            }
+            spawn_local(async move {
+                update_user_practice(&from, up)
+                    .await
+                    .and_then(|_| Ok(all_practices.run()))
+                    .unwrap()
+            });
         })
     };
 
-    let onclick_done = {
-        let reorder_practices_and_leave = reorder_practices_and_leave.clone();
-        Callback::from(move |_| {
-            reorder_practices_and_leave.run();
-        })
-    };
-
-    // Drag and drop inspired by this article: https://stackoverflow.com/questions/54237737/html5-dragndrop-not-working-on-ios-12-1-2-safari-and-chrome
-
-    fn get_div(target: HtmlElement) -> HtmlElement {
-        if target.node_name() != "DIV" {
-            return get_div(target.parent_element().unwrap().unchecked_into());
-        }
-        target
-    }
-
-    let dragging = use_mut_ref(|| None);
-
-    let ondragstart = {
-        let dragging = dragging.clone();
-        Callback::from(move |e: DragEvent| {
-            let target: HtmlElement = get_div(e.target_unchecked_into());
-            *dragging.borrow_mut() = Some(target.clone());
-            e.data_transfer()
-                .unwrap()
-                .set_drag_image(&target, target.client_width() - 20, 0);
-            e.data_transfer()
-                .unwrap()
-                .set_data("text/plain", "hello")
-                .unwrap();
-        })
-    };
-
-    let ondragover = {
-        Callback::from(move |e: DragEvent| {
-            e.prevent_default();
-            let target = get_div(e.target_unchecked_into());
-            let rect = target.get_bounding_client_rect();
-            let offset = (rect.y() + rect.height() / 2.0)
-                .round()
-                .rem_euclid(2f64.powi(32)) as u32 as i32;
-            if e.client_y() - offset > 0 {
-                target
-                    .style()
-                    .set_property("border-bottom", "solid 4px grey")
-                    .unwrap();
-                target.style().set_property("border-top", "").unwrap();
-            } else {
-                target
-                    .style()
-                    .set_property("border-top", "solid 4px grey")
-                    .unwrap();
-                target.style().set_property("border-bottom", "").unwrap();
-            }
-        })
-    };
-
-    let ondragleave = {
-        Callback::from(move |e: DragEvent| {
-            let target: HtmlElement = get_div(e.target_unchecked_into());
-            target.style().set_property("border-top", "").unwrap();
-            target.style().set_property("border-bottom", "").unwrap();
-        })
-    };
-
-    let ondrop = {
-        let dragging = dragging.clone();
-        let ordered = ordered_practices.clone();
-        Callback::from(move |e: DragEvent| {
-            e.prevent_default();
-            let target: HtmlElement = get_div(e.target_unchecked_into());
-            let dragging = dragging.borrow_mut().take().unwrap();
-            let mut moving_below_target = true;
-            if !target
-                .style()
-                .get_property_value("border-bottom")
-                .unwrap()
-                .is_empty()
-            {
-                target.style().set_property("border-bottom", "").unwrap();
-            } else {
-                target.style().set_property("border-top", "").unwrap();
-                moving_below_target = false;
-            }
-            let dragging_idx: usize = dragging.id().parse().unwrap();
-            let mut target_idx: usize = target.id().parse().unwrap();
-
-            // When moving _below_ an element, and that element is _above_ the one being dragged,
-            // add 1 to target index to indicate it goes below the one we are dropping it onto
-            if moving_below_target && target_idx < dragging_idx {
-                target_idx += 1;
-            }
-
-            // When moving _above_ an element and that element is _above_ the one being dragged
-            // take away 1 from target index to indicate it goes above the one we are dropping it onto
-            if !moving_below_target && target_idx > dragging_idx {
-                target_idx -= 1;
-            }
-
-            let p = ordered.remove(dragging_idx);
-            ordered.insert(target_idx, p);
+    let reorder = {
+        let op = ordered_practices.clone();
+        let rp = reorder_practices.clone();
+        Callback::from(move |practices: Vec<String>| {
+            op.set(practices);
+            rp.run();
         })
     };
 
     html! {
-        <BlankPage header_label={ Locale::current().select_practices() }>
+        <BlankPage
+            header_label={ Locale::current().select_practices() }
+            prev_link={ (Locale::current().done(), AppRoute::Home) }
+            show_footer=true
+            loading={ all_practices.loading }>
             <ListErrors error={all_practices.error.clone()} />
-            <ListErrors error={reorder_practices_and_leave.error.clone()} />
+            <ListErrors error={reorder_practices.error.clone()} />
             <div class={ BODY_DIV_CSS }>
-                <form> {
-                    ordered_practices.current().iter().enumerate().map ( |(idx, p)| {
-                        html! {
-                            <div
-                                ondragstart={ ondragstart.clone() }
-                                ondrop={ ondrop.clone() }
-                                ondragover={ ondragover.clone() }
-                                ondragleave={ ondragleave.clone() }
-                                class="flex w-full justify-center align-baseline"
-                                id={ idx.to_string() }
-                                >
-                                <label class="flex w-full justify-between whitespace-nowrap mb-6">
-                                    <span>{ p.clone() }</span>
-                                </label>
-                                <label >
-                                    <i onclick={ toggle_hidden.clone() }
-                                        id={ p.clone() }
-                                        class={ if selected_practices.current().contains(p) {"icon-eye"} else {"icon-eye-cross"}}
-                                        />
-                                </label>
-                                <label>
-                                    <i onclick={ rename.clone() } id={ p.clone() } class="icon-edit"/>
-                                </label>
-                                <label>
-                                    <i onclick={ delete.clone() } id={ p.clone() } class="icon-bin"/>
-                                </label>
-                                <label draggable="true" class="touch-none"><i class="icon-bars"></i></label>
-                            </div>
-                        }}).collect::<Html>()
-                    }
+                <form>{
+                    if all_practices.loading {
+                        html!{}
+                    } else { html! {
+                        <DraggableList
+                            items={ all_practices.data
+                                .as_ref()
+                                .unwrap_or(&vec![])
+                                .iter()
+                                .map(|p| p.practice.clone())
+                                .collect::<Vec<_>>() }
+                            toggle_hidden={ toggle_hidden.clone() }
+                            is_hidden={ is_hidden.clone() }
+                            rename={ rename.clone() }
+                            rename_popup_label={ Locale::current().enter_new_practice_name() }
+                            delete={ delete.clone() }
+                            delete_popup_label={ Locale::current().delete_practice_warning() }
+                            reorder = { reorder.clone() }
+                            />
+                    }}}
                 </form>
                 <div class="flex justify-center">
                     <Link<AppRoute> classes={ LINK_CSS_NEW_ACC } to={AppRoute::NewUserPractice}>
                         { Locale::current().add_new_practice() }
                     </Link<AppRoute>>
-                </div>
-                <div>
-                    <button
-                        onclick={ onclick_done.clone() }
-                        class={ SUBMIT_BTN_CSS }
-                        >
-                        <i class="icon-tick"></i>
-                        { format!(" {}", Locale::current().done()) }
-                    </button>
                 </div>
             </div>
         </BlankPage>
