@@ -2,9 +2,12 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 
 use self::{
+    about::About,
     charts::{Charts, SharedCharts},
     confirmation::Confirmation,
+    edit_password::EditPassword,
     edit_user::EditUser,
+    help::Help,
     home::Home,
     login::Login,
     new_user_practice::NewUserPractice,
@@ -15,9 +18,12 @@ use self::{
 };
 use crate::{components::user_context_provider::UserContextProvider, model::ConfirmationType};
 
+pub mod about;
 pub mod charts;
 pub mod confirmation;
+pub mod edit_password;
 pub mod edit_user;
+pub mod help;
 pub mod home;
 pub mod login;
 pub mod new_user_practice;
@@ -56,6 +62,12 @@ pub enum AppRoute {
     Settings,
     #[at("/edit-user")]
     EditUser,
+    #[at("/edit-password")]
+    EditPassword,
+    #[at("/help")]
+    Help,
+    #[at("/about")]
+    About,
     #[at("/user/practices")]
     UserPractices,
     #[at("/user/practice/new")]
@@ -74,6 +86,9 @@ fn app_switch(routes: AppRoute) -> Html {
         AppRoute::Login => html! { <Login /> },
         AppRoute::Settings => html! { <Settings /> },
         AppRoute::EditUser => html! { <EditUser/> },
+        AppRoute::EditPassword => html! { <EditPassword/> },
+        AppRoute::Help => html! { <Help/> },
+        AppRoute::About => html! { <About/> },
         AppRoute::UserPractices => html! { <UserPractices /> },
         AppRoute::NewUserPractice => html! { <NewUserPractice /> },
         AppRoute::Charts => html! { <Charts/> },

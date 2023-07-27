@@ -155,8 +155,27 @@ pub fn settings() -> Html {
     let nav = use_navigator().unwrap();
 
     let edit_user_onclick = {
+        let nav = nav.clone();
         Callback::from(move |_: MouseEvent| {
             nav.push(&AppRoute::EditUser);
+        })
+    };
+    let edit_password_onclick = {
+        let nav = nav.clone();
+        Callback::from(move |_: MouseEvent| {
+            nav.push(&AppRoute::EditPassword);
+        })
+    };
+    let help_onclick = {
+        let nav = nav.clone();
+        Callback::from(move |_: MouseEvent| {
+            nav.push(&AppRoute::Help);
+        })
+    };
+    let about_onclick = {
+        let nav = nav.clone();
+        Callback::from(move |_: MouseEvent| {
+            nav.push(&AppRoute::About);
         })
     };
 
@@ -177,23 +196,25 @@ pub fn settings() -> Html {
     </div>
 
                     <div class={ BODY_SET_CSS }>
-                    <ul class="flex items-center w-full max-w-md pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
-                            <li onclick={ edit_user_onclick }>
-                                <div class="relative flex justify-between items-center sm:text-base align-baseline">
-                                <label>
-                                    <i class="icon-user flex-none w-5"></i>
-                                    { "User details" }
-                                </label>
-                                </div>
-                            </li>
-                        </ul>
-                    <ul class="flex items-center w-full max-w-md pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
+                    <ul onclick={ edit_user_onclick } class="pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
                             <li>
                                 <div class="relative flex justify-between items-center sm:text-base align-baseline">
                                 <label>
-                                    <i class="icon-edit flex-none w-5"></i>
+                                    <i class="icon-user flex-shrink-0 w-5"></i>
+                                    { "User details" }
+                                </label>
+                                <i class="icon-chevron-right"></i>
+                                </div>
+                            </li>
+                        </ul>
+                    <ul onclick={ edit_password_onclick } class="pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
+                            <li>
+                                <div class="relative flex justify-between items-center sm:text-base align-baseline">
+                                <label>
+                                    <i class="icon-edit flex-shrink-0 w-5"></i>
                                     { "Change password" }
                                 </label>
+                                <i class="icon-chevron-right"></i>
                                 </div>
                             </li>
                         </ul>
@@ -201,9 +222,10 @@ pub fn settings() -> Html {
                             <li>
                                 <div class="relative flex justify-between items-center sm:text-base align-baseline">
                                 <label for="language">
-                                    <i class="icon-lang  flex-shrink-0 w-5"></i>
+                                    <i class="icon-lang flex-shrink-0 w-5"></i>
                                     { format!(" {} ", Locale::current().language()) }
                                 </label>
+                                <i class="icon-chevron-right"></i>
                                 </div>
                             </li>
                         </ul>
@@ -229,19 +251,20 @@ pub fn settings() -> Html {
                             </li>
                         </ul>
                         <ul class="pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
-                        <li>
+                        <li onclick={ help_onclick }>
                             <div class="relative flex justify-between items-center sm:text-base align-baseline">
                                 <label><i class="icon-help flex-shrink-0 w-5"></i>{"Help and support"}</label>
                             </div>
                         </li>
-                        <li>
+                        <li onclick={ about_onclick } >
                             <div class="relative flex justify-between items-center sm:text-base align-baseline">
-                                <label><i class="icon-info flex-shrink-0 w-5"></i>{"About" }</label>
+                                <label><i class="icon-info flex-shrink-0 w-5"></i>{"About"}</label>
+                                <i class="icon-chevron-right"></i>
                             </div>
                         </li>
-                        <li>
+                        <li onclick={ onclick_logout.clone() }>
                             <div class="relative flex justify-between items-center sm:text-base align-baseline">
-                                <label href="/login" onclick={ onclick_logout.clone() } for="toggle"><i class="icon-logout flex-shrink-0 w-5"></i>{ Locale::current().logout() }</label>
+                                <label href="/login" for="toggle"><i class="icon-logout flex-shrink-0 w-5"></i>{ Locale::current().logout() }</label>
                             </div>
                         </li>
                     </ul>
