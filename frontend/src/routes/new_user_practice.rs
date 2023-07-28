@@ -9,13 +9,24 @@ use crate::{
     css::*,
     hooks::use_user_context,
     i18n::*,
-    model::UserPractice,
+    model::{UserPractice, YatraPractice},
     routes::AppRoute,
-    services::create_user_practice,
+    services::{create_user_practice, create_yatra_practice},
 };
 
+#[derive(Properties, PartialEq)]
+pub struct Props {
+    pub target: NewPracticeTarget,
+}
+
+#[derive(PartialEq, Clone)]
+pub enum NewPracticeTarget {
+    UserPractice,
+    YatraPractice { yatra_id: String },
+}
+
 #[function_component(NewUserPractice)]
-pub fn new_user_practice() -> Html {
+pub fn new_user_practice(props: &Props) -> Html {
     #[derive(Debug, Default, Clone)]
     struct FormData {
         practice: String,
@@ -27,15 +38,31 @@ pub fn new_user_practice() -> Html {
     let save = {
         let form = form_data.clone();
         let user_ctx = user_ctx.clone();
+        let target = props.target.clone();
         use_async(async move {
-            let new_practice = UserPractice {
-                practice: form.practice.clone(),
-                data_type: form.data_type.as_str().try_into().unwrap(),
-                is_active: true,
-            };
-            create_user_practice(new_practice)
+            match target {
+                NewPracticeTarget::UserPractice => {
+                    let new_practice = UserPractice {
+                        practice: form.practice.clone(),
+                        data_type: form.data_type.as_str().try_into().unwrap(),
+                        is_active: true,
+                    };
+                    create_user_practice(new_practice)
+                        .await
+                        .and_then(|_| Ok(user_ctx.redirect_to(&AppRoute::UserPractices)))
+                }
+                NewPracticeTarget::YatraPractice { yatra_id } => create_yatra_practice(
+                    &yatra_id,
+                    YatraPractice {
+                        practice: form.practice.clone(),
+                        data_type: form.data_type.as_str().try_into().unwrap(),
+                    },
+                )
                 .await
-                .and_then(|_| Ok(user_ctx.redirect_to(&AppRoute::UserPractices)))
+                .and_then(|_| {
+                    Ok(user_ctx.redirect_to(&AppRoute::YatraAdminSettings { id: yatra_id }))
+                }),
+            }
         })
     };
 
@@ -100,10 +127,19 @@ pub fn new_user_practice() -> Html {
         })
     };
 
+    let prev_link = {
+        match &props.target {
+            NewPracticeTarget::UserPractice => AppRoute::UserPractices,
+            NewPracticeTarget::YatraPractice { yatra_id } => AppRoute::YatraAdminSettings {
+                id: yatra_id.clone(),
+            },
+        }
+    };
+
     html! {
         <BlankPage
             header_label={ Locale::current().select_practices() }
-            prev_link={ (Locale::current().cancel(), AppRoute::UserPractices) }
+            prev_link={ (Locale::current().cancel(), prev_link) }
             loading={ save.loading }
             >
             <ListErrors error={save.error.clone()} {error_formatter} />

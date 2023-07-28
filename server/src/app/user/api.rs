@@ -1,7 +1,6 @@
 use crate::{
     middleware::{auth, state::AppState},
     utils::email::send_email_smtp,
-    vars,
 };
 use actix_web::{web, HttpRequest, HttpResponse};
 use common::error::AppError;

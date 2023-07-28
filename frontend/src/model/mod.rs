@@ -269,10 +269,20 @@ pub struct Yatras {
     pub yatras: Vec<Yatra>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct YatraPractice {
     pub practice: String,
     pub data_type: PracticeDataType,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct YatraPractices {
+    pub practices: Vec<YatraPractice>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UpdateYatraPracticesOrderKey {
+    pub practices: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Default, Clone)]
@@ -287,6 +297,36 @@ pub struct CreateYatra {
 }
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct CreateYatraResponse {
+pub struct YatraResponse {
     pub yatra: Yatra,
+}
+#[derive(Debug, Deserialize, Clone)]
+pub struct IsYatraAdminResponse {
+    pub is_admin: bool,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CreateYatraPractice {
+    pub practice: YatraPractice,
+}
+
+#[derive(Debug, Serialize)]
+pub struct YatraPracticeUpdate {
+    pub practice: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UpdateYatraPractice {
+    pub update: YatraPracticeUpdate,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+pub struct YatraUserPractice {
+    pub yatra_practice: YatraPractice,
+    pub user_practice: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct YatraUserPractices {
+    pub practices: Vec<YatraUserPractice>,
 }

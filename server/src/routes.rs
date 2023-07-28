@@ -35,15 +35,12 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                             .route("", web::get().to(app::user_practices::get_user_practices)),
                     )
                     .service(
-                        web::scope("/practice")
+                        web::scope("/practice/{practice}")
                             .route(
-                                "{practice}",
+                                "",
                                 web::delete().to(app::user_practices::delete_user_practice),
                             )
-                            .route(
-                                "{practice}",
-                                web::put().to(app::user_practices::update_user_practice),
-                            ),
+                            .route("", web::put().to(app::user_practices::update_user_practice)),
                     )
                     .route("", web::get().to(app::user::api::me))
                     .route("", web::put().to(app::user::api::update_user))
@@ -53,15 +50,12 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                     ),
             )
             .service(
-                web::scope("/share")
+                web::scope("/share/{user_id}")
                     .route(
-                        "/{user_id}/practices",
+                        "/practices",
                         web::get().to(app::shared::get_shared_report_practices),
                     )
-                    .route(
-                        "/{user_id}",
-                        web::get().to(app::shared::get_shared_report_data),
-                    ),
+                    .route("", web::get().to(app::shared::get_shared_report_data)),
             )
             .service(
                 web::scope("/yatras")
@@ -69,9 +63,33 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                     .route("", web::get().to(app::yatras::user_yatras)),
             )
             .service(
-                web::scope("/yatra")
-                    // .route("{yatra_id}/practices", web::get().to(app::yatras::yatra_data))
-                    .route("{yatra_id}/data", web::get().to(app::yatras::yatra_data)),
+                web::scope("/yatra/{yatra_id}")
+                    .route("", web::get().to(app::yatras::get_yatra))
+                    .route("", web::delete().to(app::yatras::delete_yatra))
+                    .service(
+                        web::scope("/practices")
+                            .route(
+                                "/reorder",
+                                web::put().to(app::yatras::update_yatra_practice_order_key),
+                            )
+                            .route("", web::get().to(app::yatras::get_yatra_practices))
+                            .route("", web::post().to(app::yatras::create_yatra_practice)),
+                    )
+                    .service(
+                        web::scope("/practice/{practice}")
+                            .route("", web::put().to(app::yatras::update_yatra_practice))
+                            .route("", web::delete().to(app::yatras::delete_yatra_practice)),
+                    )
+                    .route("/data", web::get().to(app::yatras::yatra_data))
+                    .route(
+                        "/user-practices",
+                        web::get().to(app::yatras::get_yatra_user_practices),
+                    )
+                    .route(
+                        "/user-practices",
+                        web::put().to(app::yatras::update_yatra_user_practices),
+                    )
+                    .route("/is_admin", web::get().to(app::yatras::is_admin)),
             )
             .service(
                 web::scope("/diary")

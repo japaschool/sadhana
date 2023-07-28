@@ -16,6 +16,7 @@ use crate::{
     services::{create_yatra, get_user_yatras, get_yatra_data},
 };
 
+pub mod admin_settings;
 pub mod settings;
 
 const SELECTED_YATRA_ID_KEY: &'static str = "selected_yatra";
@@ -38,11 +39,8 @@ pub fn yatras() -> Html {
         })
     };
     let new_yatra = use_async(async move {
-        if let Some(yatra_name) = prompt(
-            "New Yatra Name", //FIXME: localise
-            None,
-        )
-        .filter(|s| !s.trim().is_empty())
+        if let Some(yatra_name) =
+            prompt(&Locale::current().new_yatra_name(), None).filter(|s| !s.trim().is_empty())
         {
             create_yatra(yatra_name).await.map(|res| res.yatra)
         } else {
@@ -73,13 +71,24 @@ pub fn yatras() -> Html {
         let selected = selected_yatra.clone();
         use_effect_with_deps(
             move |all| {
-                let mut it = all.data.iter().flat_map(|all| all.iter());
                 let yatra = LocalStorage::get::<String>(SELECTED_YATRA_ID_KEY)
                     .map(|s| s.replace("\"", ""))
                     .ok()
-                    .and_then(|id| it.find(|y| y.id == id))
-                    .or(it.next())
+                    .and_then(|id| {
+                        all.data
+                            .iter()
+                            .flat_map(|all| all.iter())
+                            .find(|y| y.id == id)
+                    })
+                    .or(all.data.iter().flat_map(|all| all.iter()).next())
                     .cloned();
+
+                log::debug!(
+                    "Setting selected yatra to {:?}; all yatras: {:?}",
+                    yatra,
+                    all.data
+                );
+
                 selected.set(yatra);
                 || ()
             },
@@ -139,7 +148,7 @@ pub fn yatras() -> Html {
                 <table class="w-full text-sm text-left text-zinc-400 dark:text-zinc-200 table-auto bg-white dark:bg-zinc-700 bg-opacity-40 dark:bg-opacity-40">
                     <thead class="text-xs uppercase dark:bg-zinc-500 dark:text-zinc-200 text-zinc-400 bg-opacity-40 dark:bg-opacity-40">
                         <tr>
-                            <th scope="col" class="px-6 py-3">{"Sadhaka"}</th>
+                            <th scope="col" class="px-6 py-3">{ Locale::current().sadhaka() }</th>
                             { data.data.iter().flat_map(|d| d.practices.iter()).map(|p| html! { <th scope="col" class="px-6 py-3">{ p.practice.clone() }</th> }).collect::<Html>() }
                         </tr>
                     </thead>
@@ -201,9 +210,12 @@ pub fn yatras() -> Html {
 
     let empty_body = html! {
         <div>
-            <span>{
-                "You don't seem to be part of any yatra. Please create a new one or ask someone to invite you into an existing one."
-            }</span>
+            <span>{ Locale::current().no_yatras_msg() }</span>
+            <div class="relative">
+                <div class={ LINKS_CSS }>
+                    <a class={ LINK_CSS } onclick={ create_yatra_onclick.clone() }>{ Locale::current().create_yatra() }</a>
+                </div>
+            </div>
         </div>
     };
 
@@ -240,9 +252,16 @@ pub fn yatras() -> Html {
             <div class="relative">
                 <div class={ LINKS_CSS }>
                     <Link<AppRoute>
-                        to={AppRoute::YatraSettings { id: selected_yatra.as_ref().map(|y|y.id.clone()).unwrap_or_default() }}>{ "Modify" } //FIXME: translate
+                        classes={ LINK_CSS }
+                        to={
+                            let id = selected_yatra.as_ref().map(|y| y.id.clone()).unwrap_or_default();
+                            AppRoute::YatraSettings { id }}>{ Locale::current().modify_yatra() }
                     </Link<AppRoute>>
-                    <a onclick={ create_yatra_onclick }>{ "Create New" }</a>
+                    <a class={ LINK_CSS }
+                        onclick={ create_yatra_onclick.clone() }
+                        >
+                        { Locale::current().create_yatra() }
+                    </a>
                 </div>
             </div>
             { grid }
@@ -253,7 +272,18 @@ pub fn yatras() -> Html {
     html! {
         <BlankPage show_footer=true loading={ yatras.loading || data.loading }>
             {
-                if !yatras.loading && yatras.data.iter().flat_map(|inner| inner.iter()).next().is_none() { empty_body } else { grid_body }
+                if !yatras.loading
+                    && yatras
+                        .data
+                        .iter()
+                        .flat_map(|inner| inner.iter())
+                        .next()
+                        .is_none()
+                {
+                    empty_body
+                } else {
+                    grid_body
+                }
             }
         </BlankPage>
     }

@@ -87,6 +87,7 @@ diesel::table! {
     yatra_users (yatra_id, user_id) {
         yatra_id -> Uuid,
         user_id -> Uuid,
+        is_admin -> Bool,
     }
 }
 

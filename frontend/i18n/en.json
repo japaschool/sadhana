@@ -68,5 +68,16 @@
   "dark_mode": "Dark mode",
   "language": "Language",
   "default_language": "System default",
-  "yatra": "Yatra"
+  "__yatra__": "------------------------------------",
+  "yatra": "Yatra",
+  "new_yatra_name": "New Yatra Name",
+  "sadhaka": "Sadhaka",
+  "create_yatra": "Create Yatra",
+  "delete_yatra": "Delete Yatra",
+  "leave_yatra": "Leave Yatra",
+  "modify_yatra": "Yatra Settings",
+  "no_yatras_msg": "You are not part of any yatra. Please create a new one or ask someone to invite you into an existing one.",
+  "yatra_mapping_info": "Choose your personal practices from the dropdowns to match the yatra practices. Leave blank to skip.",
+  "delete_yatra_warning": "Are you sure you want to delete yatra? This operation cannot be undone.",
+  "delete_yatra_practice_warning": "Are you sure you want to delete practice?"
 }
