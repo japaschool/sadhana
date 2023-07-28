@@ -74,10 +74,15 @@
   "sadhaka": "Sadhaka",
   "create_yatra": "Create Yatra",
   "delete_yatra": "Delete Yatra",
+  "join_yatra": "Join Yatra",
   "leave_yatra": "Leave Yatra",
   "modify_yatra": "Yatra Settings",
   "no_yatras_msg": "You are not part of any yatra. Please create a new one or ask someone to invite you into an existing one.",
   "yatra_mapping_info": "Choose your personal practices from the dropdowns to match the yatra practices. Leave blank to skip.",
   "delete_yatra_warning": "Are you sure you want to delete yatra? This operation cannot be undone.",
-  "delete_yatra_practice_warning": "Are you sure you want to delete practice?"
+  "delete_yatra_practice_warning": "Are you sure you want to delete practice?",
+  "leave_yatra_practice_warning": "Are you sure you want to leave yatra?",
+  "copy_yatra_join_link": "Copy Join Yatra Link",
+  "already_joined_yatra": "You have already joined this yatra",
+  "last_yatra_admin_cannot_leave": "Last yatra admin can't leave. Add another admin or delete yatra instead."
 }

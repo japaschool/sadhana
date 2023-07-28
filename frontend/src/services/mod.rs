@@ -149,6 +149,16 @@ pub async fn get_yatra(yatra_id: &str) -> Result<YatraResponse, AppError> {
     request_get(format!("/yatra/{yatra_id}")).await
 }
 
+/// Join yatra
+pub async fn join_yatra(yatra_id: &str) -> Result<(), AppError> {
+    request_put(format!("/yatra/{yatra_id}/join"), ()).await
+}
+
+/// Leave yatra
+pub async fn leave_yatra(yatra_id: &str) -> Result<(), AppError> {
+    request_put(format!("/yatra/{yatra_id}/leave"), ()).await
+}
+
 /// Create a new yatra
 pub async fn create_yatra(name: String) -> Result<YatraResponse, AppError> {
     request_post("/yatras".to_string(), &CreateYatra { name }).await

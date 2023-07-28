@@ -23,6 +23,62 @@ pub struct Yatra {
 }
 
 impl Yatra {
+    pub fn join(conn: &mut PgConnection, user_id: &Uuid, yatra_id: &Uuid) -> Result<(), AppError> {
+        diesel::insert_into(yatra_users::table)
+            .values((
+                yatra_users::yatra_id.eq(&yatra_id),
+                yatra_users::user_id.eq(&user_id),
+                yatra_users::is_admin.eq(false),
+            ))
+            .execute(conn)?;
+        Ok(())
+    }
+
+    pub fn leave(conn: &mut PgConnection, user_id: &Uuid, yatra_id: &Uuid) -> Result<(), AppError> {
+        let admins_qty: i64 = yatra_users::table
+            .select(diesel::dsl::count_star())
+            .filter(
+                yatra_users::yatra_id
+                    .eq(&yatra_id)
+                    .and(yatra_users::user_id.ne(&user_id))
+                    .and(yatra_users::is_admin.eq(true)),
+            )
+            .first(conn)?;
+
+        if admins_qty == 0 {
+            return Err(AppError::UnprocessableEntity(vec![
+                "Can't delete last yatra admin".into(),
+            ]));
+        }
+
+        conn.transaction(|conn| {
+            sql_query(
+                r#"
+                delete from yatra_user_practices yup
+                where yup.yatra_practice_id in (
+                    select yp.id from yatra_practices yp where yp.yatra_id = $1
+                )
+                and yup.user_practice_id in (
+                    select up.id from user_practices up where up.user_id = $2
+                )
+                "#,
+            )
+            .bind::<DieselUuid, _>(&yatra_id)
+            .bind::<DieselUuid, _>(&user_id)
+            .execute(conn)?;
+
+            diesel::delete(yatra_users::table)
+                .filter(
+                    yatra_users::yatra_id
+                        .eq(&yatra_id)
+                        .and(yatra_users::user_id.eq(&user_id)),
+                )
+                .execute(conn)
+        })?;
+
+        Ok(())
+    }
+
     pub fn is_admin(
         conn: &mut PgConnection,
         user_id: &Uuid,
@@ -430,6 +486,34 @@ pub async fn is_admin(
     let res = web::block(move || Yatra::is_admin(&mut conn, &user_id, &yatra_id)).await??;
 
     Ok(HttpResponse::Ok().json(YatraIsAdminResponse { is_admin: res }))
+}
+
+pub async fn join_yatra(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    path: web::Path<YatraIdSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let yatra_id = path.into_inner();
+    let user_id = auth::get_current_user(&req)?.id;
+
+    web::block(move || Yatra::join(&mut conn, &user_id, &yatra_id)).await??;
+
+    Ok(HttpResponse::Ok().json(()))
+}
+
+pub async fn leave_yatra(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    path: web::Path<YatraIdSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let yatra_id = path.into_inner();
+    let user_id = auth::get_current_user(&req)?.id;
+
+    web::block(move || Yatra::leave(&mut conn, &user_id, &yatra_id)).await??;
+
+    Ok(HttpResponse::Ok().json(()))
 }
 
 /// Gets all user yatras
