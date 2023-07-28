@@ -7,6 +7,8 @@ use yew_hooks::use_list;
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
     pub items: Vec<String>,
+    #[prop_or(true)]
+    pub toggle_hidden_enabled: bool,
     pub toggle_hidden: Callback<String>,
     pub is_hidden: Callback<String, bool>,
     pub rename: Callback<(String, String)>,
@@ -174,12 +176,15 @@ pub fn draggable_list(props: &Props) -> Html {
             <label class="flex w-full justify-between whitespace-nowrap mb-6">
                 <span>{ item.clone() }</span>
             </label>
-            <label >
-                <i onclick={ toggle_hidden.clone() }
-                    id={ item.clone() }
-                    class={ if !props.is_hidden.emit(item.to_owned()) {"icon-eye"} else {"icon-eye-cross"}}
-                    />
-            </label>
+            { if props.toggle_hidden_enabled {
+                html! {
+                <label>
+                    <i onclick={ toggle_hidden.clone() }
+                        id={ item.clone() }
+                        class={ if !props.is_hidden.emit(item.to_owned()) {"icon-eye"} else {"icon-eye-cross"}}
+                        />
+                </label>
+            }} else { html! {}}}
             <label>
                 <i onclick={ rename.clone() } id={ item.clone() } class="icon-edit"/>
             </label>

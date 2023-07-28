@@ -82,7 +82,6 @@ where
             }
         } else {
             match data.status().as_u16() {
-                //TODO: check these unwraps as we should never hit them
                 401 => Err(AppError::Unauthorized(
                     data.json::<String>().await.unwrap_or_default(),
                 )),

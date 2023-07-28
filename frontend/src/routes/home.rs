@@ -1,4 +1,4 @@
-use chrono::{prelude::*, Days};
+use chrono::prelude::*;
 use lazy_static::lazy_static;
 use regex::Regex;
 use web_sys::HtmlInputElement;

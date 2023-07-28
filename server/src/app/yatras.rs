@@ -1,7 +1,7 @@
 use actix_web::{web, HttpRequest, HttpResponse};
 use chrono::NaiveDate;
 use common::error::AppError;
-use diesel::{prelude::*, sql_query, sql_types::Uuid as DieselUuid, sql_types::*};
+use diesel::{dsl::sql, prelude::*, sql_query, sql_types::Uuid as DieselUuid, sql_types::*};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use uuid::Uuid;
@@ -9,7 +9,10 @@ use uuid::Uuid;
 use crate::{
     db_types::PracticeDataType,
     middleware::{auth, state::AppState},
-    schema::{yatra_practices, yatra_users, yatras},
+    schema::{
+        sql_types::PracticeDataTypeEnum, user_practices, yatra_practices, yatra_user_practices,
+        yatra_users, yatras,
+    },
 };
 
 #[derive(Serialize, Debug, Queryable)]
@@ -20,6 +23,49 @@ pub struct Yatra {
 }
 
 impl Yatra {
+    pub fn is_admin(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        yatra_id: &Uuid,
+    ) -> Result<bool, AppError> {
+        let cnt: i64 = yatra_users::table
+            .select(diesel::dsl::count_star())
+            .filter(
+                yatra_users::is_admin
+                    .eq(true)
+                    .and(yatra_users::user_id.eq(&user_id))
+                    .and(yatra_users::yatra_id.eq(&yatra_id)),
+            )
+            .first(conn)?;
+
+        Ok(cnt > 0)
+    }
+
+    pub fn get_yatra(conn: &mut PgConnection, yatra_id: &Uuid) -> Result<Self, AppError> {
+        let res = yatras::table
+            .select((yatras::id, yatras::name))
+            .filter(yatras::id.eq(&yatra_id))
+            .first(conn)?;
+        Ok(res)
+    }
+
+    fn ensure_admin_user(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        yatra_id: &Uuid,
+    ) -> Result<(), AppError> {
+        let res = Self::is_admin(conn, user_id, yatra_id)?;
+
+        if res {
+            Ok(())
+        } else {
+            Err(AppError::Unauthorized(format!(
+                "User {} is not authorized to alter yatra {}",
+                user_id, yatra_id
+            )))
+        }
+    }
+
     pub fn create(conn: &mut PgConnection, name: String, user_id: &Uuid) -> Result<Self, AppError> {
         let id = conn.transaction(|conn| {
             let id = diesel::insert_into(yatras::table)
@@ -31,6 +77,7 @@ impl Yatra {
                 .values((
                     yatra_users::yatra_id.eq(&id),
                     yatra_users::user_id.eq(&user_id),
+                    yatra_users::is_admin.eq(true),
                 ))
                 .execute(conn)?;
 
@@ -38,6 +85,26 @@ impl Yatra {
         })?;
 
         Ok(Yatra { id, name })
+    }
+
+    pub fn delete(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        yatra_id: &Uuid,
+    ) -> Result<(), AppError> {
+        Yatra::ensure_admin_user(conn, user_id, yatra_id)?;
+
+        conn.transaction(|conn| {
+            YatraPractice::delete_int(conn, yatra_id, None)?;
+            diesel::delete(yatra_users::table)
+                .filter(yatra_users::yatra_id.eq(&yatra_id))
+                .execute(conn)?;
+            diesel::delete(yatras::table)
+                .filter(yatras::id.eq(&yatra_id))
+                .execute(conn)
+        })?;
+
+        Ok(())
     }
 
     pub fn get_user_yatras(conn: &mut PgConnection, user_id: &Uuid) -> Result<Vec<Self>, AppError> {
@@ -54,12 +121,106 @@ impl Yatra {
 
 #[derive(Debug, Queryable, Serialize)]
 #[diesel(table_name = yatra_practices)]
+pub struct NewYatraPractice {
+    pub yatra_id: Uuid,
+    pub practice: String,
+    pub data_type: PracticeDataType,
+}
+
+#[derive(Debug, Queryable, Serialize, Deserialize, Clone)]
+#[diesel(table_name = yatra_practices)]
 pub struct YatraPractice {
     pub practice: String,
     pub data_type: PracticeDataType,
 }
 
 impl YatraPractice {
+    pub fn create(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        record: &NewYatraPractice,
+    ) -> Result<(), AppError> {
+        use crate::schema::yatra_practices::dsl::*;
+
+        Yatra::ensure_admin_user(conn, &user_id, &record.yatra_id)?;
+
+        let subq = yatra_practices
+            .filter(yatra_id.eq(&record.yatra_id))
+            .select((
+                // diesel::dsl::count_star() is BigInt which needs down-casting
+                sql::<Int4>("cast(count(*) as integer)"),
+                record.yatra_id.into_sql::<DieselUuid>(),
+                (&record.practice).into_sql::<Text>(),
+                (&record.data_type).into_sql::<PracticeDataTypeEnum>(),
+            ));
+
+        diesel::insert_into(yatra_practices)
+            .values(subq)
+            .into_columns((order_key, yatra_id, practice, data_type))
+            .execute(conn)?;
+
+        Ok(())
+    }
+
+    pub fn update(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        yatra_id: &Uuid,
+        practice: &str,
+        update: &YatraPracticeUpdate,
+    ) -> Result<(), AppError> {
+        Yatra::ensure_admin_user(conn, &user_id, &yatra_id)?;
+
+        diesel::update(yatra_practices::table)
+            .set(yatra_practices::practice.eq(&update.practice))
+            .filter(yatra_practices::practice.eq(practice))
+            .execute(conn)?;
+
+        Ok(())
+    }
+
+    fn delete_int(
+        conn: &mut PgConnection,
+        yatra_id: &Uuid,
+        yatra_practice: Option<&str>,
+    ) -> Result<(), diesel::result::Error> {
+        let mut yatra_practice_filter = yatra_practices::table
+            .select(yatra_practices::id)
+            .filter(yatra_practices::yatra_id.eq(&yatra_id))
+            .into_boxed();
+
+        let mut del2 = diesel::delete(yatra_practices::table)
+            .filter(yatra_practices::yatra_id.eq(&yatra_id))
+            .into_boxed();
+
+        if let Some(practice) = yatra_practice {
+            yatra_practice_filter =
+                yatra_practice_filter.filter(yatra_practices::practice.eq(practice));
+            del2 = del2.filter(yatra_practices::practice.eq(practice));
+        }
+
+        diesel::delete(yatra_user_practices::table)
+            .filter(yatra_user_practices::yatra_practice_id.eq_any(yatra_practice_filter))
+            .execute(conn)?;
+
+        del2.execute(conn)?;
+
+        Ok(())
+    }
+
+    pub fn delete(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        yatra_id: &Uuid,
+        practice: &str,
+    ) -> Result<(), AppError> {
+        Yatra::ensure_admin_user(conn, &user_id, &yatra_id)?;
+
+        conn.transaction(|conn| Self::delete_int(conn, yatra_id, Some(practice)))?;
+
+        Ok(())
+    }
+
     pub fn get_ordered_yatra_practices(
         conn: &mut PgConnection,
         yatra_id: &Uuid,
@@ -69,6 +230,114 @@ impl YatraPractice {
             .select((yatra_practices::practice, yatra_practices::data_type))
             .order_by(yatra_practices::order_key)
             .load(conn)?;
+
+        Ok(res)
+    }
+
+    pub fn update_order_key(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        yatra_id: &Uuid,
+        data: &Vec<UpdateYatraPracticeOrderKey>,
+    ) -> Result<(), AppError> {
+        Yatra::ensure_admin_user(conn, &user_id, &yatra_id)?;
+
+        conn.transaction(|conn| {
+            for row in data {
+                diesel::update(yatra_practices::table)
+                    .set(yatra_practices::order_key.eq(row.order_key))
+                    .filter(
+                        yatra_practices::yatra_id
+                            .eq(&yatra_id)
+                            .and(yatra_practices::practice.eq(&row.practice)),
+                    )
+                    .execute(conn)?;
+            }
+            Ok(())
+        })
+    }
+}
+
+#[derive(Debug, Queryable, Serialize, Deserialize, Clone)]
+#[diesel(table_name = yatra_practices)]
+pub struct YatraUserPractice {
+    pub yatra_practice: YatraPractice,
+    pub user_practice: Option<String>,
+}
+
+impl YatraUserPractice {
+    pub fn update_yatra_user_practices(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        yatra_id: &Uuid,
+        data: &Vec<Self>,
+    ) -> Result<(), AppError> {
+        conn.transaction(|conn| {
+            diesel::delete(yatra_user_practices::table)
+                .filter(
+                    yatra_user_practices::yatra_practice_id
+                        .eq_any(
+                            yatra_practices::table
+                                .select(yatra_practices::id)
+                                .filter(yatra_practices::yatra_id.eq(&yatra_id)),
+                        )
+                        .and(
+                            yatra_user_practices::user_practice_id.eq_any(
+                                user_practices::table
+                                    .select(user_practices::id)
+                                    .filter(user_practices::user_id.eq(&user_id)),
+                            ),
+                        ),
+                )
+                .execute(conn)?;
+
+            for yp in data {
+                if let Some(up) = yp.user_practice.as_ref() {
+                    sql_query(
+                        r#"
+                    insert into yatra_user_practices (yatra_practice_id, user_practice_id)
+                    select yp.id, up.id
+                    from   yatra_practices yp
+                    cross join user_practices up
+                    where  yp.yatra_id = $1
+                    and    yp.practice = $2
+                    and    up.user_id = $3
+                    and    up.practice = $4
+                    "#,
+                    )
+                    .bind::<DieselUuid, _>(&yatra_id)
+                    .bind::<Text, _>(&yp.yatra_practice.practice)
+                    .bind::<DieselUuid, _>(&user_id)
+                    .bind::<Text, _>(up)
+                    .execute(conn)?;
+                }
+            }
+
+            Ok::<_, diesel::result::Error>(())
+        })?;
+
+        Ok(())
+    }
+
+    pub fn get_yatra_user_practices(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        yatra_id: &Uuid,
+    ) -> Result<Vec<Self>, AppError> {
+        let res = yatra_practices::table
+            .left_outer_join(yatra_user_practices::table)
+            .left_join(
+                user_practices::table.on(user_practices::id
+                    .eq(yatra_user_practices::user_practice_id)
+                    .and(user_practices::user_id.eq(&user_id))),
+            )
+            .select((
+                (yatra_practices::practice, yatra_practices::data_type),
+                user_practices::practice.nullable(),
+            ))
+            .filter(yatra_practices::yatra_id.eq(&yatra_id))
+            .order_by(yatra_practices::order_key)
+            .load::<YatraUserPractice>(conn)?;
 
         Ok(res)
     }
@@ -149,6 +418,20 @@ pub async fn yatra_data(
     Ok(HttpResponse::Ok().json(YatraDataResponse::from((practices, data))))
 }
 
+pub async fn is_admin(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    path: web::Path<YatraIdSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let yatra_id = path.into_inner();
+    let user_id = auth::get_current_user(&req)?.id;
+
+    let res = web::block(move || Yatra::is_admin(&mut conn, &user_id, &yatra_id)).await??;
+
+    Ok(HttpResponse::Ok().json(YatraIsAdminResponse { is_admin: res }))
+}
+
 /// Gets all user yatras
 pub async fn user_yatras(
     state: web::Data<AppState>,
@@ -173,10 +456,173 @@ pub async fn create_yatra(
 
     let yatra = web::block(move || Yatra::create(&mut conn, name, &user_id)).await??;
 
-    Ok(HttpResponse::Ok().json(CreateYatraResponse { yatra }))
+    Ok(HttpResponse::Ok().json(YatraResponse { yatra }))
+}
+
+/// Delete yatra
+pub async fn delete_yatra(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    path: web::Path<YatraIdSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
+    let yatra_id = path.into_inner();
+
+    web::block(move || Yatra::delete(&mut conn, &user_id, &yatra_id)).await??;
+
+    Ok(HttpResponse::Ok().json(()))
+}
+
+/// Get yatra
+pub async fn get_yatra(
+    state: web::Data<AppState>,
+    path: web::Path<YatraIdSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let yatra_id = path.into_inner();
+
+    let yatra = web::block(move || Yatra::get_yatra(&mut conn, &yatra_id)).await??;
+
+    Ok(HttpResponse::Ok().json(YatraResponse { yatra }))
+}
+
+/// Get yatra practices
+pub async fn get_yatra_practices(
+    state: web::Data<AppState>,
+    path: web::Path<YatraIdSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let yatra_id = path.into_inner();
+
+    let practices =
+        web::block(move || YatraPractice::get_ordered_yatra_practices(&mut conn, &yatra_id))
+            .await??;
+
+    Ok(HttpResponse::Ok().json(YatraPracticesResponse { practices }))
+}
+
+/// Create yatra practice
+pub async fn create_yatra_practice(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    form: web::Json<CreateYatraPracticeForm>,
+    path: web::Path<YatraIdSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
+    let yatra_id = path.into_inner();
+
+    let data = NewYatraPractice {
+        yatra_id,
+        practice: form.practice.practice.clone(),
+        data_type: form.practice.data_type.clone(),
+    };
+
+    web::block(move || YatraPractice::create(&mut conn, &user_id, &data)).await??;
+
+    Ok(HttpResponse::Ok().json(()))
+}
+
+/// Delete yatra practice
+pub async fn delete_yatra_practice(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    path: web::Path<YatraIdPracticeSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
+    let (yatra_id, practice) = path.into_inner();
+
+    web::block(move || YatraPractice::delete(&mut conn, &user_id, &yatra_id, &practice)).await??;
+
+    Ok(HttpResponse::Ok().json(()))
+}
+
+/// Update yatra practice
+pub async fn update_yatra_practice(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    form: web::Json<UpdateYatraPracticeForm>,
+    path: web::Path<YatraIdPracticeSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
+    let (yatra_id, practice) = path.into_inner();
+    let data = form.update.clone();
+
+    web::block(move || YatraPractice::update(&mut conn, &user_id, &yatra_id, &practice, &data))
+        .await??;
+
+    Ok(HttpResponse::Ok().json(()))
+}
+
+/// Updates order of yatra practices
+pub async fn update_yatra_practice_order_key(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    path: web::Path<YatraIdSlug>,
+    form: web::Json<UpdateYatraPracticeOrderKeyRequest>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
+    let yatra_id = path.into_inner();
+
+    let data = form
+        .practices
+        .iter()
+        .enumerate()
+        .map(|(idx, practice)| UpdateYatraPracticeOrderKey {
+            practice: practice.clone(),
+            order_key: idx as i32,
+        })
+        .collect();
+
+    web::block(move || YatraPractice::update_order_key(&mut conn, &user_id, &yatra_id, &data))
+        .await??;
+    Ok(HttpResponse::Ok().json(()))
+}
+
+/// Get yatra to user practices mapping
+pub async fn get_yatra_user_practices(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    path: web::Path<YatraIdSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let yatra_id = path.into_inner();
+    let user_id = auth::get_current_user(&req)?.id;
+
+    let practices = web::block(move || {
+        YatraUserPractice::get_yatra_user_practices(&mut conn, &user_id, &yatra_id)
+    })
+    .await??;
+
+    Ok(HttpResponse::Ok().json(YatraUserPractices { practices }))
+}
+
+/// Update yatra to user practices mapping
+pub async fn update_yatra_user_practices(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    path: web::Path<YatraIdSlug>,
+    form: web::Json<YatraUserPractices>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let yatra_id = path.into_inner();
+    let user_id = auth::get_current_user(&req)?.id;
+    let data = form.practices.clone();
+
+    web::block(move || {
+        YatraUserPractice::update_yatra_user_practices(&mut conn, &user_id, &yatra_id, &data)
+    })
+    .await??;
+
+    Ok(HttpResponse::Ok().json(()))
 }
 
 type YatraIdSlug = Uuid;
+type YatraIdPracticeSlug = (Uuid, String);
 
 #[derive(Deserialize, Debug)]
 pub struct YatraDataQueryParams {
@@ -186,6 +632,37 @@ pub struct YatraDataQueryParams {
 #[derive(Deserialize, Debug)]
 pub struct CreateYatraForm {
     name: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CreateYatraPracticeForm {
+    practice: YatraPractice,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct YatraPracticeUpdate {
+    practice: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct UpdateYatraPracticeForm {
+    update: YatraPracticeUpdate,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateYatraPracticeOrderKeyRequest {
+    practices: Vec<String>,
+}
+
+#[derive(Debug)]
+pub struct UpdateYatraPracticeOrderKey {
+    pub practice: String,
+    pub order_key: i32,
+}
+
+#[derive(Serialize, Debug)]
+pub struct YatraIsAdminResponse {
+    pub is_admin: bool,
 }
 
 #[derive(Serialize, Debug)]
@@ -234,6 +711,16 @@ pub struct YatrasResponse {
 }
 
 #[derive(Serialize, Debug)]
-pub struct CreateYatraResponse {
+pub struct YatraResponse {
     pub yatra: Yatra,
+}
+
+#[derive(Serialize, Debug)]
+pub struct YatraPracticesResponse {
+    pub practices: Vec<YatraPractice>,
+}
+
+#[derive(Serialize, Debug, Deserialize)]
+pub struct YatraUserPractices {
+    pub practices: Vec<YatraUserPractice>,
 }

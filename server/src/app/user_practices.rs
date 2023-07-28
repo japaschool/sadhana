@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::db_types::PracticeDataType;
 use crate::middleware::auth;
 use crate::middleware::state::AppState;
-use crate::schema::user_practices;
+use crate::schema::{user_practices, yatra_user_practices};
 
 #[derive(Debug, Queryable, Serialize, Deserialize)]
 pub struct UserPractice {
@@ -94,6 +94,16 @@ impl UserPractice {
             .bind::<DieselUuid, _>(user_id)
             .bind::<Text, _>(practice)
             .execute(conn)?;
+
+            diesel::delete(yatra_user_practices::table)
+                .filter(
+                    yatra_user_practices::user_practice_id.eq_any(
+                        user_practices::table
+                            .select(user_practices::id)
+                            .filter(user_practices::practice.eq(&practice)),
+                    ),
+                )
+                .execute(conn)?;
 
             diesel::delete(user_practices::table)
                 .filter(

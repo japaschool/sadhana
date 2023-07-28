@@ -10,12 +10,12 @@ use self::{
     help::Help,
     home::Home,
     login::Login,
-    new_user_practice::NewUserPractice,
+    new_user_practice::{NewPracticeTarget, NewUserPractice},
     pwd_reset::PwdReset,
     register_with_id::RegisterWithId,
     settings::Settings,
     user_practices::UserPractices,
-    yatras::{settings::YatraSettings, Yatras},
+    yatras::{admin_settings::AdminSettings, settings::YatraSettings, Yatras},
 };
 use crate::{components::user_context_provider::UserContextProvider, model::ConfirmationType};
 
@@ -80,6 +80,10 @@ pub enum AppRoute {
     Yatras,
     #[at("/yatra/:id/settings")]
     YatraSettings { id: String },
+    #[at("/yatra/:id/admin/settings")]
+    YatraAdminSettings { id: String },
+    #[at("/yatra/:id/practice/new")]
+    NewYatraPractice { id: String },
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -96,10 +100,16 @@ fn app_switch(routes: AppRoute) -> Html {
         AppRoute::Help => html! { <Help/> },
         AppRoute::About => html! { <About/> },
         AppRoute::UserPractices => html! { <UserPractices /> },
-        AppRoute::NewUserPractice => html! { <NewUserPractice /> },
+        AppRoute::NewUserPractice => {
+            html! { <NewUserPractice target={ NewPracticeTarget::UserPractice } /> }
+        }
         AppRoute::Charts => html! { <Charts/> },
         AppRoute::Yatras => html! { <Yatras/> },
         AppRoute::YatraSettings { id } => html! { <YatraSettings yatra_id={id}/> },
+        AppRoute::YatraAdminSettings { id } => html! { <AdminSettings yatra_id={id}/> },
+        AppRoute::NewYatraPractice { id } => {
+            html! { <NewUserPractice target={ NewPracticeTarget::YatraPractice { yatra_id: id } } /> }
+        }
         AppRoute::NotFound => html! { <h1>{ "404" }</h1> },
     }
 }

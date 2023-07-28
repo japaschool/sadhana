@@ -1,13 +1,7 @@
 use chrono::NaiveDate;
 use common::{error::AppError, ReportDuration};
 
-use crate::model::{
-    AllUserPractices, CreateUserPractice, CreateYatra, CreateYatraResponse, DiaryDay,
-    LoginInfoWrapper, RegisterInfoWrapper, ReportData, ResetPassword, ResetPasswordWrapper,
-    SendConfirmationLink, SendConfirmationLinkWrapper, SignupLinkDetailsWrapper, UpdateUser,
-    UpdateUserPassword, UpdateUserPractice, UpdateUserPracticesOrderKey, UpdateUserWrapper,
-    UserInfoWrapper, UserPractice, Yatra, YatraData, Yatras,
-};
+use crate::model::*;
 
 use self::requests::*;
 
@@ -151,6 +145,90 @@ pub async fn get_user_yatras() -> Result<Yatras, AppError> {
 }
 
 /// Create a new yatra
-pub async fn create_yatra(name: String) -> Result<CreateYatraResponse, AppError> {
+pub async fn get_yatra(yatra_id: &str) -> Result<YatraResponse, AppError> {
+    request_get(format!("/yatra/{yatra_id}")).await
+}
+
+/// Create a new yatra
+pub async fn create_yatra(name: String) -> Result<YatraResponse, AppError> {
     request_post("/yatras".to_string(), &CreateYatra { name }).await
+}
+
+/// Delete yatra
+pub async fn delete_yatra(yatra_id: &str) -> Result<(), AppError> {
+    request_delete(format!("/yatra/{yatra_id}")).await
+}
+
+/// Check is_admin flag
+pub async fn is_yatra_admin(yatra_id: &str) -> Result<IsYatraAdminResponse, AppError> {
+    request_get(format!("/yatra/{yatra_id}/is_admin")).await
+}
+
+/// Get yatra practices
+pub async fn get_yatra_practices(yatra_id: &str) -> Result<YatraPractices, AppError> {
+    request_get(format!("/yatra/{yatra_id}/practices")).await
+}
+
+/// Reorder yatra practices
+pub async fn reorder_yatra_practices(
+    yatra_id: &str,
+    practices: Vec<String>,
+) -> Result<(), AppError> {
+    request_put(
+        format!("/yatra/{yatra_id}/practices/reorder"),
+        UpdateYatraPracticesOrderKey { practices },
+    )
+    .await
+}
+
+/// Create a new yatra practice
+pub async fn create_yatra_practice(
+    yatra_id: &str,
+    practice: YatraPractice,
+) -> Result<(), AppError> {
+    request_post(
+        format!("/yatra/{yatra_id}/practices"),
+        &CreateYatraPractice { practice },
+    )
+    .await
+}
+
+/// Delete yatra practice
+pub async fn delete_yatra_practice(yatra_id: &str, practice: &str) -> Result<(), AppError> {
+    request_delete(format!("/yatra/{yatra_id}/practice/{practice}")).await
+}
+
+/// Update yatra practice
+pub async fn update_yatra_practice(
+    yatra_id: &str,
+    practice: &str,
+    new_name: &str,
+) -> Result<(), AppError> {
+    request_put(
+        format!("/yatra/{yatra_id}/practice/{practice}"),
+        UpdateYatraPractice {
+            update: YatraPracticeUpdate {
+                practice: new_name.to_owned(),
+            },
+        },
+    )
+    .await
+}
+
+/// Get yatra user practices mapping
+pub async fn get_yatra_user_practices(yatra_id: &str) -> Result<YatraUserPractices, AppError> {
+    request_get(format!("/yatra/{yatra_id}/user-practices")).await
+}
+
+pub async fn update_yatra_user_practices(
+    yatra_id: &str,
+    practices: &Vec<YatraUserPractice>,
+) -> Result<(), AppError> {
+    request_put(
+        format!("/yatra/{yatra_id}/user-practices"),
+        YatraUserPractices {
+            practices: practices.clone(),
+        },
+    )
+    .await
 }
