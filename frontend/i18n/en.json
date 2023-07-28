@@ -61,7 +61,7 @@
   "passwords_dont_match": "Passwords don't match",
   "reset_success_alert": "Password has been successfully reset. Please login.",
   "data_type_cant_be_empty": "Please fill in this field.",
-  "sharing_links": "Charts Links",
+  "share_charts_link": "Copy charts sharing link",
   "add_new": "Add New",
   "short_description": "Short Description",
   "copied": "Copied!",

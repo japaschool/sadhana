@@ -1,7 +1,10 @@
 use std::str::FromStr;
 
 use crate::{
-    components::{blank_page::BlankPage, chart::Chart, list_errors::ListErrors},
+    components::{
+        blank_page::BlankPage, chart::Chart, clipboard_copy_button::CopyButton,
+        list_errors::ListErrors,
+    },
     css::*,
     hooks::use_user_context,
     i18n::Locale,
@@ -9,21 +12,9 @@ use crate::{
     services::{get_chart_data, get_shared_chart_data, get_shared_practices, get_user_practices},
 };
 use common::ReportDuration;
-use lazy_static::lazy_static;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
-use yew_hooks::{use_async, use_bool_toggle, use_clipboard, use_mount, use_timeout};
-
-lazy_static! {
-    static ref SHARE_URL_BASE: String = {
-        format!(
-            "{}/shared",
-            web_sys::window()
-                .expect("Can't get hold of the window object")
-                .origin()
-        )
-    };
-}
+use yew_hooks::{use_async, use_mount};
 
 #[function_component(Charts)]
 pub fn charts() -> Html {
@@ -72,42 +63,6 @@ pub fn charts() -> Html {
     };
 
     let user_ctx = use_user_context();
-    let clipboard = use_clipboard();
-    let show_tooltip = use_bool_toggle(false);
-
-    let tooltip_timeout = {
-        let show_tooltip = show_tooltip.clone();
-        use_timeout(
-            move || {
-                show_tooltip.set(false);
-            },
-            2000,
-        )
-    };
-
-    {
-        let timeout = tooltip_timeout.clone();
-        use_effect_with_deps(
-            move |show| {
-                if **show {
-                    timeout.reset();
-                }
-                || ()
-            },
-            show_tooltip.clone(),
-        );
-    }
-
-    let copy_link_onclick = {
-        let clipboard = clipboard.clone();
-        let show_tooltip = show_tooltip.clone();
-        let user_ctx = user_ctx.clone();
-        Callback::from(move |_| {
-            let msg = format!("{}/{}", SHARE_URL_BASE.as_str(), user_ctx.id);
-            clipboard.write_text(msg);
-            show_tooltip.set(true);
-        })
-    };
 
     html! {
         <BlankPage show_footer=true loading={all_practices.data.is_none()}>
@@ -119,14 +74,10 @@ pub fn charts() -> Html {
                     report_data={report_data.data.clone().unwrap_or_default()}
                     {pull_data}/>
             }
-            <div
-                class={ format!("{} absolute left-0 top-0 flex h-full w-full justify-center z-50", if *show_tooltip {"inline"} else {"hidden"}) }>
-                <span class="bg-slate-600 bg-opacity-50 rounded-2xl my-auto border p-4 text-white text-2xl">{ Locale::current().copied() }</span>
-            </div>
-            <div class="relative">
-                <button onclick={ copy_link_onclick.clone() } class={ BTN_CSS }>
-                <i class="icon-doc-dup"></i>{ format!(" {}", "Share link to charts") }</button>
-            </div>
+            <CopyButton
+                button_label={ Locale::current().share_charts_link() }
+                relative_link={ format!("/shared/{}", user_ctx.id) }
+                />
         </BlankPage>
     }
 }
