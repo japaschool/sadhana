@@ -89,6 +89,8 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                         "/user-practices",
                         web::put().to(app::yatras::update_yatra_user_practices),
                     )
+                    .route("join", web::put().to(app::yatras::join_yatra))
+                    .route("leave", web::put().to(app::yatras::leave_yatra))
                     .route("/is_admin", web::get().to(app::yatras::is_admin)),
             )
             .service(

@@ -5,7 +5,10 @@ use yew_hooks::{use_async, use_list, use_mount};
 use yew_router::prelude::*;
 
 use crate::{
-    components::{blank_page::BlankPage, draggable_list::DraggableList, list_errors::ListErrors},
+    components::{
+        blank_page::BlankPage, clipboard_copy_button::CopyButton, draggable_list::DraggableList,
+        list_errors::ListErrors,
+    },
     css::*,
     i18n::Locale,
     services::{
@@ -168,6 +171,10 @@ pub fn admin_settings(props: &Props) -> Html {
                         { Locale::current().add_new_practice() }
                     </Link<AppRoute>>
                 </div>
+                <CopyButton
+                    button_label={ Locale::current().copy_yatra_join_link() }
+                    relative_link={ format!("/yatra/{}/join", props.yatra_id.as_str()) }
+                    />
                 <div class="relative">
                     <button class={ SUBMIT_BTN_CSS } onclick={ delete_yatra_onclick }>
                     <i class="icon-bin"></i>{ format!(" {}", Locale::current().delete_yatra()) }</button>

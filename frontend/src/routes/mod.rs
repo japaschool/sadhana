@@ -15,7 +15,7 @@ use self::{
     register_with_id::RegisterWithId,
     settings::Settings,
     user_practices::UserPractices,
-    yatras::{admin_settings::AdminSettings, settings::YatraSettings, Yatras},
+    yatras::{admin_settings::AdminSettings, join::JoinYatra, settings::YatraSettings, Yatras},
 };
 use crate::{components::user_context_provider::UserContextProvider, model::ConfirmationType};
 
@@ -78,6 +78,8 @@ pub enum AppRoute {
     Charts,
     #[at("/yatras")]
     Yatras,
+    #[at("/yatra/:id/join")]
+    JoinYatra { id: String },
     #[at("/yatra/:id/settings")]
     YatraSettings { id: String },
     #[at("/yatra/:id/admin/settings")]
@@ -105,6 +107,7 @@ fn app_switch(routes: AppRoute) -> Html {
         }
         AppRoute::Charts => html! { <Charts/> },
         AppRoute::Yatras => html! { <Yatras/> },
+        AppRoute::JoinYatra { id } => html! { <JoinYatra yatra_id={id}/> },
         AppRoute::YatraSettings { id } => html! { <YatraSettings yatra_id={id}/> },
         AppRoute::YatraAdminSettings { id } => html! { <AdminSettings yatra_id={id}/> },
         AppRoute::NewYatraPractice { id } => {

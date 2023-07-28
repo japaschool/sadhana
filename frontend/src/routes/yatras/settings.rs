@@ -1,5 +1,7 @@
 use std::collections::HashSet;
 
+use common::error::AppError;
+use gloo_dialogs::confirm;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_list, use_mount, use_set};
@@ -12,7 +14,7 @@ use crate::{
     model::{PracticeDataType, YatraUserPractice},
     routes::AppRoute,
     services::{
-        get_user_practices, get_yatra, get_yatra_user_practices, is_yatra_admin,
+        get_user_practices, get_yatra, get_yatra_user_practices, is_yatra_admin, leave_yatra,
         update_yatra_user_practices,
     },
 };
@@ -47,6 +49,17 @@ pub fn yatra_settings(props: &Props) -> Html {
             })
         })
     };
+    let nav = use_navigator().unwrap();
+
+    let leave = {
+        let yatra_id = props.yatra_id.clone();
+        let nav = nav.clone();
+        use_async(async move {
+            leave_yatra(&yatra_id)
+                .await
+                .map(|_| nav.push(&AppRoute::Yatras))
+        })
+    };
 
     let mapped_practices = use_list(vec![]);
     let mapped_user_practices = use_set(HashSet::<String>::default());
@@ -63,8 +76,11 @@ pub fn yatra_settings(props: &Props) -> Html {
     let save = {
         let mapped_practices = mapped_practices.clone();
         let yatra_id = props.yatra_id.clone();
+        let nav = nav.clone();
         use_async(async move {
-            update_yatra_user_practices(yatra_id.as_str(), &*mapped_practices.current()).await
+            update_yatra_user_practices(yatra_id.as_str(), &*mapped_practices.current())
+                .await
+                .map(|_| nav.push(&AppRoute::Yatras))
         })
     };
 
@@ -104,8 +120,11 @@ pub fn yatra_settings(props: &Props) -> Html {
     }
 
     let leave_onclick = {
+        let leave = leave.clone();
         Callback::from(move |_: MouseEvent| {
-            // TODO:
+            if confirm(&Locale::current().leave_yatra_practice_warning()) {
+                leave.run();
+            }
         })
     };
 
@@ -220,16 +239,31 @@ pub fn yatra_settings(props: &Props) -> Html {
             .collect::<Html>()
     };
 
+    let leave_error_formatter = {
+        Callback::from(move |err| match err {
+            AppError::UnprocessableEntity(err)
+                if err
+                    .iter()
+                    .find(|s| s.ends_with("Can't delete last yatra admin"))
+                    .is_some() =>
+            {
+                Some(Locale::current().last_yatra_admin_cannot_leave())
+            }
+            _ => None,
+        })
+    };
+
     html! {
         <BlankPage
             header_label={ yatra.data.iter().map(|y| y.name.clone()).next().unwrap_or_default() }
-            loading={ yatra.loading || is_admin.loading || yatra_user_practices.loading || user_practices.loading || save.loading }
+            loading={ leave.loading || yatra.loading || is_admin.loading || yatra_user_practices.loading || user_practices.loading || save.loading }
             prev_link={ (Locale::current().cancel(), AppRoute::Yatras) }
             >
             <ListErrors error={ yatra_user_practices.error.clone() } />
             <ListErrors error={ user_practices.error.clone() } />
             <ListErrors error={ is_admin.error.clone() } />
             <ListErrors error={ save.error.clone() } />
+            <ListErrors error={ leave.error.clone() } error_formatter = {leave_error_formatter}/>
             <ListErrors error={ yatra.error.clone() } />
             <form {onsubmit}>
                 <div class={ BODY_DIV_CSS }>

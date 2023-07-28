@@ -17,6 +17,7 @@ use crate::{
 };
 
 pub mod admin_settings;
+pub mod join;
 pub mod settings;
 
 const SELECTED_YATRA_ID_KEY: &'static str = "selected_yatra";
