@@ -15,9 +15,6 @@ use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_bool_toggle};
 
-static LANGUAGE_DATA: [(&'static str, &'static str); 3] =
-    [("en", "English"), ("ru", "Русский"), ("ua", "Українська")];
-
 #[function_component(EditPassword)]
 pub fn edit_password() -> Html {
     let user_info = use_state(|| UpdateUser::default());

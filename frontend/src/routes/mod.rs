@@ -2,32 +2,28 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 
 use self::{
-    about::About,
     charts::{Charts, SharedCharts},
     confirmation::Confirmation,
-    edit_password::EditPassword,
-    edit_user::EditUser,
-    help::Help,
     home::Home,
     login::Login,
-    new_user_practice::{NewPracticeTarget, NewUserPractice},
+    new_practice::{NewPractice, NewPracticeTarget},
     pwd_reset::PwdReset,
     register_with_id::RegisterWithId,
+    settings::about::About,
+    settings::edit_password::EditPassword,
+    settings::edit_user::EditUser,
+    settings::help::Help,
     settings::Settings,
     user_practices::UserPractices,
     yatras::{admin_settings::AdminSettings, join::JoinYatra, settings::YatraSettings, Yatras},
 };
 use crate::{components::user_context_provider::UserContextProvider, model::ConfirmationType};
 
-pub mod about;
 pub mod charts;
 pub mod confirmation;
-pub mod edit_password;
-pub mod edit_user;
-pub mod help;
 pub mod home;
 pub mod login;
-pub mod new_user_practice;
+pub mod new_practice;
 pub mod pwd_reset;
 pub mod register_with_id;
 pub mod settings;
@@ -103,7 +99,7 @@ fn app_switch(routes: AppRoute) -> Html {
         AppRoute::About => html! { <About/> },
         AppRoute::UserPractices => html! { <UserPractices /> },
         AppRoute::NewUserPractice => {
-            html! { <NewUserPractice target={ NewPracticeTarget::UserPractice } /> }
+            html! { <NewPractice target={ NewPracticeTarget::UserPractice } /> }
         }
         AppRoute::Charts => html! { <Charts/> },
         AppRoute::Yatras => html! { <Yatras/> },
@@ -111,7 +107,7 @@ fn app_switch(routes: AppRoute) -> Html {
         AppRoute::YatraSettings { id } => html! { <YatraSettings yatra_id={id}/> },
         AppRoute::YatraAdminSettings { id } => html! { <AdminSettings yatra_id={id}/> },
         AppRoute::NewYatraPractice { id } => {
-            html! { <NewUserPractice target={ NewPracticeTarget::YatraPractice { yatra_id: id } } /> }
+            html! { <NewPractice target={ NewPracticeTarget::YatraPractice { yatra_id: id } } /> }
         }
         AppRoute::NotFound => html! { <h1>{ "404" }</h1> },
     }
