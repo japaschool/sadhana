@@ -74,6 +74,15 @@ impl HeaderButtonProps {
     pub fn blank() -> Self {
         Self::new("", Callback::default(), None, ButtonType::Button)
     }
+
+    pub fn back(onclick: Callback<Event>) -> Self {
+        Self::new(
+            Locale::current().back(),
+            onclick,
+            Some("icon-chevron-left".into()),
+            ButtonType::Button,
+        )
+    }
 }
 
 fn header_button(props: &Option<HeaderButtonProps>) -> Html {
@@ -81,7 +90,7 @@ fn header_button(props: &Option<HeaderButtonProps>) -> Html {
         html! {
             <span class="text-zinc-500 ">
                 <button type={ rb.btn_type.as_str() } class={ LINK_CSS } onclick={ rb.onclick.clone() }>
-                    <i class={ format!(" {}", rb.icon_css.to_owned().unwrap_or_default()) }></i>
+                    <i class={ format!("{}", rb.icon_css.to_owned().unwrap_or_default()) }></i>
                     { &rb.label }
                 </button>
             </span>
