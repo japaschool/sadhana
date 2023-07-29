@@ -9,11 +9,10 @@ use self::{
     new_practice::{NewPractice, NewPracticeTarget},
     pwd_reset::PwdReset,
     register_with_id::RegisterWithId,
-    settings::about::About,
-    settings::edit_password::EditPassword,
-    settings::edit_user::EditUser,
-    settings::help::Help,
-    settings::Settings,
+    settings::{
+        about::About, edit_password::EditPassword, edit_user::EditUser, help::Help,
+        language::Language, Settings,
+    },
     user_practices::UserPractices,
     yatras::{admin_settings::AdminSettings, join::JoinYatra, settings::YatraSettings, Yatras},
 };
@@ -58,14 +57,16 @@ pub enum AppRoute {
     Login,
     #[at("/settings")]
     Settings,
-    #[at("/edit-user")]
+    #[at("/settings/edit-user")]
     EditUser,
-    #[at("/edit-password")]
+    #[at("/settings/edit-password")]
     EditPassword,
-    #[at("/help")]
+    #[at("/settings/help")]
     Help,
-    #[at("/about")]
+    #[at("/settings/about")]
     About,
+    #[at("/settings/language")]
+    Language,
     #[at("/user/practices")]
     UserPractices,
     #[at("/user/practice/new")]
@@ -97,6 +98,7 @@ fn app_switch(routes: AppRoute) -> Html {
         AppRoute::EditPassword => html! { <EditPassword/> },
         AppRoute::Help => html! { <Help/> },
         AppRoute::About => html! { <About/> },
+        AppRoute::Language => html! { <Language/> },
         AppRoute::UserPractices => html! { <UserPractices /> },
         AppRoute::NewUserPractice => {
             html! { <NewPractice target={ NewPracticeTarget::UserPractice } /> }
