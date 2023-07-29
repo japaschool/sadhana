@@ -41,11 +41,6 @@ pub fn settings() -> Html {
         use_async(async move { services::update_user((*user_info).clone()).await })
     };
 
-    let update_password = {
-        let user_password = user_password.clone();
-        use_async(async move { services::update_user_password((*user_password).clone()).await })
-    };
-
     let edit_onclick = {
         let editing = editing.clone();
         Callback::from(move |e: MouseEvent| {
@@ -94,7 +89,6 @@ pub fn settings() -> Html {
 
     let onsubmit = {
         let update_user = update_user.clone();
-        let update_password = update_password.clone();
         let editing = editing.clone();
         let user_info = user_info.clone();
         let user_password = user_password.clone();
@@ -103,9 +97,6 @@ pub fn settings() -> Html {
             e.prevent_default();
             if !user_info.name.is_empty() && ctx.name != user_info.name {
                 update_user.run();
-            }
-            if !user_password.is_empty() {
-                update_password.run();
             }
             editing.toggle();
         })
@@ -184,10 +175,9 @@ pub fn settings() -> Html {
         <form {onsubmit} {onreset} >
             <BlankPage
                 show_footer={ !*editing }
-                loading={ update_user.loading || update_password.loading }
+                loading={ update_user.loading }
                 >
                 <ListErrors error={update_user.error.clone()} />
-                <ListErrors error={update_password.error.clone()} />
                 <div class="w-full text-center relative mt-3">
                     <div class="absolute flex w-full h-full flex-col justify-center px-4">
                         <h5 class="mb-1 text-xl font-medium text-zinc-500 dark:text-zinc-100">{ format!(" {}", Locale::current().name()) }</h5>

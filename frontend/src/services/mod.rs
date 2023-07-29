@@ -47,11 +47,15 @@ pub async fn update_user(user: UpdateUser) -> Result<(), AppError> {
 }
 
 /// Update user password
-pub async fn update_user_password(password: impl Into<String>) -> Result<(), AppError> {
+pub async fn update_user_password(
+    current_password: &str,
+    new_password: &str,
+) -> Result<(), AppError> {
     request_put(
         "/user/password".to_string(),
         UpdateUserPassword {
-            password: password.into(),
+            current_password: current_password.to_owned(),
+            new_password: new_password.to_owned(),
         },
     )
     .await

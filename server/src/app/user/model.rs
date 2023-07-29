@@ -108,9 +108,18 @@ impl User {
     pub fn update_password(
         conn: &mut PgConnection,
         id: Uuid,
-        naive_password: &str,
+        current_password: &str,
+        new_password: &str,
     ) -> Result<(), AppError> {
-        let hashed_password = hasher::hash_password(naive_password)?;
+        let user = users::table.filter(users::id.eq(&id)).first::<User>(conn)?;
+
+        let password_matches = hasher::verify(&current_password, &user.hash)?;
+
+        if !password_matches {
+            return Err(AppError::Unauthorized("Invalid password".into()));
+        }
+
+        let hashed_password = hasher::hash_password(new_password)?;
 
         diesel::update(users::table)
             .filter(users::id.eq(&id))

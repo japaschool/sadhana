@@ -42,7 +42,8 @@ pub struct UpdateUserRequest {
 
 #[derive(Deserialize, Debug)]
 pub struct UpdateUserPasswordRequest {
-    pub password: String,
+    pub current_password: String,
+    pub new_password: String,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
