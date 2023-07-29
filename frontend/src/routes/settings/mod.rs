@@ -17,6 +17,7 @@ pub mod about;
 pub mod edit_password;
 pub mod edit_user;
 pub mod help;
+pub mod language;
 
 #[function_component(Settings)]
 pub fn settings() -> Html {
@@ -158,6 +159,12 @@ pub fn settings() -> Html {
             nav.push(&AppRoute::EditPassword);
         })
     };
+    let language_onclick = {
+        let nav = nav.clone();
+        Callback::from(move |_: MouseEvent| {
+            nav.push(&AppRoute::Language);
+        })
+    };
     let help_onclick = {
         let nav = nav.clone();
         Callback::from(move |_: MouseEvent| {
@@ -207,7 +214,7 @@ pub fn settings() -> Html {
                             </div>
                         </li>
                     </ul>
-                    <ul class="pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
+                    <ul onclick={ language_onclick } class="pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
                         <li>
                             <div class="relative flex justify-between items-center sm:text-base align-baseline">
                                 <label for="language">
