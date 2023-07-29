@@ -1,33 +1,138 @@
-use common::error::AppError;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::prelude::*;
-use yew_router::prelude::*;
+use yew_router::prelude::use_navigator;
 
 use crate::{
-    components::{blank_page::BlankPage, list_errors::ListErrors},
+    components::{
+        blank_page::{BlankPage, HeaderButtonProps},
+        list_errors::ListErrors,
+    },
     css::*,
     hooks::use_user_context,
     i18n::*,
     model::*,
-    services, BaseRoute,
+    routes::AppRoute,
+    services,
 };
 
 #[function_component(EditUser)]
 pub fn edit_user() -> Html {
-    html! {
-              <BlankPage show_footer=true >
-        <div class={ BODY_DIV_CSS }>
-        <div class="text-center">
-        <img
-        src="https://tecdn.b-cdn.net/img/new/avatars/2.webp"
-        class="mx-auto mb-4 w-32 rounded-full"
-        alt="Avatar" />
-      <h5 class="mb-4 text-xl font-medium leading-tight">{"Name Surname"}</h5>
-      <p class="text-zinc-500 dark:text-zinc-200">{"email"}</p>
-      <p class="text-zinc-500 dark:text-zinc-200">{"Some other info"}</p>
-    </div>
-        </div>
-              </BlankPage>
+    let user_info = use_state(|| UpdateUser::default());
+    let editing = use_bool_toggle(false);
+    let user_ctx = use_user_context();
+    let nav = use_navigator().unwrap();
+
+    {
+        let user_info = user_info.clone();
+        use_effect_with_deps(
+            move |ctx| {
+                user_info.set(UpdateUser::new(&ctx.name));
+                || ()
+            },
+            user_ctx.clone(),
+        );
+    }
+
+    let update_user = {
+        let user_info = user_info.clone();
+        use_async(async move { services::update_user((*user_info).clone()).await })
+    };
+
+    let edit_onclick = {
+        let editing = editing.clone();
+        Callback::from(move |e: MouseEvent| {
+            e.prevent_default();
+            editing.toggle();
+        })
+    };
+
+    let name_oninput = {
+        let user_info = user_info.clone();
+        Callback::from(move |e: InputEvent| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+            let mut new_info = (*user_info).clone();
+            new_info.name = input.value();
+            user_info.set(new_info);
+        })
+    };
+
+    let onreset = {
+        let editing = editing.clone();
+        let user_info = user_info.clone();
+        let ctx = user_ctx.clone();
+        Callback::from(move |e: Event| {
+            e.prevent_default();
+            user_info.set(UpdateUser::new(&ctx.name));
+            editing.toggle();
+        })
+    };
+
+    let onsubmit = {
+        let update_user = update_user.clone();
+        let editing = editing.clone();
+        let user_info = user_info.clone();
+        let ctx = user_ctx.clone();
+        Callback::from(move |e: SubmitEvent| {
+            e.prevent_default();
+            if !user_info.name.is_empty() && ctx.name != user_info.name {
+                update_user.run();
             }
+            editing.toggle();
+        })
+    };
+
+    let back_onclick = {
+        let nav = nav.clone();
+        Callback::from(move |_: MouseEvent| {
+            nav.push(&AppRoute::Settings);
+        })
+    };
+
+    html! {
+        <form {onsubmit} {onreset} >
+            <BlankPage
+                show_footer={ !*editing }
+                left_button={ if *editing { HeaderButtonProps::reset(Locale::current().cancel()) } else { HeaderButtonProps::back(back_onclick) }}
+                right_button={ if *editing { HeaderButtonProps::submit(Locale::current().save()) } else { HeaderButtonProps::edit(edit_onclick) }}
+                loading={ update_user.loading }
+                header_label={ Locale::current().user_details() }
+                >
+                <ListErrors error={update_user.error.clone()} />
+                <div class={ BODY_DIV_CSS }>
+                    <div class="relative">
+                        <input
+                            id="email"
+                            type="email"
+                            placeholder="Email"
+                            class={ INPUT_CSS }
+                            value={ user_ctx.email.clone() }
+                            disabled=true
+                            required=true
+                            />
+                        <label for="email"
+                            class={ INPUT_LABEL_CSS }>
+                            <i class="icon-mail"></i>{ format!(" {}", Locale::current().email_address()) }
+                        </label>
+                    </div>
+                    <div class="relative">
+                        <input
+                            id="name"
+                            type="text"
+                            placeholder="Name"
+                            class={ INPUT_CSS }
+                            value={ user_info.name.clone() }
+                            oninput={ name_oninput.clone() }
+                            readonly={ !*editing }
+                            minlength="3"
+                            />
+                        <label for="name"
+                            class={ INPUT_LABEL_CSS }>
+                            <i class="icon-user"></i>{ format!(" {}", Locale::current().name()) }
+                        </label>
+                    </div>
+                </div>
+            </BlankPage>
+        </form>
+    }
 }
