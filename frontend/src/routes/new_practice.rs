@@ -25,8 +25,8 @@ pub enum NewPracticeTarget {
     YatraPractice { yatra_id: String },
 }
 
-#[function_component(NewUserPractice)]
-pub fn new_user_practice(props: &Props) -> Html {
+#[function_component(NewPractice)]
+pub fn new_practice(props: &Props) -> Html {
     #[derive(Debug, Default, Clone)]
     struct FormData {
         practice: String,
