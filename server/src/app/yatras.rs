@@ -314,6 +314,16 @@ impl YatraPractice {
     }
 }
 
+#[derive(Debug, QueryableByName)]
+struct YatraUserPracticeFlat {
+    #[diesel(sql_type = Text)]
+    yatra_practice: String,
+    #[diesel(sql_type = PracticeDataTypeEnum)]
+    data_type: PracticeDataType,
+    #[diesel(sql_type = Nullable<Text>)]
+    user_practice: Option<String>,
+}
+
 #[derive(Debug, Queryable, Serialize, Deserialize, Clone)]
 #[diesel(table_name = yatra_practices)]
 pub struct YatraUserPractice {
@@ -380,22 +390,52 @@ impl YatraUserPractice {
         user_id: &Uuid,
         yatra_id: &Uuid,
     ) -> Result<Vec<Self>, AppError> {
-        let res = yatra_practices::table
-            .left_outer_join(yatra_user_practices::table)
-            .left_join(
-                user_practices::table.on(user_practices::id
-                    .eq(yatra_user_practices::user_practice_id)
-                    .and(user_practices::user_id.eq(&user_id))),
+        let res = sql_query(
+            r#"
+            with p as (
+                select
+                    up.practice as user_practice,
+                    yup.yatra_practice_id
+                from
+                    yatra_user_practices yup
+                    join user_practices up on (
+                        up.id = yup.user_practice_id
+                        and up.user_id = $2
+                    )
             )
-            .select((
-                (yatra_practices::practice, yatra_practices::data_type),
-                user_practices::practice.nullable(),
-            ))
-            .filter(yatra_practices::yatra_id.eq(&yatra_id))
-            .order_by(yatra_practices::order_key)
-            .load::<YatraUserPractice>(conn)?;
+            SELECT
+                yp.practice as yatra_practice,
+                yp.data_type,
+                p.user_practice
+            FROM
+                yatra_practices yp
+                LEFT join p on (p.yatra_practice_id = yp.id)
+            where
+                yp.yatra_id = $1
+            ORDER BY
+                yp.order_key
+            "#,
+        )
+        .bind::<DieselUuid, _>(&yatra_id)
+        .bind::<DieselUuid, _>(&user_id)
+        .load::<YatraUserPracticeFlat>(conn)?;
 
-        Ok(res)
+        Ok(res
+            .into_iter()
+            .map(
+                |YatraUserPracticeFlat {
+                     yatra_practice,
+                     data_type,
+                     user_practice,
+                 }| YatraUserPractice {
+                    yatra_practice: YatraPractice {
+                        practice: yatra_practice,
+                        data_type,
+                    },
+                    user_practice,
+                },
+            )
+            .collect())
     }
 }
 
