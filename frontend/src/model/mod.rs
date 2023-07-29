@@ -41,7 +41,8 @@ pub struct UpdateUserWrapper {
 
 #[derive(Serialize, Debug)]
 pub struct UpdateUserPassword {
-    pub password: String,
+    pub current_password: String,
+    pub new_password: String,
 }
 
 #[derive(Serialize, Debug)]

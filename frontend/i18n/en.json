@@ -8,6 +8,7 @@
   "email_address": "Email Address",
   "password": "Password",
   "new_password": "New Password",
+  "current_password": "Current Password",
   "confirm_password": "Confirm Password",
   "sign_in": "Sign In",
   "sign_up": "Sign up",
