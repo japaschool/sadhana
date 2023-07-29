@@ -273,7 +273,7 @@ pub fn yatra_settings(props: &Props) -> Html {
                             html! {
                                 <Link<AppRoute> classes={ LINK_CSS }
                                     to={AppRoute::YatraAdminSettings{ id: props.yatra_id.to_string() }}>
-                                    { Locale::current().modify_yatra() }
+                                    { Locale::current().modify_yatra_admin() }
                                 </Link<AppRoute>>
                             }
                         } else {
