@@ -165,17 +165,15 @@ pub fn admin_settings(props: &Props) -> Html {
                             />
                     }}}
                 </form>
-                <div class="flex justify-center">
-                    <Link<AppRoute> classes={ LINK_CSS_NEW_ACC }
+                <div class="relative">
+                <button class={ BTN_CSS }><Link<AppRoute>
                         to={AppRoute::NewYatraPractice { id: props.yatra_id.to_string() }}>
-                        { Locale::current().add_new_practice() }
-                    </Link<AppRoute>>
-                </div>
-                <CopyButton
+                        <i class="icon-plus"></i>{ Locale::current().add_new_practice() }
+                    </Link<AppRoute>></button>
+                    <CopyButton
                     button_label={ Locale::current().copy_yatra_join_link() }
                     relative_link={ format!("/yatra/{}/join", props.yatra_id.as_str()) }
                     />
-                <div class="relative">
                     <button class={ SUBMIT_BTN_CSS } onclick={ delete_yatra_onclick }>
                     <i class="icon-bin"></i>{ format!(" {}", Locale::current().delete_yatra()) }</button>
                 </div>

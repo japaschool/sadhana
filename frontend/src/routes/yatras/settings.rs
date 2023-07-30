@@ -267,28 +267,30 @@ pub fn yatra_settings(props: &Props) -> Html {
             <ListErrors error={ yatra.error.clone() } />
             <form {onsubmit}>
                 <div class={ BODY_DIV_CSS }>
-                    <div class={ LINKS_CSS }>
-                        <a class={ LINK_CSS } onclick={ leave_onclick }>{ Locale::current().leave_yatra() }</a>
-                        { if is_admin.data.unwrap_or(false) {
-                            html! {
-                                <Link<AppRoute> classes={ LINK_CSS }
-                                    to={AppRoute::YatraAdminSettings{ id: props.yatra_id.to_string() }}>
-                                    { Locale::current().modify_yatra_admin() }
-                                </Link<AppRoute>>
-                            }
-                        } else {
-                            html! {}
-                        }}
-                    </div>
-                    <div class="relative">
-                        <label class="text-gray-600">{ Locale::current().yatra_mapping_info() }</label>
+                    <div class="relative pb-3">
+                        <label>{ Locale::current().yatra_mapping_info() }</label>
                     </div>
                     { practices }
                     <div class="relative">
-                        <button class={ SUBMIT_BTN_CSS }>
+                        <button class={ BTN_CSS }>
                             <i class="icon-tick"></i>{ format!(" {}", Locale::current().save()) }
                         </button>
                     </div>
+                    <div class="flex space-x-3">
+                <button class={ BTN_CSS } onclick={ leave_onclick }>
+                  <i class="icon-minus"></i>{ Locale::current().leave_yatra() }
+                </button>
+                { if is_admin.data.unwrap_or(false) {
+                    html! {
+                        <Link<AppRoute> classes={ BTN_CSS }
+                            to={AppRoute::YatraAdminSettings{ id: props.yatra_id.to_string() }}>
+                            <i class="icon-edit"></i>{ Locale::current().modify_yatra_admin() }
+                        </Link<AppRoute>>
+                    }
+                } else {
+                    html! {}
+                }}
+            </div>
                 </div>
             </form>
         </BlankPage>
