@@ -144,7 +144,7 @@ pub fn blank_page(props: &Props) -> Html {
                             { props.header_label.iter().map(|l| {
                                 html! {
                                     <div class="pb-5">
-                                        <h1 class="text-center text-2xl font-medium leading-9 tracking-tight logo">{ l }</h1>
+                                        <h1 class="text-center text-xl font-normal leading-9 tracking-tight dark:text-white text-zinc-400">{ l }</h1>
                                     </div>
                                 }}).collect::<Html>()
                             }

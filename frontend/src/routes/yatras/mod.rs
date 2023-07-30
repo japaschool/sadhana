@@ -146,8 +146,8 @@ pub fn yatras() -> Html {
     let grid = html! {
         <div class="relative scroll-smooth hover:scroll-auto overflow-x-auto shadow-md border dark:border-zinc-200 border-zinc-400 rounded-lg">
             <div class="flex items-center justify-between pb-4">
-                <table class="w-full text-sm text-left text-zinc-400 dark:text-zinc-200 table-auto bg-white dark:bg-zinc-700 bg-opacity-40 dark:bg-opacity-40">
-                    <thead class="text-xs uppercase dark:bg-zinc-500 dark:text-zinc-200 text-zinc-400 bg-opacity-40 dark:bg-opacity-40">
+                <table class="w-full text-sm text-left text-zinc-400 dark:text-zinc-200 table-auto bg-white dark:bg-zinc-700 bg-opacity-30 dark:bg-opacity-30">
+                    <thead class="text-xs uppercase dark:bg-zinc-500 dark:text-zinc-200 text-zinc-400 bg-opacity-30 dark:bg-opacity-30">
                         <tr>
                             <th scope="col" class="px-6 py-3">{ Locale::current().sadhaka() }</th>
                             { data.data.iter().flat_map(|d| d.practices.iter()).map(|p| html! { <th scope="col" class="px-6 py-3">{ p.practice.clone() }</th> }).collect::<Html>() }
@@ -250,22 +250,19 @@ pub fn yatras() -> Html {
                     { format!(" {}: ", Locale::current().yatra()) }
                 </label>
             </div>
-            <div class="relative">
-                <div class={ LINKS_CSS }>
-                    <Link<AppRoute>
-                        classes={ LINK_CSS }
-                        to={
-                            let id = selected_yatra.as_ref().map(|y| y.id.clone()).unwrap_or_default();
-                            AppRoute::YatraSettings { id }}>{ Locale::current().modify_yatra() }
-                    </Link<AppRoute>>
-                    <a class={ LINK_CSS }
-                        onclick={ create_yatra_onclick.clone() }
-                        >
-                        { Locale::current().create_yatra() }
-                    </a>
-                </div>
-            </div>
             { grid }
+            <div class="flex space-x-3">
+            <button class={ BTN_CSS }>
+              <i class="icon-edit"></i><Link<AppRoute>
+              to={
+                  let id = selected_yatra.as_ref().map(|y| y.id.clone()).unwrap_or_default();
+                  AppRoute::YatraSettings { id }}>{ Locale::current().modify_yatra() }
+                  </Link<AppRoute>>
+            </button>
+            <button class={ BTN_CSS } onclick={ create_yatra_onclick.clone() }>
+              <i class="icon-plus"></i>{ Locale::current().create_yatra() }
+            </button>
+        </div>
         </div>
         </>
     };
