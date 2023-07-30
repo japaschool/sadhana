@@ -21,6 +21,7 @@ pub const BTN_CSS: &'static str =
 
 pub const BODY_DIV_CSS: &'static str ="text-balance accent-amber-500 text-base leading-6 space-y-10 text-zinc-500 dark:text-zinc-100 sm:leading-7 overflow-x-hidden overflow-y-auto scrolling-touch lg:max-h-sm scrollbar-w-2 scrollbar-track-gray-lighter scrollbar-thumb-rounded scrollbar-thumb-gray";
 pub const BODY_SETTINGS_CSS: &'static str ="pt-14 text-balance accent-amber-500 text-base leading-6 space-y-4 text-zinc-500 dark:text-zinc-100 sm:leading-7 overflow-x-hidden overflow-y-auto scrolling-touch lg:max-h-sm scrollbar-w-2 scrollbar-track-gray-lighter scrollbar-thumb-rounded scrollbar-thumb-gray";
+pub const BODY_YATRAS_CSS: &'static str ="text-balance accent-amber-500 text-base leading-6 space-y-5 text-zinc-500 dark:text-zinc-100 sm:leading-7 overflow-x-hidden overflow-y-auto scrolling-touch lg:max-h-sm scrollbar-w-2 scrollbar-track-gray-lighter scrollbar-thumb-rounded scrollbar-thumb-gray";
 pub const MENU_CSS: &'static str ="text-zinc-500  dark:text-text-zinc-100 text-2xl flex justify-between whitespace-nowrap items-center";
 pub const FOOTER_ICON_CSS: &'static str =
     "inline-flex flex-col items-center justify-center px-5 group dark:text-zinc-100 menu";
