@@ -225,9 +225,21 @@ pub fn yatras() -> Html {
         <ListErrors error={yatras.error.clone()} />
         <ListErrors error={data.error.clone()} />
         <ListErrors error={new_yatra.error.clone()} />
-        <div class={ BODY_DIV_CSS }>
+        <div class={ BODY_YATRAS_CSS }>
             <Calendar selected_date={ *selected_date } date_onchange={ selected_date_onchange }/>
-            <div class="relative">
+            <div class="flex space-x-3">
+            <button class={ BTN_CSS }>
+              <i class="icon-edit"></i><Link<AppRoute>
+              to={
+                  let id = selected_yatra.as_ref().map(|y| y.id.clone()).unwrap_or_default();
+                  AppRoute::YatraSettings { id }}>{ Locale::current().modify_yatra() }
+                  </Link<AppRoute>>
+            </button>
+            <button class={ BTN_CSS } onclick={ create_yatra_onclick.clone() }>
+              <i class="icon-plus"></i>{ Locale::current().create_yatra() }
+            </button>
+        </div>
+            <div class="relative pb-5">
                 <select
                     class={ INPUT_CSS }
                     id="yatra"
@@ -251,18 +263,6 @@ pub fn yatras() -> Html {
                 </label>
             </div>
             { grid }
-            <div class="flex space-x-3">
-            <button class={ BTN_CSS }>
-              <i class="icon-edit"></i><Link<AppRoute>
-              to={
-                  let id = selected_yatra.as_ref().map(|y| y.id.clone()).unwrap_or_default();
-                  AppRoute::YatraSettings { id }}>{ Locale::current().modify_yatra() }
-                  </Link<AppRoute>>
-            </button>
-            <button class={ BTN_CSS } onclick={ create_yatra_onclick.clone() }>
-              <i class="icon-plus"></i>{ Locale::current().create_yatra() }
-            </button>
-        </div>
         </div>
         </>
     };

@@ -272,7 +272,7 @@ pub fn yatra_settings(props: &Props) -> Html {
                     </div>
                     { practices }
                     <div class="relative">
-                        <button class={ BTN_CSS }>
+                        <button class={ SUBMIT_BTN_CSS }>
                             <i class="icon-tick"></i>{ format!(" {}", Locale::current().save()) }
                         </button>
                     </div>
