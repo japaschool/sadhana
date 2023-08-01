@@ -8,7 +8,7 @@ use yew_hooks::{use_async, use_mount};
 use yew_router::prelude::*;
 
 use crate::{
-    components::{blank_page::BlankPage, calendar::Calendar, list_errors::ListErrors},
+    components::{blank_page::BlankPage, calendar::Calendar, grid::*, list_errors::ListErrors},
     css::*,
     i18n::Locale,
     model::{PracticeDataType, Yatra, YatraData},
@@ -43,7 +43,9 @@ pub fn yatras() -> Html {
         if let Some(yatra_name) =
             prompt(&Locale::current().new_yatra_name(), None).filter(|s| !s.trim().is_empty())
         {
-            create_yatra(yatra_name).await.map(|res| res.yatra)
+            create_yatra(yatra_name.trim().to_owned())
+                .await
+                .map(|res| res.yatra)
         } else {
             Err(AppError::UnprocessableEntity(vec![]))
         }
@@ -144,69 +146,66 @@ pub fn yatras() -> Html {
     };
 
     let grid = html! {
-        <div class="relative scroll-smooth hover:scroll-auto overflow-x-auto shadow-md border dark:border-zinc-200 border-zinc-400 rounded-lg">
-            <div class="flex items-center justify-between pb-4">
-                <table class="w-full text-sm text-left text-zinc-400 dark:text-zinc-200 table-auto bg-white dark:bg-zinc-700 bg-opacity-30 dark:bg-opacity-30">
-                    <thead class="text-xs uppercase dark:bg-zinc-500 dark:text-zinc-200 text-zinc-400 bg-opacity-30 dark:bg-opacity-30">
-                        <tr>
-                            <th scope="col" class="px-6 py-3">{ Locale::current().sadhaka() }</th>
-                            { data.data.iter().flat_map(|d| d.practices.iter()).map(|p| html! { <th scope="col" class="px-6 py-3">{ p.practice.clone() }</th> }).collect::<Html>() }
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {
-                            data
-                                .data
-                                .iter()
-                                .flat_map(|d| d.data.iter())
-                                .map(|(user_name, values)| {
-                                    let data_columns = data.data
-                                        .iter()
-                                        .flat_map(|inner| inner.practices.iter())
-                                        .zip(values.iter())
-                                        .map(|(practice, value_opt)| {
-                                            let value_str = match practice.data_type {
-                                            PracticeDataType::Bool => value_opt
-                                                .as_ref()
-                                                .and_then(|b| b.as_bool())
-                                                .map(|b| if b { "V".to_string() } else { String::new() })
-                                                .unwrap_or_default(),
-                                            PracticeDataType::Int => value_opt
-                                                .as_ref()
-                                                .and_then(|v| v.as_int())
-                                                .map(|i| i.to_string())
-                                                .unwrap_or_default(),
-                                            PracticeDataType::Time => value_opt
-                                                .as_ref()
-                                                .and_then(|v| v.as_time_str())
-                                                .unwrap_or_default(),
-                                            PracticeDataType::Text => value_opt
-                                                .as_ref()
-                                                .and_then(|v| v.as_text())
-                                                .unwrap_or_default(),
-                                            PracticeDataType::Duration => value_opt
-                                                .as_ref()
-                                                .and_then(|v| v.as_duration_str())
-                                                .unwrap_or_default(),
-                                        };
-                                        html! { <td class="px-6 py-4">{ value_str }</td> }
-                                    }).collect::<Html>();
+        <Grid>
+            <Ghead>
+                <Gh>{ Locale::current().sadhaka() }</Gh>
+                { data
+                    .data
+                    .iter()
+                    .flat_map(|d| d.practices.iter())
+                    .map(|p| html! { <Gh>{ p.practice.clone() }</Gh> })
+                    .collect::<Html>()
+                }
+            </Ghead>
+            <Gbody>
+            { data
+                .data
+                .iter()
+                .flat_map(|d| d.data.iter())
+                .map(|(user_name, values)| {
+                    let data_columns = data.data
+                        .iter()
+                        .flat_map(|inner| inner.practices.iter())
+                        .zip(values.iter())
+                        .map(|(practice, value_opt)| {
+                            let value_str = match practice.data_type {
+                            PracticeDataType::Bool => value_opt
+                                .as_ref()
+                                .and_then(|b| b.as_bool())
+                                .map(|b| if b { "V".to_string() } else { String::new() })
+                                .unwrap_or_default(),
+                            PracticeDataType::Int => value_opt
+                                .as_ref()
+                                .and_then(|v| v.as_int())
+                                .map(|i| i.to_string())
+                                .unwrap_or_default(),
+                            PracticeDataType::Time => value_opt
+                                .as_ref()
+                                .and_then(|v| v.as_time_str())
+                                .unwrap_or_default(),
+                            PracticeDataType::Text => value_opt
+                                .as_ref()
+                                .and_then(|v| v.as_text())
+                                .unwrap_or_default(),
+                            PracticeDataType::Duration => value_opt
+                                .as_ref()
+                                .and_then(|v| v.as_duration_str())
+                                .unwrap_or_default(),
+                        };
+                        html! { <Gd>{ value_str }</Gd> }
+                    }).collect::<Html>();
 
-                                    html! {
-                                        <tr class="bg-white bg-opacity-40 dark:bg-opacity-40 dark:bg-zinc-800 dark:border-zinc-700 border-b hover:bg-zinc-50 dark:hover:bg-zinc-600">
-                                            <th scope="row" class="flex items-center px-6 py-4 text-zinc-400 whitespace-nowrap dark:text-zinc-300">
-                                                <div class="text-sm font-normal">{ user_name.clone() }</div>
-                                            </th>
-                                            { data_columns }
-                                        </tr>
-                                    }
-                                })
-                                .collect::<Html>()
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                    html! {
+                        <Gr>
+                            <Ghd>{ user_name.clone() }</Ghd>
+                            { data_columns }
+                        </Gr>
+                    }
+                })
+                .collect::<Html>()
+            }
+            </Gbody>
+        </Grid>
     };
 
     let empty_body = html! {

@@ -56,7 +56,7 @@ pub fn draggable_list(props: &Props) -> Html {
             if let Some(new_value) =
                 prompt(label.as_str(), Some(&item)).filter(|s| !s.trim().is_empty())
             {
-                cb.emit((item, new_value));
+                cb.emit((item, new_value.trim().to_owned()));
             }
         })
     };
