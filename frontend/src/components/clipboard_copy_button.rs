@@ -60,7 +60,7 @@ pub fn copy_button(props: &Props) -> Html {
     html! {
         <>
             <div
-                class={ format!("{} absolute left-0 top-0 flex h-full w-full justify-center z-50", if *show_tooltip {"inline"} else {"hidden"}) }>
+                class={ format!("{} fixed left-0 top-0 flex h-full w-full justify-center z-50", if *show_tooltip {"inline"} else {"hidden"}) }>
                 <span class="bg-slate-600 bg-opacity-50 rounded-2xl my-auto border p-4 text-white text-2xl">{ Locale::current().copied() }</span>
             </div>
             <div class="relative">

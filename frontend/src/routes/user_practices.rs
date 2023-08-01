@@ -161,7 +161,7 @@ pub fn user_practices() -> Html {
             loading={ all_practices.loading }>
             <ListErrors error={all_practices.error.clone()} />
             <ListErrors error={reorder_practices.error.clone()} />
-            <div class={ BODY_DIV_CSS }>
+            <div class={ format!("space-y-10 {}", BODY_DIV_CSS) }>
                 <form>{
                     if all_practices.loading {
                         html!{}
