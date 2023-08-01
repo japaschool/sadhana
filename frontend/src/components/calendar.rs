@@ -72,9 +72,9 @@ pub fn calendar(props: &Props) -> Html {
             (false, false) => HOVER_DATE_DIV_CSS,
         };
         let weekday_label_css = if for_selected_date {
-            "text-zinc-500  dark:text-zinc-100 text-base font-semibold"
+            "text-zinc-500  dark:text-zinc-100 text-xs font-semibold"
         } else {
-            "text-zinc-500  dark:text-zinc-100 text-base"
+            "text-zinc-500  dark:text-zinc-100 text-xs"
         };
         let date_label_css = if for_selected_date {
             "text-zinc-500  dark:text-zinc-100 my-auto font-bold"

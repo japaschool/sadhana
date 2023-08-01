@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use crate::{
     components::{
-        blank_page::BlankPage, chart::Chart, clipboard_copy_button::CopyButton,
+        blank_page::BlankPage, chart::Chart, clipboard_copy_button::CopyButton, grid::*,
         list_errors::ListErrors,
     },
     css::*,
@@ -160,6 +160,9 @@ pub struct ChartBaseProps {
     pub pull_data: Callback<(UserPractice, ReportDuration), ()>,
 }
 
+const DATE_FORMAT: &'static str = "%Y-%m-%d";
+const DATE_FORMAT_HR: &'static str = "%a, %d %b";
+
 #[function_component(ChartsBase)]
 fn charts_base(props: &ChartBaseProps) -> Html {
     let selected_practice = use_state(|| props.practices.first().cloned());
@@ -203,8 +206,6 @@ fn charts_base(props: &ChartBaseProps) -> Html {
             );
         })
     };
-
-    const DATE_FORMAT: &'static str = "%Y-%m-%d";
 
     let (x_values, y_values): (Vec<_>, Vec<_>) = selected_practice
         .iter()
@@ -253,15 +254,68 @@ fn charts_base(props: &ChartBaseProps) -> Html {
         })
         .unzip();
 
+    let grid = html! {
+        <Grid>
+            <Ghead>
+                <Gh>{ Locale::current().date() }</Gh>
+                <Gh>{ selected_practice.as_ref().map(|p| p.practice.clone()).unwrap_or_default() }</Gh>
+            </Ghead>
+            <Gbody>{
+                for props.report_data.iter().map(|p| {
+                    html! {
+                        <Gr>
+                            <Gd>{ p.cob_date.format(DATE_FORMAT_HR).to_string() }</Gd>
+                            <Gd>{
+                                p.value
+                                    .as_ref()
+                                    .map(|v| v.as_text())
+                                    .unwrap_or_default()
+                            }
+                            </Gd>
+                        </Gr>
+                    }
+                })
+            }
+            </Gbody>
+        </Grid>
+    };
+
+    let data_body = if selected_practice
+        .as_ref()
+        .map(|inner| inner.data_type == PracticeDataType::Text)
+        .unwrap_or(false)
+    {
+        html! { grid }
+    } else {
+        html! {
+            <Chart
+                { x_values }
+                { y_values }
+                y_axis_type={ selected_practice.as_ref().map(|p| p.data_type) }
+                />
+        }
+    };
+
     html! {
         <div class={ BODY_DIV_CSS }>
             <div class="relative">
-                <select  class={ INPUT_CSS } id="practices" onchange={ practice_onchange.clone() }>
+                <select
+                    class={ INPUT_CSS }
+                    id="practices"
+                    onchange={ practice_onchange.clone() }
+                    >
                     { for props.practices.iter().map(|p| html!{
                         <option class={ "text-black" }
-                            selected={ selected_practice.as_ref().map(|inner| inner.practice == p.practice).unwrap_or(false) }
+                            selected={
+                                selected_practice
+                                    .as_ref()
+                                    .map(|inner| inner.practice == p.practice)
+                                    .unwrap_or(false)
+                            }
                             value={ p.practice.clone() }
-                            >{ p.practice.clone() }</option>
+                            >
+                            { p.practice.clone() }
+                        </option>
                     })}
                 </select>
                 <label for="practices" class={ INPUT_LABEL_CSS }>
@@ -282,11 +336,7 @@ fn charts_base(props: &ChartBaseProps) -> Html {
                 </label>
             </div>
             <div class="relative">
-                <Chart
-                    { x_values }
-                    { y_values }
-                    y_axis_type={ selected_practice.as_ref().map(|p| p.data_type) }
-                    />
+                { data_body }
             </div>
         </div>
     }
