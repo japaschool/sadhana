@@ -83,7 +83,7 @@ pub fn settings() -> Html {
                     // <span class="text-sm text-zinc-300 dark:text-zinc-200">{"Bla-bla"}</span>
                 </div>
             </div>
-            <div class={ BODY_SETTINGS_CSS }>
+            <div class={ format!("space-y-4 pt-14 {}", BODY_DIV_BASE_CSS) }>
                 <ul onclick={ edit_user_onclick } class="pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
                     <li>
                         <div class="relative flex justify-between items-center sm:text-base align-baseline">

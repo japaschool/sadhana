@@ -142,7 +142,7 @@ pub fn admin_settings(props: &Props) -> Html {
             loading={ all_practices.loading }>
             <ListErrors error={all_practices.error.clone()} />
             <ListErrors error={reorder_practices.error.clone()} />
-            <div class={ BODY_DIV_CSS }>
+            <div class={ format!("space-y-10 {}", BODY_DIV_BASE_CSS) }>
                 <form>{
                     if all_practices.loading {
                         html!{}
@@ -166,16 +166,20 @@ pub fn admin_settings(props: &Props) -> Html {
                     }}}
                 </form>
                 <div class="relative">
-                <button class={ BTN_CSS }><Link<AppRoute>
-                        to={AppRoute::NewYatraPractice { id: props.yatra_id.to_string() }}>
-                        <i class="icon-plus"></i>{ Locale::current().add_new_practice() }
-                    </Link<AppRoute>></button>
+                    <button class={ BTN_CSS }>
+                        <Link<AppRoute> to={AppRoute::NewYatraPractice { id: props.yatra_id.to_string() }}>
+                            <i class="icon-plus"></i>
+                            { Locale::current().add_new_practice() }
+                        </Link<AppRoute>>
+                    </button>
                     <CopyButton
-                    button_label={ Locale::current().copy_yatra_join_link() }
-                    relative_link={ format!("/yatra/{}/join", props.yatra_id.as_str()) }
-                    />
+                        button_label={ Locale::current().copy_yatra_join_link() }
+                        relative_link={ format!("/yatra/{}/join", props.yatra_id.as_str()) }
+                        />
                     <button class={ SUBMIT_BTN_CSS } onclick={ delete_yatra_onclick }>
-                    <i class="icon-bin"></i>{ format!(" {}", Locale::current().delete_yatra()) }</button>
+                        <i class="icon-bin"></i>
+                        { format!(" {}", Locale::current().delete_yatra()) }
+                    </button>
                 </div>
             </div>
         </BlankPage>

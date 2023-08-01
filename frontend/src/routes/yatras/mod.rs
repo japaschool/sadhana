@@ -221,11 +221,11 @@ pub fn yatras() -> Html {
 
     let grid_body = html! {
         <>
+        <Calendar selected_date={ *selected_date } date_onchange={ selected_date_onchange }/>
         <ListErrors error={yatras.error.clone()} />
         <ListErrors error={data.error.clone()} />
         <ListErrors error={new_yatra.error.clone()} />
-        <div class={ BODY_YATRAS_CSS }>
-            <Calendar selected_date={ *selected_date } date_onchange={ selected_date_onchange }/>
+        <div class={ format!("space-y-5 {}", BODY_DIV_BASE_CSS) }>
             <div class="flex space-x-3">
             <button class={ BTN_CSS }>
               <i class="icon-edit"></i><Link<AppRoute>

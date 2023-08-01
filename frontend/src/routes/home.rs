@@ -351,10 +351,10 @@ pub fn home() -> Html {
 
     html! {
         <BlankPage show_footer=true >
+            <Calendar selected_date={ *selected_date } date_onchange={ selected_date_onchange }/>
+            <ListErrors error={diary_entry.error.clone()} />
+            <ListErrors error={save_diary_day.error.clone()} />
             <div class={ BODY_DIV_CSS }>
-                <Calendar selected_date={ *selected_date } date_onchange={ selected_date_onchange }/>
-                <ListErrors error={diary_entry.error.clone()} />
-                <ListErrors error={save_diary_day.error.clone()} />
                 {
                 for local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, value})|
                     html! {
@@ -445,17 +445,16 @@ pub fn home() -> Html {
                                         >
                                     </textarea>
                                     <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
-                                    <i class="icon-doc"></i>
-                                                                            { format!(" {}: ", practice) }
-                                                                     </label>
-                                                                  </div>
-                                                               }
-                                                     }}
-                                                  )
-                                             }
-                                                  <div class="relative flex justify-center links">
-                                                     <Link<AppRoute> classes={ LINK_CSS_NEW_ACC } to={AppRoute::UserPractices}>
-                                                        { Locale::current().modify_practices() }
+                                        <i class="icon-doc"></i>
+                                        { format!(" {}: ", practice) }
+                                    </label>
+                                </div>
+                            }
+                        }})
+                }
+                <div class="relative flex justify-center links">
+                    <Link<AppRoute> classes={ LINK_CSS_NEW_ACC } to={AppRoute::UserPractices}>
+                        { Locale::current().modify_practices() }
                     </Link<AppRoute>>
                 </div>
             </div>
