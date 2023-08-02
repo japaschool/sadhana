@@ -207,6 +207,12 @@ fn charts_base(props: &ChartBaseProps) -> Html {
         })
     };
 
+    fn format_duration(mins: &u16) -> String {
+        let h = mins / 60;
+        let m = mins % 60;
+        format!("2020-01-01 {:0width$}:{:0width$}:00", h, m, width = 2)
+    }
+
     let (x_values, y_values): (Vec<_>, Vec<_>) = selected_practice
         .iter()
         .flat_map(|selected| {
@@ -231,14 +237,7 @@ fn charts_base(props: &ChartBaseProps) -> Html {
                             .as_ref()
                             .and_then(|v| match v {
                                 PracticeEntryValue::Duration(minutes) => {
-                                    let h = minutes / 60;
-                                    let m = minutes % 60;
-                                    Some(format!(
-                                        "2020-01-01 {:0width$}:{:0width$}:00",
-                                        h,
-                                        m,
-                                        width = 2
-                                    ))
+                                    Some(format_duration(minutes))
                                 }
                                 _ => None,
                             })
@@ -253,6 +252,74 @@ fn charts_base(props: &ChartBaseProps) -> Html {
             })
         })
         .unzip();
+
+    let avg_value = selected_practice
+        .iter()
+        .flat_map(|selected| {
+            if props.report_data.is_empty() {
+                None
+            } else {
+                match selected.data_type {
+                    PracticeDataType::Int => {
+                        let res = (props
+                            .report_data
+                            .iter()
+                            .map(|p| {
+                                p.value.iter().flat_map(|v| v.as_int()).next().unwrap_or(0) as u64
+                            })
+                            .sum::<u64>()
+                            / props.report_data.len() as u64)
+                            .to_string();
+                        Some((res.clone(), res))
+                    }
+                    PracticeDataType::Duration => {
+                        let avg_mins = (props
+                            .report_data
+                            .iter()
+                            .flat_map(|p| p.value.iter().flat_map(|v| v.as_duration_mins()))
+                            .map(|m| m as u64)
+                            .sum::<u64>()
+                            / props.report_data.len() as u64)
+                            as u16;
+                        Some((
+                            format_duration(&avg_mins),
+                            PracticeEntryValue::Duration(avg_mins)
+                                .as_duration_str()
+                                .unwrap_or_default(),
+                        ))
+                    }
+                    PracticeDataType::Time => {
+                        let avg_mins = props
+                            .report_data
+                            .iter()
+                            .flat_map(|e| {
+                                e.value.iter().map(|v| match v {
+                                    PracticeEntryValue::Time { h, m } => {
+                                        (*h as u64) * 60 + (*m as u64)
+                                    }
+                                    _ => 0,
+                                })
+                            })
+                            .sum::<u64>()
+                            / props
+                                .report_data
+                                .iter()
+                                .filter_map(|x| x.value.as_ref().map(|_| 1))
+                                .sum::<u64>();
+                        let h = (avg_mins / 60) as u8;
+                        let m = (avg_mins % 60) as u8;
+
+                        PracticeEntryValue::Time { h, m }
+                            .as_time_str()
+                            .into_iter()
+                            .map(|s| (format!("2020-01-01 {}:00", s), s))
+                            .next()
+                    }
+                    _ => None,
+                }
+            }
+        })
+        .next();
 
     let grid = html! {
         <Grid>
@@ -292,6 +359,7 @@ fn charts_base(props: &ChartBaseProps) -> Html {
                 { x_values }
                 { y_values }
                 y_axis_type={ selected_practice.as_ref().map(|p| p.data_type) }
+                avg_value_and_label={ avg_value }
                 />
         }
     };
