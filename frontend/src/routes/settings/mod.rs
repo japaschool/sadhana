@@ -3,6 +3,7 @@ use crate::{
     routes::AppRoute,
 };
 use gloo::storage::{LocalStorage, Storage};
+use inflector::Inflector;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_router::prelude::use_navigator;
@@ -89,7 +90,7 @@ pub fn settings() -> Html {
                         <div class="relative flex justify-between items-center sm:text-base align-baseline">
                             <label>
                                 <i class="icon-user flex-shrink-0 w-5"></i>
-                                { "User details" }
+                                { Locale::current().user_details().to_sentence_case() }
                             </label>
                             <i class="icon-chevron-right"></i>
                         </div>
@@ -100,7 +101,7 @@ pub fn settings() -> Html {
                         <div class="relative flex justify-between items-center sm:text-base align-baseline">
                             <label>
                                 <i class="icon-edit flex-shrink-0 w-5"></i>
-                                { "Change password" }
+                                { Locale::current().change_password() }
                             </label>
                             <i class="icon-chevron-right"></i>
                         </div>
@@ -141,12 +142,13 @@ pub fn settings() -> Html {
                 <ul class="pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
                     <li onclick={ help_onclick }>
                         <div class="relative flex justify-between items-center sm:text-base align-baseline">
-                            <label><i class="icon-help flex-shrink-0 w-5"></i>{"Help and support"}</label>
+                            <label><i class="icon-help flex-shrink-0 w-5"></i>{ Locale::current().help_and_support() }</label>
+                            <i class="icon-chevron-right"></i>
                         </div>
                     </li>
                     <li onclick={ about_onclick } >
                         <div class="relative flex justify-between items-center sm:text-base align-baseline">
-                            <label><i class="icon-info flex-shrink-0 w-5"></i>{"About"}</label>
+                            <label><i class="icon-info flex-shrink-0 w-5"></i>{ Locale::current().about() }</label>
                             <i class="icon-chevron-right"></i>
                         </div>
                     </li>
