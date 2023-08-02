@@ -68,6 +68,7 @@
   "reset_success_alert": "Password has been successfully reset. Please login.",
   "data_type_cant_be_empty": "Please fill in this field.",
   "share_charts_link": "Copy charts sharing link",
+  "on_average": "{qty} on average",
   "add_new": "Add New",
   "short_description": "Short Description",
   "copied": "Copied!",

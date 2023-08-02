@@ -187,6 +187,13 @@ impl PracticeEntryValue {
         }
     }
 
+    pub fn as_duration_mins(&self) -> Option<u16> {
+        match self {
+            &PracticeEntryValue::Duration(mins) => Some(mins),
+            _ => None,
+        }
+    }
+
     pub fn as_duration_str(&self) -> Option<String> {
         match self {
             &PracticeEntryValue::Duration(mins) => {
