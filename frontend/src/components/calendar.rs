@@ -67,6 +67,13 @@ pub fn calendar(props: &Props) -> Html {
         })
     };
 
+    let ondblclick = {
+        let selected_date = selected_date.clone();
+        Callback::from(move |_: MouseEvent| {
+            selected_date.set(today);
+        })
+    };
+
     const HOVER_TODAY_DATE_DIV_CSS: &'static str = 
         "flex group dark:hover:bg-amber-400 rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center h-8 w-8";
     const HOVER_DATE_DIV_CSS: &'static str = 
@@ -107,7 +114,7 @@ pub fn calendar(props: &Props) -> Html {
     };
 
     html! {
-        <div class="relative">
+        <div class="relative" {ondblclick}>
             <div class="pb-5 flex justify-center overflow-x-scroll mx-auto">
                 <div class="flex text-zinc-500 dark:text-zinc-100 group w-16" onclick={ prev_week_onclick.clone() }>
                     <div class="flex items-center"><i class="icon-chevron-left"></i></div>
