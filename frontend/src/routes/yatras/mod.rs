@@ -227,6 +227,7 @@ pub fn yatras() -> Html {
 
     let empty_body = html! {
         <div>
+            <ListErrors error={yatras.error.clone()} />
             <span>{ Locale::current().no_yatras_msg() }</span>
             <div class="relative">
                 <div class={ LINKS_CSS }>
