@@ -8,7 +8,12 @@ use yew_hooks::{use_async, use_mount};
 use yew_router::prelude::*;
 
 use crate::{
-    components::{blank_page::BlankPage, calendar::Calendar, grid::*, list_errors::ListErrors},
+    components::{
+        blank_page::{BlankPage, ButtonType, HeaderButtonProps},
+        calendar::Calendar,
+        grid::*,
+        list_errors::ListErrors,
+    },
     css::*,
     i18n::Locale,
     model::{PracticeDataType, Yatra, YatraData},
@@ -59,6 +64,7 @@ pub fn yatras() -> Html {
     }
 
     {
+        let nav = nav.clone();
         use_effect_with_deps(
             move |res| {
                 res.data
@@ -145,6 +151,17 @@ pub fn yatras() -> Html {
         })
     };
 
+    let edit_onclick = {
+        let nav = nav.clone();
+        let yatra = selected_yatra.clone();
+        Callback::from(move |e: MouseEvent| {
+            e.prevent_default();
+            yatra.iter().for_each(|y| {
+                nav.push(&AppRoute::YatraSettings { id: y.id.clone() });
+            });
+        })
+    };
+
     let grid = html! {
         <Grid>
             <Ghead>
@@ -225,19 +242,7 @@ pub fn yatras() -> Html {
         <ListErrors error={yatras.error.clone()} />
         <ListErrors error={data.error.clone()} />
         <ListErrors error={new_yatra.error.clone()} />
-        <div class={ format!("space-y-5 {}", BODY_DIV_BASE_CSS) }>
-            <div class="flex space-x-3">
-            <button class={ BTN_CSS }>
-              <i class="icon-edit"></i><Link<AppRoute>
-              to={
-                  let id = selected_yatra.as_ref().map(|y| y.id.clone()).unwrap_or_default();
-                  AppRoute::YatraSettings { id }}>{ Locale::current().modify_yatra() }
-                  </Link<AppRoute>>
-            </button>
-            <button class={ BTN_CSS } onclick={ create_yatra_onclick.clone() }>
-              <i class="icon-plus"></i>{ Locale::current().create_yatra() }
-            </button>
-        </div>
+        <div class={ BODY_DIV_CSS }>
             <div class="relative pb-5">
                 <select
                     class={ INPUT_CSS }
@@ -267,7 +272,18 @@ pub fn yatras() -> Html {
     };
 
     html! {
-        <BlankPage show_footer=true loading={ yatras.loading || data.loading }>
+        <BlankPage
+            show_footer=true
+            loading={ yatras.loading || data.loading }
+            left_button={ HeaderButtonProps::blank() }
+            right_button={
+                if selected_yatra.is_some() {
+                    HeaderButtonProps::new(Locale::current().settings(), edit_onclick, None, ButtonType::Button)
+                } else {
+                    HeaderButtonProps::blank()
+                }
+            }
+            >
             {
                 if !yatras.loading
                     && yatras

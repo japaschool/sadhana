@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use common::error::AppError;
-use gloo_dialogs::confirm;
+use gloo_dialogs::{confirm, prompt};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_list, use_mount, use_set};
@@ -14,8 +14,8 @@ use crate::{
     model::{PracticeDataType, YatraUserPractice},
     routes::AppRoute,
     services::{
-        get_user_practices, get_yatra, get_yatra_user_practices, is_yatra_admin, leave_yatra,
-        update_yatra_user_practices,
+        create_yatra, get_user_practices, get_yatra, get_yatra_user_practices, is_yatra_admin,
+        leave_yatra, update_yatra_user_practices,
     },
 };
 
@@ -84,6 +84,18 @@ pub fn yatra_settings(props: &Props) -> Html {
         })
     };
 
+    let new_yatra = use_async(async move {
+        if let Some(yatra_name) =
+            prompt(&Locale::current().new_yatra_name(), None).filter(|s| !s.trim().is_empty())
+        {
+            create_yatra(yatra_name.trim().to_owned())
+                .await
+                .map(|res| res.yatra)
+        } else {
+            Err(AppError::UnprocessableEntity(vec![]))
+        }
+    });
+
     {
         let is_admin = is_admin.clone();
         let yatra = yatra.clone();
@@ -95,6 +107,20 @@ pub fn yatra_settings(props: &Props) -> Html {
             user_practices.run();
             yatra.run();
         });
+    }
+
+    {
+        let nav = nav.clone();
+        use_effect_with_deps(
+            move |res| {
+                log::debug!("Created yatra {:?}", res.data);
+                res.data
+                    .iter()
+                    .for_each(|y| nav.push(&AppRoute::YatraSettings { id: y.id.clone() }));
+                || ()
+            },
+            new_yatra.clone(),
+        );
     }
 
     {
@@ -253,6 +279,23 @@ pub fn yatra_settings(props: &Props) -> Html {
         })
     };
 
+    let create_yatra_onclick = {
+        let create = new_yatra.clone();
+        Callback::from(move |_: MouseEvent| {
+            create.run();
+        })
+    };
+
+    let admin_settings_onclick = {
+        let nav = nav.clone();
+        let yatra_id = props.yatra_id.clone();
+        Callback::from(move |_: MouseEvent| {
+            nav.push(&AppRoute::YatraAdminSettings {
+                id: yatra_id.to_string(),
+            });
+        })
+    };
+
     html! {
         <BlankPage
             header_label={ yatra.data.iter().map(|y| y.name.clone()).next().unwrap_or_default() }
@@ -265,6 +308,7 @@ pub fn yatra_settings(props: &Props) -> Html {
             <ListErrors error={ save.error.clone() } />
             <ListErrors error={ leave.error.clone() } error_formatter = {leave_error_formatter}/>
             <ListErrors error={ yatra.error.clone() } />
+            <ListErrors error={new_yatra.error.clone()} />
             <form {onsubmit}>
                 <div class={ format!("space-y-10 {}", BODY_DIV_BASE_CSS) }>
                     <div class="relative pb-3">
@@ -277,20 +321,24 @@ pub fn yatra_settings(props: &Props) -> Html {
                         </button>
                     </div>
                     <div class="flex space-x-3">
-                <button class={ BTN_CSS } onclick={ leave_onclick }>
-                  <i class="icon-minus"></i>{ Locale::current().leave_yatra() }
-                </button>
-                { if is_admin.data.unwrap_or(false) {
-                    html! {
-                        <Link<AppRoute> classes={ BTN_CSS }
-                            to={AppRoute::YatraAdminSettings{ id: props.yatra_id.to_string() }}>
-                            <i class="icon-edit"></i>{ Locale::current().modify_yatra_admin() }
-                        </Link<AppRoute>>
-                    }
-                } else {
-                    html! {}
-                }}
-            </div>
+                        <button class={ BTN_CSS } onclick={ leave_onclick }>
+                            <i class="icon-minus"></i>{ Locale::current().leave_yatra() }
+                        </button>
+                        <button class={ BTN_CSS } onclick={ create_yatra_onclick.clone() }>
+                            <i class="icon-plus"></i>{ Locale::current().create_yatra() }
+                        </button>
+                    </div>
+                    { if is_admin.data.unwrap_or(false) {
+                        html! {
+                            <div class="relative">
+                                <button class={ BTN_CSS } onclick={ admin_settings_onclick.clone() }>
+                                    <i class="icon-edit"></i>{ Locale::current().modify_yatra_admin() }
+                                </button>
+                            </div>
+                        }
+                    } else {
+                        html! {}
+                    }}
                 </div>
             </form>
         </BlankPage>
