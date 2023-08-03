@@ -19,7 +19,7 @@ pub const SUBMIT_BTN_CSS: &'static str =
     active:translate-y-1";
 
 pub const BTN_CSS: &'static str =
-    "bg-transparent hover:bg-amber-500 hover:bg-opacity-10  rounded-md text-white w-full cursor-pointer text-base font-light text-zinc-500 dark:text-zinc-100 mb-8 border border-zinc-500 dark:border-zinc-100 p-2 outline-none";
+    "bg-transparent hover:bg-amber-500 hover:bg-opacity-10 rounded-md text-white w-full cursor-pointer text-base font-light text-zinc-500 dark:text-zinc-100 mb-8 border border-zinc-500 dark:border-zinc-100 p-2 outline-none";
 
 pub const BODY_DIV_BASE_CSS: &'static str = "
     text-balance accent-amber-500 text-base leading-6 
