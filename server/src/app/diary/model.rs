@@ -104,6 +104,8 @@ pub struct DiaryEntryUpdate<'a> {
 pub struct ReportEntry {
     #[diesel(sql_type = Date)]
     cob_date: NaiveDate,
+    #[diesel(sql_type = Text)]
+    practice: String,
     #[diesel(sql_type = Nullable<Jsonb>)]
     value: Option<JsonValue>,
 }
@@ -112,7 +114,7 @@ impl ReportEntry {
     pub fn get_report_data(
         conn: &mut PgConnection,
         user_id: &Uuid,
-        practice: &str,
+        practice: &Option<String>,
         duration: &ReportDuration,
     ) -> Result<Vec<ReportEntry>, AppError> {
         use diesel::pg::expression::extensions::IntervalDsl;
@@ -126,28 +128,35 @@ impl ReportEntry {
 
         let res = sql_query(
             r#"
-        with dates as (
-            select t.cob_date::date
-            from   generate_series(now() - $3, now(), interval '1 day') as t(cob_date)
-        ),
-        diary as (
-            select d.cob_date, d.value
-            from   user_practices up
-            left   join diary d
-            on     up.user_id = d.user_id 
-            and    up.id = d.practice_id
-            where  up.user_id = $1
-            and    up.practice = $2
-        )
-        select dt.cob_date, d.value
-        from   dates dt
-        left   join diary d
-        on     d.cob_date = dt.cob_date
-        order  by dt.cob_date
+            with dates as (
+                select
+                    t.cob_date :: date
+                from
+                    generate_series(
+                        now() - $3,
+                        now(),
+                        interval '1 day'
+                    ) as t(cob_date)
+            )
+            select
+                dt.cob_date,
+                up.practice,
+                d.value
+            from
+                dates dt
+                cross join user_practices up
+                left join diary d on d.cob_date = dt.cob_date
+                and d.practice_id = up.id
+            where
+                up.user_id = $1
+                and (up.practice = $2 or $2 is null)
+            order by
+                dt.cob_date,
+                up.order_key;
         "#,
         )
         .bind::<DieselUuid, _>(user_id)
-        .bind::<Text, _>(practice)
+        .bind::<Nullable<Text>, _>(practice)
         .bind::<Interval, _>(interval)
         .load::<Self>(conn)?;
 

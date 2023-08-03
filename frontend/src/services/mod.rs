@@ -115,11 +115,14 @@ pub async fn create_user_practice(user_practice: UserPractice) -> Result<(), App
 
 /// Get chart data for a practice
 pub async fn get_chart_data(
-    practice: &str,
+    practice: &Option<String>,
     duration: &ReportDuration,
 ) -> Result<ReportData, AppError> {
-    request_get(format!("/diary/report?practice={}&duration={}", practice, duration).to_string())
-        .await
+    let mut query = format!("duration={duration}");
+    if let Some(p) = practice {
+        query.push_str(&format!("&practice={p}"));
+    }
+    request_get(format!("/diary/report?{query}").to_string()).await
 }
 
 /// Get shared chart data for a practice

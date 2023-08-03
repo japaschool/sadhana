@@ -61,7 +61,7 @@ pub async fn get_diary_day(
 
 #[derive(Deserialize, Debug)]
 pub struct ReportDataQueryParams {
-    practice: String,
+    practice: Option<String>,
     duration: ReportDuration,
 }
 
