@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use chrono::{naive::NaiveDate, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 
@@ -163,6 +165,25 @@ pub enum PracticeEntryValue {
     Duration(u16),
 }
 
+impl Display for PracticeEntryValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            PracticeEntryValue::Int(i) => i.to_string(),
+            PracticeEntryValue::Bool(b) => {
+                if *b {
+                    "V".into()
+                } else {
+                    String::default()
+                }
+            }
+            PracticeEntryValue::Time { h: _, m: _ } => self.as_time_str().unwrap(),
+            PracticeEntryValue::Text(_) => self.as_text().unwrap(),
+            PracticeEntryValue::Duration(_) => self.as_duration_str().unwrap(),
+        };
+        write!(f, "{}", s)
+    }
+}
+
 impl PracticeEntryValue {
     pub fn as_int(&self) -> Option<u16> {
         match self {
@@ -263,6 +284,7 @@ pub struct ReportData {
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 pub struct ReportDataEntry {
     pub cob_date: NaiveDate,
+    pub practice: String,
     pub value: Option<PracticeEntryValue>,
 }
 

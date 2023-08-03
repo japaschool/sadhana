@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{error::Error, str::FromStr};
 
 use crate::{
     components::{
@@ -8,16 +8,23 @@ use crate::{
     css::*,
     hooks::use_user_context,
     i18n::Locale,
-    model::{PracticeDataType, PracticeEntryValue, ReportDataEntry, UserPractice},
+    model::{PracticeDataType, PracticeEntryValue, ReportData, ReportDataEntry, UserPractice},
     services::{get_chart_data, get_shared_chart_data, get_shared_practices, get_user_practices},
 };
 use common::ReportDuration;
-use web_sys::HtmlInputElement;
+use csv::Writer;
+use wasm_bindgen::{JsCast, JsValue};
+use wasm_bindgen_futures::spawn_local;
+use web_sys::{BlobPropertyBag, HtmlElement, HtmlInputElement};
 use yew::prelude::*;
 use yew_hooks::{use_async, use_mount};
 
 #[function_component(Charts)]
 pub fn charts() -> Html {
+    let user_ctx = use_user_context();
+    let selected_practice = use_state(|| None as Option<UserPractice>);
+    let duration = use_state(|| ReportDuration::Last7Days);
+
     let all_practices = use_async(async move {
         get_user_practices().await.map(|res| {
             res.user_practices
@@ -27,6 +34,19 @@ pub fn charts() -> Html {
         })
     });
 
+    let report_data = {
+        let practice = selected_practice.clone();
+        let duration = duration.clone();
+        use_async(async move {
+            match &*practice {
+                Some(p) => get_chart_data(&Some(p.practice.clone()), &*duration)
+                    .await
+                    .map(|res| res.values),
+                None => Ok(vec![]),
+            }
+        })
+    };
+
     {
         // Load state on mount
         let all_practices = all_practices.clone();
@@ -34,22 +54,6 @@ pub fn charts() -> Html {
             all_practices.run();
         });
     }
-
-    let selected_practice = use_state(|| None as Option<UserPractice>);
-    let duration = use_state(|| ReportDuration::Last7Days);
-
-    let report_data = {
-        let practice = selected_practice.clone();
-        let duration = duration.clone();
-        use_async(async move {
-            match &*practice {
-                Some(p) => get_chart_data(&p.practice, &*duration)
-                    .await
-                    .map(|res| res.values),
-                None => Ok(vec![]),
-            }
-        })
-    };
 
     let pull_data = {
         let report_data = report_data.clone();
@@ -62,7 +66,73 @@ pub fn charts() -> Html {
         })
     };
 
-    let user_ctx = use_user_context();
+    fn to_csv_str(data: ReportData) -> Result<String, Box<dyn Error>> {
+        let mut wrt = Writer::from_writer(vec![]);
+        let mut practices = vec![Locale::current().date()];
+        let mut practices_done = false;
+        let mut cob = None;
+        let mut row = vec![];
+        for entry in data.values {
+            let entry_str = entry.value.map(|v| v.to_string()).unwrap_or_default();
+            if cob.is_none() {
+                row.push(entry.cob_date.to_string());
+                row.push(entry_str);
+                cob = Some(entry.cob_date);
+                practices.push(entry.practice);
+            } else if cob == Some(entry.cob_date) {
+                row.push(entry_str);
+                if !practices_done {
+                    practices.push(entry.practice);
+                }
+            } else {
+                if !practices_done {
+                    practices_done = true;
+                    wrt.write_record(practices)?;
+                    practices = vec![];
+                }
+                cob = Some(entry.cob_date);
+                wrt.write_record(row)?;
+                row = vec![entry.cob_date.to_string(), entry_str];
+            }
+        }
+        let res = String::from_utf8(wrt.into_inner()?)?;
+        Ok(res)
+    }
+
+    let download_onclick = {
+        let duration = duration.clone();
+        Callback::from(move |_: MouseEvent| {
+            let duration = duration.clone();
+            spawn_local(async move {
+                get_chart_data(&None, &*duration)
+                    .await
+                    .map(|data| {
+                        let csv = to_csv_str(data).unwrap_or_default();
+                        let json_jsvalue_array =
+                            js_sys::Array::from_iter(std::iter::once(JsValue::from_str(&csv)));
+                        let b = web_sys::Blob::new_with_str_sequence_and_options(
+                            &json_jsvalue_array,
+                            &BlobPropertyBag::new().type_("text/csv"),
+                        )
+                        .unwrap();
+                        let url = web_sys::Url::create_object_url_with_blob(&b).unwrap();
+                        let a = web_sys::window()
+                            .unwrap()
+                            .document()
+                            .unwrap()
+                            .create_element("a")
+                            .unwrap()
+                            .dyn_into::<HtmlElement>()
+                            .unwrap();
+
+                        a.set_attribute("href", &url).unwrap();
+
+                        a.click();
+                    })
+                    .unwrap();
+            });
+        })
+    };
 
     html! {
         <BlankPage show_footer=true loading={all_practices.data.is_none()}>
@@ -78,6 +148,10 @@ pub fn charts() -> Html {
                 button_label={ Locale::current().share_charts_link() }
                 relative_link={ format!("/shared/{}", user_ctx.id) }
                 />
+            <div class="relative">
+                <button onclick={ download_onclick } class={ BTN_CSS }>
+                <i class="icon-doc-dup"></i>{ Locale::current().download_csv() }</button>
+            </div>
         </BlankPage>
     }
 }

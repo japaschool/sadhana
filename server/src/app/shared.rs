@@ -12,7 +12,7 @@ use super::{
 
 #[derive(Deserialize, Debug)]
 pub struct ReportDataQueryParams {
-    practice: String,
+    practice: Option<String>,
     duration: ReportDuration,
 }
 
