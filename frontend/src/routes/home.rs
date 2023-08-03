@@ -332,12 +332,13 @@ pub fn home() -> Html {
             <ListErrors error={diary_entry.error.clone()} />
             <ListErrors error={save_diary_day.error.clone()} />
             <div class={ BODY_DIV_CSS }>
+                <div class="columns md:columns-2 lg:columns-2 space-y-7">
                 {
                 for local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, value})|
                     html! {
                         match data_type {
                             PracticeDataType::Int => html! {
-                                <div class="relative" key={ practice.clone() } >
+                                <div class="relative mb-9 before:content-[''] before:absolute before:inset-0" key={ practice.clone() } >
                                     <input
                                         onchange={ onchange.clone() }
                                         type="number"
@@ -355,7 +356,7 @@ pub fn home() -> Html {
                                 </div>
                                 },
                             PracticeDataType::Bool => html! {
-                                <div class="relative" key={ practice.clone() } >
+                                <div class="relative mb-9 before:absolute" key={ practice.clone() } >
                                     <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
                                         <span class=""><i class="icon-tick"></i>{ format!(" {}: ", practice) }</span>
                                         <input
@@ -369,7 +370,7 @@ pub fn home() -> Html {
                                 </div>
                                 },
                             PracticeDataType::Duration => html! {
-                                <div class="relative" key={ practice.clone() } >
+                                <div class="relative mb-9 before:content-[''] before:absolute before:inset-0" key={ practice.clone() } >
                                     <input
                                         autocomplete="off"
                                         id={ idx.to_string() }
@@ -389,7 +390,7 @@ pub fn home() -> Html {
                                 </div>
                                 },
                             PracticeDataType::Time => html! {
-                                <div class="relative" key={ practice.clone() } >
+                                <div class="relative mb-9 before:content-[''] before:absolute before:inset-0" key={ practice.clone() } >
                                     <input
                                         autocomplete="off"
                                         id={ idx.to_string() }
@@ -410,7 +411,7 @@ pub fn home() -> Html {
                                 </div>
                                 },
                             PracticeDataType::Text => html! {
-                                <div class="relative" key={ practice.clone() } >
+                                <div class="relative mb-9 before:content-[''] before:absolute before:inset-0" key={ practice.clone() } >
                                     <textarea
                                         id={ idx.to_string() }
                                         class={ TEXTAREA_CSS }
@@ -429,10 +430,11 @@ pub fn home() -> Html {
                             }
                         }})
                 }
-                <div class="relative flex justify-center links">
+                <div class="relative mb-9">
                     <Link<AppRoute> classes={ LINK_CSS_NEW_ACC } to={AppRoute::UserPractices}>
                         { Locale::current().modify_practices() }
                     </Link<AppRoute>>
+                </div>
                 </div>
             </div>
         </BlankPage>
