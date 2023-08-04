@@ -32,6 +32,23 @@ input::-webkit-calendar-picker-indicator {
     margin-top: 30px !important;
 }
 
+.group:focus .group-focus\:max-h-screen {
+    max-height: 100vh;
+  }
+  
+  .group:focus .group-focus\:text-white {
+    --text-opacity: 1;
+    color: #02455a;
+  }
+  
+  .group:focus .group-focus\:-rotate-90 {
+    --tw-rotate: 90deg;
+  }
+  
+  .focus-within\:max-h-screen:focus-within {
+    max-height: 100vh;
+  }
+
 .toggle-checkbox:checked {
     @apply: right-0 border-amber-400;
     right: 0;
