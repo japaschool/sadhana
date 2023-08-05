@@ -150,7 +150,7 @@ pub fn charts() -> Html {
                 />
             <div class="relative">
                 <button onclick={ download_onclick } class={ BTN_CSS }>
-                <i class="icon-doc-dup"></i>{ Locale::current().download_csv() }</button>
+                <i class="icon-???"></i>{ Locale::current().download_csv() }</button>
             </div>
         </BlankPage>
     }

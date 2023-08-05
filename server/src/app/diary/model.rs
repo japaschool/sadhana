@@ -149,6 +149,7 @@ impl ReportEntry {
                 and d.practice_id = up.id
             where
                 up.user_id = $1
+                and up.is_active = true
                 and (up.practice = $2 or $2 is null)
             order by
                 dt.cob_date,

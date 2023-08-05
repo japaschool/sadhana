@@ -10,7 +10,7 @@ use self::{
     pwd_reset::PwdReset,
     register_with_id::RegisterWithId,
     settings::{
-        about::About, edit_password::EditPassword, edit_user::EditUser, help::Help,
+        about::About, edit_password::EditPassword, edit_user::EditUser, help::Help, import::Import,
         language::Language, Settings,
     },
     user_practices::UserPractices,
@@ -65,6 +65,8 @@ pub enum AppRoute {
     Help,
     #[at("/settings/about")]
     About,
+    #[at("/settings/import")]
+    Import,
     #[at("/settings/language")]
     Language,
     #[at("/user/practices")]
@@ -98,6 +100,7 @@ fn app_switch(routes: AppRoute) -> Html {
         AppRoute::EditPassword => html! { <EditPassword/> },
         AppRoute::Help => html! { <Help/> },
         AppRoute::About => html! { <About/> },
+        AppRoute::Import => html! { <Import/> },
         AppRoute::Language => html! { <Language/> },
         AppRoute::UserPractices => html! { <UserPractices /> },
         AppRoute::NewUserPractice => {
