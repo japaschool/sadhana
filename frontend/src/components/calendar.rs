@@ -10,6 +10,8 @@ pub struct Props {
     pub date_onchange: Callback<NaiveDate>,
 }
 
+pub const DATE_FORMAT: &'static str = "%Y-%m-%d";
+
 #[function_component(Calendar)]
 pub fn calendar(props: &Props) -> Html {
     let today: NaiveDate = Local::now().date_naive();
@@ -33,8 +35,6 @@ pub fn calendar(props: &Props) -> Html {
             selected_date.clone(),
         );
     }
-
-    const DATE_FORMAT: &'static str = "%Y-%m-%d";
 
     let onclick_date = {
         let selected_date = selected_date.clone();

@@ -12,6 +12,7 @@ pub mod about;
 pub mod edit_password;
 pub mod edit_user;
 pub mod help;
+pub mod import;
 pub mod language;
 
 #[function_component(Settings)]
@@ -19,7 +20,7 @@ pub fn settings() -> Html {
     let user_ctx = use_user_context();
     let nav = use_navigator().unwrap();
 
-    let onclick_logout = {
+    let logout_onclick = {
         let user_ctx = user_ctx.clone();
         Callback::from(move |e: MouseEvent| {
             e.prevent_default();
@@ -75,6 +76,31 @@ pub fn settings() -> Html {
             nav.push(&AppRoute::About);
         })
     };
+    let import_onclick = {
+        let nav = nav.clone();
+        Callback::from(move |_: MouseEvent| {
+            nav.push(&AppRoute::Import);
+        })
+    };
+
+    const UL_CSS: &'static str =
+        "pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500";
+    const LI_DIV_CSS: &'static str =
+        "relative flex justify-between items-center sm:text-base align-baseline";
+
+    fn menu_li(icon: &str, label: String) -> Html {
+        html! {
+            <li>
+                <div class={LI_DIV_CSS}>
+                    <label>
+                        <i class={format!("{icon} flex-shrink-0 w-5")}></i>
+                        { label }
+                    </label>
+                    <i class="icon-chevron-right"></i>
+                </div>
+            </li>
+        }
+    }
 
     html! {
         <BlankPage show_footer=true >
@@ -85,42 +111,18 @@ pub fn settings() -> Html {
                 </div>
             </div>
             <div class={ format!("space-y-4 pt-14 {}", BODY_DIV_BASE_CSS) }>
-                <ul onclick={ edit_user_onclick } class="pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
-                    <li>
-                        <div class="relative flex justify-between items-center sm:text-base align-baseline">
-                            <label>
-                                <i class="icon-user flex-shrink-0 w-5"></i>
-                                { Locale::current().user_details().to_sentence_case() }
-                            </label>
-                            <i class="icon-chevron-right"></i>
-                        </div>
-                    </li>
+                <ul onclick={ edit_user_onclick } class={UL_CSS}>
+                    { menu_li("icon-user", Locale::current().user_details().to_sentence_case()) }
                 </ul>
-                <ul onclick={ edit_password_onclick } class="pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
-                    <li>
-                        <div class="relative flex justify-between items-center sm:text-base align-baseline">
-                            <label>
-                                <i class="icon-edit flex-shrink-0 w-5"></i>
-                                { Locale::current().change_password() }
-                            </label>
-                            <i class="icon-chevron-right"></i>
-                        </div>
-                    </li>
+                <ul onclick={ edit_password_onclick } class={UL_CSS}>
+                    { menu_li("icon-edit", Locale::current().change_password()) }
                 </ul>
-                <ul onclick={ language_onclick } class="pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
-                    <li>
-                        <div class="relative flex justify-between items-center sm:text-base align-baseline">
-                            <label for="language">
-                                <i class="icon-lang flex-shrink-0 w-5"></i>
-                                { format!(" {} ", Locale::current().language()) }
-                            </label>
-                            <i class="icon-chevron-right"></i>
-                        </div>
-                    </li>
+                <ul onclick={ language_onclick } class={UL_CSS}>
+                    { menu_li("icon-lang", Locale::current().language()) }
                 </ul>
-                <ul class="pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
+                <ul class={UL_CSS}>
                     <li>
-                        <div class="relative flex justify-between items-center sm:text-base align-baseline">
+                        <div class={LI_DIV_CSS}>
                             <label for="toggle"><i class="icon-moon flex-shrink-0 w-5"></i>{ Locale::current().dark_mode() }</label>
                             <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in ml-7">
                                 <input
@@ -139,22 +141,28 @@ pub fn settings() -> Html {
                         </div>
                     </li>
                 </ul>
-                <ul class="pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500">
+                <ul onclick={ import_onclick } class={UL_CSS}>
+                    { menu_li("icon-???", Locale::current().import_csv() ) }
+                </ul>
+                <ul class={UL_CSS}>
                     <li onclick={ help_onclick }>
-                        <div class="relative flex justify-between items-center sm:text-base align-baseline">
+                        <div class={LI_DIV_CSS}>
                             <label><i class="icon-help flex-shrink-0 w-5"></i>{ Locale::current().help_and_support() }</label>
                             <i class="icon-chevron-right"></i>
                         </div>
                     </li>
                     <li onclick={ about_onclick } >
-                        <div class="relative flex justify-between items-center sm:text-base align-baseline">
+                        <div class={LI_DIV_CSS}>
                             <label><i class="icon-info flex-shrink-0 w-5"></i>{ Locale::current().about() }</label>
                             <i class="icon-chevron-right"></i>
                         </div>
                     </li>
-                    <li onclick={ onclick_logout.clone() }>
-                        <div class="relative flex justify-between items-center sm:text-base align-baseline">
-                            <label href="/login" for="toggle"><i class="icon-logout flex-shrink-0 w-5"></i>{ Locale::current().logout() }</label>
+                    <li onclick={ logout_onclick.clone() }>
+                        <div class={LI_DIV_CSS}>
+                            <label href="/login" for="toggle">
+                                <i class="icon-logout flex-shrink-0 w-5"></i>
+                                { Locale::current().logout() }
+                            </label>
                         </div>
                     </li>
                 </ul>

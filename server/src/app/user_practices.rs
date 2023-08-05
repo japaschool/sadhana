@@ -3,6 +3,7 @@ use common::error::AppError;
 use diesel::prelude::*;
 use diesel::{sql_query, sql_types::Uuid as DieselUuid, sql_types::*, PgConnection, RunQueryDsl};
 use serde::{Deserialize, Serialize};
+use urlencoding::decode;
 use uuid::Uuid;
 
 use crate::db_types::PracticeDataType;
@@ -175,6 +176,7 @@ pub async fn delete_user_practice(
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
     let practice = path.into_inner();
+    let practice = decode(&practice)?.into_owned();
 
     web::block(move || UserPractice::delete(&mut conn, &user_id, &practice)).await??;
 
@@ -191,6 +193,7 @@ pub async fn update_user_practice(
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
     let practice = path.into_inner();
+    let practice = decode(&practice)?.into_owned();
 
     web::block(move || {
         UserPractice::update(

@@ -45,3 +45,4 @@ lettre = { version = "0.10", default-features = false, features = [
 ] }
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
 jemallocator = "0.5"
+urlencoding = "2.1"

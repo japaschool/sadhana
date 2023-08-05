@@ -75,35 +75,12 @@ pub fn home() -> Html {
         static ref DURATION_R: Regex = Regex::new(r#"(?:(\d+)[^\d]+)?(\d+)[^\d]+"#).unwrap();
     };
 
-    let get_new_val = |input: &HtmlInputElement, entry: &DiaryEntry| match entry.data_type {
-        PracticeDataType::Bool => Some(PracticeEntryValue::Bool(input.checked())),
-        PracticeDataType::Int => input
-            .value()
-            .parse()
-            .map(|v| PracticeEntryValue::Int(v))
-            .ok(),
-        PracticeDataType::Text => Some(PracticeEntryValue::Text(input.value())),
-        PracticeDataType::Duration => DURATION_R
-            .captures_iter(&input.value())
-            .filter_map(|cap| {
-                cap.get(2).and_then(|m_str| {
-                    m_str.as_str().parse().ok().map(|m: u16| {
-                        PracticeEntryValue::Duration(
-                            m + 60
-                                * cap
-                                    .get(1)
-                                    .and_then(|h_str| h_str.as_str().parse::<u16>().ok())
-                                    .unwrap_or_default(),
-                        )
-                    })
-                })
-            })
-            .next(),
-        PracticeDataType::Time => input.value().split_once(":").and_then(|(h, m)| {
-            let h = h.parse().ok()?;
-            let m = m.parse().ok()?;
-            Some(PracticeEntryValue::Time { h, m })
-        }),
+    let get_new_val = |input: &HtmlInputElement, entry: &DiaryEntry| {
+        let s = match entry.data_type {
+            PracticeDataType::Bool => input.checked().to_string(),
+            _ => input.value(),
+        };
+        PracticeEntryValue::try_from((&entry.data_type, s.as_str())).ok()
     };
 
     let checkbox_onclick = {
@@ -350,7 +327,7 @@ pub fn home() -> Html {
     };
 
     html! {
-        <BlankPage show_footer=true >
+        <BlankPage show_footer=true loading={diary_entry.loading || save_diary_day.loading}>
             <Calendar selected_date={ *selected_date } date_onchange={ selected_date_onchange }/>
             <ListErrors error={diary_entry.error.clone()} />
             <ListErrors error={save_diary_day.error.clone()} />

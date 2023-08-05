@@ -1,3 +1,5 @@
+use std::string::FromUtf8Error;
+
 #[cfg(feature = "backend")]
 use actix_web::{error::BlockingError, http::StatusCode, HttpResponse, ResponseError};
 #[cfg(feature = "backend")]
@@ -189,5 +191,12 @@ impl From<LettreError> for AppError {
     fn from(err: LettreError) -> Self {
         log::error!("Failed to send email: {:?}", err.to_string());
         AppError::InternalServerError
+    }
+}
+
+impl From<FromUtf8Error> for AppError {
+    fn from(err: FromUtf8Error) -> Self {
+        log::error!("Failed to url decode a parameter: {:?}", err.to_string());
+        AppError::DeserializeError
     }
 }

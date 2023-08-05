@@ -5,17 +5,31 @@ edition = "2021"
 
 [dependencies]
 thiserror = "1"
-actix-web ={ version = "4", optional = true }
+actix-web = { version = "4", optional = true }
 diesel = { version = "2.0", features = ["r2d2", "uuid"], optional = true }
 bcrypt = { version = "0.13", optional = true }
 jsonwebtoken = { version = "8.1", optional = true }
-uuid = { version = "1.2",  optional = true }
-validator = { version = "0.16",  optional = true }
+uuid = { version = "1.2", optional = true }
+validator = { version = "0.16", optional = true }
 log = "0.4"
-lettre = { version = "0.10", optional = true, default-features = false, features = ["smtp-transport", "tokio1-rustls-tls", "hostname", "builder"] }
+lettre = { version = "0.10", optional = true, default-features = false, features = [
+    "smtp-transport",
+    "tokio1-rustls-tls",
+    "hostname",
+    "builder",
+] }
 serde = { version = "1.0", features = ["derive"] }
+urlencoding = "2.1"
 
 [features]
 default = []
 frontend = []
-backend = ["actix-web", "diesel", "bcrypt", "jsonwebtoken", "uuid", "validator", "lettre"]
+backend = [
+    "actix-web",
+    "diesel",
+    "bcrypt",
+    "jsonwebtoken",
+    "uuid",
+    "validator",
+    "lettre",
+]

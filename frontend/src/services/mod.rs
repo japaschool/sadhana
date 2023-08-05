@@ -1,5 +1,6 @@
 use chrono::NaiveDate;
 use common::{error::AppError, ReportDuration};
+use urlencoding::encode;
 
 use crate::model::*;
 
@@ -84,7 +85,7 @@ pub async fn update_user_practice(
     user_practice: UserPractice,
 ) -> Result<(), AppError> {
     request_put(
-        format!("/user/practice/{}", practice),
+        format!("/user/practice/{}", encode(practice)),
         &UpdateUserPractice { user_practice },
     )
     .await
@@ -101,7 +102,7 @@ pub async fn reorder_user_practices(practices: Vec<String>) -> Result<(), AppErr
 
 /// Delete user practice
 pub async fn delete_user_practice(practice: &str) -> Result<(), AppError> {
-    request_delete(format!("/user/practice/{}", practice)).await
+    request_delete(format!("/user/practice/{}", encode(practice))).await
 }
 
 /// Create a new user practice
@@ -120,7 +121,7 @@ pub async fn get_chart_data(
 ) -> Result<ReportData, AppError> {
     let mut query = format!("duration={duration}");
     if let Some(p) = practice {
-        query.push_str(&format!("&practice={p}"));
+        query.push_str(&format!("&practice={}", encode(p)));
     }
     request_get(format!("/diary/report?{query}").to_string()).await
 }
@@ -131,8 +132,14 @@ pub async fn get_shared_chart_data(
     practice: &str,
     duration: &ReportDuration,
 ) -> Result<ReportData, AppError> {
-    request_get(format!("/share/{user_id}?practice={practice}&duration={duration}").to_string())
-        .await
+    request_get(
+        format!(
+            "/share/{user_id}?practice={}&duration={duration}",
+            encode(practice)
+        )
+        .to_string(),
+    )
+    .await
 }
 
 /// Get shared practices
@@ -212,7 +219,7 @@ pub async fn create_yatra_practice(
 
 /// Delete yatra practice
 pub async fn delete_yatra_practice(yatra_id: &str, practice: &str) -> Result<(), AppError> {
-    request_delete(format!("/yatra/{yatra_id}/practice/{practice}")).await
+    request_delete(format!("/yatra/{yatra_id}/practice/{}", encode(practice))).await
 }
 
 /// Update yatra practice
@@ -222,7 +229,7 @@ pub async fn update_yatra_practice(
     new_name: &str,
 ) -> Result<(), AppError> {
     request_put(
-        format!("/yatra/{yatra_id}/practice/{practice}"),
+        format!("/yatra/{yatra_id}/practice/{}", encode(practice)),
         UpdateYatraPractice {
             update: YatraPracticeUpdate {
                 practice: new_name.to_owned(),

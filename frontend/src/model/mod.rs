@@ -1,7 +1,11 @@
-use std::fmt::Display;
+use std::{error::Error, fmt::Display, str::FromStr};
 
+use anyhow::{anyhow, Context};
 use chrono::{naive::NaiveDate, NaiveDateTime};
+use lazy_static::lazy_static;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
+use thiserror::__private::AsDynError;
 
 use crate::i18n::Locale;
 
@@ -113,7 +117,7 @@ pub struct RegisterInfoWrapper {
 }
 
 /// Assumes values are sorted by DiaryEntry.practice
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct DiaryDay {
     pub diary_day: Vec<DiaryEntry>,
     pub cob_date: NaiveDate,
@@ -133,6 +137,19 @@ pub enum PracticeDataType {
     Time,
     Text,
     Duration,
+}
+
+impl Display for PracticeDataType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            PracticeDataType::Int => "int",
+            PracticeDataType::Bool => "bool",
+            PracticeDataType::Time => "time",
+            PracticeDataType::Text => "text",
+            PracticeDataType::Duration => "duration",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 impl TryFrom<&str> for PracticeDataType {
@@ -165,17 +182,62 @@ pub enum PracticeEntryValue {
     Duration(u16),
 }
 
+lazy_static! {
+    static ref DURATION_R: Regex = Regex::new(r#"(?:(\d+)[^\d]+)?(\d+)[^\d]+"#).unwrap();
+}
+
+impl TryFrom<(&PracticeDataType, &str)> for PracticeEntryValue {
+    type Error = anyhow::Error;
+
+    fn try_from(value: (&PracticeDataType, &str)) -> Result<Self, Self::Error> {
+        let res = match value.0 {
+            PracticeDataType::Int => value
+                .1
+                .parse()
+                .map(|i| PracticeEntryValue::Int(i))
+                .with_context(|| format!("Failed to parse int from {}", value.1))?,
+            PracticeDataType::Bool => value
+                .1
+                .parse()
+                .map(|b| PracticeEntryValue::Bool(b))
+                .with_context(|| format!("Failed to parse bool from {}", value.1))?,
+            PracticeDataType::Time => value
+                .1
+                .split_once(":")
+                .and_then(|(h, m)| {
+                    let h = h.parse().ok()?;
+                    let m = m.parse().ok()?;
+                    Some(PracticeEntryValue::Time { h, m })
+                })
+                .ok_or_else(|| anyhow!("Couldn't parse time from {}", value.1))?,
+            PracticeDataType::Text => PracticeEntryValue::Text(value.1.to_owned()),
+            PracticeDataType::Duration => DURATION_R
+                .captures_iter(value.1)
+                .filter_map(|cap| {
+                    cap.get(2).and_then(|m_str| {
+                        m_str.as_str().parse().ok().map(|m: u16| {
+                            PracticeEntryValue::Duration(
+                                m + 60
+                                    * cap
+                                        .get(1)
+                                        .and_then(|h_str| h_str.as_str().parse::<u16>().ok())
+                                        .unwrap_or_default(),
+                            )
+                        })
+                    })
+                })
+                .next()
+                .ok_or_else(|| anyhow!("Couldn't parse duration from {}", value.1))?,
+        };
+        Ok(res)
+    }
+}
+
 impl Display for PracticeEntryValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
             PracticeEntryValue::Int(i) => i.to_string(),
-            PracticeEntryValue::Bool(b) => {
-                if *b {
-                    "V".into()
-                } else {
-                    String::default()
-                }
-            }
+            PracticeEntryValue::Bool(b) => b.to_string(),
             PracticeEntryValue::Time { h: _, m: _ } => self.as_time_str().unwrap(),
             PracticeEntryValue::Text(_) => self.as_text().unwrap(),
             PracticeEntryValue::Duration(_) => self.as_duration_str().unwrap(),

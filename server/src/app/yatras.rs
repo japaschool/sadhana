@@ -4,6 +4,7 @@ use common::error::AppError;
 use diesel::{dsl::sql, prelude::*, sql_query, sql_types::Uuid as DieselUuid, sql_types::*};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
+use urlencoding::decode;
 use uuid::Uuid;
 
 use crate::{
@@ -657,6 +658,7 @@ pub async fn delete_yatra_practice(
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
     let (yatra_id, practice) = path.into_inner();
+    let practice = decode(&practice)?.into_owned();
 
     web::block(move || YatraPractice::delete(&mut conn, &user_id, &yatra_id, &practice)).await??;
 
@@ -674,6 +676,7 @@ pub async fn update_yatra_practice(
     let user_id = auth::get_current_user(&req)?.id;
     let (yatra_id, practice) = path.into_inner();
     let data = form.update.clone();
+    let practice = decode(&practice)?.into_owned();
 
     web::block(move || YatraPractice::update(&mut conn, &user_id, &yatra_id, &practice, &data))
         .await??;
