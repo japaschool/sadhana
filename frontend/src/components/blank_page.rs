@@ -117,7 +117,7 @@ pub fn blank_page(props: &Props) -> Html {
                     <div class="w-full text-center relative">
                         <div class="absolute flex w-full h-full flex-col justify-center px-4">
                             <div class="relative">
-                                <div class="relative sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto">
+                                <div class="relative sm:max-w-xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl 2xl:max-w-7xl mx-auto">
                                     <div class="relative flex justify-between py-10 px-4 sm:p-20 md:p-30 lg:p-40 xl:p-50">
                                         {
                                             if let Some((ref label, ref route)) = props.prev_link {
@@ -140,7 +140,7 @@ pub fn blank_page(props: &Props) -> Html {
                         </div>
                         <img class="logo h-20 inline-block" src="/images/logo.png" />
                     </div>
-                    <div class="relative sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto">
+                    <div class="relative sm:max-w-xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl 2xl:max-w-7xl mx-auto">
                         <div class="relative px-4 py-4 rounded-3xl sm:px-20 md:px-30 lg:px-40 xl:px-50">
                             {for props.header_label.iter().map(|l| {
                                 html! {
