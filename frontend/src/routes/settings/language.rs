@@ -41,6 +41,7 @@ pub fn language() -> Html {
             header_label={ Locale::current().language() }
             >
             <div class={ BODY_DIV_CSS }>
+            <div class="justify-center mx-auto max-w-md">
                 <div class="relative">
                     <select
                         class={ INPUT_CSS }
@@ -62,6 +63,7 @@ pub fn language() -> Html {
                         <i class="icon-lang"></i>
                         { format!(" {}: ", Locale::current().language()) }
                     </label>
+                </div>
                 </div>
             </div>
         </BlankPage>

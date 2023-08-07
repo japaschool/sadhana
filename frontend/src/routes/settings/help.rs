@@ -7,6 +7,7 @@ pub fn help() -> Html {
     html! {
             <BlankPage show_footer=true >
                 <div class={ BODY_DIV_CSS }>
+                <div class="justify-center mx-auto max-w-md">
                     <div class="text-center">
                         <h5 class="mb-4 text-xl font-medium leading-tight">{"FAQ"}</h5>
                         <div class="group" tabindex="1">
@@ -20,6 +21,7 @@ pub fn help() -> Html {
         <p class="pl-4 pr-4 pt-0 pb-2">{"Answer: "}<a href="https://stackoverflow.com">{"Bla-bla"}</a></p>
       </div>
     </div>
+                    </div>
                     </div>
                 </div>
             </BlankPage>
