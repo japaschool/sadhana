@@ -105,6 +105,7 @@ pub fn settings() -> Html {
     html! {
         <BlankPage show_footer=true header_label={user_ctx.name.clone()}>
             <div class={ format!("space-y-4 pt-14 {}", BODY_DIV_BASE_CSS) }>
+            <div class="justify-center mx-auto max-w-md">
                 <ul onclick={ edit_user_onclick } class={UL_CSS}>
                     { menu_li("icon-user", Locale::current().user_details().to_sentence_case()) }
                 </ul>
@@ -160,6 +161,7 @@ pub fn settings() -> Html {
                         </div>
                     </li>
                 </ul>
+                </div>
             </div>
         </BlankPage>
     }

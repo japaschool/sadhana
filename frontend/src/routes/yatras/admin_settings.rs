@@ -142,6 +142,7 @@ pub fn admin_settings(props: &Props) -> Html {
             loading={ all_practices.loading }>
             <ListErrors error={all_practices.error.clone()} />
             <ListErrors error={reorder_practices.error.clone()} />
+            <div class="justify-center mx-auto max-w-md">
             <div class={ format!("space-y-10 {}", BODY_DIV_BASE_CSS) }>
                 <form>{
                     if all_practices.loading {
@@ -181,6 +182,8 @@ pub fn admin_settings(props: &Props) -> Html {
                         { format!(" {}", Locale::current().delete_yatra()) }
                     </button>
                 </div>
+            </div>
+            </div>
             </div>
         </BlankPage>
     }

@@ -162,6 +162,7 @@ pub fn user_practices() -> Html {
             <ListErrors error={all_practices.error.clone()} />
             <ListErrors error={reorder_practices.error.clone()} />
             <div class={ format!("space-y-10 {}", BODY_DIV_CSS) }>
+            <div class="justify-center mx-auto max-w-md">
                 <form>{
                     if all_practices.loading {
                         html!{}
@@ -183,6 +184,7 @@ pub fn user_practices() -> Html {
                             />
                     }}}
                 </form>
+            </div>
                 <div class="flex justify-center">
                     <Link<AppRoute> classes={ LINK_CSS_NEW_ACC } to={AppRoute::NewUserPractice}>
                         { Locale::current().add_new_practice() }
