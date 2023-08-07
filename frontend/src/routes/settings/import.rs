@@ -11,8 +11,8 @@ use wasm_bindgen_futures::spawn_local;
 use web_sys::{FileList, HtmlInputElement};
 use yew::prelude::*;
 use yew_hooks::{
-    use_async, use_bool_toggle, use_effect_update_with_deps, use_list, use_map, use_mount,
-    UseAsyncHandle, UseListHandle,
+    use_async, use_bool_toggle, use_effect_update_with_deps, use_list, use_mount, UseAsyncHandle,
+    UseListHandle,
 };
 use yew_router::prelude::use_navigator;
 
@@ -29,7 +29,6 @@ use crate::{
 pub fn import() -> Html {
     let csv_data = use_state(|| None::<String>);
     let headers = use_list(vec![]);
-    let headers_types = use_map(HashMap::new());
     let saving = use_bool_toggle(false);
     let successes: UseListHandle<DiaryDay> = use_list(vec![]);
     let failures = use_list(vec![]);
@@ -84,7 +83,7 @@ pub fn import() -> Html {
 
     {
         let headers = headers.clone();
-        let headers_types = headers_types.clone();
+        let all_practices = all_practices.clone();
         use_effect_update_with_deps(
             move |data| {
                 if let Some(data) = data.as_ref() {
@@ -95,12 +94,14 @@ pub fn import() -> Html {
                         .iter()
                         .map(|h| h.to_owned())
                         .collect::<Vec<_>>();
-                    headers_types.set(
-                        hs.iter()
-                            .map(|h| (h.to_owned(), None::<PracticeDataType>))
-                            .collect(),
-                    );
-                    headers.set(hs);
+
+                    if let Some(practices) = all_practices.data.as_ref() {
+                        headers.set(
+                            hs.into_iter()
+                                .map(|h| (h.clone(), practices.get(&h).copied()))
+                                .collect(),
+                        );
+                    }
                 }
                 || ()
             },
@@ -144,23 +145,9 @@ pub fn import() -> Html {
         })
     };
 
-    let data_type_onchange = {
-        let headers_types = headers_types.clone();
-        Callback::from(move |e: Event| {
-            e.prevent_default();
-
-            let input: HtmlInputElement = e.target_unchecked_into();
-
-            headers_types.update(
-                &input.id(),
-                PracticeDataType::try_from(input.value().as_str()).ok(),
-            );
-        })
-    };
-
     fn to_diary_day(
         row: StringRecord,
-        headers: &[(&str, &Option<PracticeDataType>)],
+        headers: &[(String, Option<PracticeDataType>)],
     ) -> Result<DiaryDay> {
         let mut diary_day = vec![];
         let mut it = headers.iter().zip(row.iter());
@@ -168,18 +155,18 @@ pub fn import() -> Html {
         let (_, cob) = it
             .next()
             .ok_or_else(|| anyhow!(Locale::current().import_row_parse_err()))?;
+
         let cob_date = NaiveDate::parse_from_str(cob, DATE_FORMAT)
             .with_context(|| Locale::current().import_cob_parse_err(Cob(cob)))?;
 
-        for (&h, data_type, v) in
-            it.filter_map(|((h, data_type), v)| data_type.map(|dt| (h, dt, v)))
+        for (h, data_type, v) in it.filter_map(|((h, data_type), v)| data_type.map(|dt| (h, dt, v)))
         {
             let value = (!v.trim().is_empty())
                 .then(|| PracticeEntryValue::try_from((&data_type, v)))
                 .transpose()?;
             let entry = DiaryEntry {
                 practice: h.to_owned(),
-                data_type,
+                data_type: data_type.clone(),
                 value,
             };
             diary_day.push(entry);
@@ -194,66 +181,34 @@ pub fn import() -> Html {
     let onsubmit = {
         let data = csv_data.clone();
         let headers = headers.clone();
-        let headers_types = headers_types.clone();
         let saving = saving.clone();
         let successes = successes.clone();
         let failures = failures.clone();
         let save = save.clone();
-        let practices = all_practices.clone();
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
             saving.toggle();
-            if let (Some(data), Some(practices)) = (data.as_ref(), practices.data.as_ref()) {
+            if let Some(data) = data.as_ref() {
                 let mut rdr = scv_reader(data);
-                let ht = headers_types.current();
                 let headers = headers.current();
-                let hd = headers
-                    .iter()
-                    .map(|h| (h.as_str(), ht.get(&*h).unwrap()))
-                    .collect::<Vec<_>>();
 
-                hd.iter().for_each(|(h, t)| {
-                    if let Some(t) = t {
-                        if let Some(saved_type) = practices.get(*h) {
-                            if t != saved_type {
-                                failures.push((
-                                    None,
-                                    Locale::current().import_wrong_type_err(
-                                        Practice(h),
-                                        SavedType(&saved_type.to_string()),
-                                        SelectedType(&t.to_string()),
-                                    ),
-                                ));
-                            }
-                        } else {
-                            failures.push((
-                                None,
-                                Locale::current().import_no_such_practice_err(Practice(h)),
-                            ));
-                        }
+                for (row_num, row) in rdr.records().enumerate() {
+                    let dd = row
+                        .map_err(|e| anyhow::Error::from(e))
+                        .with_context(|| Locale::current().import_row_parse_err())
+                        .and_then(|row| to_diary_day(row, &*headers));
+                    if let Ok(dd) = dd {
+                        successes.push(dd);
+                    } else {
+                        failures.push((
+                            Some(row_num),
+                            dd.err().map(|e| e.to_string()).unwrap_or_default(),
+                        ));
                     }
-                });
+                }
 
-                let no_errors = failures.current().is_empty();
-
-                if no_errors {
-                    for (row_num, row) in rdr.records().enumerate() {
-                        let dd = row
-                            .map_err(|e| anyhow::Error::from(e))
-                            .with_context(|| Locale::current().import_row_parse_err())
-                            .and_then(|row| to_diary_day(row, &*hd));
-                        if let Ok(dd) = dd {
-                            successes.push(dd);
-                        } else {
-                            failures.push((
-                                Some(row_num),
-                                dd.err().map(|e| e.to_string()).unwrap_or_default(),
-                            ));
-                        }
-                    }
-                    if failures.current().is_empty() {
-                        save.run();
-                    }
+                if failures.current().is_empty() {
+                    save.run();
                 }
             }
 
@@ -261,26 +216,58 @@ pub fn import() -> Html {
         })
     };
 
-    let columns_picker = {
+    let add_practice = {
+        let nav = nav.clone();
+        Callback::from(move |e: MouseEvent| {
+            let target: HtmlInputElement = e.target_unchecked_into();
+            nav.push(&AppRoute::NewUserPracticeWithName {
+                practice: target.id(),
+            });
+        })
+    };
+
+    let columns_view = {
         log::debug!(
             "Building columns list from headers: {:?}",
             headers.current()
         );
         html! {
             <>
-                {headers.current().iter().skip(1).map(|h| html! {
+                <div>
+                    <h5 class="text-center mb-4 text-xl font-medium leading-tight">{"Discovered Columns"}</h5>
+                    <p class="text-zinc-500 dark:text-zinc-200">{"These columns have been matched with your practices"}</p>
+                </div>
+                {for headers.current().iter().skip(1).filter(|(_, dt)| dt.is_some()).map(|(h, dt)| html! {
                     <div class="relative">
-                        <select onchange={data_type_onchange.clone()} class={INPUT_CSS} id={h.clone()}>
-                            <option class={ "text-black" } value="int">{ Locale::current().integer() }</option>
-                            <option class={ "text-black" } value="time">{ Locale::current().time() }</option>
-                            <option class={ "text-black" } value="bool">{ Locale::current().boolean() }</option>
-                            <option class={ "text-black" } value="text">{ Locale::current().text() }</option>
-                            <option class={ "text-black" } value="duration">{ Locale::current().duration() }</option>
-                            <option class={ "text-black" } value="" selected=true>{ Locale::current().select_data_type() }</option>
+                        <select class={INPUT_CSS} id={(*h).to_owned() }>
+                            <option class={"text-black"} disabled=true selected={dt == &Some(PracticeDataType::Int)}>{Locale::current().integer()}</option>
+                            <option class={"text-black"} disabled=true selected={dt == &Some(PracticeDataType::Time)}>{Locale::current().time()}</option>
+                            <option class={"text-black"} disabled=true selected={dt == &Some(PracticeDataType::Bool)}>{Locale::current().boolean()}</option>
+                            <option class={"text-black"} disabled=true selected={dt == &Some(PracticeDataType::Text)}>{Locale::current().text()}</option>
+                            <option class={"text-black"} disabled=true selected={dt == &Some(PracticeDataType::Duration)}>{Locale::current().duration()}</option>
                         </select>
-                        <label for={h.clone()} class={INPUT_LABEL_CSS}>{h}</label>
+                        <label for={(*h).to_owned()} class={INPUT_LABEL_CSS}>{h}</label>
                     </div>
-                }).collect::<Html>()}
+                })}
+                <div>
+                    <h5 class="text-center mb-4 text-xl font-medium leading-tight">{"Unmatched Columns"}</h5>
+                    <p class="text-zinc-500 dark:text-zinc-200">{"These columns could not be matched with your practices and can't be imported"}</p>
+                </div>
+                <div class="space-y-0">
+                    {for headers.current().iter().skip(1).filter(|(_, dt)| dt.is_none()).map(|(h, _)| html! {
+                        <div
+                            class="flex w-full justify-center align-baseline"
+                            id={(*h).to_owned()}
+                            >
+                            <label class="flex w-full justify-between whitespace-nowrap mb-6">
+                                <span>{(*h).to_owned()}</span>
+                            </label>
+                            <label>
+                                <i onclick={add_practice.clone()} id={(*h).to_owned()} class="icon-plus"/>
+                            </label>
+                        </div>
+                    })}
+                </div>
                 <div class="relative">
                     <button type="submit" class={ SUBMIT_BTN_CSS }>{ Locale::current().import_csv() }</button>
                 </div>
@@ -347,7 +334,7 @@ pub fn import() -> Html {
                     } else if !failures.current().is_empty() {
                         list_failures
                     } else {
-                        columns_picker
+                        columns_view
                     }}
                 </div>
             </form>

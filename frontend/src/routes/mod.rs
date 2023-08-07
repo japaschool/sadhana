@@ -73,6 +73,8 @@ pub enum AppRoute {
     UserPractices,
     #[at("/user/practice/new")]
     NewUserPractice,
+    #[at("/user/practice/new/:practice")]
+    NewUserPracticeWithName { practice: String },
     #[at("/charts")]
     Charts,
     #[at("/yatras")]
@@ -105,6 +107,9 @@ fn app_switch(routes: AppRoute) -> Html {
         AppRoute::UserPractices => html! { <UserPractices /> },
         AppRoute::NewUserPractice => {
             html! { <NewPractice target={ NewPracticeTarget::UserPractice } /> }
+        }
+        AppRoute::NewUserPracticeWithName { practice } => {
+            html! { <NewPractice target={NewPracticeTarget::UserPractice} practice={practice} /> }
         }
         AppRoute::Charts => html! { <Charts/> },
         AppRoute::Yatras => html! { <Yatras/> },

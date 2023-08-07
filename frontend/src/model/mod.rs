@@ -1,11 +1,10 @@
-use std::{error::Error, fmt::Display, str::FromStr};
+use std::fmt::Display;
 
 use anyhow::{anyhow, Context};
 use chrono::{naive::NaiveDate, NaiveDateTime};
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use thiserror::__private::AsDynError;
 
 use crate::i18n::Locale;
 

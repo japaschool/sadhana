@@ -1,22 +1,27 @@
 use common::error::AppError;
+use urlencoding::decode;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_mount};
+use yew_router::prelude::use_navigator;
 
 use crate::{
-    components::{blank_page::BlankPage, list_errors::ListErrors},
+    components::{
+        blank_page::{BlankPage, HeaderButtonProps},
+        list_errors::ListErrors,
+    },
     css::*,
-    hooks::use_user_context,
     i18n::*,
     model::{UserPractice, YatraPractice},
-    routes::AppRoute,
     services::{create_user_practice, create_yatra_practice},
 };
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
     pub target: NewPracticeTarget,
+    #[prop_or_default]
+    pub practice: Option<String>,
 }
 
 #[derive(PartialEq, Clone)]
@@ -33,36 +38,43 @@ pub fn new_practice(props: &Props) -> Html {
         data_type: String,
     }
 
-    let user_ctx = use_user_context();
-    let form_data = use_state(|| FormData::default());
+    let form_data = use_state(|| FormData {
+        practice: props
+            .practice
+            .iter()
+            .flat_map(|p| decode(p).map(|s| s.into_owned()).ok())
+            .next()
+            .unwrap_or_default(),
+        ..FormData::default()
+    });
+    let nav = use_navigator().unwrap();
+
     let save = {
         let form = form_data.clone();
-        let user_ctx = user_ctx.clone();
+        let nav = nav.clone();
         let target = props.target.clone();
         use_async(async move {
-            match target {
+            (match target {
                 NewPracticeTarget::UserPractice => {
                     let new_practice = UserPractice {
                         practice: form.practice.clone(),
                         data_type: form.data_type.as_str().try_into().unwrap(),
                         is_active: true,
                     };
-                    create_user_practice(new_practice)
-                        .await
-                        .and_then(|_| Ok(user_ctx.redirect_to(&AppRoute::UserPractices)))
+                    create_user_practice(new_practice).await
                 }
-                NewPracticeTarget::YatraPractice { yatra_id } => create_yatra_practice(
-                    &yatra_id,
-                    YatraPractice {
-                        practice: form.practice.clone(),
-                        data_type: form.data_type.as_str().try_into().unwrap(),
-                    },
-                )
-                .await
-                .and_then(|_| {
-                    Ok(user_ctx.redirect_to(&AppRoute::YatraAdminSettings { id: yatra_id }))
-                }),
-            }
+                NewPracticeTarget::YatraPractice { yatra_id } => {
+                    create_yatra_practice(
+                        &yatra_id,
+                        YatraPractice {
+                            practice: form.practice.clone(),
+                            data_type: form.data_type.as_str().try_into().unwrap(),
+                        },
+                    )
+                    .await
+                }
+            })
+            .and_then(|_| Ok(nav.back()))
         })
     };
 
@@ -127,19 +139,17 @@ pub fn new_practice(props: &Props) -> Html {
         })
     };
 
-    let prev_link = {
-        match &props.target {
-            NewPracticeTarget::UserPractice => AppRoute::UserPractices,
-            NewPracticeTarget::YatraPractice { yatra_id } => AppRoute::YatraAdminSettings {
-                id: yatra_id.clone(),
-            },
-        }
+    let back_onclick = {
+        let nav = nav.clone();
+        Callback::from(move |_: MouseEvent| {
+            nav.back();
+        })
     };
 
     html! {
         <BlankPage
             header_label={ Locale::current().select_practices() }
-            prev_link={ (Locale::current().cancel(), prev_link) }
+            left_button={ HeaderButtonProps::back(back_onclick) }
             loading={ save.loading }
             >
             <ListErrors error={save.error.clone()} {error_formatter} />
@@ -156,6 +166,8 @@ pub fn new_practice(props: &Props) -> Html {
                             pattern="^[^\\s].*"
                             maxlength="64"
                             required=true
+                            disabled={props.practice.is_some()}
+                            value={form_data.practice.clone()}
                             />
                         <label for="practice_name" class={ INPUT_LABEL_CSS }>
                             <i class="fa"></i>
