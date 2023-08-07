@@ -332,7 +332,7 @@ pub fn home() -> Html {
             <ListErrors error={diary_entry.error.clone()} />
             <ListErrors error={save_diary_day.error.clone()} />
             <div class={ BODY_DIV_CSS }>
-                <div class="columns md:columns-2 lg:columns-2">
+                <div class="columns md:columns-2 lg:columns-2 xl:columns-2 2xl:columns-2">
                 {
                 for local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, value})|
                     html! {
