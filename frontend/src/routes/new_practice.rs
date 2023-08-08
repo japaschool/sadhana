@@ -57,7 +57,7 @@ pub fn new_practice(props: &Props) -> Html {
             (match target {
                 NewPracticeTarget::UserPractice => {
                     let new_practice = UserPractice {
-                        practice: form.practice.clone(),
+                        practice: form.practice.trim().to_owned(),
                         data_type: form.data_type.as_str().try_into().unwrap(),
                         is_active: true,
                     };
@@ -93,7 +93,7 @@ pub fn new_practice(props: &Props) -> Html {
 
             let input: HtmlInputElement = e.target_unchecked_into();
             let mut form = (*form_data).clone();
-            form.practice = input.value().trim().to_owned();
+            form.practice = input.value().to_owned();
             form_data.set(form);
         })
     };
@@ -163,7 +163,7 @@ pub fn new_practice(props: &Props) -> Html {
                             oninput={ practice_oninput.clone() }
                             class={ INPUT_CSS }
                             placeholder="practice_name"
-                            pattern="^[^\\s].*"
+                            pattern="[^\\s]+?.*"
                             maxlength="64"
                             required=true
                             disabled={props.practice.is_some()}
