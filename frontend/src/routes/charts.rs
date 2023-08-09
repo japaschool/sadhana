@@ -294,12 +294,6 @@ fn charts_base(props: &ChartBaseProps) -> Html {
         })
     };
 
-    fn format_duration(mins: &u16) -> String {
-        let h = mins / 60;
-        let m = mins % 60;
-        format!("2020-01-01 {:0width$}:{:0width$}:00", h, m, width = 2)
-    }
-
     let (x_values, y_values): (Vec<_>, Vec<_>) = selected_practice
         .iter()
         .flat_map(|selected| {
@@ -375,7 +369,7 @@ fn charts_base(props: &ChartBaseProps) -> Html {
                             / report_data.len() as u64)
                             as u16;
                         Some((
-                            format_duration(&avg_mins),
+                            avg_mins.to_string(),
                             PracticeEntryValue::Duration(avg_mins)
                                 .as_duration_str()
                                 .unwrap_or_default(),
