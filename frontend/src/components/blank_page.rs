@@ -110,9 +110,8 @@ pub fn blank_page(props: &Props) -> Html {
             <div id="content" class={ format!("fixed top-0 {} left-0 right-0 overflow-y-auto", if props.show_footer {"bottom-16"} else {"bottom-0"}) }>
                 <div class="bg-transparent min-h-screen justify-center items-center py-6 sm:py-12">
                     if props.loading {
-                        <div class="bg-gray-500 bg-opacity-50 absolute left-0 top-0 z-50 h-full w-full overflow-hidden flex">
-                            <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-10 w-10 m-auto">
-                            </div>
+                        <div class="bg-gray-500 bg-opacity-50 fixed left-0 top-0 z-50 h-full w-full overflow-hidden flex">
+                            <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-10 w-10 m-auto"/>
                         </div>
                     }
                     <div class="w-full text-center relative">
