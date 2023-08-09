@@ -51,6 +51,7 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
             )
             .service(
                 web::scope("/share/{user_id}")
+                    .route("/user", web::get().to(app::user::api::user_info))
                     .route(
                         "/practices",
                         web::get().to(app::shared::get_shared_report_practices),

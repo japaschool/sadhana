@@ -1,7 +1,6 @@
 use crate::{
     components::{blank_page::BlankPage, list_errors::ListErrors, pwd::Pwd},
     css::*,
-    hooks::use_user_context,
     i18n::Locale,
     routes::AppRoute,
     services,
@@ -14,7 +13,6 @@ use yew_router::prelude::use_navigator;
 #[function_component(EditPassword)]
 pub fn edit_password() -> Html {
     let new_password = use_state(|| String::new());
-    let user_ctx = use_user_context();
     let current_pwd = use_state(|| String::default());
     let nav = use_navigator().unwrap();
 
@@ -55,7 +53,7 @@ pub fn edit_password() -> Html {
     html! {
         <form {onsubmit} >
             <BlankPage
-                header_label={ user_ctx.name.clone() }
+                header_label={ Locale::current().change_password() }
                 prev_link={ (Locale::current().cancel(), AppRoute::Settings) }
                 loading={ update_password.loading }
                 >

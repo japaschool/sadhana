@@ -105,11 +105,11 @@ pub async fn send_confirmation_link(
     Ok(HttpResponse::Ok().json(()))
 }
 
-type ConfirmationIdSlug = Uuid;
+type UuidSlug = Uuid;
 
 pub async fn confirmation_details(
     state: web::Data<AppState>,
-    path: web::Path<ConfirmationIdSlug>,
+    path: web::Path<UuidSlug>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let id = path.into_inner();
@@ -122,6 +122,18 @@ pub async fn me(req: HttpRequest) -> Result<HttpResponse, AppError> {
     let user = auth::get_current_user(&req)?;
     let token = user.generate_token()?;
     let res = UserResponse::from((user, token));
+    Ok(HttpResponse::Ok().json(res))
+}
+
+pub async fn user_info(
+    state: web::Data<AppState>,
+    path: web::Path<UuidSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let user_id = path.into_inner();
+
+    let user = web::block(move || User::find(&mut conn, &user_id)).await??;
+    let res = UserResponse::from((user, "".into()));
     Ok(HttpResponse::Ok().json(res))
 }
 

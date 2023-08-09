@@ -114,7 +114,7 @@ fn fetch_user(req: &ServiceRequest) -> Result<User, &str> {
         .ok_or("Cannot get state.")
         .and_then(|state| state.get_conn().map_err(|_err| "Cannot get db connection."))?;
 
-    User::find(&mut conn, user_id).map_err(|_err| "Cannot find auth user")
+    User::find(&mut conn, &user_id).map_err(|_err| "Cannot find auth user")
 }
 
 fn get_user_id_from_header(req: &ServiceRequest) -> Result<Uuid, &str> {
@@ -195,7 +195,7 @@ mod tests {
     }
 }
 
-const SKIP_AUTH_API_ROUTES: [SkipAuthRoute; 7] = [
+const SKIP_AUTH_API_ROUTES: [SkipAuthRoute; 8] = [
     SkipAuthRoute {
         path: "/api/users",
         method: Method::POST,
@@ -222,6 +222,10 @@ const SKIP_AUTH_API_ROUTES: [SkipAuthRoute; 7] = [
     },
     SkipAuthRoute {
         path: "/api/share/{share_id}/practices",
+        method: Method::GET,
+    },
+    SkipAuthRoute {
+        path: "/api/share/{share_id}/user",
         method: Method::GET,
     },
 ];

@@ -147,6 +147,10 @@ pub async fn get_shared_practices(user_id: &str) -> Result<AllUserPractices, App
     request_get(format!("/share/{user_id}/practices").to_string()).await
 }
 
+pub async fn user_info(user_id: &str) -> Result<UserInfoWrapper, AppError> {
+    request_get(format!("/share/{user_id}/user")).await
+}
+
 /// Get yatra data
 pub async fn get_yatra_data(yatra_id: &str, cob_date: &NaiveDate) -> Result<YatraData, AppError> {
     request_get(format!("/yatra/{yatra_id}/data?cob_date={}", cob_date.format("%F")).to_string())
