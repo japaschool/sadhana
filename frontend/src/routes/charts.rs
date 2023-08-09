@@ -9,7 +9,9 @@ use crate::{
     hooks::use_user_context,
     i18n::Locale,
     model::{PracticeDataType, PracticeEntryValue, ReportData, ReportDataEntry, UserPractice},
-    services::{get_chart_data, get_shared_chart_data, get_shared_practices, get_user_practices},
+    services::{
+        get_chart_data, get_shared_chart_data, get_shared_practices, get_user_practices, user_info,
+    },
 };
 use common::ReportDuration;
 use csv::Writer;
@@ -135,24 +137,24 @@ pub fn charts() -> Html {
     };
 
     html! {
-        <BlankPage show_footer=true loading={all_practices.data.is_none()}>
-            <ListErrors error={all_practices.error.clone()} />
-            <ListErrors error={report_data.error.clone()} />
-            if all_practices.data.is_some(){
-                <ChartsBase
-                    practices={all_practices.data.clone().unwrap_or_default()}
-                    report_data={report_data.data.clone().unwrap_or_default()}
-                    {pull_data}/>
+            <BlankPage show_footer=true loading={all_practices.data.is_none()} header_label={user_ctx.name.clone()}>
+                <ListErrors error={all_practices.error.clone()} />
+                <ListErrors error={report_data.error.clone()} />
+                if all_practices.data.is_some(){
+                    <ChartsBase
+                        practices={all_practices.data.clone().unwrap_or_default()}
+                        report_data={report_data.data.clone().unwrap_or_default()}
+                        {pull_data}/>
             }
-            <CopyButton
-                button_label={ Locale::current().share_charts_link() }
-                relative_link={ format!("/shared/{}", user_ctx.id) }
-                />
-            <div class="relative">
-                <button onclick={ download_onclick } class={ BTN_CSS }>
-                <i class="icon-???"></i>{ Locale::current().download_csv() }</button>
-            </div>
-        </BlankPage>
+                <CopyButton
+                    button_label={Locale::current().share_charts_link()}
+                    relative_link={format!("/shared/{}", user_ctx.id)}
+                    />
+                <div class="relative">
+                    <button onclick={download_onclick} class={BTN_CSS}>
+                    <i class="icon-???"></i>{Locale::current().download_csv()}</button>
+                </div>
+            </BlankPage>
     }
 }
 
@@ -163,6 +165,11 @@ pub struct SharedChartsProps {
 
 #[function_component(SharedCharts)]
 pub fn shared_charts(props: &SharedChartsProps) -> Html {
+    let user_info = {
+        let share_id = props.share_id.clone();
+        use_async(async move { user_info(&share_id).await.map(|inner| inner.user) })
+    };
+
     let all_practices = {
         let share_id = props.share_id.clone();
         use_async(async move {
@@ -178,8 +185,10 @@ pub fn shared_charts(props: &SharedChartsProps) -> Html {
     {
         // Load state on mount
         let all_practices = all_practices.clone();
+        let user_info = user_info.clone();
         use_mount(move || {
             all_practices.run();
+            user_info.run();
         });
     }
 
@@ -212,16 +221,20 @@ pub fn shared_charts(props: &SharedChartsProps) -> Html {
     };
 
     html! {
-        <BlankPage show_footer=false loading={all_practices.data.is_none()}>
-            <ListErrors error={all_practices.error.clone()} />
-            <ListErrors error={report_data.error.clone()} />
-            if all_practices.data.is_some(){
-                <ChartsBase
-                    practices={all_practices.data.clone().unwrap_or_default()}
-                    report_data={report_data.data.clone().unwrap_or_default()}
-                    {pull_data}/>
+            <BlankPage
+                show_footer=false
+                loading={all_practices.loading || user_info.loading}
+                header_label={user_info.data.as_ref().map(|u| u.name.to_owned()).unwrap_or_default()}
+                >
+                <ListErrors error={all_practices.error.clone()} />
+                <ListErrors error={report_data.error.clone()} />
+                if all_practices.data.is_some(){
+                    <ChartsBase
+                        practices={all_practices.data.clone().unwrap_or_default()}
+                        report_data={report_data.data.clone().unwrap_or_default()}
+                        {pull_data}/>
             }
-        </BlankPage>
+            </BlankPage>
     }
 }
 
@@ -396,29 +409,29 @@ fn charts_base(props: &ChartBaseProps) -> Html {
         .next();
 
     let grid = html! {
-        <Grid>
-            <Ghead>
-                <Gh>{ Locale::current().date() }</Gh>
-                <Gh>{ selected_practice.as_ref().map(|p| p.practice.clone()).unwrap_or_default() }</Gh>
-            </Ghead>
-            <Gbody>{
-                for props.report_data.iter().map(|p| {
-                    html! {
-                        <Gr>
-                            <Gd>{ p.cob_date.format(DATE_FORMAT_HR).to_string() }</Gd>
-                            <Gd>{
-                                p.value
-                                    .as_ref()
-                                    .map(|v| v.as_text())
-                                    .unwrap_or_default()
+            <Grid>
+                <Ghead>
+                    <Gh>{Locale::current().date()}</Gh>
+                    <Gh>{selected_practice.as_ref().map(|p| p.practice.clone()).unwrap_or_default()}</Gh>
+                </Ghead>
+                <Gbody>{
+                    for props.report_data.iter().map(|p| {
+                        html! {
+                            <Gr>
+                                <Gd>{p.cob_date.format(DATE_FORMAT_HR).to_string()}</Gd>
+                                <Gd>{
+                                    p.value
+                                        .as_ref()
+                                        .map(|v| v.as_text())
+                                        .unwrap_or_default()
                             }
-                            </Gd>
-                        </Gr>
+                                </Gd>
+                            </Gr>
                     }
                 })
             }
-            </Gbody>
-        </Grid>
+                </Gbody>
+            </Grid>
     };
 
     let data_body = if selected_practice
@@ -426,60 +439,60 @@ fn charts_base(props: &ChartBaseProps) -> Html {
         .map(|inner| inner.data_type == PracticeDataType::Text)
         .unwrap_or(false)
     {
-        html! { grid }
+        html! {grid}
     } else {
         html! {
-            <Chart
-                { x_values }
-                { y_values }
-                y_axis_type={ selected_practice.as_ref().map(|p| p.data_type) }
-                avg_value_and_label={ avg_value }
-                />
+                <Chart
+                    {x_values}
+                    {y_values}
+                    y_axis_type={selected_practice.as_ref().map(|p| p.data_type)}
+                    avg_value_and_label={avg_value}
+                    />
         }
     };
 
     html! {
-        <div class={ BODY_DIV_CSS }>
-            <div class="relative">
-                <select
-                    class={ INPUT_CSS }
-                    id="practices"
-                    onchange={ practice_onchange.clone() }
-                    >
-                    { for props.practices.iter().map(|p| html!{
-                        <option class={ "text-black" }
-                            selected={
-                                selected_practice
-                                    .as_ref()
-                                    .map(|inner| inner.practice == p.practice)
-                                    .unwrap_or(false)
+            <div class={BODY_DIV_CSS}>
+                <div class="relative">
+                    <select
+                        class={INPUT_CSS}
+                        id="practices"
+                        onchange={practice_onchange.clone()}
+                        >
+                        {for props.practices.iter().map(|p| html!{
+                            <option class={"text-black"}
+                                selected={
+                                    selected_practice
+                                        .as_ref()
+                                        .map(|inner| inner.practice == p.practice)
+                                        .unwrap_or(false)
                             }
-                            value={ p.practice.clone() }
-                            >
-                            { p.practice.clone() }
-                        </option>
+                                value={p.practice.clone()}
+                                >
+                                {p.practice.clone()}
+                            </option>
                     })}
-                </select>
-                <label for="practices" class={ INPUT_LABEL_CSS }>
-                    <i class="fa"></i>
-                    { format!(" {}: ", Locale::current().practice()) }
-                </label>
+                    </select>
+                    <label for="practices" class={INPUT_LABEL_CSS}>
+                        <i class="fa"></i>
+                        {format!(" {}: ", Locale::current().practice())}
+                    </label>
+                </div>
+                <div class="relative">
+                    <select class={INPUT_CSS} id="duration" onchange={duration_onchange.clone()}>
+                        <option class={"text-black"} selected=true value={ReportDuration::Last7Days.to_string()}>{Locale::current().last_week()}</option>
+                        <option class={"text-black"} value={ReportDuration::Last30Days.to_string()}>{Locale::current().last_month()}</option>
+                        <option class={"text-black"} value={ReportDuration::Last90Days.to_string()}>{Locale::current().last_quarter()}</option>
+                        <option class={"text-black"} value={ReportDuration::Last365Days.to_string()}>{Locale::current().last_year()}</option>
+                    </select>
+                    <label for="duration" class={INPUT_LABEL_CSS}>
+                        <i class="fa"></i>
+                        {format!(" {}: ", Locale::current().duration())}
+                    </label>
+                </div>
+                <div class="relative">
+                    {data_body}
+                </div>
             </div>
-            <div class="relative">
-                <select class={ INPUT_CSS } id="duration" onchange={ duration_onchange.clone() }>
-                    <option class={ "text-black" } selected=true value={ ReportDuration::Last7Days.to_string() }>{ Locale::current().last_week() }</option>
-                    <option class={ "text-black" } value={ ReportDuration::Last30Days.to_string() }>{ Locale::current().last_month() }</option>
-                    <option class={ "text-black" } value={ ReportDuration::Last90Days.to_string() }>{ Locale::current().last_quarter() }</option>
-                    <option class={ "text-black" } value={ ReportDuration::Last365Days.to_string() }>{ Locale::current().last_year() }</option>
-                </select>
-                <label for="duration" class={ INPUT_LABEL_CSS }>
-                    <i class="fa"></i>
-                    { format!(" {}: ", Locale::current().duration()) }
-                </label>
-            </div>
-            <div class="relative">
-                { data_body }
-            </div>
-        </div>
     }
 }

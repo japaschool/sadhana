@@ -103,13 +103,7 @@ pub fn settings() -> Html {
     }
 
     html! {
-        <BlankPage show_footer=true >
-            <div class="w-full text-center relative mt-3">
-                <div class="absolute flex w-full h-full flex-col justify-center px-4">
-                    <h5 class="mb-1 text-xl font-medium text-zinc-500 dark:text-zinc-100">{ user_ctx.name.clone() }</h5>
-                    // <span class="text-sm text-zinc-300 dark:text-zinc-200">{"Bla-bla"}</span>
-                </div>
-            </div>
+        <BlankPage show_footer=true header_label={user_ctx.name.clone()}>
             <div class={ format!("space-y-4 pt-14 {}", BODY_DIV_BASE_CSS) }>
                 <ul onclick={ edit_user_onclick } class={UL_CSS}>
                     { menu_li("icon-user", Locale::current().user_details().to_sentence_case()) }

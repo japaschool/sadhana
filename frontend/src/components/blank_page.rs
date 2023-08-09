@@ -8,6 +8,8 @@ pub struct Props {
     #[prop_or_default]
     pub header_label: Option<String>,
     #[prop_or_default]
+    pub header_sub_label: Option<String>,
+    #[prop_or_default]
     pub prev_link: Option<(String, AppRoute)>,
     #[prop_or_default]
     pub left_button: Option<HeaderButtonProps>,
@@ -139,14 +141,17 @@ pub fn blank_page(props: &Props) -> Html {
                         </div>
                         <img class="logo h-20 inline-block" src="/images/logo.png" />
                     </div>
-                    <div class="relative py-3 sm:max-w-xl sm:mx-auto">
+                    <div class="relative sm:max-w-xl sm:mx-auto">
                         <div class="relative px-4 py-4 sm:rounded-3xl sm:px-20">
-                            { props.header_label.iter().map(|l| {
+                            {for props.header_label.iter().map(|l| {
                                 html! {
-                                    <div class="pb-5">
-                                        <h1 class="text-center text-xl font-normal leading-9 tracking-tight dark:text-white text-zinc-400">{ l }</h1>
+                                    <div class="pb-5 text-center">
+                                        <h5 class="text-xl font-medium text-zinc-500 dark:text-zinc-100">{l}</h5>
+                                        {for props.header_sub_label.iter().map(|sl| {
+                                            html!{<span class="text-sm text-zinc-300 dark:text-zinc-200">{sl}</span>}
+                                        })}
                                     </div>
-                                }}).collect::<Html>()
+                                }})
                             }
                             { props.children.clone() }
                         </div>

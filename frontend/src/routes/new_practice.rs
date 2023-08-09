@@ -148,7 +148,7 @@ pub fn new_practice(props: &Props) -> Html {
 
     html! {
         <BlankPage
-            header_label={ Locale::current().select_practices() }
+            header_label={ Locale::current().add_new_practice() }
             left_button={ HeaderButtonProps::back(back_onclick) }
             loading={ save.loading }
             >

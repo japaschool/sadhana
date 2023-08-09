@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::i18n::Locale;
 
-//FIXME: break up into sub modules
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct UserInfo {
     pub id: String,
