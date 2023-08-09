@@ -341,8 +341,12 @@ fn charts_base(props: &ChartBaseProps) -> Html {
     let avg_value = selected_practice
         .iter()
         .flat_map(|selected| {
-            if props
+            let report_data = props
                 .report_data
+                .split_last()
+                .map(|x| x.1)
+                .unwrap_or(&props.report_data);
+            if report_data
                 .iter()
                 .filter(|v| v.value.is_some())
                 .next()
@@ -352,25 +356,23 @@ fn charts_base(props: &ChartBaseProps) -> Html {
             } else {
                 match selected.data_type {
                     PracticeDataType::Int => {
-                        let res = (props
-                            .report_data
+                        let res = (report_data
                             .iter()
                             .map(|p| {
                                 p.value.iter().flat_map(|v| v.as_int()).next().unwrap_or(0) as u64
                             })
                             .sum::<u64>()
-                            / props.report_data.len() as u64)
+                            / report_data.len() as u64)
                             .to_string();
                         Some((res.clone(), res))
                     }
                     PracticeDataType::Duration => {
-                        let avg_mins = (props
-                            .report_data
+                        let avg_mins = (report_data
                             .iter()
                             .flat_map(|p| p.value.iter().flat_map(|v| v.as_duration_mins()))
                             .map(|m| m as u64)
                             .sum::<u64>()
-                            / props.report_data.len() as u64)
+                            / report_data.len() as u64)
                             as u16;
                         Some((
                             format_duration(&avg_mins),
@@ -380,8 +382,7 @@ fn charts_base(props: &ChartBaseProps) -> Html {
                         ))
                     }
                     PracticeDataType::Time => {
-                        let avg_mins = props
-                            .report_data
+                        let avg_mins = report_data
                             .iter()
                             .flat_map(|e| {
                                 e.value.iter().map(|v| match v {
@@ -392,8 +393,7 @@ fn charts_base(props: &ChartBaseProps) -> Html {
                                 })
                             })
                             .sum::<u64>()
-                            / props
-                                .report_data
+                            / report_data
                                 .iter()
                                 .filter_map(|x| x.value.as_ref().map(|_| 1))
                                 .sum::<u64>();
