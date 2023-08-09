@@ -323,9 +323,7 @@ fn charts_base(props: &ChartBaseProps) -> Html {
                             .value
                             .as_ref()
                             .and_then(|v| match v {
-                                PracticeEntryValue::Duration(minutes) => {
-                                    Some(format_duration(minutes))
-                                }
+                                PracticeEntryValue::Duration(minutes) => Some(minutes.to_string()),
                                 _ => None,
                             })
                             .unwrap_or_default(),
@@ -343,7 +341,13 @@ fn charts_base(props: &ChartBaseProps) -> Html {
     let avg_value = selected_practice
         .iter()
         .flat_map(|selected| {
-            if props.report_data.is_empty() {
+            if props
+                .report_data
+                .iter()
+                .filter(|v| v.value.is_some())
+                .next()
+                .is_none()
+            {
                 None
             } else {
                 match selected.data_type {

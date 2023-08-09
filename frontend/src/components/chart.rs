@@ -2,7 +2,7 @@ use yew::prelude::*;
 use yew_plotly::plotly::color::NamedColor;
 use yew_plotly::plotly::common::{Font, Marker, Mode, Position};
 use yew_plotly::plotly::configuration::DisplayModeBar;
-use yew_plotly::plotly::layout::{Axis, Margin};
+use yew_plotly::plotly::layout::{Axis, AxisType, Margin};
 use yew_plotly::plotly::{Bar, Configuration, Layout, Plot, Scatter};
 use yew_plotly::Plotly;
 
@@ -33,16 +33,23 @@ pub fn chart(props: &Props) -> Html {
         .show_legend(false)
         .auto_size(true);
 
-    if let Some(PracticeDataType::Time | PracticeDataType::Duration) = props.y_axis_type {
-        layout = layout.y_axis(Axis::new().tick_format("%H:%M"))
+    if let Some(PracticeDataType::Time) = props.y_axis_type {
+        layout = layout.y_axis(Axis::new().tick_format("%H:%M"));
     }
 
-    let config = Configuration::default()
-        .display_mode_bar(DisplayModeBar::False)
-        .static_plot(true);
+    if let Some(PracticeDataType::Duration) = props.y_axis_type {
+        layout = layout.y_axis(
+            Axis::new()
+                .type_(AxisType::Linear)
+                .tick_suffix(Locale::current().minutes_label()),
+        );
+    }
+
+    let config = Configuration::default().display_mode_bar(DisplayModeBar::False);
 
     let trace = Bar::new(props.x_values.clone(), props.y_values.clone())
         .marker(Marker::new().color(NamedColor::DarkOrange))
+        .name("")
         .opacity(0.5);
 
     if let Some((avg_value, label_value)) = props.avg_value_and_label.as_ref() {
@@ -50,6 +57,7 @@ pub fn chart(props: &Props) -> Html {
             props.x_values.clone(),
             vec![avg_value.clone(); props.y_values.len()],
         )
+        .name("")
         .text_array(
             props
                 .x_values
@@ -74,6 +82,6 @@ pub fn chart(props: &Props) -> Html {
     plot.set_configuration(config);
 
     html! {
-        <Plotly plot={ plot }/>
+        <Plotly plot={plot}/>
     }
 }
