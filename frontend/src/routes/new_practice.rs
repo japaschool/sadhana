@@ -184,7 +184,7 @@ pub fn new_practice(props: &Props) -> Html {
                             <option class={ "text-black" } value="time">{ Locale::current().time() }</option>
                             <option class={ "text-black" } value="bool">{ Locale::current().boolean() }</option>
                             <option class={ "text-black" } value="text">{ Locale::current().text() }</option>
-                            <option class={ "text-black" } value="duration">{ Locale::current().duration() }</option>
+                            <option class={ "text-black" } value="duration">{ Locale::current().duration_in_mins() }</option>
                             <option class={ "text-black" } value="" selected=true disabled=true style="display:none">{ Locale::current().select_data_type() }</option>
                         </select>
                         <label for="data_type" class={ INPUT_LABEL_CSS }>
