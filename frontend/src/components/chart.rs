@@ -33,19 +33,23 @@ pub fn chart(props: &Props) -> Html {
         .show_legend(false)
         .auto_size(true);
 
+    let mut y_axis = Axis::new().fixed_range(true);
+
     if let Some(PracticeDataType::Time) = props.y_axis_type {
-        layout = layout.y_axis(Axis::new().tick_format("%H:%M"));
+        y_axis = y_axis.tick_format("%H:%M");
     }
 
     if let Some(PracticeDataType::Duration) = props.y_axis_type {
-        layout = layout.y_axis(
-            Axis::new()
-                .type_(AxisType::Linear)
-                .tick_suffix(Locale::current().minutes_label()),
-        );
+        y_axis = y_axis
+            .type_(AxisType::Linear)
+            .tick_suffix(Locale::current().minutes_label());
     }
 
-    let config = Configuration::default().display_mode_bar(DisplayModeBar::False);
+    layout = layout.y_axis(y_axis.clone());
+
+    let config = Configuration::default()
+        .display_mode_bar(DisplayModeBar::False)
+        .static_plot(true);
 
     let trace = Bar::new(props.x_values.clone(), props.y_values.clone())
         .marker(Marker::new().color(NamedColor::DarkOrange))
