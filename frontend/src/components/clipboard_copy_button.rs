@@ -1,3 +1,4 @@
+use crate::web_sys_ext::*;
 use lazy_static::lazy_static;
 use yew::prelude::*;
 use yew_hooks::{use_bool_toggle, use_clipboard, use_timeout};
@@ -29,8 +30,20 @@ pub fn copy_button(props: &Props) -> Html {
         let link = props.relative_link.clone();
         Callback::from(move |_| {
             let msg = format!("{}{}", URL_BASE.as_str(), link.as_str());
-            clipboard.write_text(msg);
-            show_tooltip.set(true);
+            if window()
+                .iter()
+                .flat_map(|w| {
+                    w.navigator()
+                        .can_share()
+                        .unwrap_or(false)
+                        .then(|| w.navigator().share_with_data(&ShareData::new().url(&msg)))
+                })
+                .next()
+                .is_none()
+            {
+                clipboard.write_text(msg);
+                show_tooltip.set(true);
+            }
         })
     };
 
