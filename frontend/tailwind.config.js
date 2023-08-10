@@ -6,7 +6,7 @@ module.exports = {
   content: ["./src/**/*.rs"],
   theme: {
     fontFamily: {
-      sans: ["poppins", ...defaultTheme.fontFamily.sans]
+      sans: ["montserrat", ...defaultTheme.fontFamily.sans]
     },
     extend: {
       spacing: {
