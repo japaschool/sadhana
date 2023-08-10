@@ -107,6 +107,7 @@ pub fn calendar(props: &Props) -> Html {
             <div class="text-center">
                 <p class={ weekday_label_css }>{ &Locale::current().day_of_week(d).chars().nth(0).unwrap() }</p>
                 <div class={ date_css } id={ id.to_string() } onclick={ onclick_date.clone() }>
+                <span class="absolute ml-4 w-2 h-2 bg-red-500 rounded-full"></span>
                     <p id={ id.to_string() } class={ date_label_css }>{ d.format("%-d") }</p>
                 </div>
             </div>
@@ -122,7 +123,9 @@ pub fn calendar(props: &Props) -> Html {
                 {
                     week.iter().map(|d| html! {
                         <div class="flex group justify-center w-16">
-                            <div class="flex items-center">{ calendar_day(*d == *selected_date, d) }</div>
+                            <div class="flex items-center">
+                            { calendar_day(*d == *selected_date, d) }
+                            </div>
                         </div>
                     }).collect::<Html>()
                 }
