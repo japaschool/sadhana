@@ -13,6 +13,7 @@ mod i18n;
 mod model;
 mod routes;
 mod services;
+mod web_sys_ext;
 
 #[function_component(App)]
 fn app() -> Html {
