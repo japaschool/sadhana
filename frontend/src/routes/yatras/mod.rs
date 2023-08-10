@@ -226,7 +226,7 @@ pub fn yatras() -> Html {
     };
 
     let empty_body = html! {
-        <div>
+        <div class={BODY_DIV_CSS}>
             <ListErrors error={yatras.error.clone()} />
             <span>{ Locale::current().no_yatras_msg() }</span>
             <div class="relative">
@@ -243,7 +243,7 @@ pub fn yatras() -> Html {
         <ListErrors error={yatras.error.clone()} />
         <ListErrors error={data.error.clone()} />
         <ListErrors error={new_yatra.error.clone()} />
-        <div class={ BODY_DIV_CSS }>
+        <div class={BODY_DIV_CSS}>
             <div class="relative pb-5">
                 <select
                     class={ INPUT_CSS }
@@ -267,8 +267,8 @@ pub fn yatras() -> Html {
                     { format!(" {}: ", Locale::current().yatra()) }
                 </label>
             </div>
-            { grid }
         </div>
+        { grid }
         </>
     };
 

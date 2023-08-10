@@ -139,11 +139,11 @@ pub fn admin_settings(props: &Props) -> Html {
         <BlankPage
             header_label={ yatra.data.iter().map(|y| y.name.clone()).next().unwrap_or_default() }
             prev_link={ (Locale::current().done(), AppRoute::YatraSettings { id: props.yatra_id.to_string() }) }
-            loading={ all_practices.loading }>
+            loading={ all_practices.loading }
+            >
             <ListErrors error={all_practices.error.clone()} />
             <ListErrors error={reorder_practices.error.clone()} />
-            <div class="justify-center mx-auto max-w-md">
-            <div class={ format!("space-y-10 {}", BODY_DIV_BASE_CSS) }>
+            <div class={BODY_DIV_CSS}>
                 <form>{
                     if all_practices.loading {
                         html!{}
@@ -182,8 +182,6 @@ pub fn admin_settings(props: &Props) -> Html {
                         { format!(" {}", Locale::current().delete_yatra()) }
                     </button>
                 </div>
-            </div>
-            </div>
             </div>
         </BlankPage>
     }

@@ -310,8 +310,7 @@ pub fn yatra_settings(props: &Props) -> Html {
             <ListErrors error={ yatra.error.clone() } />
             <ListErrors error={new_yatra.error.clone()} />
             <form {onsubmit}>
-            <div class="justify-center mx-auto max-w-md">
-                <div class={ format!("space-y-10 {}", BODY_DIV_BASE_CSS) }>
+                <div class={BODY_DIV_NO_PADDING_CSS}>
                     <div class="relative pb-3">
                         <label>{ Locale::current().yatra_mapping_info() }</label>
                     </div>
@@ -321,6 +320,8 @@ pub fn yatra_settings(props: &Props) -> Html {
                             <i class="icon-tick"></i>{ format!(" {}", Locale::current().save()) }
                         </button>
                     </div>
+                </div>
+                <div class="mx-auto max-w-md">
                     <div class="flex space-x-3">
                         <button class={ BTN_CSS } onclick={ leave_onclick }>
                             <i class="icon-minus"></i>{ Locale::current().leave_yatra() }
@@ -329,18 +330,13 @@ pub fn yatra_settings(props: &Props) -> Html {
                             <i class="icon-plus"></i>{ Locale::current().create_yatra() }
                         </button>
                     </div>
-                    { if is_admin.data.unwrap_or(false) {
-                        html! {
-                            <div class="relative">
-                                <button class={ BTN_CSS } onclick={ admin_settings_onclick.clone() }>
-                                    <i class="icon-edit"></i>{ Locale::current().modify_yatra_admin() }
-                                </button>
-                            </div>
-                        }
-                    } else {
-                        html! {}
-                    }}
-                </div>
+                    if is_admin.data.unwrap_or(false) {
+                        <div class="relative">
+                            <button class={ BTN_CSS } onclick={ admin_settings_onclick.clone() }>
+                                <i class="icon-edit"></i>{ Locale::current().modify_yatra_admin() }
+                            </button>
+                        </div>
+                    }
                 </div>
             </form>
         </BlankPage>

@@ -137,15 +137,17 @@ pub fn charts() -> Html {
     };
 
     html! {
-            <BlankPage show_footer=true loading={all_practices.data.is_none()} header_label={user_ctx.name.clone()}>
-                <ListErrors error={all_practices.error.clone()} />
-                <ListErrors error={report_data.error.clone()} />
-                if all_practices.data.is_some(){
-                    <ChartsBase
-                        practices={all_practices.data.clone().unwrap_or_default()}
-                        report_data={report_data.data.clone().unwrap_or_default()}
-                        {pull_data}/>
+        <BlankPage show_footer=true loading={all_practices.data.is_none()} header_label={user_ctx.name.clone()}>
+            <ListErrors error={all_practices.error.clone()} />
+            <ListErrors error={report_data.error.clone()} />
+            if all_practices.data.is_some(){
+                <ChartsBase
+                    practices={all_practices.data.clone().unwrap_or_default()}
+                    report_data={report_data.data.clone().unwrap_or_default()}
+                    {pull_data}
+                    />
             }
+            <div class={TWO_COLS_CSS}>
                 <CopyButton
                     button_label={Locale::current().share_charts_link()}
                     relative_link={format!("/shared/{}", user_ctx.id)}
@@ -154,7 +156,8 @@ pub fn charts() -> Html {
                     <button onclick={download_onclick} class={BTN_CSS}>
                     <i class="icon-???"></i>{Locale::current().download_csv()}</button>
                 </div>
-            </BlankPage>
+            </div>
+        </BlankPage>
     }
 }
 
@@ -450,8 +453,8 @@ fn charts_base(props: &ChartBaseProps) -> Html {
     };
 
     html! {
-            <div class={BODY_DIV_CSS}>
-            <div class="flex space-x-3 grid grid-flow-col justify-stretch py-2">
+        <div class={BODY_DIV_SPACE_10_CSS}>
+            <div class={TWO_COLS_CSS}>
                 <div class="relative">
                     <select
                         class={INPUT_CSS}
@@ -473,7 +476,7 @@ fn charts_base(props: &ChartBaseProps) -> Html {
                     })}
                     </select>
                     <label for="practices" class={INPUT_LABEL_CSS}>
-                          {format!(" {}: ", Locale::current().practice())}
+                        {format!(" {}: ", Locale::current().practice())}
                     </label>
                 </div>
                 <div class="relative">
@@ -484,13 +487,13 @@ fn charts_base(props: &ChartBaseProps) -> Html {
                         <option class={"text-black"} value={ReportDuration::Last365Days.to_string()}>{Locale::current().last_year()}</option>
                     </select>
                     <label for="duration" class={INPUT_LABEL_CSS}>
-                          {format!(" {}: ", Locale::current().duration())}
+                        {format!(" {}: ", Locale::current().duration())}
                     </label>
                 </div>
-                </div>
-            <div class="relative">
-                    {data_body}
-                </div>
             </div>
+            <div class="relative">
+                {data_body}
+            </div>
+        </div>
     }
 }

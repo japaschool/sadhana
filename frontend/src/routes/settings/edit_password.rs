@@ -58,7 +58,6 @@ pub fn edit_password() -> Html {
                 loading={ update_password.loading }
                 >
                 <ListErrors error={update_password.error.clone()} />
-                <div class="justify-center mx-auto max-w-md">
                 <div class={ BODY_DIV_CSS }>
                     <div class="relative">
                         <input
@@ -85,7 +84,6 @@ pub fn edit_password() -> Html {
                     <div class="relative">
                         <button class={ SUBMIT_BTN_CSS }>
                         <i class="icon-login"></i>{ format!(" {}", Locale::current().save()) }</button>
-                    </div>
                     </div>
                 </div>
             </BlankPage>
