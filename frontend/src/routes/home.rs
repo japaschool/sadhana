@@ -109,9 +109,11 @@ pub fn home() -> Html {
             let mut current = ref_diary_entry[idx].clone();
             let new_val = get_new_val(&input, &current);
 
-            current.value = new_val;
-            change_buffer.update(idx, current);
-            save_diary_day.run();
+            if current.value != new_val {
+                current.value = new_val;
+                change_buffer.update(idx, current);
+                save_diary_day.run();
+            }
         })
     };
 
@@ -310,9 +312,11 @@ pub fn home() -> Html {
             let mut current = ref_diary_entry[idx].clone();
             let new_val = get_new_val(&input, &current);
 
-            current.value = new_val;
-            change_buffer.update(idx, current);
-            save_diary_day.run();
+            if current.value != new_val {
+                current.value = new_val;
+                change_buffer.update(idx, current);
+                save_diary_day.run();
+            }
         })
     };
 
@@ -327,111 +331,110 @@ pub fn home() -> Html {
     };
 
     html! {
-        <BlankPage show_footer=true loading={diary_entry.loading || save_diary_day.loading}>
+        <BlankPage show_footer=true loading={diary_entry.loading}>
             <Calendar selected_date={ *selected_date } date_onchange={ selected_date_onchange }/>
             <ListErrors error={diary_entry.error.clone()} />
             <ListErrors error={save_diary_day.error.clone()} />
-            <div class={ BODY_DIV_CSS }>
-                <div class="grid-flow-col columns md:columns-2 lg:columns-2 xl:columns-2 2xl:columns-2">
-                {
-                for local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, value})|
-                    html! {
-                        match data_type {
-                            PracticeDataType::Int => html! {
-                                <div class="relative mb-9 before:content-[''] before:absolute before:inset-0" key={ practice.clone() } >
-                                    <input
-                                        onchange={ onchange.clone() }
-                                        type="number"
-                                        pattern="[0-9]*"
-                                        id={ idx.to_string() }
-                                        value={ value.iter().find_map(|v| v.as_int().map(|i| i.to_string())).unwrap_or_default() }
-                                        min="0"
-                                        max="174"
-                                        placeholder={ idx.to_string() }
-                                        class={ format!("{} text-center", INPUT_CSS) }
-                                        />
-                                    <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
-                                        <i class="icon-rounds"></i>{ format!(" {}: ", practice) }
-                                    </label>
-                                </div>
-                                },
-                            PracticeDataType::Bool => html! {
-                                <div class="relative mb-9 before:absolute" key={ practice.clone() } >
-                                    <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
-                                        <span class=""><i class="icon-tick"></i>{ format!(" {}: ", practice) }</span>
+            <div class={BODY_DIV_SPACE_10_CSS}>
+                <div class={TWO_COLS_CSS}>
+                    {for local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, value})|
+                        html! {
+                            match data_type {
+                                PracticeDataType::Int => html! {
+                                    <div class="relative" key={ practice.clone() } >
                                         <input
-                                            id="checkbox"
-                                            type="checkbox"
-                                            onclick={ checkbox_onclick.clone() }
+                                            onchange={ onchange.clone() }
+                                            type="number"
+                                            pattern="[0-9]*"
                                             id={ idx.to_string() }
-                                            checked={ value.iter().find_map(|v| v.as_bool()).unwrap_or(false) }
+                                            value={ value.iter().find_map(|v| v.as_int().map(|i| i.to_string())).unwrap_or_default() }
+                                            min="0"
+                                            max="174"
+                                            placeholder={ idx.to_string() }
+                                            class={ format!("{} text-center", INPUT_CSS) }
                                             />
-                                    </label>
-                                </div>
-                                },
-                            PracticeDataType::Duration => html! {
-                                <div class="relative mb-9 before:content-[''] before:absolute before:inset-0" key={ practice.clone() } >
-                                    <input
-                                        autocomplete="off"
-                                        id={ idx.to_string() }
-                                        type="text"
-                                        pattern="[0-9]*"
-                                        onblur={ onblur_duration.clone() }
-                                        oninput={ oninput_duration.clone() }
-                                        onkeydown={ onkeydown_time_dur.clone() }
-                                        value={ value.iter().find_map(|v| v.as_duration_str()).unwrap_or_default() }
-                                        class={ format!("{} text-center", INPUT_CSS) }
-                                        placeholder={ idx.to_string() }
-                                        />
-                                    <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
-                                        <i class="icon-clock"></i>
-                                        { format!(" {}: ", practice) }
-                                    </label>
-                                </div>
-                                },
-                            PracticeDataType::Time => html! {
-                                <div class="relative mb-9 before:content-[''] before:absolute before:inset-0" key={ practice.clone() } >
-                                    <input
-                                        autocomplete="off"
-                                        id={ idx.to_string() }
-                                        type="text"
-                                        pattern="[0-9]*"
-                                        onblur={ onblur_time.clone() }
-                                        onfocus={ onfocus_time.clone() }
-                                        oninput={ oninput_time.clone() }
-                                        onkeydown={ onkeydown_time_dur.clone() }
-                                        value={ value.iter().find_map(|v| v.as_time_str()).unwrap_or_default() }
-                                        class={ format!("{} text-center", INPUT_CSS) }
-                                        placeholder={ idx.to_string() }
-                                        />
-                                    <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
-                                        <i class="icon-clock"></i>
-                                        { format!(" {}: ", practice) }
-                                    </label>
-                                </div>
-                                },
-                            PracticeDataType::Text => html! {
-                                <div class="relative mb-9 before:content-[''] before:absolute before:inset-0" key={ practice.clone() } >
-                                    <textarea
-                                        id={ idx.to_string() }
-                                        class={ TEXTAREA_CSS }
-                                        maxlength="1024"
-                                        rows="4"
-                                        placeholder={ idx.to_string() }
-                                        onchange={ onchange.clone() }
-                                        value={ value.iter().find_map(|v| v.as_text()).unwrap_or_default() }
-                                        >
-                                    </textarea>
-                                    <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
-                                        <i class="icon-doc"></i>
-                                        { format!(" {}: ", practice) }
-                                    </label>
-                                </div>
-                            }
-                        }})
-                }
+                                        <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
+                                            <i class="icon-rounds"></i>{ format!(" {}: ", practice) }
+                                        </label>
+                                    </div>
+                                    },
+                                PracticeDataType::Bool => html! {
+                                    <div class="relative" key={ practice.clone() } >
+                                        <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
+                                            <span class=""><i class="icon-tick"></i>{ format!(" {}: ", practice) }</span>
+                                            <input
+                                                id="checkbox"
+                                                type="checkbox"
+                                                onclick={ checkbox_onclick.clone() }
+                                                id={ idx.to_string() }
+                                                checked={ value.iter().find_map(|v| v.as_bool()).unwrap_or(false) }
+                                                />
+                                        </label>
+                                    </div>
+                                    },
+                                PracticeDataType::Duration => html! {
+                                    <div class="relative" key={ practice.clone() } >
+                                        <input
+                                            autocomplete="off"
+                                            id={ idx.to_string() }
+                                            type="text"
+                                            pattern="[0-9]*"
+                                            onblur={ onblur_duration.clone() }
+                                            oninput={ oninput_duration.clone() }
+                                            onkeydown={ onkeydown_time_dur.clone() }
+                                            value={ value.iter().find_map(|v| v.as_duration_str()).unwrap_or_default() }
+                                            class={ format!("{} text-center", INPUT_CSS) }
+                                            placeholder={ idx.to_string() }
+                                            />
+                                        <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
+                                            <i class="icon-clock"></i>
+                                            { format!(" {}: ", practice) }
+                                        </label>
+                                    </div>
+                                    },
+                                PracticeDataType::Time => html! {
+                                    <div class="relative" key={ practice.clone() } >
+                                        <input
+                                            autocomplete="off"
+                                            id={ idx.to_string() }
+                                            type="text"
+                                            pattern="[0-9]*"
+                                            onblur={ onblur_time.clone() }
+                                            onfocus={ onfocus_time.clone() }
+                                            oninput={ oninput_time.clone() }
+                                            onkeydown={ onkeydown_time_dur.clone() }
+                                            value={ value.iter().find_map(|v| v.as_time_str()).unwrap_or_default() }
+                                            class={ format!("{} text-center", INPUT_CSS) }
+                                            placeholder={ idx.to_string() }
+                                            />
+                                        <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
+                                            <i class="icon-clock"></i>
+                                            { format!(" {}: ", practice) }
+                                        </label>
+                                    </div>
+                                    },
+                                PracticeDataType::Text => html! {
+                                    <div class="relative" key={ practice.clone() } >
+                                        <textarea
+                                            id={ idx.to_string() }
+                                            class={ TEXTAREA_CSS }
+                                            maxlength="1024"
+                                            rows="4"
+                                            placeholder={ idx.to_string() }
+                                            onchange={ onchange.clone() }
+                                            value={ value.iter().find_map(|v| v.as_text()).unwrap_or_default() }
+                                            >
+                                        </textarea>
+                                        <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
+                                            <i class="icon-doc"></i>
+                                            { format!(" {}: ", practice) }
+                                        </label>
+                                    </div>
+                                }
+                            }})
+                    }
                 </div>
-                <div class="flex items-center justify-center mb-9">
+                <div class="flex items-center justify-center links">
                     <Link<AppRoute> classes={ LINK_CSS_NEW_ACC } to={AppRoute::UserPractices}>
                         { Locale::current().modify_practices() }
                     </Link<AppRoute>>

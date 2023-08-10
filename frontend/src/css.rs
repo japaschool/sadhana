@@ -28,8 +28,16 @@ pub const BODY_DIV_BASE_CSS: &'static str = "
     lg:max-h-sm scrollbar-w-2 scrollbar-track-gray-lighter 
     scrollbar-thumb-rounded scrollbar-thumb-gray";
 
-pub const BODY_DIV_CSS: &'static str = concatcp!("pt-8 space-y-10", BODY_DIV_BASE_CSS);
+pub const BODY_DIV_SPACE_10_CSS: &'static str = concatcp!("pt-8 space-y-10 ", BODY_DIV_BASE_CSS);
+
+pub const BODY_DIV_NO_PADDING_CSS: &'static str =
+    concatcp!("space-y-10 mx-auto max-w-md ", BODY_DIV_BASE_CSS);
+
+pub const BODY_DIV_CSS: &'static str = concatcp!("pt-8 ", BODY_DIV_NO_PADDING_CSS);
 
 pub const MENU_CSS: &'static str ="text-zinc-500  dark:text-text-zinc-100 text-2xl flex justify-between whitespace-nowrap items-center";
 pub const FOOTER_ICON_CSS: &'static str =
     "inline-flex flex-col items-center justify-center px-5 group dark:text-zinc-100 menu";
+
+pub const TWO_COLS_CSS: &'static str =
+    "grid-flow-row grid gap-9 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2";

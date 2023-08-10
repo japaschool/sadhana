@@ -99,7 +99,6 @@ pub fn edit_user() -> Html {
                 header_label={ Locale::current().user_details() }
                 >
                 <ListErrors error={update_user.error.clone()} />
-                <div class="justify-center mx-auto max-w-md">
                 <div class={ BODY_DIV_CSS }>
                     <div class="relative">
                         <input
@@ -131,7 +130,6 @@ pub fn edit_user() -> Html {
                             class={ INPUT_LABEL_CSS }>
                             <i class="icon-user"></i>{ format!(" {}", Locale::current().name()) }
                         </label>
-                    </div>
                     </div>
                 </div>
             </BlankPage>
