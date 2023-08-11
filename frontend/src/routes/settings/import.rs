@@ -30,7 +30,7 @@ pub fn import() -> Html {
     let csv_data = use_state(|| None::<String>);
     let headers = use_list(vec![]);
     let saving = use_bool_toggle(false);
-    let successes: UseListHandle<DiaryDay> = use_list(vec![]);
+    let successes: UseListHandle<(NaiveDate, DiaryDay)> = use_list(vec![]);
     let failures = use_list(vec![]);
     let nav = use_navigator().unwrap();
 
@@ -52,7 +52,7 @@ pub fn import() -> Html {
                 successes
                     .current()
                     .iter()
-                    .map(|dd| save_diary((*dd).clone())),
+                    .map(|(cob, dd)| save_diary(cob, (*dd).clone())),
             )
             .await
             .into_iter()
@@ -148,7 +148,7 @@ pub fn import() -> Html {
     fn to_diary_day(
         row: StringRecord,
         headers: &[(String, Option<PracticeDataType>)],
-    ) -> Result<DiaryDay> {
+    ) -> Result<(NaiveDate, DiaryDay)> {
         let mut diary_day = vec![];
         let mut it = headers.iter().zip(row.iter());
 
@@ -172,10 +172,7 @@ pub fn import() -> Html {
             diary_day.push(entry);
         }
 
-        Ok(DiaryDay {
-            cob_date,
-            diary_day,
-        })
+        Ok((cob_date, DiaryDay { diary_day }))
     }
 
     let onsubmit = {

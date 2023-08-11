@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use chrono::prelude::*;
 use gloo_events::EventListener;
 use lazy_static::lazy_static;
@@ -12,7 +14,7 @@ use crate::{
     css::*,
     i18n::Locale,
     model::{DiaryDay, DiaryEntry, PracticeDataType, PracticeEntryValue},
-    services::{get_diary_day, save_diary},
+    services::{get_diary_day, get_incomplete_days, save_diary},
 };
 
 use super::AppRoute;
@@ -27,21 +29,24 @@ pub fn home() -> Html {
     // Used as reference for getting indexes and data types of entries to avoid
     // immutable borrowing of the local change buffer.
     let static_diary_entry = use_state(|| Vec::new());
+
     let diary_entry = {
         let selected_date = selected_date.clone();
         use_async(async move { get_diary_day(&*selected_date).await.map(|je| je.diary_day) })
     };
+
     let save_diary_day = {
         let local = local_diary_entry.clone();
         let cob = selected_date.clone();
         use_async(async move {
             let diary_day = local.current().to_owned();
-            save_diary(DiaryDay {
-                diary_day,
-                cob_date: *cob,
-            })
-            .await
+            save_diary(&*cob, DiaryDay { diary_day }).await
         })
+    };
+
+    let incomplete_days = {
+        let selected = selected_date.clone();
+        use_async(async move { get_incomplete_days(&*selected).await.map(|res| res.days) })
     };
 
     {
@@ -73,9 +78,11 @@ pub fn home() -> Html {
     {
         // Fetch data from server on date change
         let diary_entry = diary_entry.clone();
+        let incomplete_days = incomplete_days.clone();
         use_effect_with_deps(
             move |_| {
                 diary_entry.run();
+                incomplete_days.run();
                 || ()
             },
             selected_date.clone(),
@@ -357,9 +364,30 @@ pub fn home() -> Html {
         })
     };
 
+    let cal_should_highlight = {
+        let today = Local::now().date_naive();
+        let incomplete_days = incomplete_days.clone();
+        let selected = selected_date.clone();
+        Callback::from(move |date: Rc<NaiveDate>| -> bool {
+            log::debug!("Incomplete days: {:?}", incomplete_days.data);
+            today > *date
+                && *selected != *date
+                && incomplete_days
+                    .data
+                    .iter()
+                    .filter(|inner| inner.contains(date.as_ref()))
+                    .next()
+                    .is_some()
+        })
+    };
+
     html! {
         <BlankPage show_footer=true loading={diary_entry.loading}>
-            <Calendar selected_date={ *selected_date } date_onchange={ selected_date_onchange }/>
+            <Calendar
+                selected_date={*selected_date}
+                date_onchange={selected_date_onchange}
+                highlight_date={cal_should_highlight}
+                />
             <ListErrors error={diary_entry.error.clone()} />
             <ListErrors error={save_diary_day.error.clone()} />
             <div class={BODY_DIV_SPACE_10_CSS}>

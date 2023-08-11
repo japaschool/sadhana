@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use chrono::{prelude::*, Days};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
@@ -8,6 +10,8 @@ use crate::i18n::Locale;
 pub struct Props {
     pub selected_date: NaiveDate,
     pub date_onchange: Callback<NaiveDate>,
+    #[prop_or_default]
+    pub highlight_date: Option<Callback<Rc<NaiveDate>, bool>>,
 }
 
 pub const DATE_FORMAT: &'static str = "%Y-%m-%d";
@@ -103,11 +107,17 @@ pub fn calendar(props: &Props) -> Html {
 
         let id = d.format(DATE_FORMAT);
 
+        let highlight = html! {
+            for props.highlight_date.iter().filter(|cb| cb.emit(Rc::new(*d))).map(|_| html! {
+                <span class="absolute ml-4 w-2 h-2 bg-red-500 rounded-full"></span>
+            })
+        };
+
         html! {
             <div class="text-center">
                 <p class={ weekday_label_css }>{ &Locale::current().day_of_week(d).chars().nth(0).unwrap() }</p>
                 <div class={ date_css } id={ id.to_string() } onclick={ onclick_date.clone() }>
-                <span class="absolute ml-4 w-2 h-2 bg-red-500 rounded-full"></span>
+                    {highlight}
                     <p id={ id.to_string() } class={ date_label_css }>{ d.format("%-d") }</p>
                 </div>
             </div>
@@ -120,15 +130,13 @@ pub fn calendar(props: &Props) -> Html {
                 <div class="flex text-zinc-500 dark:text-zinc-100 group w-16" onclick={ prev_week_onclick.clone() }>
                     <div class="flex items-center"><i class="icon-chevron-left"></i></div>
                 </div>
-                {
-                    week.iter().map(|d| html! {
-                        <div class="flex group justify-center w-16">
-                            <div class="flex items-center">
-                            { calendar_day(*d == *selected_date, d) }
-                            </div>
+                {for week.iter().map(|d| html! {
+                    <div class="flex group justify-center w-16">
+                        <div class="flex items-center">
+                        { calendar_day(*d == *selected_date, d) }
                         </div>
-                    }).collect::<Html>()
-                }
+                    </div>
+                })}
                 <div class="flex text-zinc-500 dark:text-zinc-100 justify-end group w-16" onclick={ next_week_onclick.clone() }>
                     <div class="flex items-center"><i class="icon-chevron-right"></i></div>
                 </div>

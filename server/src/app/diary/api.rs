@@ -6,24 +6,21 @@ use serde::Deserialize;
 use urlencoding::decode;
 
 use super::{
-    model::{DiaryDayEntry, DiaryEntryUpdate, ReportEntry},
+    model::{DiaryDayEntry, DiaryEntryUpdate, IncompleteCob, ReportEntry},
     request,
-    response::{DiaryDayResponse, ReportResponse},
+    response::{DiaryDayResponse, IncompleteDays, ReportResponse},
 };
-
-#[derive(Deserialize, Debug)]
-pub struct DiaryDayQueryParams {
-    cob_date: NaiveDate,
-}
 
 /// Inserts or updates a diary day
 pub async fn upsert_diary_day(
     state: web::Data<AppState>,
     req: HttpRequest,
     form: web::Json<request::DiaryDayUpsertRequest>,
+    path: web::Path<CobSlug>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
+    let cob = path.into_inner();
     log::debug!("Upserting {:?}", form);
 
     web::block(move || {
@@ -33,7 +30,7 @@ pub async fn upsert_diary_day(
                 .diary_day
                 .iter()
                 .map(|entry| DiaryEntryUpdate {
-                    cob_date: &form.cob_date,
+                    cob_date: &cob,
                     user_id: &user_id,
                     practice: &entry.practice,
                     value: entry.value.as_ref(),
@@ -50,14 +47,14 @@ pub async fn upsert_diary_day(
 pub async fn get_diary_day(
     state: web::Data<AppState>,
     req: HttpRequest,
-    params: web::Query<DiaryDayQueryParams>,
+    path: web::Path<CobSlug>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
-    let cob = params.cob_date.clone();
+    let cob = path.into_inner();
 
     let res = web::block(move || DiaryDayEntry::get_diary_day(&mut conn, &cob, &user_id)).await??;
-    Ok(HttpResponse::Ok().json(DiaryDayResponse::from((params.cob_date, res))))
+    Ok(HttpResponse::Ok().json(DiaryDayResponse::from((cob, res))))
 }
 
 #[derive(Deserialize, Debug)]
@@ -71,6 +68,7 @@ pub async fn get_report_data(
     state: web::Data<AppState>,
     req: HttpRequest,
     params: web::Query<ReportDataQueryParams>,
+    _path: web::Path<CobSlug>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
@@ -86,5 +84,24 @@ pub async fn get_report_data(
     .await??;
     Ok(HttpResponse::Ok().json(ReportResponse::from(data)))
 }
+
+pub async fn get_incomplete_days(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    path: web::Path<CobSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
+    let cob = path.into_inner();
+
+    let res =
+        web::block(move || IncompleteCob::get_incomplete_days(&mut conn, &user_id, &cob)).await??;
+
+    Ok(HttpResponse::Ok().json(IncompleteDays {
+        days: res.iter().map(|c| c.cob_date).collect(),
+    }))
+}
+
+type CobSlug = NaiveDate;
 
 //TODO: add tests

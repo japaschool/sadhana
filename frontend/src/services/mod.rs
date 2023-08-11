@@ -65,13 +65,18 @@ pub async fn update_user_password(
 /// Get diary data for a date
 pub async fn get_diary_day(date: &NaiveDate) -> Result<DiaryDay, AppError> {
     log::debug!("Fetching journal entry for {}", date);
-    request_get(format!("/diary?cob_date={}", date.format("%F"))).await
+    request_get(format!("/diary/{}", date.format("%F"))).await
 }
 
 /// Save all diary entries for a date
-pub async fn save_diary(data: DiaryDay) -> Result<(), AppError> {
+pub async fn save_diary(cob: &NaiveDate, data: DiaryDay) -> Result<(), AppError> {
     log::debug!("Saving diary day: {:?}", data);
-    request_put("/diary".into(), data).await
+    request_put(format!("/diary/{}", cob.format("%F")), data).await
+}
+
+/// Gets incomplete days for the week the date is in
+pub async fn get_incomplete_days(date: &NaiveDate) -> Result<IncompleteDays, AppError> {
+    request_get(format!("/diary/{}/incomplete-days", date.format("%F"))).await
 }
 
 /// Get user practices
