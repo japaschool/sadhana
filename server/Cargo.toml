@@ -19,19 +19,19 @@ dotenv = "0.15"
 dotenv_codegen = "0.15"
 log = "0.4"
 env_logger = "0.10"
-diesel = { version = "2.0", features = [
+diesel = { version = "2.1", features = [
     "postgres",
     "r2d2",
     "chrono",
     "serde_json",
     "uuid",
 ] }
-diesel_migrations = "2.0"
-diesel-derive-enum = { version = "2.0.0-rc.0", features = ["postgres"] }
+diesel_migrations = "2.1"
+diesel-derive-enum = { version = "2.1", features = ["postgres"] }
 validator = { version = "0.16", features = ["derive"] }
-bcrypt = { version = "0.13" }
-uuid = { version = "1.2", features = ["serde", "v4"] }
-jsonwebtoken = { version = "8.1" }
+bcrypt = { version = "0.15" }
+uuid = { version = "1", features = ["serde", "v4"] }
+jsonwebtoken = { version = "8" }
 thiserror = "1.0"
 futures = { version = "0.3" }
 chrono = { version = "0.4", features = ["serde"] }
