@@ -1,7 +1,8 @@
 use chrono::prelude::*;
+use gloo_events::EventListener;
 use lazy_static::lazy_static;
 use regex::Regex;
-use web_sys::HtmlInputElement;
+use web_sys::{HtmlInputElement, VisibilityState};
 use yew::prelude::*;
 use yew_hooks::{use_async, use_list};
 use yew_router::prelude::*;
@@ -42,6 +43,32 @@ pub fn home() -> Html {
             .await
         })
     };
+
+    {
+        // Reload the home screen if the browser window was inactive.
+        // Mostly needed to refresh the app on a phone after it was minimized to
+        // pick up any concurrent changes
+        let diary_entry = diary_entry.clone();
+        use_effect(move || {
+            // Create your Callback as you normally would
+            let onwakeup = Callback::from(move |_: Event| {
+                if let Some(doc) = web_sys::window().and_then(|w| w.document()) {
+                    if doc.visibility_state() == VisibilityState::Visible {
+                        log::debug!("Reloading...");
+                        diary_entry.run();
+                    }
+                }
+            });
+
+            // Create a Closure from a Box<dyn Fn> - this has to be 'static
+            let listener =
+                EventListener::new(&web_sys::window().unwrap(), "visibilitychange", move |e| {
+                    onwakeup.emit(e.clone())
+                });
+
+            move || drop(listener)
+        });
+    }
 
     {
         // Fetch data from server on date change

@@ -1,4 +1,5 @@
 use yew::{html::onclick::Event, prelude::*};
+use yew_hooks::{use_bool_toggle, use_timeout};
 use yew_router::prelude::*;
 
 use crate::{css::*, i18n::Locale, routes::AppRoute};
@@ -104,12 +105,33 @@ fn header_button(props: &Option<HeaderButtonProps>) -> Html {
 
 #[function_component(BlankPage)]
 pub fn blank_page(props: &Props) -> Html {
+    let loading = use_bool_toggle(false);
+
+    let timer = {
+        let loading = loading.clone();
+        use_timeout(
+            move || {
+                log::debug!("Toggling spinner timer");
+                loading.toggle();
+            },
+            400,
+        )
+    };
+
+    if props.loading {
+        log::debug!("Resetting spinner timer");
+        timer.reset();
+    } else {
+        log::debug!("Canceling spinner timer");
+        timer.cancel();
+    }
+
     html! {
         <>
             <div class="bg-hero dark:bg-herod bg-no-repeat bg-cover bg-center h-screen w-full fixed -z-10" />
             <div id="content" class={ format!("fixed top-0 {} left-0 right-0 overflow-y-auto", if props.show_footer {"bottom-16"} else {"bottom-0"}) }>
                 <div class="bg-transparent min-h-screen justify-center items-center py-6 sm:py-12">
-                    if props.loading {
+                    if props.loading && *loading {
                         <div class="bg-gray-500 bg-opacity-50 fixed left-0 top-0 z-50 h-full w-full overflow-hidden flex">
                             <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-10 w-10 m-auto"/>
                         </div>

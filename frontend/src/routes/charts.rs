@@ -147,7 +147,7 @@ pub fn charts() -> Html {
                     {pull_data}
                     />
             }
-            <div class={TWO_COLS_CSS}>
+            <div class={TWO_COLS_NO_GAP_CSS}>
                 <CopyButton
                     button_label={Locale::current().share_charts_link()}
                     relative_link={format!("/shared/{}", user_ctx.id)}

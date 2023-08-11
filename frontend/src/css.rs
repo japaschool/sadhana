@@ -39,5 +39,6 @@ pub const MENU_CSS: &'static str ="text-zinc-500  dark:text-text-zinc-100 text-2
 pub const FOOTER_ICON_CSS: &'static str =
     "inline-flex flex-col items-center justify-center px-5 group dark:text-zinc-100 menu";
 
-pub const TWO_COLS_CSS: &'static str =
-    "grid-flow-row grid gap-9 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2";
+pub const TWO_COLS_NO_GAP_CSS: &'static str =
+    "grid-flow-row grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2";
+pub const TWO_COLS_CSS: &'static str = concatcp!("gap-9 ", TWO_COLS_NO_GAP_CSS);
