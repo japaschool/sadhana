@@ -49,6 +49,7 @@ diesel::table! {
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
         order_key -> Int4,
+        is_required -> Nullable<Bool>,
     }
 }
 

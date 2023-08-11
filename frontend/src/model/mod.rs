@@ -114,11 +114,15 @@ pub struct RegisterInfoWrapper {
     pub user: RegisterInfo,
 }
 
+#[derive(Deserialize, Clone, Debug)]
+pub struct IncompleteDays {
+    pub days: Vec<NaiveDate>,
+}
+
 /// Assumes values are sorted by DiaryEntry.practice
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct DiaryDay {
     pub diary_day: Vec<DiaryEntry>,
-    pub cob_date: NaiveDate,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]

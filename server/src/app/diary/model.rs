@@ -116,7 +116,7 @@ impl ReportEntry {
         user_id: &Uuid,
         practice: &Option<String>,
         duration: &ReportDuration,
-    ) -> Result<Vec<ReportEntry>, AppError> {
+    ) -> Result<Vec<Self>, AppError> {
         use diesel::pg::expression::extensions::IntervalDsl;
 
         let interval = match duration {
@@ -160,6 +160,57 @@ impl ReportEntry {
         .bind::<Nullable<Text>, _>(practice)
         .bind::<Interval, _>(interval)
         .load::<Self>(conn)?;
+
+        Ok(res)
+    }
+}
+
+#[derive(Serialize, Debug, QueryableByName)]
+pub struct IncompleteCob {
+    #[diesel(sql_type = Date)]
+    pub cob_date: NaiveDate,
+}
+
+impl IncompleteCob {
+    pub fn get_incomplete_days(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        date: &NaiveDate,
+    ) -> Result<Vec<Self>, AppError> {
+        let week = date.week(chrono::Weekday::Mon);
+        let start = week.first_day();
+        let end = week.last_day();
+
+        let res = sql_query(
+            r#"
+            with dates as (
+                select
+                    t.cob_date :: date
+                from
+                    generate_series(
+                        $1,
+                        $2,
+                        interval '1 day'
+                    ) as t(cob_date)
+            )
+            select
+                dates.cob_date
+            from
+                dates
+                cross join user_practices up
+                left join diary d on up.id = d.practice_id
+                and d.cob_date = dates.cob_date
+            where
+                up.is_required = true
+                and d.value is null
+                and up.user_id = $3
+                and dates.cob_date < now()
+            "#,
+        )
+        .bind::<Date, _>(&start)
+        .bind::<Date, _>(&end)
+        .bind::<DieselUuid, _>(&user_id)
+        .load(conn)?;
 
         Ok(res)
     }

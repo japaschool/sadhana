@@ -28,3 +28,8 @@ impl From<Vec<ReportEntry>> for ReportResponse {
         Self { values }
     }
 }
+
+#[derive(Serialize, Debug)]
+pub struct IncompleteDays {
+    pub days: Vec<NaiveDate>,
+}
