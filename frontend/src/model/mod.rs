@@ -125,6 +125,12 @@ pub struct DiaryDay {
     pub diary_day: Vec<DiaryEntry>,
 }
 
+/// Assumes values are sorted by DiaryEntry.practice
+#[derive(Debug, Serialize, Clone)]
+pub struct SaveDiaryDay<'a> {
+    pub diary_day: &'a Vec<DiaryEntry>,
+}
+
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct DiaryEntry {
     pub practice: String,
@@ -139,6 +145,12 @@ pub enum PracticeDataType {
     Time,
     Text,
     Duration,
+}
+
+impl Default for PracticeDataType {
+    fn default() -> Self {
+        Self::Text
+    }
 }
 
 impl Display for PracticeDataType {
@@ -313,11 +325,26 @@ impl PracticeEntryValue {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Default)]
 pub struct UserPractice {
+    pub id: String,
     pub practice: String,
     pub data_type: PracticeDataType,
     pub is_active: bool,
+    pub is_required: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Clone, PartialEq, Default)]
+pub struct NewUserPractice {
+    pub practice: String,
+    pub data_type: PracticeDataType,
+    pub is_active: bool,
+    pub is_required: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GetUserPractice {
+    pub practice: UserPractice,
 }
 
 #[derive(Debug, Deserialize)]
@@ -327,17 +354,17 @@ pub struct AllUserPractices {
 
 #[derive(Debug, Serialize)]
 pub struct CreateUserPractice {
-    pub user_practice: UserPractice,
+    pub user_practice: NewUserPractice,
 }
 
 #[derive(Debug, Serialize)]
-pub struct UpdateUserPractice {
-    pub user_practice: UserPractice,
+pub struct UpdateUserPractice<'a> {
+    pub user_practice: &'a UserPractice,
 }
 
 #[derive(Debug, Serialize)]
-pub struct UpdateUserPracticesOrderKey {
-    pub practices: Vec<String>,
+pub struct UpdateUserPracticesOrderKey<'a> {
+    pub practices: &'a Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]

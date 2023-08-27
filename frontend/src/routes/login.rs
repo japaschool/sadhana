@@ -23,7 +23,7 @@ pub fn login() -> Html {
             let request = LoginInfoWrapper {
                 user: (*login_info).clone(),
             };
-            services::login(request).await
+            services::login(&request).await
         })
     };
 

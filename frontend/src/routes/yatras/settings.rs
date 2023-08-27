@@ -300,7 +300,7 @@ pub fn yatra_settings(props: &Props) -> Html {
         <BlankPage
             header_label={ yatra.data.iter().map(|y| y.name.clone()).next().unwrap_or_default() }
             loading={ leave.loading || yatra.loading || is_admin.loading || yatra_user_practices.loading || user_practices.loading || save.loading }
-            prev_link={ (Locale::current().cancel(), AppRoute::Yatras) }
+            prev_link={ (Locale::current().back(), AppRoute::Yatras) }
             >
             <ListErrors error={ yatra_user_practices.error.clone() } />
             <ListErrors error={ user_practices.error.clone() } />

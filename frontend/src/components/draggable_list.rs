@@ -6,16 +6,24 @@ use yew_hooks::use_list;
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
-    pub items: Vec<String>,
+    pub items: Vec<Item>,
     #[prop_or(true)]
     pub toggle_hidden_enabled: bool,
     pub toggle_hidden: Callback<String>,
     pub is_hidden: Callback<String, bool>,
     pub rename: Callback<(String, String)>,
     pub rename_popup_label: AttrValue,
+    #[prop_or(true)]
+    pub request_new_name: bool,
     pub delete: Callback<String>,
     pub delete_popup_label: AttrValue,
-    pub reorder: Callback<Vec<String>>,
+    pub reorder: Callback<Vec<Item>>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Item {
+    pub id: String,
+    pub name: String,
 }
 
 /// Drag and drop inspired by this article: https://stackoverflow.com/questions/54237737/html5-dragndrop-not-working-on-ios-12-1-2-safari-and-chrome
@@ -47,16 +55,21 @@ pub fn draggable_list(props: &Props) -> Html {
     let rename = {
         let cb = props.rename.clone();
         let label = props.rename_popup_label.clone();
+        let needs_prompt = props.request_new_name;
         Callback::from(move |e: MouseEvent| {
             e.prevent_default();
 
             let input: HtmlElement = e.target_unchecked_into();
             let item = input.id();
 
-            if let Some(new_value) =
-                prompt(label.as_str(), Some(&item)).filter(|s| !s.trim().is_empty())
-            {
-                cb.emit((item, new_value.trim().to_owned()));
+            if needs_prompt {
+                if let Some(new_value) =
+                    prompt(label.as_str(), Some(&item)).filter(|s| !s.trim().is_empty())
+                {
+                    cb.emit((item, new_value.trim().to_owned()));
+                }
+            } else {
+                cb.emit((item, String::default()));
             }
         })
     };
@@ -174,22 +187,22 @@ pub fn draggable_list(props: &Props) -> Html {
             id={ idx.to_string() }
             >
             <label class="flex w-full justify-between whitespace-nowrap mb-6">
-                <span>{ item.clone() }</span>
+                <span>{ item.name.clone() }</span>
             </label>
             { if props.toggle_hidden_enabled {
                 html! {
                 <label>
                     <i onclick={ toggle_hidden.clone() }
-                        id={ item.clone() }
-                        class={ if !props.is_hidden.emit(item.to_owned()) {"icon-eye"} else {"icon-eye-cross"}}
+                        id={ item.id.clone() }
+                        class={ if !props.is_hidden.emit(item.id.to_owned()) {"icon-eye"} else {"icon-eye-cross"}}
                         />
                 </label>
             }} else { html! {}}}
             <label>
-                <i onclick={ rename.clone() } id={ item.clone() } class="icon-edit"/>
+                <i onclick={ rename.clone() } id={ item.id.clone() } class="icon-edit"/>
             </label>
             <label>
-                <i onclick={ delete.clone() } id={ item.clone() } class="icon-bin"/>
+                <i onclick={ delete.clone() } id={ item.id.clone() } class="icon-bin"/>
             </label>
             <label draggable="true" class="touch-none"><i class="icon-bars"></i></label>
         </div>
