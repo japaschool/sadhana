@@ -1,36 +1,56 @@
 use actix_web::{web, HttpRequest, HttpResponse};
 use common::error::AppError;
 use diesel::prelude::*;
-use diesel::{sql_query, sql_types::Uuid as DieselUuid, sql_types::*, PgConnection, RunQueryDsl};
+use diesel::{PgConnection, RunQueryDsl};
 use serde::{Deserialize, Serialize};
-use urlencoding::decode;
 use uuid::Uuid;
 
 use crate::db_types::PracticeDataType;
 use crate::middleware::auth;
 use crate::middleware::state::AppState;
-use crate::schema::{user_practices, yatra_user_practices};
+use crate::schema::{diary, user_practices, yatra_user_practices};
 
 #[derive(Debug, Queryable, Serialize, Deserialize)]
 pub struct UserPractice {
+    #[diesel(sql_type = DieselUuid)]
+    pub id: Uuid,
     #[diesel(sql_type = Text)]
     pub practice: String,
     #[diesel(sql_type = PracticeDataTypeEnum)]
     pub data_type: PracticeDataType,
     #[diesel(sql_type = Bool)]
     pub is_active: bool,
+    #[diesel(sql_type = Nullable<Bool>)]
+    pub is_required: Option<bool>,
 }
 
 impl UserPractice {
+    pub fn get(conn: &mut PgConnection, practice: &Uuid) -> Result<Self, AppError> {
+        let res = user_practices::table
+            .select((
+                user_practices::id,
+                user_practices::practice,
+                user_practices::data_type,
+                user_practices::is_active,
+                user_practices::is_required,
+            ))
+            .filter(user_practices::id.eq(&practice))
+            .first(conn)?;
+
+        Ok(res)
+    }
+
     pub fn all_user_practices(
         conn: &mut PgConnection,
         user_id: &Uuid,
     ) -> Result<Vec<Self>, AppError> {
         let res = user_practices::table
             .select((
+                user_practices::id,
                 user_practices::practice,
                 user_practices::data_type,
                 user_practices::is_active,
+                user_practices::is_required,
             ))
             .filter(user_practices::user_id.eq(user_id))
             .order(user_practices::order_key)
@@ -42,19 +62,21 @@ impl UserPractice {
     pub fn update(
         conn: &mut PgConnection,
         user_id: &Uuid,
-        practice: &str,
+        practice: &Uuid,
         new_name: &str,
         is_active: bool,
+        is_required: Option<bool>,
     ) -> Result<(), AppError> {
         diesel::update(user_practices::table)
             .set((
                 user_practices::practice.eq(new_name),
                 user_practices::is_active.eq(is_active),
+                user_practices::is_required.eq(is_required),
             ))
             .filter(
                 user_practices::user_id
                     .eq(user_id)
-                    .and(user_practices::practice.eq(practice)),
+                    .and(user_practices::id.eq(&practice)),
             )
             .execute(conn)?;
         Ok(())
@@ -72,7 +94,7 @@ impl UserPractice {
                     .filter(
                         user_practices::user_id
                             .eq(user_id)
-                            .and(user_practices::practice.eq(&row.practice)),
+                            .and(user_practices::id.eq(&row.practice)),
                     )
                     .execute(conn)?;
             }
@@ -80,37 +102,50 @@ impl UserPractice {
         })
     }
 
-    pub fn delete(conn: &mut PgConnection, user_id: &Uuid, practice: &str) -> Result<(), AppError> {
+    pub fn delete(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        practice: &Uuid,
+    ) -> Result<(), AppError> {
         conn.transaction(|conn| {
-            sql_query(
-                r#"
-                delete from diary 
-                where user_id = $1 
-                and practice_id in (
-                    select id from user_practices 
-                    where user_id = $1 and practice = $2
-                ) 
-            "#,
-            )
-            .bind::<DieselUuid, _>(user_id)
-            .bind::<Text, _>(practice)
-            .execute(conn)?;
+            diesel::delete(diary::table)
+                .filter(
+                    diary::user_id
+                        .eq(&user_id)
+                        .and(diary::practice_id.eq(&practice)),
+                )
+                .execute(conn)?;
 
             diesel::delete(yatra_user_practices::table)
                 .filter(
                     yatra_user_practices::user_practice_id.eq_any(
                         user_practices::table
                             .select(user_practices::id)
-                            .filter(user_practices::practice.eq(&practice)),
+                            .filter(user_practices::id.eq(&practice)),
                     ),
                 )
                 .execute(conn)?;
+
+            let order_key: i32 = user_practices::table
+                .select(user_practices::order_key)
+                .filter(user_practices::id.eq(&practice))
+                .first(conn)?;
 
             diesel::delete(user_practices::table)
                 .filter(
                     user_practices::user_id
                         .eq(user_id)
-                        .and(user_practices::practice.eq(practice)),
+                        .and(user_practices::id.eq(&practice)),
+                )
+                .execute(conn)?;
+
+            // Shift order key on practices with order key greater than deleted
+            diesel::update(user_practices::table)
+                .set(user_practices::order_key.eq(user_practices::order_key - 1))
+                .filter(
+                    user_practices::user_id
+                        .eq(&user_id)
+                        .and(user_practices::order_key.gt(order_key)),
                 )
                 .execute(conn)
         })?;
@@ -122,9 +157,9 @@ impl UserPractice {
         use crate::schema::user_practices::dsl::*;
 
         conn.transaction(|conn| {
-            let cnt: i64 = user_practices
+            let max_order_key: Option<i32> = user_practices
                 .filter(user_id.eq(&record.user_id))
-                .select(diesel::dsl::count_star())
+                .select(diesel::dsl::max(order_key))
                 .first(conn)?;
 
             diesel::insert_into(user_practices)
@@ -133,12 +168,29 @@ impl UserPractice {
                     practice.eq(&record.practice),
                     data_type.eq(&record.data_type),
                     is_active.eq(record.is_active),
-                    order_key.eq(cnt as i32),
+                    is_required.eq(record.is_required),
+                    order_key.eq(max_order_key.unwrap_or_default() + 1),
                 ))
                 .execute(conn)?;
             Ok(())
         })
     }
+}
+
+/// Retrieves user practice
+pub async fn get_user_practice(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    path: web::Path<PracticeSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+
+    auth::get_current_user(&req)?;
+
+    let practice = path.into_inner();
+
+    let res = web::block(move || UserPractice::get(&mut conn, &practice)).await??;
+    Ok(HttpResponse::Ok().json(GetUserPractice { practice: res }))
 }
 
 /// Retrieves all user practices
@@ -154,6 +206,11 @@ pub async fn get_user_practices(
 }
 
 #[derive(Serialize, Debug)]
+pub struct GetUserPractice {
+    pub practice: UserPractice,
+}
+
+#[derive(Serialize, Debug)]
 pub struct AllUserPracticesResponse {
     pub user_practices: Vec<UserPractice>,
 }
@@ -164,7 +221,7 @@ impl From<Vec<UserPractice>> for AllUserPracticesResponse {
     }
 }
 
-type PracticeSlug = String;
+type PracticeSlug = Uuid;
 
 /// Deletes a user practice
 /// Note it also deletes any dependent diary entries
@@ -176,7 +233,6 @@ pub async fn delete_user_practice(
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
     let practice = path.into_inner();
-    let practice = decode(&practice)?.into_owned();
 
     web::block(move || UserPractice::delete(&mut conn, &user_id, &practice)).await??;
 
@@ -193,7 +249,6 @@ pub async fn update_user_practice(
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
     let practice = path.into_inner();
-    let practice = decode(&practice)?.into_owned();
 
     web::block(move || {
         UserPractice::update(
@@ -202,6 +257,7 @@ pub async fn update_user_practice(
             &practice,
             &form.user_practice.practice,
             form.user_practice.is_active,
+            form.user_practice.is_required,
         )
     })
     .await??;
@@ -245,6 +301,7 @@ pub async fn add_new(
         practice: form.user_practice.practice.clone(),
         data_type: form.user_practice.data_type.clone(),
         is_active: form.user_practice.is_active,
+        is_required: form.user_practice.is_required,
     };
     web::block(move || UserPractice::create(&mut conn, &record)).await??;
     Ok(HttpResponse::Ok().json(()))
@@ -257,11 +314,20 @@ pub struct NewUserPractice {
     practice: String,
     data_type: PracticeDataType,
     is_active: bool,
+    is_required: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct NewUserPracticeForm {
+    practice: String,
+    data_type: PracticeDataType,
+    is_active: bool,
+    is_required: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct NewUserPracticeRequest {
-    user_practice: UserPractice,
+    user_practice: NewUserPracticeForm,
 }
 
 #[derive(Debug, Deserialize)]
@@ -271,11 +337,11 @@ pub struct UpdateUserPracticeRequest {
 
 #[derive(Debug)]
 pub struct UpdateUserPracticeOrderKey {
-    pub practice: String,
+    pub practice: Uuid,
     pub order_key: i32,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateUserPracticeOrderKeyRequest {
-    practices: Vec<String>,
+    practices: Vec<Uuid>,
 }

@@ -6,7 +6,9 @@ use yew_router::prelude::*;
 
 use crate::{
     components::{
-        blank_page::BlankPage, clipboard_copy_button::CopyButton, draggable_list::DraggableList,
+        blank_page::BlankPage,
+        clipboard_copy_button::CopyButton,
+        draggable_list::{DraggableList, Item},
         list_errors::ListErrors,
     },
     css::*,
@@ -120,8 +122,13 @@ pub fn admin_settings(props: &Props) -> Html {
     let reorder = {
         let op = ordered_practices.clone();
         let rp = reorder_practices.clone();
-        Callback::from(move |practices: Vec<String>| {
-            op.set(practices);
+        Callback::from(move |practices: Vec<Item>| {
+            op.set(
+                practices
+                    .iter()
+                    .map(|Item { id, name: _ }| id.to_owned())
+                    .collect(),
+            );
             rp.run();
         })
     };
@@ -153,7 +160,7 @@ pub fn admin_settings(props: &Props) -> Html {
                                 .as_ref()
                                 .unwrap_or(&vec![])
                                 .iter()
-                                .map(|p| p.practice.clone())
+                                .map(|p| Item{ id: p.practice.clone(), name: p.practice.clone() })
                                 .collect::<Vec<_>>() }
                             toggle_hidden_enabled=false
                             toggle_hidden={ Callback::from(|_|{}) }

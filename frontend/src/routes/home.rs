@@ -13,7 +13,7 @@ use crate::{
     components::{blank_page::BlankPage, calendar::Calendar, list_errors::ListErrors},
     css::*,
     i18n::Locale,
-    model::{DiaryDay, DiaryEntry, PracticeDataType, PracticeEntryValue},
+    model::{DiaryEntry, PracticeDataType, PracticeEntryValue, SaveDiaryDay},
     services::{get_diary_day, get_incomplete_days, save_diary},
 };
 
@@ -39,8 +39,13 @@ pub fn home() -> Html {
         let local = local_diary_entry.clone();
         let cob = selected_date.clone();
         use_async(async move {
-            let diary_day = local.current().to_owned();
-            save_diary(&*cob, DiaryDay { diary_day }).await
+            save_diary(
+                &*cob,
+                &SaveDiaryDay {
+                    diary_day: &*local.current(),
+                },
+            )
+            .await
         })
     };
 

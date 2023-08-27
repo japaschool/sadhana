@@ -22,7 +22,7 @@ use crate::{
     i18n::*,
     model::{DiaryDay, DiaryEntry, PracticeDataType, PracticeEntryValue},
     routes::AppRoute,
-    services::{get_user_practices, save_diary},
+    services::{get_user_practices, save_diary_owned},
 };
 
 #[function_component(Import)]
@@ -52,7 +52,7 @@ pub fn import() -> Html {
                 successes
                     .current()
                     .iter()
-                    .map(|(cob, dd)| save_diary(cob, (*dd).clone())),
+                    .map(|(cob, dd)| save_diary_owned(cob, dd.clone())),
             )
             .await
             .into_iter()

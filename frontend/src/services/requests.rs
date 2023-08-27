@@ -43,7 +43,7 @@ pub fn get_token() -> Option<String> {
 }
 
 /// build all kinds of http request: post/get/delete etc.
-pub async fn request<B, T>(method: reqwest::Method, url: String, body: B) -> Result<T, AppError>
+pub async fn request<B, T>(method: reqwest::Method, url: String, body: &B) -> Result<T, AppError>
 where
     T: DeserializeOwned + 'static + std::fmt::Debug,
     B: Serialize + std::fmt::Debug,
@@ -109,7 +109,7 @@ pub async fn request_delete<T>(url: String) -> Result<T, AppError>
 where
     T: DeserializeOwned + 'static + std::fmt::Debug,
 {
-    request(reqwest::Method::DELETE, url, ()).await
+    request(reqwest::Method::DELETE, url, &()).await
 }
 
 /// Get request
@@ -117,11 +117,11 @@ pub async fn request_get<T>(url: String) -> Result<T, AppError>
 where
     T: DeserializeOwned + 'static + std::fmt::Debug,
 {
-    request(reqwest::Method::GET, url, ()).await
+    request(reqwest::Method::GET, url, &()).await
 }
 
 /// Get request
-pub async fn request_post<T, B>(url: String, body: B) -> Result<T, AppError>
+pub async fn request_post<T, B>(url: String, body: &B) -> Result<T, AppError>
 where
     T: DeserializeOwned + 'static + std::fmt::Debug,
     B: Serialize + std::fmt::Debug,
@@ -130,7 +130,7 @@ where
 }
 
 /// Put request with a body
-pub async fn request_put<B, T>(url: String, body: B) -> Result<T, AppError>
+pub async fn request_put<B, T>(url: String, body: &B) -> Result<T, AppError>
 where
     T: DeserializeOwned + 'static + std::fmt::Debug,
     B: Serialize + std::fmt::Debug,

@@ -4,6 +4,7 @@ use yew_router::prelude::*;
 use self::{
     charts::{Charts, SharedCharts},
     confirmation::Confirmation,
+    edit_user_practice::EditUserPractice,
     home::Home,
     login::Login,
     new_practice::{NewPractice, NewPracticeTarget},
@@ -20,6 +21,7 @@ use crate::{components::user_context_provider::UserContextProvider, model::Confi
 
 pub mod charts;
 pub mod confirmation;
+pub mod edit_user_practice;
 pub mod home;
 pub mod login;
 pub mod new_practice;
@@ -73,6 +75,8 @@ pub enum AppRoute {
     UserPractices,
     #[at("/user/practice/new")]
     NewUserPractice,
+    #[at("/user/practice/:practice/edit")]
+    EditUserPractice { practice: String },
     #[at("/user/practice/new/:practice")]
     NewUserPracticeWithName { practice: String },
     #[at("/charts")]
@@ -107,6 +111,9 @@ fn app_switch(routes: AppRoute) -> Html {
         AppRoute::UserPractices => html! { <UserPractices /> },
         AppRoute::NewUserPractice => {
             html! { <NewPractice target={ NewPracticeTarget::UserPractice } /> }
+        }
+        AppRoute::EditUserPractice { practice } => {
+            html! { <EditUserPractice practice={practice}/> }
         }
         AppRoute::NewUserPracticeWithName { practice } => {
             html! { <NewPractice target={NewPracticeTarget::UserPractice} practice={practice} /> }

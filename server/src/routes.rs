@@ -36,6 +36,7 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                     )
                     .service(
                         web::scope("/practice/{practice}")
+                            .route("", web::get().to(app::user_practices::get_user_practice))
                             .route(
                                 "",
                                 web::delete().to(app::user_practices::delete_user_practice),
@@ -112,7 +113,9 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
             .default_handler(|req: ServiceRequest| {
                 let (http_req, _payload) = req.into_parts();
                 async {
-                    let response = NamedFile::open("./dist/index.html")?.into_response(&http_req);
+                    let response = NamedFile::open_async("./dist/index.html")
+                        .await?
+                        .into_response(&http_req);
                     Ok(ServiceResponse::new(http_req, response))
                 }
             }),

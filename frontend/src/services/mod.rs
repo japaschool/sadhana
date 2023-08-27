@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use common::{error::AppError, ReportDuration};
-use urlencoding::encode;
+use urlencoding::encode; //FIXME: should be gone
 
 use crate::model::*;
 
@@ -9,7 +9,7 @@ use self::requests::*;
 pub mod requests;
 
 /// Login a user
-pub async fn login(login_info: LoginInfoWrapper) -> Result<UserInfoWrapper, AppError> {
+pub async fn login(login_info: &LoginInfoWrapper) -> Result<UserInfoWrapper, AppError> {
     request_post("/users/login".to_string(), login_info).await
 }
 
@@ -17,7 +17,7 @@ pub async fn login(login_info: LoginInfoWrapper) -> Result<UserInfoWrapper, AppE
 pub async fn send_confirmation_link(data: SendConfirmationLink) -> Result<(), AppError> {
     request_post(
         "/users/confirmation".to_string(),
-        SendConfirmationLinkWrapper { data },
+        &SendConfirmationLinkWrapper { data },
     )
     .await
 }
@@ -29,12 +29,16 @@ pub async fn get_signup_link_details(id: &str) -> Result<SignupLinkDetailsWrappe
 
 /// Register a user
 pub async fn register(register_info: RegisterInfoWrapper) -> Result<UserInfoWrapper, AppError> {
-    request_post("/users".to_string(), register_info).await
+    request_post("/users".to_string(), &register_info).await
 }
 
 /// Reset password
 pub async fn reset_pwd(data: ResetPassword) -> Result<(), AppError> {
-    request_put("/password-reset".to_string(), ResetPasswordWrapper { data }).await
+    request_put(
+        "/password-reset".to_string(),
+        &ResetPasswordWrapper { data },
+    )
+    .await
 }
 
 /// Get current user info
@@ -44,7 +48,7 @@ pub async fn current() -> Result<UserInfoWrapper, AppError> {
 
 /// Update user
 pub async fn update_user(user: UpdateUser) -> Result<(), AppError> {
-    request_put("/user".to_string(), UpdateUserWrapper { user }).await
+    request_put("/user".to_string(), &UpdateUserWrapper { user }).await
 }
 
 /// Update user password
@@ -54,7 +58,7 @@ pub async fn update_user_password(
 ) -> Result<(), AppError> {
     request_put(
         "/user/password".to_string(),
-        UpdateUserPassword {
+        &UpdateUserPassword {
             current_password: current_password.to_owned(),
             new_password: new_password.to_owned(),
         },
@@ -69,14 +73,25 @@ pub async fn get_diary_day(date: &NaiveDate) -> Result<DiaryDay, AppError> {
 }
 
 /// Save all diary entries for a date
-pub async fn save_diary(cob: &NaiveDate, data: DiaryDay) -> Result<(), AppError> {
+pub async fn save_diary(cob: &NaiveDate, data: &SaveDiaryDay<'_>) -> Result<(), AppError> {
     log::debug!("Saving diary day: {:?}", data);
     request_put(format!("/diary/{}", cob.format("%F")), data).await
+}
+
+/// Save all diary entries for a date
+pub async fn save_diary_owned(cob: &NaiveDate, data: DiaryDay) -> Result<(), AppError> {
+    log::debug!("Saving diary day: {:?}", data);
+    request_put(format!("/diary/{}", cob.format("%F")), &data).await
 }
 
 /// Gets incomplete days for the week the date is in
 pub async fn get_incomplete_days(date: &NaiveDate) -> Result<IncompleteDays, AppError> {
     request_get(format!("/diary/{}/incomplete-days", date.format("%F"))).await
+}
+
+/// Get user practice
+pub async fn get_user_practice(practice: &str) -> Result<GetUserPractice, AppError> {
+    request_get(format!("/user/practice/{practice}")).await
 }
 
 /// Get user practices
@@ -85,33 +100,30 @@ pub async fn get_user_practices() -> Result<AllUserPractices, AppError> {
 }
 
 /// Updates a user practice
-pub async fn update_user_practice(
-    practice: &str,
-    user_practice: UserPractice,
-) -> Result<(), AppError> {
+pub async fn update_user_practice(user_practice: &UserPractice) -> Result<(), AppError> {
     request_put(
-        format!("/user/practice/{}", encode(practice)),
+        format!("/user/practice/{}", user_practice.id),
         &UpdateUserPractice { user_practice },
     )
     .await
 }
 
 /// Reorder user practices
-pub async fn reorder_user_practices(practices: Vec<String>) -> Result<(), AppError> {
+pub async fn reorder_user_practices(practices: &Vec<String>) -> Result<(), AppError> {
     request_put(
         "/user/practices/reorder".to_string(),
-        UpdateUserPracticesOrderKey { practices },
+        &UpdateUserPracticesOrderKey { practices },
     )
     .await
 }
 
 /// Delete user practice
 pub async fn delete_user_practice(practice: &str) -> Result<(), AppError> {
-    request_delete(format!("/user/practice/{}", encode(practice))).await
+    request_delete(format!("/user/practice/{practice}")).await
 }
 
 /// Create a new user practice
-pub async fn create_user_practice(user_practice: UserPractice) -> Result<(), AppError> {
+pub async fn create_user_practice(user_practice: NewUserPractice) -> Result<(), AppError> {
     request_post(
         "/user/practices".to_string(),
         &CreateUserPractice { user_practice },
@@ -121,6 +133,7 @@ pub async fn create_user_practice(user_practice: UserPractice) -> Result<(), App
 
 /// Get chart data for a practice
 pub async fn get_chart_data(
+    cob: &NaiveDate,
     practice: &Option<String>,
     duration: &ReportDuration,
 ) -> Result<ReportData, AppError> {
@@ -128,7 +141,7 @@ pub async fn get_chart_data(
     if let Some(p) = practice {
         query.push_str(&format!("&practice={}", encode(p)));
     }
-    request_get(format!("/diary/report?{query}").to_string()).await
+    request_get(format!("/diary/{cob}/report?{query}").to_string()).await
 }
 
 /// Get shared chart data for a practice
@@ -174,12 +187,12 @@ pub async fn get_yatra(yatra_id: &str) -> Result<YatraResponse, AppError> {
 
 /// Join yatra
 pub async fn join_yatra(yatra_id: &str) -> Result<(), AppError> {
-    request_put(format!("/yatra/{yatra_id}/join"), ()).await
+    request_put(format!("/yatra/{yatra_id}/join"), &()).await
 }
 
 /// Leave yatra
 pub async fn leave_yatra(yatra_id: &str) -> Result<(), AppError> {
-    request_put(format!("/yatra/{yatra_id}/leave"), ()).await
+    request_put(format!("/yatra/{yatra_id}/leave"), &()).await
 }
 
 /// Create a new yatra
@@ -209,7 +222,7 @@ pub async fn reorder_yatra_practices(
 ) -> Result<(), AppError> {
     request_put(
         format!("/yatra/{yatra_id}/practices/reorder"),
-        UpdateYatraPracticesOrderKey { practices },
+        &UpdateYatraPracticesOrderKey { practices },
     )
     .await
 }
@@ -239,7 +252,7 @@ pub async fn update_yatra_practice(
 ) -> Result<(), AppError> {
     request_put(
         format!("/yatra/{yatra_id}/practice/{}", encode(practice)),
-        UpdateYatraPractice {
+        &UpdateYatraPractice {
             update: YatraPracticeUpdate {
                 practice: new_name.to_owned(),
             },
@@ -259,7 +272,7 @@ pub async fn update_yatra_user_practices(
 ) -> Result<(), AppError> {
     request_put(
         format!("/yatra/{yatra_id}/user-practices"),
-        YatraUserPractices {
+        &YatraUserPractices {
             practices: practices.clone(),
         },
     )

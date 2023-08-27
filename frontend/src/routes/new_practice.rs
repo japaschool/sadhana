@@ -13,7 +13,7 @@ use crate::{
     },
     css::*,
     i18n::*,
-    model::{UserPractice, YatraPractice},
+    model::{NewUserPractice, YatraPractice},
     services::{create_user_practice, create_yatra_practice},
 };
 
@@ -36,6 +36,7 @@ pub fn new_practice(props: &Props) -> Html {
     struct FormData {
         practice: String,
         data_type: String,
+        is_required: Option<bool>,
     }
 
     let form_data = use_state(|| FormData {
@@ -56,10 +57,11 @@ pub fn new_practice(props: &Props) -> Html {
         use_async(async move {
             (match target {
                 NewPracticeTarget::UserPractice => {
-                    let new_practice = UserPractice {
+                    let new_practice = NewUserPractice {
                         practice: form.practice.trim().to_owned(),
                         data_type: form.data_type.as_str().try_into().unwrap(),
                         is_active: true,
+                        is_required: form.is_required,
                     };
                     create_user_practice(new_practice).await
                 }
@@ -146,6 +148,16 @@ pub fn new_practice(props: &Props) -> Html {
         })
     };
 
+    let required_onclick = {
+        let form = form_data.clone();
+        Callback::from(move |e: MouseEvent| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+            let mut new_form = (*form).clone();
+            new_form.is_required = Some(input.checked());
+            form.set(new_form);
+        })
+    };
+
     html! {
         <BlankPage
             header_label={ Locale::current().add_new_practice() }
@@ -192,6 +204,21 @@ pub fn new_practice(props: &Props) -> Html {
                             { format!(" {}: ", Locale::current().data_type()) }
                         </label>
                     </div>
+                    if props.target == NewPracticeTarget::UserPractice {
+                        <div class="relative">
+                            <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
+                                <span><i class="icon-tick"></i>{format!(" {}: ", Locale::current().is_required())}</span>
+                                <input
+                                    id="checkbox"
+                                    type="checkbox"
+                                    onclick={required_onclick.clone()}
+                                    />
+                            </label>
+                            <div class="pt-2">
+                                <p class="text-xs text-zinc-500 dark:text-zinc-200">{Locale::current().is_required_memo()}</p>
+                            </div>
+                        </div>
+                    }
                     <div class="relative">
                         <button type="submit" class={ SUBMIT_BTN_CSS }>{ Locale::current().save() }</button>
                     </div>

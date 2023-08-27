@@ -13,6 +13,7 @@ use crate::{
         get_chart_data, get_shared_chart_data, get_shared_practices, get_user_practices, user_info,
     },
 };
+use chrono::Local;
 use common::ReportDuration;
 use csv::Writer;
 use wasm_bindgen::{JsCast, JsValue};
@@ -23,6 +24,7 @@ use yew_hooks::{use_async, use_mount};
 
 #[function_component(Charts)]
 pub fn charts() -> Html {
+    let today = Local::now().date_naive();
     let user_ctx = use_user_context();
     let selected_practice = use_state(|| None as Option<UserPractice>);
     let duration = use_state(|| ReportDuration::Last7Days);
@@ -41,7 +43,7 @@ pub fn charts() -> Html {
         let duration = duration.clone();
         use_async(async move {
             match &*practice {
-                Some(p) => get_chart_data(&Some(p.practice.clone()), &*duration)
+                Some(p) => get_chart_data(&today, &Some(p.practice.clone()), &*duration)
                     .await
                     .map(|res| res.values),
                 None => Ok(vec![]),
@@ -106,7 +108,7 @@ pub fn charts() -> Html {
         Callback::from(move |_: MouseEvent| {
             let duration = duration.clone();
             spawn_local(async move {
-                get_chart_data(&None, &*duration)
+                get_chart_data(&today, &None, &*duration)
                     .await
                     .map(|data| {
                         let csv = to_csv_str(data).unwrap_or_default();

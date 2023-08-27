@@ -49,7 +49,8 @@ pub fn chart(props: &Props) -> Html {
 
     let config = Configuration::default()
         .display_mode_bar(DisplayModeBar::False)
-        .static_plot(true);
+        .static_plot(true)
+        .responsive(true);
 
     let trace = Bar::new(props.x_values.clone(), props.y_values.clone())
         .marker(Marker::new().color(NamedColor::DarkOrange))
