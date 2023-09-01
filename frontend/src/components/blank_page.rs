@@ -109,12 +109,13 @@ pub fn blank_page(props: &Props) -> Html {
 
     let timer = {
         let loading = loading.clone();
+        let props_loading = props.loading;
         use_timeout(
             move || {
                 log::debug!("Toggling spinner timer");
-                loading.toggle();
+                loading.set(props_loading);
             },
-            400,
+            600,
         )
     };
 
