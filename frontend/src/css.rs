@@ -18,8 +18,10 @@ pub const SUBMIT_BTN_CSS: &'static str =
     dark:-active:bg-orange-900 
     active:translate-y-1";
 
-pub const BTN_CSS: &'static str =
-    "bg-transparent hover:bg-amber-500 hover:bg-opacity-10 rounded-md text-white w-full cursor-pointer text-base font-light text-zinc-500 dark:text-zinc-100 mb-8 border border-zinc-500 dark:border-zinc-100 p-2 outline-none";
+pub const BTN_CSS_NO_MARGIN: &'static str =
+    "bg-transparent hover:bg-amber-500 hover:bg-opacity-10 rounded-md text-white w-full cursor-pointer text-base font-light text-zinc-500 dark:text-zinc-100 border border-zinc-500 dark:border-zinc-100 p-2 outline-none";
+
+pub const BTN_CSS: &'static str = concatcp!("mb-8 ", BTN_CSS_NO_MARGIN);
 
 pub const BODY_DIV_BASE_CSS: &'static str = "
     text-balance accent-amber-500 text-base leading-6 

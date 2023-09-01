@@ -181,6 +181,7 @@ pub fn admin_settings(props: &Props) -> Html {
                         </Link<AppRoute>>
                     </button>
                     <CopyButton
+                        class={BTN_CSS}
                         button_label={ Locale::current().copy_yatra_join_link() }
                         relative_link={ format!("/yatra/{}/join", props.yatra_id.as_str()) }
                         />
