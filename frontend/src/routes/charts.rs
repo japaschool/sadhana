@@ -16,6 +16,7 @@ use crate::{
 use chrono::Local;
 use common::ReportDuration;
 use csv::Writer;
+use gloo_events::EventListener;
 use wasm_bindgen::{JsCast, JsValue};
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{BlobPropertyBag, HtmlElement, HtmlInputElement};
@@ -149,13 +150,14 @@ pub fn charts() -> Html {
                     {pull_data}
                     />
             }
-            <div class={TWO_COLS_NO_GAP_CSS}>
+            <div class={TWO_COLS_CSS}>
                 <CopyButton
+                    class={BTN_CSS_NO_MARGIN}
                     button_label={Locale::current().share_charts_link()}
                     relative_link={format!("/shared/{}", user_ctx.id)}
                     />
                 <div class="relative">
-                    <button onclick={download_onclick} class={BTN_CSS}>
+                    <button onclick={download_onclick} class={BTN_CSS_NO_MARGIN}>
                     <i class="icon-???"></i>{Locale::current().download_csv()}</button>
                 </div>
             </div>
@@ -282,6 +284,27 @@ fn charts_base(props: &ChartBaseProps) -> Html {
             },
             (selected_practice.clone(), duration.clone()),
         );
+    }
+
+    {
+        // Reload the screen if the browser window resizes
+        // Required cause I couldn't make plot.ly responsive
+        use_effect(move || {
+            // Create your Callback as you normally would
+            let onresize = Callback::from(move |_: Event| {
+                if let Some(w) = web_sys::window() {
+                    log::debug!("Reloading on resize...");
+                    w.location().reload().unwrap();
+                }
+            });
+
+            // Create a Closure from a Box<dyn Fn> - this has to be 'static
+            let listener = EventListener::new(&web_sys::window().unwrap(), "resize", move |e| {
+                onresize.emit(e.clone())
+            });
+
+            move || drop(listener)
+        });
     }
 
     let practice_onchange = {
