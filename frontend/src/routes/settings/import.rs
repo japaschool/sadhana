@@ -231,8 +231,8 @@ pub fn import() -> Html {
         html! {
             <>
                 <div>
-                    <h5 class="text-center mb-4 text-xl font-medium leading-tight">{"Discovered Columns"}</h5>
-                    <p class="text-zinc-500 dark:text-zinc-200">{"These columns have been matched with your practices"}</p>
+                    <h5 class="text-center mb-4 text-xl font-medium leading-tight">{Locale::current().import_discovered_columns()}</h5>
+                    <p class="text-zinc-500 dark:text-zinc-200">{Locale::current().import_discovered_columns_memo()}</p>
                 </div>
                 {for headers.current().iter().skip(1).filter(|(_, dt)| dt.is_some()).map(|(h, dt)| html! {
                     <div class="relative">
@@ -247,8 +247,8 @@ pub fn import() -> Html {
                     </div>
                 })}
                 <div>
-                    <h5 class="text-center mb-4 text-xl font-medium leading-tight">{"Unmatched Columns"}</h5>
-                    <p class="text-zinc-500 dark:text-zinc-200">{"These columns could not be matched with your practices and can't be imported"}</p>
+                    <h5 class="text-center mb-4 text-xl font-medium leading-tight">{Locale::current().import_unmatched_columns()}</h5>
+                    <p class="text-zinc-500 dark:text-zinc-200">{Locale::current().import_unmatched_columns_memo()}</p>
                 </div>
                 <div class="space-y-0">
                     {for headers.current().iter().skip(1).filter(|(_, dt)| dt.is_none()).map(|(h, _)| html! {
