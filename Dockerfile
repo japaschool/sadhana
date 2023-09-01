@@ -14,14 +14,14 @@ FROM chef AS build
 RUN apt update
 RUN apt install -y libpq5
 
-# Building dependencies in a caching layer
-COPY --from=planner /usr/src/sadhana-pro/recipe.json recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json
-
 # TODO: download `trunk` instead of building it. See: https://github.com/LukeMathWalker/cargo-chef/issues/63
 # If works, do the same to download cargo-chef
 RUN rustup target add wasm32-unknown-unknown
 RUN cargo install trunk wasm-bindgen-cli
+
+# Building dependencies in a caching layer
+COPY --from=planner /usr/src/sadhana-pro/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
 
 WORKDIR /usr/src/sadhana-pro
 
