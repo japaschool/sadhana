@@ -7,7 +7,7 @@ use uuid::Uuid;
 lazy_static! {
     static ref KEY: String = env::var("JWT_KEY").expect("JWT_KEY must be set");
 }
-static ONE_WEEK: i64 = 7 * 60 * 60 * 24; // in seconds
+static ONE_YEAR: i64 = 365 * 60 * 60 * 24; // in seconds
 
 pub fn decode(token: &str) -> jsonwebtoken::errors::Result<TokenData<Claims>> {
     jsonwebtoken::decode::<Claims>(
@@ -42,7 +42,7 @@ impl Claims {
     pub fn new(user_id: Uuid, now: i64) -> Self {
         Claims {
             iat: now,
-            exp: now + ONE_WEEK,
+            exp: now + ONE_YEAR,
             user_id,
         }
     }
