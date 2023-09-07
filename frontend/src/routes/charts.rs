@@ -16,6 +16,7 @@ use crate::{
 use chrono::Local;
 use common::ReportDuration;
 use csv::Writer;
+use gloo::storage::{LocalStorage, Storage};
 use gloo_events::EventListener;
 use wasm_bindgen::{JsCast, JsValue};
 use wasm_bindgen_futures::spawn_local;
@@ -256,22 +257,23 @@ pub struct ChartBaseProps {
 
 const DATE_FORMAT: &'static str = "%Y-%m-%d";
 const DATE_FORMAT_HR: &'static str = "%a, %d %b";
+const PRACTICE_STORAGE_KEY: &'static str = "charts.selected_practice";
+const DURATION_STORAGE_KEY: &'static str = "charts.selected_duration";
 
 #[function_component(ChartsBase)]
 fn charts_base(props: &ChartBaseProps) -> Html {
-    let selected_practice = use_state(|| props.practices.first().cloned());
-    let duration = use_state(|| ReportDuration::Last7Days);
-
-    let duration_onchange = {
-        let dur = duration.clone();
-        Callback::from(move |e: Event| {
-            e.prevent_default();
-            let input: HtmlInputElement = e.target_unchecked_into();
-            if let Ok(d) = ReportDuration::from_str(&input.value()) {
-                dur.set(d.clone());
-            };
-        })
-    };
+    let selected_practice = use_state(|| {
+        LocalStorage::get::<String>(PRACTICE_STORAGE_KEY)
+            .ok()
+            .and_then(|v| props.practices.iter().find(|p| p.practice == v))
+            .or(props.practices.first())
+            .cloned()
+    });
+    let duration = use_state(|| {
+        let res = LocalStorage::get::<ReportDuration>(DURATION_STORAGE_KEY);
+        log::debug!("Duration in storage {:?}", res);
+        res.unwrap_or(ReportDuration::Last7Days)
+    });
 
     {
         let pull_data = props.pull_data.clone();
@@ -307,6 +309,18 @@ fn charts_base(props: &ChartBaseProps) -> Html {
         });
     }
 
+    let duration_onchange = {
+        let dur = duration.clone();
+        Callback::from(move |e: Event| {
+            e.prevent_default();
+            let input: HtmlInputElement = e.target_unchecked_into();
+            if let Ok(d) = ReportDuration::from_str(&input.value()) {
+                dur.set(d.clone());
+                LocalStorage::set(DURATION_STORAGE_KEY, d).unwrap();
+            };
+        })
+    };
+
     let practice_onchange = {
         let all_practices = props.practices.clone();
         let selected_practice = selected_practice.clone();
@@ -319,6 +333,7 @@ fn charts_base(props: &ChartBaseProps) -> Html {
                     .find(|p| p.practice == input.value())
                     .cloned(),
             );
+            LocalStorage::set(PRACTICE_STORAGE_KEY, input.value()).unwrap();
         })
     };
 
@@ -506,10 +521,21 @@ fn charts_base(props: &ChartBaseProps) -> Html {
                 </div>
                 <div class="relative">
                     <select class={INPUT_CSS} id="duration" onchange={duration_onchange.clone()}>
-                        <option class={"text-black"} selected=true value={ReportDuration::Last7Days.to_string()}>{Locale::current().last_week()}</option>
-                        <option class={"text-black"} value={ReportDuration::Last30Days.to_string()}>{Locale::current().last_month()}</option>
-                        <option class={"text-black"} value={ReportDuration::Last90Days.to_string()}>{Locale::current().last_quarter()}</option>
-                        <option class={"text-black"} value={ReportDuration::Last365Days.to_string()}>{Locale::current().last_year()}</option>
+                        { for vec![
+                            (ReportDuration::Last7Days, Locale::current().last_week()),
+                            (ReportDuration::Last30Days, Locale::current().last_month()),
+                            (ReportDuration::Last90Days, Locale::current().last_quarter()),
+                            (ReportDuration::Last365Days, Locale::current().last_year()),
+                            ].iter().map(|(dur, label)| html!{
+                                <option
+                                    class={"text-black"}
+                                    selected={*dur == *duration}
+                                    value={dur.to_string()}
+                                    >
+                                    {label}
+                                    </option>
+                            })
+                        }
                     </select>
                     <label for="duration" class={INPUT_LABEL_CSS}>
                         {format!(" {}: ", Locale::current().duration())}
