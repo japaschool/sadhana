@@ -1,13 +1,13 @@
 use std::{fmt, str::FromStr};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[macro_use]
 extern crate log;
 
 pub mod error;
 
-#[derive(Debug, PartialEq, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
 pub enum ReportDuration {
     Last7Days,
     Last30Days,
