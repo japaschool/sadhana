@@ -13,8 +13,8 @@ use crate::{
     components::{blank_page::BlankPage, calendar::Calendar, list_errors::ListErrors},
     css::*,
     i18n::Locale,
-    model::{DiaryEntry, PracticeDataType, PracticeEntryValue, SaveDiaryDay},
-    services::{get_diary_day, get_incomplete_days, save_diary},
+    model::{DiaryEntry, PracticeDataType, PracticeEntryValue},
+    services::{get_diary_day, get_incomplete_days, save_diary_entry},
 };
 
 use super::AppRoute;
@@ -25,33 +25,40 @@ pub fn home() -> Html {
 
     // A copy of backend data with local changes
     let local_diary_entry = use_list(Vec::new());
-    // A copy of the backend state without local values changes.
-    // Used as reference for getting indexes and data types of entries to avoid
-    // immutable borrowing of the local change buffer.
-    let static_diary_entry = use_state(|| Vec::new());
+    let current_entry = use_state(|| None::<DiaryEntry>);
 
     let diary_entry = {
         let selected_date = selected_date.clone();
         use_async(async move { get_diary_day(&*selected_date).await.map(|je| je.diary_day) })
     };
 
-    let save_diary_day = {
-        let local = local_diary_entry.clone();
-        let cob = selected_date.clone();
-        use_async(async move {
-            save_diary(
-                &*cob,
-                &SaveDiaryDay {
-                    diary_day: &*local.current(),
-                },
-            )
-            .await
-        })
-    };
-
     let incomplete_days = {
         let selected = selected_date.clone();
         use_async(async move { get_incomplete_days(&*selected).await.map(|res| res.days) })
+    };
+
+    let save_diary_day_entry = {
+        let cob = selected_date.clone();
+        let entry = current_entry.clone();
+        let incomplete_days = incomplete_days.clone();
+        use_async(async move {
+            if let Some(e) = entry.as_ref() {
+                save_diary_entry(&*cob, e).await.map(|_| {
+                    entry.set(None);
+                    if incomplete_days
+                        .data
+                        .as_ref()
+                        .unwrap_or(&vec![])
+                        .contains(&*cob)
+                        || e.value.is_none()
+                    {
+                        incomplete_days.run();
+                    }
+                })
+            } else {
+                Ok(())
+            }
+        })
     };
 
     {
@@ -97,12 +104,10 @@ pub fn home() -> Html {
     {
         // Update local state from server data when the later changes
         let local = local_diary_entry.clone();
-        let local2 = static_diary_entry.clone();
         use_effect_with_deps(
             move |je| {
                 je.data.iter().for_each(|data| {
                     local.set(data.clone());
-                    local2.set(data.clone());
                 });
                 || ()
             },
@@ -112,51 +117,6 @@ pub fn home() -> Html {
 
     lazy_static! {
         static ref DURATION_R: Regex = Regex::new(r#"(?:(\d+)[^\d]+)?(\d+)[^\d]+"#).unwrap();
-    };
-
-    let get_new_val = |input: &HtmlInputElement, entry: &DiaryEntry| {
-        let s = match entry.data_type {
-            PracticeDataType::Bool => input.checked().to_string(),
-            _ => input.value(),
-        };
-        PracticeEntryValue::try_from((&entry.data_type, s.as_str())).ok()
-    };
-
-    let checkbox_onclick = {
-        let change_buffer = local_diary_entry.clone();
-        let ref_diary_entry = static_diary_entry.clone();
-        let save_diary_day = save_diary_day.clone();
-        Callback::from(move |ev: MouseEvent| {
-            let input: HtmlInputElement = ev.target_unchecked_into();
-            let idx: usize = input.id().parse().unwrap();
-            let mut current = ref_diary_entry[idx].clone();
-            let new_val = get_new_val(&input, &current);
-
-            current.value = new_val;
-            change_buffer.update(idx, current);
-            save_diary_day.run();
-        })
-    };
-
-    let onchange = {
-        let change_buffer = local_diary_entry.clone();
-        let ref_diary_entry = static_diary_entry.clone();
-        let save_diary_day = save_diary_day.clone();
-        Callback::from(move |e: Event| {
-            let input: HtmlInputElement = e.target_unchecked_into();
-            let idx: usize = input.id().parse().unwrap();
-            let mut current = ref_diary_entry[idx].clone();
-            let new_val = get_new_val(&input, &current);
-
-            if current.value != new_val {
-                current.value = new_val;
-                change_buffer.update(idx, current);
-                save_diary_day.run();
-            }
-        })
-    };
-
-    lazy_static! {
         static ref REJECT_TIME_R: Regex = Regex::new(r"[^\d]").unwrap();
         static ref VALID_DURATION_R: Regex = {
             let h = Locale::current().hours_label();
@@ -172,6 +132,50 @@ pub fn home() -> Html {
             let r = format!(r#"^(?:(\d{{1,3}}){m}?|([0-1]?[0-9]|2[0-3])(?:{h}?\s?|:)?|([0-1]?[0-9]|2[0-3])(?:{h}?\s?|:)?([0-5]?[0-9]){m}?)$"#);
             Regex::new(&r).unwrap()
         };
+    };
+
+    let get_new_val = |input: &HtmlInputElement, entry: &DiaryEntry| {
+        let s = match entry.data_type {
+            PracticeDataType::Bool => input.checked().to_string(),
+            _ => input.value(),
+        };
+        PracticeEntryValue::try_from((&entry.data_type, s.as_str())).ok()
+    };
+
+    let checkbox_onclick = {
+        let local_state = local_diary_entry.clone();
+        let save = save_diary_day_entry.clone();
+        let save_buffer = current_entry.clone();
+        Callback::from(move |ev: MouseEvent| {
+            let input: HtmlInputElement = ev.target_unchecked_into();
+            let idx: usize = input.id().parse().unwrap();
+            let mut entry = local_state.current()[idx].clone();
+            let new_val = get_new_val(&input, &entry);
+
+            entry.value = new_val;
+            local_state.update(idx, entry.clone());
+            save_buffer.set(Some(entry));
+            save.run();
+        })
+    };
+
+    let onchange = {
+        let local_state = local_diary_entry.clone();
+        let save = save_diary_day_entry.clone();
+        let save_buffer = current_entry.clone();
+        Callback::from(move |e: Event| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+            let idx: usize = input.id().parse().unwrap();
+            let mut entry = local_state.current()[idx].clone();
+            let new_val = get_new_val(&input, &entry);
+
+            if entry.value != new_val {
+                entry.value = new_val;
+                local_state.update(idx, entry.clone());
+                save_buffer.set(Some(entry));
+                save.run();
+            }
+        })
     };
 
     // use_mut_ref is to avoid re-rendering on every key press
@@ -332,9 +336,9 @@ pub fn home() -> Html {
     };
 
     let onblur_time_dur = |for_time: bool| {
-        let change_buffer = local_diary_entry.clone();
-        let ref_diary_entry = static_diary_entry.clone();
-        let save_diary_day = save_diary_day.clone();
+        let local_state = local_diary_entry.clone();
+        let save = save_diary_day_entry.clone();
+        let save_buffer = current_entry.clone();
         Callback::from(move |e: FocusEvent| {
             let mut input: HtmlInputElement = e.target_unchecked_into();
             if for_time {
@@ -348,13 +352,14 @@ pub fn home() -> Html {
             // Safari does not seem to fire onchange when there is oninput: https://developer.apple.com/forums/thread/698078
             // Hence have to update state on blur
             let idx: usize = input.id().parse().unwrap();
-            let mut current = ref_diary_entry[idx].clone();
-            let new_val = get_new_val(&input, &current);
+            let mut entry = local_state.current()[idx].clone();
+            let new_val = get_new_val(&input, &entry);
 
-            if current.value != new_val {
-                current.value = new_val;
-                change_buffer.update(idx, current);
-                save_diary_day.run();
+            if entry.value != new_val {
+                entry.value = new_val;
+                local_state.update(idx, entry.clone());
+                save_buffer.set(Some(entry));
+                save.run();
             }
         })
     };
@@ -372,11 +377,8 @@ pub fn home() -> Html {
     let cal_should_highlight = {
         let today = Local::now().date_naive();
         let incomplete_days = incomplete_days.clone();
-        let selected = selected_date.clone();
         Callback::from(move |date: Rc<NaiveDate>| -> bool {
-            log::debug!("Incomplete days: {:?}", incomplete_days.data);
             today > *date
-                && *selected != *date
                 && incomplete_days
                     .data
                     .iter()
@@ -394,7 +396,7 @@ pub fn home() -> Html {
                 highlight_date={cal_should_highlight}
                 />
             <ListErrors error={diary_entry.error.clone()} />
-            <ListErrors error={save_diary_day.error.clone()} />
+            <ListErrors error={save_diary_day_entry.error.clone()} />
             <div class={BODY_DIV_SPACE_10_CSS}>
                 <div class={TWO_COLS_CSS}>
                     {for local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, value})|

@@ -73,9 +73,20 @@ pub async fn get_diary_day(date: &NaiveDate) -> Result<DiaryDay, AppError> {
 }
 
 /// Save all diary entries for a date
+//TODO: remove if no longer required from both frontend & backend
 pub async fn save_diary(cob: &NaiveDate, data: &SaveDiaryDay<'_>) -> Result<(), AppError> {
     log::debug!("Saving diary day: {:?}", data);
     request_put(format!("/diary/{}", cob.format("%F")), data).await
+}
+
+/// Save a diary entry for a date
+pub async fn save_diary_entry(cob: &NaiveDate, entry: &DiaryEntry) -> Result<(), AppError> {
+    log::debug!("Saving diary day entry: {:?}", entry);
+    request_put(
+        format!("/diary/{}/entry", cob.format("%F")),
+        &SaveDiaryDayEntry { entry },
+    )
+    .await
 }
 
 /// Save all diary entries for a date

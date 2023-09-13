@@ -131,6 +131,11 @@ pub struct SaveDiaryDay<'a> {
     pub diary_day: &'a Vec<DiaryEntry>,
 }
 
+#[derive(Debug, Serialize, Clone)]
+pub struct SaveDiaryDayEntry<'a> {
+    pub entry: &'a DiaryEntry,
+}
+
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct DiaryEntry {
     pub practice: String,

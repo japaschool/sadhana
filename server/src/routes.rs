@@ -102,6 +102,10 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                         "/incomplete-days",
                         web::get().to(app::diary::api::get_incomplete_days),
                     )
+                    .route(
+                        "/entry",
+                        web::put().to(app::diary::api::upsert_diary_day_entry),
+                    )
                     .route("", web::put().to(app::diary::api::upsert_diary_day))
                     .route("", web::get().to(app::diary::api::get_diary_day)),
             ),

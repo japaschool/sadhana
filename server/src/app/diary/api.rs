@@ -11,6 +11,35 @@ use super::{
     response::{DiaryDayResponse, IncompleteDays, ReportResponse},
 };
 
+/// Inserts or updates a single practice in a diary
+pub async fn upsert_diary_day_entry(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    form: web::Json<request::DiaryDayEntryUpsertRequest>,
+    path: web::Path<CobSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
+    let cob = path.into_inner();
+
+    log::debug!("Upserting {:?}", form);
+
+    web::block(move || {
+        DiaryDayEntry::upsert_entry(
+            &mut conn,
+            &DiaryEntryUpdate {
+                cob_date: &cob,
+                user_id: &user_id,
+                practice: &form.entry.practice,
+                value: form.entry.value.as_ref(),
+            },
+        )
+    })
+    .await??;
+
+    Ok(HttpResponse::Ok().json(()))
+}
+
 /// Inserts or updates a diary day
 pub async fn upsert_diary_day(
     state: web::Data<AppState>,
@@ -21,6 +50,7 @@ pub async fn upsert_diary_day(
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
     let cob = path.into_inner();
+
     log::debug!("Upserting {:?}", form);
 
     web::block(move || {

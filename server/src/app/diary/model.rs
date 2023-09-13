@@ -1,4 +1,7 @@
-use crate::{db_types::PracticeDataType, schema::sql_types::PracticeDataTypeEnum};
+use crate::{
+    db_types::PracticeDataType,
+    schema::{diary, sql_types::PracticeDataTypeEnum, user_practices},
+};
 use chrono::NaiveDate;
 use common::{error::AppError, ReportDuration};
 use diesel::{prelude::*, sql_query, sql_types::Uuid as DieselUuid, sql_types::*};
@@ -40,6 +43,33 @@ impl DiaryDayEntry {
         .load::<Self>(conn)?;
 
         Ok(res)
+    }
+
+    pub fn upsert_entry(conn: &mut PgConnection, entry: &DiaryEntryUpdate) -> Result<(), AppError> {
+        conn.transaction(|conn| {
+            let practice_id: Uuid = user_practices::table
+                .select(user_practices::id)
+                .filter(
+                    user_practices::practice
+                        .eq(&entry.practice)
+                        .and(user_practices::user_id.eq(&entry.user_id)),
+                )
+                .first(conn)?;
+
+            diesel::insert_into(diary::table)
+                .values((
+                    diary::cob_date.eq(&entry.cob_date),
+                    diary::user_id.eq(&entry.user_id),
+                    diary::practice_id.eq(&practice_id),
+                    diary::value.eq(&entry.value),
+                ))
+                .on_conflict((diary::cob_date, diary::user_id, diary::practice_id))
+                .do_update()
+                .set(diary::value.eq(&entry.value))
+                .execute(conn)
+        })?;
+
+        Ok(())
     }
 
     pub fn upsert(
@@ -202,6 +232,7 @@ impl IncompleteCob {
                 and d.cob_date = dates.cob_date
             where
                 up.is_required = true
+                and up.is_active = true
                 and d.value is null
                 and up.user_id = $3
                 and dates.cob_date < now()
