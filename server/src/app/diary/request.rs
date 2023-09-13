@@ -7,6 +7,11 @@ pub struct DiaryDayUpsertRequest {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct DiaryDayEntryUpsertRequest {
+    pub entry: DiaryDayEntryUpsert,
+}
+
+#[derive(Deserialize, Debug)]
 pub struct DiaryDayEntryUpsert {
     pub practice: String,
     pub value: Option<JsonValue>,
