@@ -119,7 +119,7 @@ pub fn blank_page(props: &Props) -> Html {
         )
     };
 
-    if props.loading {
+    if props.loading && !*loading {
         log::debug!("Resetting spinner timer");
         timer.reset();
     } else {

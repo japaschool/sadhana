@@ -1,11 +1,7 @@
 [workspace]
 resolver = "2" # features for target-specific deps are not enabled if the target is not being built
 
-members = [
-  "server",
-  "frontend",
-  "common",
-]
+members = ["server", "frontend", "common"]
 
 default-members = ["server"]
 
@@ -20,3 +16,5 @@ opt-level = 'z'
 # opt-level = 's'
 # link time optimization using using whole-program analysis
 lto = true
+# Automatically strip symbols from the binary.
+strip = true
