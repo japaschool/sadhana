@@ -4,12 +4,22 @@ var CACHE = {
     version: '-v1'
 };
 
+var precache = [
+    '/api/user/practices'
+];
+
 const diaryDayPutUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}/entry');
 const dateR = /(\d{4}-\d{2}-\d{2})/;
 const cacheTtlDays = 10;
 
 /* Install service worker, adding all our cache entries */
 self.addEventListener('install', function (e) {
+    console.info('Event: Install');
+    e.waitUntil(
+        caches.open(CACHE.name + CACHE.version).then(function (cache) {
+            return cache.addAll(precache);
+        })
+    );
     /*
     ** check network state after certain time interval
     ** If online for the first time, create an indexed db and a table
@@ -149,6 +159,7 @@ function saveIntoIndexedDb(url, authHeader, method, payload) {
 }
 
 async function sendOfflinePostRequestsToServer() {
+    console.info('Saving offline writes');
     var request = indexedDB.open("SadhanaProPostDB");
     request.onsuccess = function (event) {
         var db = event.target.result;
@@ -227,5 +238,5 @@ async function updateDiaryDayCachedGet(reqUrl, authHeader, payloadText) {
         });
         caches.open(CACHE.name + CACHE.version).then(cache => cache.put(getReq, new Response(JSON.stringify(respData))));
     } //TODO: if not found, make a new entry based on another date's cache
-    //TODO: update /incomplete-days cache 
+    //TODO: update /incomplete-days cache
 }
