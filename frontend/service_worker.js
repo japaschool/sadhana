@@ -4,10 +4,6 @@ var CACHE = {
     version: '-v1'
 };
 
-var precache = [
-    '/api/user/practices'
-];
-
 const diaryDayPutUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}/entry');
 const dateR = /(\d{4}-\d{2}-\d{2})/;
 const cacheTtlDays = 10;
@@ -15,11 +11,6 @@ const cacheTtlDays = 10;
 /* Install service worker, adding all our cache entries */
 self.addEventListener('install', function (e) {
     console.info('Event: Install');
-    e.waitUntil(
-        caches.open(CACHE.name + CACHE.version).then(function (cache) {
-            return cache.addAll(precache);
-        })
-    );
     /*
     ** check network state after certain time interval
     ** If online for the first time, create an indexed db and a table
@@ -33,9 +24,10 @@ self.addEventListener('install', function (e) {
     self.skipWaiting();
 });
 
-self.addEventListener('visibilitychange', e => {
-    clearStaleCache();
-});
+//FIXME: 
+// self.addEventListener('visibilitychange', e => {
+//     clearStaleCache();
+// });
 
 /* Serve cached content when offline */
 self.addEventListener('fetch', event => {
