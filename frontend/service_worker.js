@@ -4,13 +4,9 @@ var CACHE = {
     version: '-v1'
 };
 
-//TODO: 
-// - cache expiry
-// - use cache when server is unreachable (not just when offline). See: https://stackoverflow.com/questions/47262024/show-offline-cache-when-server-is-unreachable#47262275
-// - think about cache warmup
-// - offline mode banner, blah
-
 const diaryDayPutUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}/entry');
+const dateR = /(\d{4}-\d{2}-\d{2})/;
+const cacheTtlDays = 10;
 
 /* Install service worker, adding all our cache entries */
 self.addEventListener('install', function (e) {
@@ -20,10 +16,15 @@ self.addEventListener('install', function (e) {
     ** If online after going offline, hit all requests saved in indexed table to server and empty the table
     */
     checkNetworkState();
+
     // Skip over the "waiting" lifecycle state, to ensure that our
     // new service worker is activated immediately, even if there's
     // another tab open controlled by our older service worker code.
     self.skipWaiting();
+});
+
+self.addEventListener('visibilitychange', e => {
+    clearStaleCache();
 });
 
 /* Serve cached content when offline */
@@ -63,6 +64,22 @@ self.addEventListener('fetch', event => {
         }
     }
 });
+
+function clearStaleCache() {
+    setTimeout(function () {
+        caches.open(CACHE.name + CACHE.version).then(cache => {
+            var staleCobThreshold = new Date();
+            staleCobThreshold.setDate(staleCobThreshold.getDate() - cacheTtlDays);
+
+            cache.keys().then(reqs => reqs.forEach(req => {
+                const dateStr = req.url.match(dateR);
+                if (dateStr && Date.parse(dateStr[1]) < staleCobThreshold) {
+                    cache.delete(req);
+                }
+            }))
+        });
+    }, 60000);
+}
 
 function checkNetworkState() {
     setInterval(function () {
