@@ -66,6 +66,7 @@ pub fn home() -> Html {
         // Mostly needed to refresh the app on a phone after it was minimized to
         // pick up any concurrent changes
         let diary_entry = diary_entry.clone();
+        let incomplete_days = incomplete_days.clone();
         use_effect(move || {
             // Create your Callback as you normally would
             let onwakeup = Callback::from(move |_: Event| {
@@ -73,6 +74,7 @@ pub fn home() -> Html {
                     if doc.visibility_state() == VisibilityState::Visible {
                         log::debug!("Reloading...");
                         diary_entry.run();
+                        incomplete_days.run();
                     }
                 }
             });
