@@ -17,4 +17,4 @@ opt-level = 'z'
 # link time optimization using using whole-program analysis
 lto = true
 # Automatically strip symbols from the binary.
-strip = true
+# strip = true
