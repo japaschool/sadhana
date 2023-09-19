@@ -88,7 +88,7 @@
   <script>
     // Dark/Light mode automatic switch
     // Inspired by https://www.ditdot.hr/en/dark-mode-website-tutorial
-    // Should be kept inine in this file to avoid FOUC
+    // Should be kept inline in this file to avoid FOUC
 
     // Dark mode OS media selector
     const useDark = window.matchMedia("(prefers-color-scheme: dark)");
@@ -111,14 +111,14 @@
     useDark.addListener(evt => toggleDarkMode());
 
     // register ServiceWorker
-    window.onload = () => {
-      'use strict';
+    // window.onload = () => {
+    //   'use strict';
 
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker
-          .register('./service_worker.js');
-      }
-    }
+    //   if ('serviceWorker' in navigator) {
+    //     navigator.serviceWorker
+    //       .register('./service_worker.js');
+    //   }
+    // }
   </script>
   <title>Sadhana Pro</title>
 </head>
