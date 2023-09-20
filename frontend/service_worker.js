@@ -8,15 +8,8 @@ const diaryDayPutUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}/entry');
 const dateR = /(\d{4}-\d{2}-\d{2})/;
 const cacheTtlDays = 10;
 
-/* Install service worker, adding all our cache entries */
 self.addEventListener('install', function (e) {
     console.info('Event: Install');
-    /*
-    ** check network state after certain time interval
-    ** If online for the first time, create an indexed db and a table
-    ** If online after going offline, hit all requests saved in indexed table to server and empty the table
-    */
-    checkNetworkState();
 
     // Skip over the "waiting" lifecycle state, to ensure that our
     // new service worker is activated immediately, even if there's
@@ -24,71 +17,67 @@ self.addEventListener('install', function (e) {
     self.skipWaiting();
 });
 
-//FIXME: 
-// self.addEventListener('visibilitychange', e => {
-//     clearStaleCache();
-// });
+self.addEventListener('install', function (e) {
+    console.info('Event: Activating');
 
-/* Serve cached content when offline */
-self.addEventListener('fetch', event => {
-    if (event.request.cache === 'only-if-cached' && event.request.mode !== 'same-origin')
-        //invalid combo so just returning
-        return;
+    clearStaleCache();
+});
+
+self.addEventListener('fetch', (event) => {
     if (event.request.method === 'GET') {
-        if (navigator.onLine) {
-            event.respondWith(cacheRequest(event.request));
-        } else {
-            // console.info('Trying to fetch %s offline', event.request.url);
-            var resp = fetchResponseFromCache(event.request).catch((e) => { return })
-            if (resp) {
-                // console.info('Got offline response  %s', resp);
-                event.respondWith(resp)
+        // Open the cache
+        event.respondWith(sendOfflinePostRequestsToServer()
+            .catch((e) => console.error(e))
+            .then(() => caches.open(CACHE.name + CACHE.version))
+            .then(async (cache) => {
+                // Go to the network first
+                try {
+                    const fetchedResponse = await fetch(event.request.clone(), { credentials: 'same-origin' });
+                    cache.put(event.request, fetchedResponse.clone());
+                    return fetchedResponse;
+                } catch {
+                    return await cache.match(event.request, { ignoreVary: true });
+                }
+            }));
+    } else if (event.request.method === 'PUT' && diaryDayPutUrlR.test(event.request.url)) {
+        event.respondWith(Promise.resolve().then(async () => {
+            // Go to the network first
+            try {
+                const x = await sendOfflinePostRequestsToServer().catch((e) => console.error(e));
+                const fetchedResponse = await fetch(event.request.clone(), { credentials: 'same-origin' });
+                // If successful post cached puts
+                return fetchedResponse;
+            } catch {
+                console.info('Saving %s into DB for later processing', event.request.url);
+                var authHeader = event.request.headers.get('Authorization');
+                var reqUrl = event.request.url;
+                var method = event.request.method;
+                Promise.resolve(event.request.text()).then((payload) => {
+                    //Update local cache
+                    updateDiaryDayCachedGet(reqUrl, authHeader, payload);
+                    //save offline requests to indexed db
+                    saveIntoIndexedDb(reqUrl, authHeader, method, payload)
+                });
+                return new Response('null', { headers: { 'Content-Type': 'application/json' }, });
             }
-        }
-    }
-    else {
-        if (!navigator.onLine && diaryDayPutUrlR.test(event.request.url)) {
-            //here you can check for specific urls to be saved in indexed db
-            var authHeader = event.request.headers.get('Authorization');
-            var reqUrl = event.request.url;
-            var method = event.request.method;
-            Promise.resolve(event.request.text()).then((payload) => {
-                //Update local cache
-                updateDiaryDayCachedGet(reqUrl, authHeader, payload);
-                //save offline requests to indexed db
-                saveIntoIndexedDb(reqUrl, authHeader, method, payload)
-            });
-            event.respondWith(new Response('null', {
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-            }))
-        }
+        }));
+    } else {
+        return;
     }
 });
 
-function clearStaleCache() {
-    setTimeout(function () {
-        caches.open(CACHE.name + CACHE.version).then(cache => {
-            var staleCobThreshold = new Date();
-            staleCobThreshold.setDate(staleCobThreshold.getDate() - cacheTtlDays);
+async function clearStaleCache() {
+    return caches.open(CACHE.name + CACHE.version).then(cache => {
+        var staleCobThreshold = new Date();
+        staleCobThreshold.setDate(staleCobThreshold.getDate() - cacheTtlDays);
 
-            cache.keys().then(reqs => reqs.forEach(req => {
-                const dateStr = req.url.match(dateR);
-                if (dateStr && Date.parse(dateStr[1]) < staleCobThreshold) {
-                    cache.delete(req);
-                }
-            }))
-        });
-    }, 60000);
-}
-
-function checkNetworkState() {
-    setInterval(function () {
-        if (navigator.onLine) {
-            sendOfflinePostRequestsToServer()
-        }
-    }, 3000);
+        cache.keys().then(reqs => reqs.forEach(req => {
+            const dateStr = req.url.match(dateR);
+            if (dateStr && Date.parse(dateStr[1]) < staleCobThreshold) {
+                cache.delete(req);
+            }
+        }))
+    });
 }
 
 const fetchResponseFromCache = (request) =>
@@ -150,71 +139,63 @@ function saveIntoIndexedDb(url, authHeader, method, payload) {
     }
 }
 
+const sequencePromises = async (promises) => {
+    for (const p of promises) {
+        await p
+    }
+};
+
 async function sendOfflinePostRequestsToServer() {
-    console.info('Saving offline writes');
-    var request = indexedDB.open("SadhanaProPostDB");
-    request.onsuccess = function (event) {
-        var db = event.target.result;
-        var tx = db.transaction('postrequest', 'readwrite');
-        var store = tx.objectStore('postrequest');
-        var allRecords = store.getAll();
-        allRecords.onsuccess = function () {
-            if (allRecords.result && allRecords.result.length > 0) {
-                var records = allRecords.result
-                //make recursive call to hit fetch requests to server in a serial manner
-                var resp = sendFetchRequestsToServer(
-                    fetch(records[0].url, {
-                        method: records[0].method,
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json',
-                            'Authorization': records[0].authHeader
-                        },
-                        body: records[0].payload
-                    }), records[0].url, records[0].authHeader, records[0].method, records[0].payload, records.slice(1))
+    return new Promise(function (yes, no) {
+        console.info('Posting offline writes to the server');
+        var request = indexedDB.open("SadhanaProPostDB");
+        request.onupgradeneeded = function (event) {
+            var db = event.target.result;
+            db.onerror = function (event) {
+                console.log("Why didn't you allow my web app to use IndexedDB?!");
+            };
 
-                for (var i = 0; i < allRecords.result.length; i++)
-                    store.delete(allRecords.result[i].id)
+            var objectStore;
+            if (!db.objectStoreNames.contains('postrequest')) {
+                objectStore = db.createObjectStore("postrequest", { keyPath: 'id', autoIncrement: true });
             }
-        };
-    }
-    request.onupgradeneeded = function (event) {
-        var db = event.target.result;
-        db.onerror = function (event) {
-            console.log("Why didn't you allow my web app to use IndexedDB?!");
-        };
+            else {
+                objectStore = db.objectStoreNames.get('postrequest');
+            }
+        }
+        request.onsuccess = function (event) {
+            var db = event.target.result;
+            var tx = db.transaction('postrequest', 'readwrite');
+            var store = tx.objectStore('postrequest');
+            var allRecords = store.getAll();
+            allRecords.onsuccess = function () {
+                if (allRecords.result && allRecords.result.length > 0) {
+                    const postPromises = allRecords.result.map((record) =>
+                        fetch(record.url, {
+                            method: record.method,
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'Authorization': record.authHeader
+                            },
+                            body: record.payload
+                        }).catch((e) => {
+                            // Fetch fails only in case of network error. Fetch is successful in case of any response code
+                            // console.debug('Exception while sending post request to server' + e);
+                            saveIntoIndexedDb(record.url, record.authHeader, record.method, record.payload)
+                        })
+                    );
 
-        var objectStore;
-        if (!db.objectStoreNames.contains('postrequest')) {
-            objectStore = db.createObjectStore("postrequest", { keyPath: 'id', autoIncrement: true });
-        }
-        else {
-            objectStore = db.objectStoreNames.get('postrequest');
-        }
-    }
-}
+                    for (var i = 0; i < allRecords.result.length; i++)
+                        store.delete(allRecords.result[i].id)
 
-async function sendFetchRequestsToServer(data, reqUrl, authHeader, method, payload, records) {
-    let promise = Promise.resolve(data).then((response) => {
-        // console.log('Successfully sent request to server')
-        if (records.length != 0) {
-            sendFetchRequestsToServer(
-                fetch(records[0].url, {
-                    method: records[0].method,
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                        'Authorization': records[0].authHeader
-                    },
-                    body: records[0].payload
-                }), records[0].url, records[0].authHeader, records[0].method, records[0].payload, records.slice(1))
+                    sequencePromises(postPromises).then(() => yes());
+                } else {
+                    yes();
+                }
+            };
         }
-        return true
-    }).catch((e) => {
-        //fetch fails only in case of network error. Fetch is successful in case of any response code
-        // console.log('Exception while sending post request to server' + e)
-        saveIntoIndexedDb(reqUrl, authHeader, method, payload)
-    })
+    });
 }
 
 async function updateDiaryDayCachedGet(reqUrl, authHeader, payloadText) {
