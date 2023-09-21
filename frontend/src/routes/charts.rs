@@ -13,6 +13,7 @@ use crate::{
         get_chart_data, get_shared_chart_data, get_shared_practices, get_user_practices, user_info,
     },
 };
+use chrono::Datelike;
 use chrono::Local;
 use common::ReportDuration;
 use csv::Writer;
@@ -151,15 +152,19 @@ pub fn charts() -> Html {
                     {pull_data}
                     />
             }
-            <div class={TWO_COLS_CSS}>
-                <CopyButton
-                    class={BTN_CSS_NO_MARGIN}
-                    button_label={Locale::current().share_charts_link()}
-                    relative_link={format!("/shared/{}", user_ctx.id)}
-                    />
-                <div class="relative">
-                    <button onclick={download_onclick} class={BTN_CSS_NO_MARGIN}>
-                    <i class="icon-???"></i>{Locale::current().download_csv()}</button>
+            <div class="pt-8">
+                <div class={TWO_COLS_CSS}>
+                    <div class="relative">
+                        <CopyButton
+                            class={BTN_CSS_NO_MARGIN}
+                            button_label={Locale::current().share_charts_link()}
+                            relative_link={format!("/shared/{}", user_ctx.id)}
+                            />
+                    </div>
+                    <div class="relative">
+                        <button onclick={download_onclick} class={BTN_CSS_NO_MARGIN}>
+                        <i class="icon-???"></i>{Locale::current().download_csv()}</button>
+                    </div>
                 </div>
             </div>
         </BlankPage>
@@ -257,6 +262,9 @@ pub struct ChartBaseProps {
 
 const DATE_FORMAT: &'static str = "%Y-%m-%d";
 const DATE_FORMAT_HR: &'static str = "%a, %d %b";
+const DATE_FORMAT_DAY_NAME: &'static str = "%a";
+const DATE_FORMAT_DAY_NUM: &'static str = "%u";
+const DATE_FORMAT_DAY_ONLY: &'static str = "%a";
 const PRACTICE_STORAGE_KEY: &'static str = "charts.selected_practice";
 const DURATION_STORAGE_KEY: &'static str = "charts.selected_duration";
 
@@ -449,47 +457,100 @@ fn charts_base(props: &ChartBaseProps) -> Html {
         })
         .next();
 
-    let grid = html! {
-            <Grid>
-                <Ghead>
-                    <Gh>{Locale::current().date()}</Gh>
-                    <Gh>{selected_practice.as_ref().map(|p| p.practice.clone()).unwrap_or_default()}</Gh>
-                </Ghead>
-                <Gbody>{
-                    for props.report_data.iter().map(|p| {
-                        html! {
-                            <Gr>
-                                <Gd>{p.cob_date.format(DATE_FORMAT_HR).to_string()}</Gd>
-                                <Gd>{
-                                    p.value
-                                        .as_ref()
-                                        .map(|v| v.as_text())
-                                        .unwrap_or_default()
-                            }
-                                </Gd>
-                            </Gr>
-                    }
-                })
-            }
-                </Gbody>
-            </Grid>
+    let days: Vec<String> = {
+        vec![
+            Locale::current().mon(),
+            Locale::current().tue(),
+            Locale::current().wed(),
+            Locale::current().thu(),
+            Locale::current().fri(),
+            Locale::current().sat(),
+            Locale::current().sun(),
+        ]
+        .iter()
+        .map(|d| d.chars().next().unwrap().to_string())
+        .collect()
     };
 
-    let data_body = if selected_practice
-        .as_ref()
-        .map(|inner| inner.data_type == PracticeDataType::Text)
-        .unwrap_or(false)
-    {
-        html! {grid}
-    } else {
-        html! {
-                <Chart
-                    {x_values}
-                    {y_values}
-                    y_axis_type={selected_practice.as_ref().map(|p| p.data_type)}
-                    avg_value_and_label={avg_value}
-                    />
+    let bool_grid = {
+        let header = html! {
+            <Ghead>
+                <Gh>{Locale::current().week_no()}</Gh>
+                {for days.iter().map(|d| html! {<Gh>{d}</Gh>})}
+            </Ghead>
+        };
+        let mut rows = Vec::with_capacity(match *duration {
+            ReportDuration::Last7Days => 2,
+            ReportDuration::Last30Days => 5,
+            ReportDuration::Last90Days => 13,
+            ReportDuration::Last365Days => 53,
+        });
+        let mut current_week = vec![String::default(); 7];
+        let len = props.report_data.len();
+        for (i, p) in props.report_data.iter().enumerate() {
+            let idx = (p.cob_date.weekday().number_from_monday() - 1) as usize;
+            current_week[idx] = p
+                .value
+                .as_ref()
+                .map(|_| "V".to_string())
+                .unwrap_or_default();
+            if idx == 6 || (i == len - 1 && current_week.iter().any(|v| !v.is_empty())) {
+                let row = html! {
+                    <Gr>
+                        <Gd>{p.cob_date.iso_week().week()}</Gd>
+                        {for current_week.iter().map(|v| html! {<Gd>{v.clone()}</Gd>})}
+                    </Gr>
+                };
+                rows.push(row);
+                current_week = vec![String::default(); 7];
+            }
         }
+
+        html! {
+            <Grid>
+                {header}
+                <Gbody>{for rows}</Gbody>
+            </Grid>
+        }
+    };
+
+    let text_grid = html! {
+        <Grid>
+            <Ghead>
+                <Gh>{Locale::current().date()}</Gh>
+                <Gh>{selected_practice.as_ref().map(|p| p.practice.clone()).unwrap_or_default()}</Gh>
+            </Ghead>
+            <Gbody>{
+                for props.report_data.iter().map(|p| {
+                    html! {
+                        <Gr>
+                            <Gd>{p.cob_date.format(DATE_FORMAT_HR).to_string()}</Gd>
+                            <Gd>{
+                                p.value
+                                    .as_ref()
+                                    .map(|v| v.as_text())
+                                    .unwrap_or_default()
+                            }
+                            </Gd>
+                        </Gr>
+                }
+            })
+            }
+            </Gbody>
+        </Grid>
+    };
+
+    let data_body = match selected_practice.as_ref().map(|inner| inner.data_type) {
+        Some(PracticeDataType::Text) => html! {text_grid},
+        Some(PracticeDataType::Bool) => html! {bool_grid},
+        _ => html! {
+        <Chart
+            {x_values}
+            {y_values}
+            y_axis_type={selected_practice.as_ref().map(|p| p.data_type)}
+            avg_value_and_label={avg_value}
+            />
+        },
     };
 
     html! {

@@ -32,7 +32,7 @@ pub fn ghead(props: &Props) -> Html {
 #[function_component(Gh)]
 pub fn gh(props: &Props) -> Html {
     html! {
-        <th scope="col" class="px-6 py-3">{ props.children.clone() }</th>
+        <th scope="col" class="px-3 py-3">{ props.children.clone() }</th>
     }
 }
 
@@ -55,7 +55,7 @@ pub fn gr(props: &Props) -> Html {
 #[function_component(Ghd)]
 pub fn ghd(props: &Props) -> Html {
     html! {
-        <th scope="row" class="flex items-center px-6 py-4 text-zinc-400 whitespace-nowrap dark:text-zinc-300">
+        <th scope="row" class="flex items-center px-3 py-4 text-zinc-400 whitespace-nowrap dark:text-zinc-300">
             <div class="text-sm font-normal">{ props.children.clone() }</div>
         </th>
     }
@@ -64,6 +64,6 @@ pub fn ghd(props: &Props) -> Html {
 #[function_component(Gd)]
 pub fn gd(props: &Props) -> Html {
     html! {
-        <td class="px-6 py-4">{ props.children.clone() }</td>
+        <td class="px-3 py-4">{ props.children.clone() }</td>
     }
 }
