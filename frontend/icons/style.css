@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'icomoon';
-  src:  url('fonts/icomoon.eot?ae4esa');
-  src:  url('fonts/icomoon.eot?ae4esa#iefix') format('embedded-opentype'),
-    url('fonts/icomoon.ttf?ae4esa') format('truetype'),
-    url('fonts/icomoon.woff?ae4esa') format('woff'),
-    url('fonts/icomoon.svg?ae4esa#icomoon') format('svg');
+  src:  url('fonts/icomoon.eot?2iwfl5');
+  src:  url('fonts/icomoon.eot?2iwfl5#iefix') format('embedded-opentype'),
+    url('fonts/icomoon.ttf?2iwfl5') format('truetype'),
+    url('fonts/icomoon.woff?2iwfl5') format('woff'),
+    url('fonts/icomoon.svg?2iwfl5#icomoon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -13,17 +13,12 @@
 [class^="icon-"], [class*=" icon-"] {
   /* use !important to prevent issues with browser extensions that change fonts */
   font-family: 'icomoon' !important;
-  font-size: 1.15em;
   speak: never;
   font-style: normal;
   font-weight: normal;
   font-variant: normal;
   text-transform: none;
   line-height: 1;
-  margin-right: 8px;
-  margin-left: 8px;
-  vertical-align: middle;
-  text-align: center;
 
   /* Better Font Rendering =========== */
   -webkit-font-smoothing: antialiased;
@@ -33,207 +28,222 @@
 .icon-users:before {
   content: "\e900";
 }
-.icon-user:before {
+.icon-import:before {
   content: "\e901";
 }
-.icon-user-solid:before {
+.icon-import-solid:before {
   content: "\e902";
 }
-.icon-user-plus:before {
+.icon-download:before {
   content: "\e903";
 }
-.icon-user-minus:before {
+.icon-download-solid:before {
   content: "\e904";
 }
-.icon-user-group:before {
+.icon-adjust-solid:before {
   content: "\e905";
 }
-.icon-user-group-solid:before {
+.icon-user-plus:before {
   content: "\e906";
 }
-.icon-user-circle:before {
+.icon-user-minus:before {
   content: "\e907";
 }
-.icon-timer:before {
+.icon-star:before {
   content: "\e908";
 }
-.icon-timer-solid:before {
+.icon-plus:before {
   content: "\e909";
 }
-.icon-tick:before {
+.icon-minus:before {
   content: "\e90a";
 }
-.icon-tick-solid:before {
+.icon-logout:before {
   content: "\e90b";
 }
-.icon-table:before {
+.icon-login:before {
   content: "\e90c";
 }
-.icon-star:before {
+.icon-lock:before {
   content: "\e90d";
 }
-.icon-share:before {
+.icon-lock-open:before {
   content: "\e90e";
 }
-.icon-share-solid:before {
+.icon-link:before {
   content: "\e90f";
 }
-.icon-settings:before {
+.icon-info:before {
   content: "\e910";
 }
-.icon-settings-solid:before {
+.icon-help:before {
   content: "\e911";
 }
-.icon-send:before {
+.icon-heart:before {
   content: "\e912";
 }
-.icon-send-solid:before {
+.icon-chevron-up-down:before {
   content: "\e913";
 }
-.icon-rounds:before {
+.icon-chevron-right:before {
   content: "\e914";
 }
-.icon-rounds-solid:before {
+.icon-cap:before {
   content: "\e915";
 }
-.icon-plus:before {
+.icon-bell:before {
   content: "\e916";
 }
-.icon-moon:before {
+.icon-ant:before {
   content: "\e917";
 }
-.icon-moon-solid:before {
+.icon-user:before {
   content: "\e918";
 }
-.icon-minus:before {
+.icon-user-solid:before {
   content: "\e919";
 }
-.icon-mail:before {
+.icon-user-group:before {
   content: "\e91a";
 }
-.icon-mail-solid:before {
+.icon-user-group-solid:before {
   content: "\e91b";
 }
-.icon-logout:before {
+.icon-user-circle:before {
   content: "\e91c";
 }
-.icon-login:before {
+.icon-timer:before {
   content: "\e91d";
 }
-.icon-lock:before {
+.icon-timer-solid:before {
   content: "\e91e";
 }
-.icon-lock-open:before {
+.icon-tick:before {
   content: "\e91f";
 }
-.icon-list:before {
+.icon-tick-solid:before {
   content: "\e920";
 }
-.icon-link:before {
+.icon-table:before {
   content: "\e921";
 }
-.icon-lang:before {
+.icon-share:before {
   content: "\e922";
 }
-.icon-key:before {
+.icon-share-solid:before {
   content: "\e923";
 }
-.icon-key-solid:before {
+.icon-settings:before {
   content: "\e924";
 }
-.icon-info:before {
+.icon-settings-solid:before {
   content: "\e925";
 }
-.icon-home:before {
+.icon-send:before {
   content: "\e926";
 }
-.icon-home-solid:before {
+.icon-send-solid:before {
   content: "\e927";
 }
-.icon-help:before {
+.icon-rounds:before {
   content: "\e928";
 }
-.icon-heart:before {
+.icon-rounds-solid:before {
   content: "\e929";
 }
-.icon-graph:before {
+.icon-moon:before {
   content: "\e92a";
 }
-.icon-graph-solid:before {
+.icon-moon-solid:before {
   content: "\e92b";
 }
-.icon-eye:before {
+.icon-mail:before {
   content: "\e92c";
 }
-.icon-eye-solid:before {
+.icon-mail-solid:before {
   content: "\e92d";
 }
-.icon-eye-cross:before {
+.icon-list:before {
   content: "\e92e";
 }
-.icon-eye-cross-solid:before {
+.icon-lang:before {
   content: "\e92f";
 }
-.icon-edit:before {
+.icon-key:before {
   content: "\e930";
 }
-.icon-edit-solid:before {
+.icon-key-solid:before {
   content: "\e931";
 }
-.icon-doc:before {
+.icon-home:before {
   content: "\e932";
 }
-.icon-doc-solid:before {
+.icon-home-solid:before {
   content: "\e933";
 }
-.icon-doc-dup:before {
+.icon-graph:before {
   content: "\e934";
 }
-.icon-clock:before {
+.icon-graph-solid:before {
   content: "\e935";
 }
-.icon-clock-solid:before {
+.icon-eye:before {
   content: "\e936";
 }
-.icon-chevron-up-down:before {
+.icon-eye-solid:before {
   content: "\e937";
 }
-.icon-chevron-right:before {
+.icon-eye-cross:before {
   content: "\e938";
 }
-.icon-chevron-left:before {
+.icon-eye-cross-solid:before {
   content: "\e939";
 }
-.icon-chevron-down:before {
+.icon-edit:before {
   content: "\e93a";
 }
-.icon-cap:before {
+.icon-edit-solid:before {
   content: "\e93b";
 }
-.icon-calendar:before {
+.icon-doc:before {
   content: "\e93c";
 }
-.icon-calendar-solid:before {
+.icon-doc-solid:before {
   content: "\e93d";
 }
-.icon-bin:before {
+.icon-doc-dup:before {
   content: "\e93e";
 }
-.icon-bin-solid:before {
+.icon-clock:before {
   content: "\e93f";
 }
-.icon-bell:before {
+.icon-clock-solid:before {
   content: "\e940";
 }
-.icon-bars:before {
+.icon-chevron-left:before {
   content: "\e941";
 }
-.icon-bars-solid:before {
+.icon-chevron-down:before {
   content: "\e942";
 }
-.icon-ant:before {
+.icon-calendar:before {
   content: "\e943";
 }
-.icon-adjust:before {
+.icon-calendar-solid:before {
   content: "\e944";
+}
+.icon-bin:before {
+  content: "\e945";
+}
+.icon-bin-solid:before {
+  content: "\e946";
+}
+.icon-bars:before {
+  content: "\e947";
+}
+.icon-bars-solid:before {
+  content: "\e948";
+}
+.icon-adjust:before {
+  content: "\e949";
 }
