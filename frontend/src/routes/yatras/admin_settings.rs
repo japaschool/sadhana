@@ -182,7 +182,8 @@ pub fn admin_settings(props: &Props) -> Html {
                     </button>
                     <CopyButton
                         class={BTN_CSS}
-                        button_label={ Locale::current().copy_yatra_join_link() }
+                        share_button_label={Locale::current().share_yatra_join_link()}
+                        copy_button_label={Locale::current().copy_yatra_join_link()}
                         relative_link={ format!("/yatra/{}/join", props.yatra_id.as_str()) }
                         />
                     <button class={ SUBMIT_BTN_CSS } onclick={ delete_yatra_onclick }>

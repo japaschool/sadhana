@@ -37,6 +37,7 @@ pub fn language() -> Html {
     html! {
         <BlankPage
             show_footer=true
+            selected_page={AppRoute::Settings}
             prev_link={ (Locale::current().back(), AppRoute::Settings) }
             header_label={ Locale::current().language() }
             >

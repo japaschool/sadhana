@@ -133,6 +133,7 @@ pub fn user_practices() -> Html {
                 header_label={Locale::current().select_practices()}
                 prev_link={(Locale::current().done(), AppRoute::Home)}
                 show_footer=true
+                selected_page={AppRoute::Home}
                 loading={server_practices.loading}>
                 <ListErrors error={server_practices.error.clone()} />
                 <ListErrors error={reorder_practices.error.clone()} />

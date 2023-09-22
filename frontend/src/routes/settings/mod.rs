@@ -103,7 +103,7 @@ pub fn settings() -> Html {
     }
 
     html! {
-        <BlankPage show_footer=true header_label={user_ctx.name.clone()}>
+        <BlankPage show_footer=true selected_page={AppRoute::Settings} header_label={user_ctx.name.clone()}>
             <div class={ format!("space-y-4 pt-14 mx-auto max-w-md {}", BODY_DIV_BASE_CSS) }>
                 <ul onclick={ edit_user_onclick } class={UL_CSS}>
                     { menu_li("icon-user", Locale::current().user_details().to_sentence_case()) }
@@ -136,7 +136,7 @@ pub fn settings() -> Html {
                     </li>
                 </ul>
                 <ul onclick={ import_onclick } class={UL_CSS}>
-                    { menu_li("icon-???", Locale::current().import_csv() ) }
+                    { menu_li("icon-import", Locale::current().import_csv() ) }
                 </ul>
                 <ul class={UL_CSS}>
                     <li onclick={ help_onclick }>

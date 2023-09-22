@@ -105,7 +105,7 @@ pub fn edit_user_practice(props: &Props) -> Html {
                                 />
                             <label for="practice"
                                 class={INPUT_LABEL_CSS}>
-                                <i class="icon-???"></i>{format!(" {}", Locale::current().name())}
+                                <i class="icon-doc"></i>{format!(" {}", Locale::current().name())}
                             </label>
                         </div>
                         <div class="relative">

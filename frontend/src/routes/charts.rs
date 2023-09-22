@@ -9,6 +9,7 @@ use crate::{
     hooks::use_user_context,
     i18n::Locale,
     model::{PracticeDataType, PracticeEntryValue, ReportData, ReportDataEntry, UserPractice},
+    routes::AppRoute,
     services::{
         get_chart_data, get_shared_chart_data, get_shared_practices, get_user_practices, user_info,
     },
@@ -142,7 +143,7 @@ pub fn charts() -> Html {
     };
 
     html! {
-        <BlankPage show_footer=true loading={all_practices.data.is_none()} header_label={user_ctx.name.clone()}>
+        <BlankPage show_footer=true selected_page={AppRoute::Charts} loading={all_practices.data.is_none()} header_label={user_ctx.name.clone()}>
             <ListErrors error={all_practices.error.clone()} />
             <ListErrors error={report_data.error.clone()} />
             if all_practices.data.is_some(){
@@ -157,13 +158,14 @@ pub fn charts() -> Html {
                     <div class="relative">
                         <CopyButton
                             class={BTN_CSS_NO_MARGIN}
-                            button_label={Locale::current().share_charts_link()}
+                            share_button_label={Locale::current().share_charts_link()}
+                            copy_button_label={Locale::current().copy_charts_link()}
                             relative_link={format!("/shared/{}", user_ctx.id)}
                             />
                     </div>
                     <div class="relative">
                         <button onclick={download_onclick} class={BTN_CSS_NO_MARGIN}>
-                        <i class="icon-???"></i>{Locale::current().download_csv()}</button>
+                        <i class="icon-download"></i>{Locale::current().download_csv()}</button>
                     </div>
                 </div>
             </div>
@@ -235,7 +237,6 @@ pub fn shared_charts(props: &SharedChartsProps) -> Html {
 
     html! {
             <BlankPage
-                show_footer=false
                 loading={all_practices.loading || user_info.loading}
                 header_label={user_info.data.as_ref().map(|u| u.name.to_owned()).unwrap_or_default()}
                 >
@@ -262,9 +263,6 @@ pub struct ChartBaseProps {
 
 const DATE_FORMAT: &'static str = "%Y-%m-%d";
 const DATE_FORMAT_HR: &'static str = "%a, %d %b";
-const DATE_FORMAT_DAY_NAME: &'static str = "%a";
-const DATE_FORMAT_DAY_NUM: &'static str = "%u";
-const DATE_FORMAT_DAY_ONLY: &'static str = "%a";
 const PRACTICE_STORAGE_KEY: &'static str = "charts.selected_practice";
 const DURATION_STORAGE_KEY: &'static str = "charts.selected_duration";
 
