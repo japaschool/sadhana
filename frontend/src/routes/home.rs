@@ -264,7 +264,7 @@ pub fn home() -> Html {
         // Inject zeroes in the relevant places
         if sanitized.len() == 1 && sanitized.parse::<u32>().unwrap() > 2 {
             sanitized.insert(0, '0');
-        } else if sanitized.len() == 2 && sanitized.parse::<u32>().unwrap() > 24 {
+        } else if sanitized.len() == 2 && sanitized.parse::<u32>().unwrap() > 23 {
             sanitized.remove(1);
         } else if sanitized.len() == 3
             && sanitized.chars().nth(2).unwrap().to_digit(10).unwrap() > 5

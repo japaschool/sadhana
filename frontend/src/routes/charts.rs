@@ -345,6 +345,30 @@ fn charts_base(props: &ChartBaseProps) -> Html {
         })
     };
 
+    let overflow_time = {
+        if selected_practice.as_ref().map(|p| p.data_type) != Some(PracticeDataType::Time) {
+            false
+        } else {
+            let mut min_eve_h = 12;
+            let mut max_morning_h = 12;
+            for h in props.report_data.iter().filter_map(|v| {
+                v.value.as_ref().and_then(|v| match v {
+                    PracticeEntryValue::Time { h, m: _ } => Some(*h),
+                    _ => None,
+                })
+            }) {
+                if h < 24 && h > 18 && (h < min_eve_h || min_eve_h == 12) {
+                    min_eve_h = h;
+                }
+                if h < 8 && (h > max_morning_h || max_morning_h == 12) {
+                    max_morning_h = h;
+                }
+            }
+
+            min_eve_h != 12 && max_morning_h != 12 && max_morning_h + 24 - min_eve_h < 8
+        }
+    };
+
     let (x_values, y_values): (Vec<_>, Vec<_>) = selected_practice
         .iter()
         .flat_map(|selected| {
@@ -361,8 +385,18 @@ fn charts_base(props: &ChartBaseProps) -> Html {
                         PracticeDataType::Time => p
                             .value
                             .as_ref()
-                            .and_then(|v| v.as_time_str())
-                            .map(|s| format!("2020-01-01 {}:00", s))
+                            .and_then(|v| {
+                                let mut d = 1;
+                                match v {
+                                    PracticeEntryValue::Time { h, m: _ }
+                                        if overflow_time && *h < 8 =>
+                                    {
+                                        d = 2
+                                    }
+                                    _ => (),
+                                }
+                                v.as_time_str().map(|s| format!("2020-01-0{d} {s}:00"))
+                            })
                             .unwrap_or_default(),
                         PracticeDataType::Duration => p
                             .value
@@ -432,7 +466,11 @@ fn charts_base(props: &ChartBaseProps) -> Html {
                             .flat_map(|e| {
                                 e.value.iter().map(|v| match v {
                                     PracticeEntryValue::Time { h, m } => {
-                                        (*h as u64) * 60 + (*m as u64)
+                                        let mut h = *h;
+                                        if overflow_time && h < 8 {
+                                            h = h + 24;
+                                        }
+                                        (h as u64) * 60 + (*m as u64)
                                     }
                                     _ => 0,
                                 })
@@ -442,13 +480,19 @@ fn charts_base(props: &ChartBaseProps) -> Html {
                                 .iter()
                                 .filter_map(|x| x.value.as_ref().map(|_| 1))
                                 .sum::<u64>();
-                        let h = (avg_mins / 60) as u8;
+                        let mut h = (avg_mins / 60) as u8;
+                        let mut d = 1;
                         let m = (avg_mins % 60) as u8;
+
+                        if overflow_time && h > 23 {
+                            h = h - 24;
+                            d = 2;
+                        }
 
                         PracticeEntryValue::Time { h, m }
                             .as_time_str()
                             .into_iter()
-                            .map(|s| (format!("2020-01-01 {}:00", s), s))
+                            .map(|s| (format!("2020-01-0{d} {s}:00"), s))
                             .next()
                     }
                     _ => None,
