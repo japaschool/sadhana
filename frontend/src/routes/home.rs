@@ -141,7 +141,11 @@ pub fn home() -> Html {
             PracticeDataType::Bool => input.checked().to_string(),
             _ => input.value(),
         };
-        PracticeEntryValue::try_from((&entry.data_type, s.as_str())).ok()
+        if s.is_empty() {
+            None
+        } else {
+            PracticeEntryValue::try_from((&entry.data_type, s.as_str())).ok()
+        }
     };
 
     let checkbox_onclick = {
