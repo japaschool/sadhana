@@ -313,6 +313,7 @@ pub fn import() -> Html {
         <BlankPage
             header_label={Locale::current().import_csv()}
             show_footer=true
+            selected_page={AppRoute::Settings}
             loading={*saving || save.loading || all_practices.loading}
             prev_link={(Locale::current().cancel(), AppRoute::Settings)}
             >

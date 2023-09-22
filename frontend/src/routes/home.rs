@@ -391,7 +391,7 @@ pub fn home() -> Html {
     };
 
     html! {
-        <BlankPage show_footer=true loading={diary_entry.loading}>
+        <BlankPage show_footer=true loading={diary_entry.loading} selected_page={AppRoute::Home}>
             <Calendar
                 selected_date={*selected_date}
                 date_onchange={selected_date_onchange}

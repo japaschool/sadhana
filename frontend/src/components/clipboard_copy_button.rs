@@ -3,11 +3,12 @@ use lazy_static::lazy_static;
 use yew::prelude::*;
 use yew_hooks::{use_bool_toggle, use_clipboard, use_timeout};
 
-use crate::{css::*, i18n::Locale};
+use crate::i18n::Locale;
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
-    pub button_label: AttrValue,
+    pub copy_button_label: AttrValue,
+    pub share_button_label: AttrValue,
     pub relative_link: AttrValue,
     pub class: AttrValue,
 }
@@ -24,6 +25,16 @@ lazy_static! {
 pub fn copy_button(props: &Props) -> Html {
     let clipboard = use_clipboard();
     let show_tooltip = use_bool_toggle(false);
+    let can_share = window()
+        .iter()
+        .map(|w| w.navigator().can_share().unwrap_or(false))
+        .next()
+        .unwrap_or(false);
+    let button_label = if can_share {
+        props.share_button_label.clone()
+    } else {
+        props.copy_button_label.clone()
+    };
 
     let onclick = {
         let clipboard = clipboard.clone();
@@ -78,7 +89,8 @@ pub fn copy_button(props: &Props) -> Html {
                 <span class="bg-slate-600 bg-opacity-50 rounded-2xl my-auto border p-4 text-white text-2xl">{ Locale::current().copied() }</span>
             </div>
             <button {onclick} class={props.class.to_string()}>
-                <i class="icon-doc-dup"></i>{format!(" {}", props.button_label)}
+                <i class={if can_share {"icon-share"} else {"icon-doc-dup"}}></i>
+                {format!(" {}", button_label)}
             </button>
         </>
     }

@@ -275,6 +275,7 @@ pub fn yatras() -> Html {
     html! {
         <BlankPage
             show_footer=true
+            selected_page={AppRoute::Yatras}
             loading={ yatras.loading || data.loading }
             left_button={ HeaderButtonProps::blank() }
             right_button={

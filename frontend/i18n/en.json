@@ -71,7 +71,8 @@
   "passwords_dont_match": "Passwords don't match",
   "reset_success_alert": "Password has been successfully reset. Please login.",
   "data_type_cant_be_empty": "Please fill in this field.",
-  "share_charts_link": "Copy charts sharing link",
+  "share_charts_link": "Share charts link",
+  "copy_charts_link": "Copy charts sharing link",
   "on_average": "{qty} on average",
   "add_new": "Add New",
   "short_description": "Short Description",
@@ -111,6 +112,7 @@
   "delete_yatra_practice_warning": "Are you sure you want to delete practice?",
   "leave_yatra_practice_warning": "Are you sure you want to leave yatra?",
   "copy_yatra_join_link": "Copy Join Yatra Link",
+  "share_yatra_join_link": "Share Join Yatra Link",
   "already_joined_yatra": "You have already joined this yatra",
   "last_yatra_admin_cannot_leave": "Last yatra admin can't leave. Add another admin or delete yatra instead."
 }

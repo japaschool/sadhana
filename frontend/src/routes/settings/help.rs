@@ -1,11 +1,11 @@
 use yew::prelude::*;
 
-use crate::{components::blank_page::BlankPage, css::*, i18n::*};
+use crate::{components::blank_page::BlankPage, css::*, i18n::*, routes::AppRoute};
 
 #[function_component(Help)]
 pub fn help() -> Html {
     html! {
-        <BlankPage show_footer=true >
+        <BlankPage show_footer=true selected_page={AppRoute::Settings}>
             <div class={ BODY_DIV_CSS }>
                 <div class="text-center">
                     <h5 class="mb-4 text-xl font-medium leading-tight">{"FAQ"}</h5>

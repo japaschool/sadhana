@@ -20,6 +20,8 @@ pub struct Props {
     pub loading: bool,
     #[prop_or(false)]
     pub show_footer: bool,
+    #[prop_or_default]
+    pub selected_page: Option<AppRoute>,
     pub children: Children,
 }
 
@@ -127,6 +129,14 @@ pub fn blank_page(props: &Props) -> Html {
         timer.cancel();
     }
 
+    let selected_css = |route| {
+        if Some(route) == props.selected_page {
+            "-solid !text-amber-500".to_string()
+        } else {
+            String::default()
+        }
+    };
+
     html! {
         <>
             <div class="bg-hero dark:bg-herod bg-no-repeat bg-cover bg-center h-screen w-full fixed -z-10" />
@@ -186,10 +196,10 @@ pub fn blank_page(props: &Props) -> Html {
                         <div class="relative py-3 sm:max-w-xl sm:mx-auto">
                             <div class="relative px-8 sm:rounded-3xl sm:px-20">
                                 <div class={ MENU_CSS }>
-                                    <span><Link<AppRoute> to={AppRoute::Home}><i class={ format!("icon-home {FOOTER_ICON_CSS}") }/></Link<AppRoute>></span>
-                                    <span><Link<AppRoute> to={AppRoute::Charts}><i class={ format!("icon-graph {FOOTER_ICON_CSS}") }/></Link<AppRoute>></span>
-                                    <span><Link<AppRoute> to={AppRoute::Yatras}><i class={ format!("icon-user-group {FOOTER_ICON_CSS}") }/></Link<AppRoute>></span>
-                                    <span><Link<AppRoute> to={AppRoute::Settings}><i class={ format!("icon-adjust {FOOTER_ICON_CSS}") }/></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::Home}><i class={ format!("icon-home{} {FOOTER_ICON_CSS}", selected_css(AppRoute::Home)) }/></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::Charts}><i class={ format!("icon-graph{} {FOOTER_ICON_CSS}", selected_css(AppRoute::Charts)) }/></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::Yatras}><i class={ format!("icon-user-group{} {FOOTER_ICON_CSS}", selected_css(AppRoute::Yatras)) }/></Link<AppRoute>></span>
+                                    <span><Link<AppRoute> to={AppRoute::Settings}><i class={ format!("icon-adjust{} {FOOTER_ICON_CSS}", selected_css(AppRoute::Settings)) }/></Link<AppRoute>></span>
                                 </div>
                             </div>
                         </div>
