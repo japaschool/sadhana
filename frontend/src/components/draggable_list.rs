@@ -194,17 +194,17 @@ pub fn draggable_list(props: &Props) -> Html {
                 <label>
                     <i onclick={ toggle_hidden.clone() }
                         id={ item.id.clone() }
-                        class={ if !props.is_hidden.emit(item.id.to_owned()) {"icon-eye"} else {"icon-eye-cross"}}
+                        class={format!("mx-1.5 {}", if !props.is_hidden.emit(item.id.to_owned()) {"icon-eye"} else {"icon-eye-cross"})}
                         />
                 </label>
             }} else { html! {}}}
             <label>
-                <i onclick={ rename.clone() } id={ item.id.clone() } class="icon-edit"/>
+                <i onclick={ rename.clone() } id={ item.id.clone() } class="icon-edit mx-1.5"/>
             </label>
             <label>
-                <i onclick={ delete.clone() } id={ item.id.clone() } class="icon-bin"/>
+                <i onclick={ delete.clone() } id={ item.id.clone() } class="icon-bin mx-1.5"/>
             </label>
-            <label draggable="true" class="touch-none"><i class="icon-bars"></i></label>
+            <label draggable="true" class="touch-none"><i class="icon-bars mx-1.5"></i></label>
         </div>
     }).collect()
 }
