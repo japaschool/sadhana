@@ -35,12 +35,12 @@ self.addEventListener('fetch', (event) => {
             .then(async (cache) => {
                 // Go to the network first
                 try {
-                    const fetchedResponse = await fetch(event.request.clone(), { credentials: 'same-origin' });
-                    //TODO: if responseCode === 504 throw error
+                    const fetchedResponse = await fetchWrapper(event.request.clone(), { credentials: 'same-origin' });
                     cache.put(event.request, fetchedResponse.clone());
                     saveDefaultDiaryDay(event.request.url, fetchedResponse.clone());
                     return fetchedResponse;
                 } catch {
+                    console.log('Cound not fetch from server; serving from cache.');
                     // When server unreachable fetch cached response
                     const cachedResp = await cache.match(event.request, { ignoreVary: true });
                     if (cachedResp) {
@@ -64,7 +64,7 @@ self.addEventListener('fetch', (event) => {
                 // Try sending saved puts
                 const x = await sendOfflinePostRequestsToServer().catch((e) => console.error(e));
                 // Try sending original put request to the server
-                const fetchedResponse = await fetch(event.request.clone(), { credentials: 'same-origin' });
+                const fetchedResponse = await fetchWrapper(event.request.clone(), { credentials: 'same-origin' });
                 return fetchedResponse;
             } catch {
                 console.info('Saving %s into DB for later processing', event.request.url);
@@ -104,16 +104,8 @@ const fetchResponseFromCache = (request) =>
         cache.match(request, { ignoreVary: true }).then(response => returnResponseFromCache(request, response, cache))
     );
 
-const cacheRequest = request => caches.open(CACHE.name + CACHE.version).then(cache =>
-    fetch(request.clone(), {
-        credentials: 'same-origin'
-    }).then(response =>
-        cacheResponse(cache, request.clone(), response))
-);
-
 async function cacheResponse(cache, request, response) {
     var responseToCache;
-    // console.info('Caching request %s', request.url);
     try {
         responseToCache = response.clone();
         cache.put(request, responseToCache);
@@ -123,12 +115,10 @@ async function cacheResponse(cache, request, response) {
 }
 
 async function returnResponseFromCache(request, response, cache) {
-    // console.info('Caching request %s', request.url);
     if (!!response) {
         return response;
     } else {
-        // console.log(request.url + ' not yet cached!')
-        return fetch(request, { credentials: 'same-origin' }).then(response => cacheResponse(cache, request, response))
+        return fetchWrapper(request, { credentials: 'same-origin' }).then(response => cacheResponse(cache, request, response))
     }
 }
 
@@ -190,7 +180,7 @@ async function sendOfflinePostRequestsToServer() {
             allRecords.onsuccess = function () {
                 if (allRecords.result && allRecords.result.length > 0) {
                     const postPromises = allRecords.result.map((record) =>
-                        fetch(record.url, {
+                        fetchWrapper(record.url, {
                             method: record.method,
                             headers: {
                                 'Accept': 'application/json',
@@ -200,7 +190,7 @@ async function sendOfflinePostRequestsToServer() {
                             body: record.payload
                         }).catch((e) => {
                             // Fetch fails only in case of network error. Fetch is successful in case of any response code
-                            // console.debug('Exception while sending post request to server' + e);
+                            console.debug('Exception while sending post request to server' + e);
                             saveIntoIndexedDb(record.url, record.authHeader, record.method, record.payload)
                         })
                     );
@@ -242,4 +232,12 @@ async function saveDefaultDiaryDay(url, resp) {
                 })
             );
     }
+}
+
+async function fetchWrapper(req, opts) {
+    const resp = await fetch(req, opts);
+    if (resp.status === 504) {
+        throw new Error('Server unavailable');
+    }
+    return resp;
 }
