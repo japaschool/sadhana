@@ -142,6 +142,16 @@ pub fn admin_settings(props: &Props) -> Html {
         })
     };
 
+    let new_yatra_practice_onclick = {
+        let nav = nav.clone();
+        let yatra_id = props.yatra_id.clone();
+        Callback::from(move |_: MouseEvent| {
+            nav.push(&AppRoute::NewYatraPractice {
+                id: yatra_id.to_string(),
+            });
+        })
+    };
+
     html! {
         <BlankPage
             header_label={ yatra.data.iter().map(|y| y.name.clone()).next().unwrap_or_default() }
@@ -174,11 +184,9 @@ pub fn admin_settings(props: &Props) -> Html {
                     }}}
                 </form>
                 <div class="relative">
-                    <button class={ BTN_CSS }>
-                        <Link<AppRoute> to={AppRoute::NewYatraPractice { id: props.yatra_id.to_string() }}>
-                            <i class="icon-plus"></i>
-                            { Locale::current().add_new_practice() }
-                        </Link<AppRoute>>
+                    <button class={ BTN_CSS } onclick={new_yatra_practice_onclick}>
+                        <i class="icon-plus"></i>
+                        { Locale::current().add_new_practice() }
                     </button>
                     <CopyButton
                         class={BTN_CSS}
