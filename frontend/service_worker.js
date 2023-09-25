@@ -5,8 +5,11 @@ var CACHE = {
 };
 
 const diaryDayPutUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}/entry');
+const diaryDayGetUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}$');
+const incompleteDaysGetUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}/incomplete-days$');
 const dateR = /(\d{4}-\d{2}-\d{2})/;
 const cacheTtlDays = 10;
+const defaultDiaryDayKey = '/default-diary-day';
 
 self.addEventListener('install', function (e) {
     console.info('Event: Install');
@@ -33,19 +36,35 @@ self.addEventListener('fetch', (event) => {
                 // Go to the network first
                 try {
                     const fetchedResponse = await fetch(event.request.clone(), { credentials: 'same-origin' });
+                    //TODO: if responseCode === 504 throw error
                     cache.put(event.request, fetchedResponse.clone());
+                    saveDefaultDiaryDay(event.request.url, fetchedResponse.clone());
                     return fetchedResponse;
                 } catch {
-                    return await cache.match(event.request, { ignoreVary: true });
+                    // When server unreachable fetch cached response
+                    const cachedResp = await cache.match(event.request, { ignoreVary: true });
+                    if (cachedResp) {
+                        return cachedResp;
+                    }
+                    // If there's no cached response and it's a get for a diary day, generate a blank diary day
+                    if (diaryDayGetUrlR.test(event.request.url)) {
+                        const defaultResp = await cache.match(defaultDiaryDayKey);
+                        cache.put(event.request, defaultResp.clone());
+                        return defaultResp;
+                    }
+                    // If it's a get for incomplete days, just return an empty array
+                    if (incompleteDaysGetUrlR.test(event.request.url)) {
+                        return new Response('[]', { headers: { 'Content-Type': 'application/json' }, });
+                    }
                 }
             }));
     } else if (event.request.method === 'PUT' && diaryDayPutUrlR.test(event.request.url)) {
         event.respondWith(Promise.resolve().then(async () => {
-            // Go to the network first
             try {
+                // Try sending saved puts
                 const x = await sendOfflinePostRequestsToServer().catch((e) => console.error(e));
+                // Try sending original put request to the server
                 const fetchedResponse = await fetch(event.request.clone(), { credentials: 'same-origin' });
-                // If successful post cached puts
                 return fetchedResponse;
             } catch {
                 console.info('Saving %s into DB for later processing', event.request.url);
@@ -210,6 +229,17 @@ async function updateDiaryDayCachedGet(reqUrl, authHeader, payloadText) {
             if (item.practice === payload.entry.practice) respData.diary_day[i] = payload.entry;
         });
         caches.open(CACHE.name + CACHE.version).then(cache => cache.put(getReq, new Response(JSON.stringify(respData))));
-    } //TODO: if not found, make a new entry based on another date's cache
-    //TODO: update /incomplete-days cache
+    }
+}
+
+async function saveDefaultDiaryDay(url, resp) {
+    if (diaryDayGetUrlR.test(url)) {
+        return caches.open(CACHE.name + CACHE.version)
+            .then(async (cache) =>
+                resp.json().then(payload => {
+                    payload.diary_day.forEach((entry) => entry.value = null);
+                    cache.put(defaultDiaryDayKey, new Response(JSON.stringify(payload)))
+                })
+            );
+    }
 }
