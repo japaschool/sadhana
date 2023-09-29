@@ -82,19 +82,12 @@ pub fn edit_user() -> Html {
         })
     };
 
-    let back_onclick = {
-        let nav = nav.clone();
-        Callback::from(move |_: MouseEvent| {
-            nav.push(&AppRoute::Settings);
-        })
-    };
-
     html! {
         <form {onsubmit} {onreset} >
             <BlankPage
                 show_footer={ !*editing }
                 selected_page={AppRoute::Settings}
-                left_button={ if *editing { HeaderButtonProps::reset(Locale::current().cancel()) } else { HeaderButtonProps::back(back_onclick) }}
+                left_button={ if *editing { HeaderButtonProps::reset(Locale::current().cancel()) } else { HeaderButtonProps::back(nav) }}
                 right_button={ if *editing { HeaderButtonProps::submit(Locale::current().save()) } else { HeaderButtonProps::edit(edit_onclick) }}
                 loading={ update_user.loading }
                 header_label={ Locale::current().user_details() }

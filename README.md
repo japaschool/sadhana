@@ -55,10 +55,6 @@ cargo install diesel_cli --no-default-features --features postgres
 4. Run: `make run`
 5. Open in chrome localhost:8080
 
-### Add a practice to all users
-
-`insert into user_practices (user_id, practice, data_type) select id, 'Rounds, Total', 'int' from users;`
-
 ### Docker
 
 To build a container run:

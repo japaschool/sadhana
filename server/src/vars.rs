@@ -39,3 +39,8 @@ pub fn server_address() -> String {
     dotenv().ok();
     var("SERVER_ADDRESS").expect("SERVER_ADDRESS is not set")
 }
+
+pub fn support_email_address() -> String {
+    dotenv().ok();
+    var("SUPPORT_EMAIL").expect("SUPPORT_EMAIL is not set")
+}

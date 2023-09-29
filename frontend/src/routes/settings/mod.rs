@@ -14,6 +14,7 @@ pub mod edit_user;
 pub mod help;
 pub mod import;
 pub mod language;
+pub mod support_form;
 
 #[function_component(Settings)]
 pub fn settings() -> Html {

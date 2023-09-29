@@ -141,13 +141,6 @@ pub fn new_practice(props: &Props) -> Html {
         })
     };
 
-    let back_onclick = {
-        let nav = nav.clone();
-        Callback::from(move |_: MouseEvent| {
-            nav.back();
-        })
-    };
-
     let required_onclick = {
         let form = form_data.clone();
         Callback::from(move |e: MouseEvent| {
@@ -161,7 +154,7 @@ pub fn new_practice(props: &Props) -> Html {
     html! {
         <BlankPage
             header_label={ Locale::current().add_new_practice() }
-            left_button={ HeaderButtonProps::back(back_onclick) }
+            left_button={ HeaderButtonProps::back(nav) }
             loading={ save.loading }
             >
             <ListErrors error={save.error.clone()} {error_formatter} />
