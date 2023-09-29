@@ -1,4 +1,4 @@
-use gloo_dialogs::confirm;
+use gloo_dialogs::{confirm, prompt};
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_list, use_mount};
@@ -14,7 +14,7 @@ use crate::{
     css::*,
     i18n::Locale,
     services::{
-        delete_yatra, delete_yatra_practice, get_yatra, get_yatra_practices,
+        delete_yatra, delete_yatra_practice, get_yatra, get_yatra_practices, rename_yatra,
         reorder_yatra_practices, update_yatra_practice,
     },
 };
@@ -29,12 +29,14 @@ pub struct Props {
 #[function_component(AdminSettings)]
 pub fn admin_settings(props: &Props) -> Html {
     let reload = use_state(|| true);
+    let rename_yatra_name = use_state(|| String::default());
     let ordered_practices = use_list(vec![]);
     let nav = use_navigator().unwrap();
     let yatra = {
         let yatra_id = props.yatra_id.clone();
         use_async(async move { get_yatra(&yatra_id).await.map(|resp| resp.yatra) })
     };
+
     let all_practices = {
         let yatra_id = props.yatra_id.to_owned();
         use_async(async move {
@@ -51,6 +53,11 @@ pub fn admin_settings(props: &Props) -> Html {
                 .await
                 .map(|_| nav.push(&AppRoute::Yatras))
         })
+    };
+    let rename_yatra = {
+        let yatra_id = props.yatra_id.clone();
+        let new_name = rename_yatra_name.clone();
+        use_async(async move { rename_yatra(yatra_id.as_str(), (*new_name).clone()).await })
     };
 
     let reorder_practices = {
@@ -72,6 +79,17 @@ pub fn admin_settings(props: &Props) -> Html {
                 || ()
             },
             reload.clone(),
+        );
+    }
+
+    {
+        let yatra = yatra.clone();
+        use_effect_with_deps(
+            move |_| {
+                yatra.run();
+                || ()
+            },
+            rename_yatra.clone(),
         );
     }
 
@@ -152,6 +170,23 @@ pub fn admin_settings(props: &Props) -> Html {
         })
     };
 
+    let rename_yatra_onclick = {
+        let yatra = yatra.clone();
+        let rename_yatra = rename_yatra.clone();
+        let new_name = rename_yatra_name.clone();
+        Callback::from(move |_| {
+            if let Some(new_value) = prompt(
+                &Locale::current().name(),
+                yatra.data.as_ref().map(|y| y.name.as_str()),
+            )
+            .filter(|s| !s.trim().is_empty())
+            {
+                new_name.set(new_value.trim().to_owned());
+                rename_yatra.run();
+            }
+        })
+    };
+
     html! {
         <BlankPage
             header_label={ yatra.data.iter().map(|y| y.name.clone()).next().unwrap_or_default() }
@@ -160,6 +195,8 @@ pub fn admin_settings(props: &Props) -> Html {
             >
             <ListErrors error={all_practices.error.clone()} />
             <ListErrors error={reorder_practices.error.clone()} />
+            <ListErrors error={rename_yatra.error.clone()} />
+            <ListErrors error={delete_yatra.error.clone()} />
             <div class={BODY_DIV_CSS}>
                 <form>{
                     if all_practices.loading {
@@ -194,6 +231,10 @@ pub fn admin_settings(props: &Props) -> Html {
                         copy_button_label={Locale::current().copy_yatra_join_link()}
                         relative_link={ format!("/yatra/{}/join", props.yatra_id.as_str()) }
                         />
+                    <button class={ BTN_CSS } onclick={rename_yatra_onclick}>
+                        <i class="icon-edit"></i>
+                        { Locale::current().rename_yatra() }
+                    </button>
                     <button class={ SUBMIT_BTN_CSS } onclick={ delete_yatra_onclick }>
                         <i class="icon-bin"></i>
                         { format!(" {}", Locale::current().delete_yatra()) }

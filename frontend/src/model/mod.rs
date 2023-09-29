@@ -422,6 +422,11 @@ pub struct CreateYatra {
     pub name: String,
 }
 
+#[derive(Debug, Serialize)]
+pub struct RenameYatra {
+    pub name: String,
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct YatraResponse {
     pub yatra: Yatra,
