@@ -289,3 +289,11 @@ pub async fn update_yatra_user_practices(
     )
     .await
 }
+
+pub async fn send_support_message(subject: &str, message: &str) -> Result<(), AppError> {
+    request_post(
+        format!("/support-form"),
+        &SupportMessageForm::new(subject, message),
+    )
+    .await
+}

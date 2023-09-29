@@ -80,8 +80,6 @@ self.addEventListener('fetch', (event) => {
                 return new Response('null', { headers: { 'Content-Type': 'application/json' }, });
             }
         }));
-    } else {
-        return;
     }
 });
 

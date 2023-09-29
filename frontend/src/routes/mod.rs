@@ -12,7 +12,7 @@ use self::{
     register_with_id::RegisterWithId,
     settings::{
         about::About, edit_password::EditPassword, edit_user::EditUser, help::Help, import::Import,
-        language::Language, Settings,
+        language::Language, support_form::SupportForm, Settings,
     },
     user_practices::UserPractices,
     yatras::{admin_settings::AdminSettings, join::JoinYatra, settings::YatraSettings, Yatras},
@@ -65,6 +65,8 @@ pub enum AppRoute {
     EditPassword,
     #[at("/settings/help")]
     Help,
+    #[at("/settings/help/support-form")]
+    SupportForm,
     #[at("/settings/about")]
     About,
     #[at("/settings/import")]
@@ -104,6 +106,7 @@ fn app_switch(routes: AppRoute) -> Html {
         AppRoute::Settings => html! { <Settings /> },
         AppRoute::EditUser => html! { <EditUser/> },
         AppRoute::EditPassword => html! { <EditPassword/> },
+        AppRoute::SupportForm => html! { <SupportForm/> },
         AppRoute::Help => html! { <Help/> },
         AppRoute::About => html! { <About/> },
         AppRoute::Import => html! { <Import/> },

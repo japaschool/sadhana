@@ -80,10 +80,10 @@ impl HeaderButtonProps {
         Self::new("", Callback::default(), None, ButtonType::Button)
     }
 
-    pub fn back(onclick: Callback<Event>) -> Self {
+    pub fn back(nav: Navigator) -> Self {
         Self::new(
             Locale::current().back(),
-            onclick,
+            Callback::from(move |_| nav.back()),
             Some("icon-chevron-left".into()),
             ButtonType::Button,
         )

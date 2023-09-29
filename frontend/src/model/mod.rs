@@ -456,3 +456,18 @@ pub struct YatraUserPractice {
 pub struct YatraUserPractices {
     pub practices: Vec<YatraUserPractice>,
 }
+
+#[derive(Debug, Serialize, Clone)]
+pub struct SupportMessageForm {
+    pub subject: String,
+    pub message: String,
+}
+
+impl SupportMessageForm {
+    pub fn new<S: Into<String>>(subject: S, message: S) -> Self {
+        Self {
+            subject: subject.into(),
+            message: message.into(),
+        }
+    }
+}
