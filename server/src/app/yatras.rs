@@ -164,6 +164,22 @@ impl Yatra {
         Ok(())
     }
 
+    pub fn rename(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        yatra_id: &Uuid,
+        new_name: &str,
+    ) -> Result<(), AppError> {
+        Yatra::ensure_admin_user(conn, user_id, yatra_id)?;
+
+        diesel::update(yatras::table)
+            .set(yatras::name.eq(&new_name))
+            .filter(yatras::id.eq(&yatra_id))
+            .execute(conn)?;
+
+        Ok(())
+    }
+
     pub fn get_user_yatras(conn: &mut PgConnection, user_id: &Uuid) -> Result<Vec<Self>, AppError> {
         let res = yatras::table
             .inner_join(yatra_users::table)
@@ -599,6 +615,22 @@ pub async fn delete_yatra(
     Ok(HttpResponse::Ok().json(()))
 }
 
+/// Rename yatra
+pub async fn rename_yatra(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    path: web::Path<YatraIdSlug>,
+    form: web::Json<RenameYatraForm>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
+    let yatra_id = path.into_inner();
+
+    web::block(move || Yatra::rename(&mut conn, &user_id, &yatra_id, &form.name)).await??;
+
+    Ok(HttpResponse::Ok().json(()))
+}
+
 /// Get yatra
 pub async fn get_yatra(
     state: web::Data<AppState>,
@@ -758,6 +790,11 @@ pub struct YatraDataQueryParams {
 
 #[derive(Deserialize, Debug)]
 pub struct CreateYatraForm {
+    name: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct RenameYatraForm {
     name: String,
 }
 
