@@ -34,30 +34,31 @@ input::-webkit-calendar-picker-indicator {
 
 .group:focus .group-focus\:max-h-screen {
     max-height: 100vh;
-  }
-  
-  .group:focus .group-focus\:text-white {
+}
+
+.group:focus .group-focus\:text-white {
     --text-opacity: 1;
     color: #02455a;
-  }
-  
-  .group:focus .group-focus\:-rotate-90 {
+}
+
+.group:focus .group-focus\:-rotate-90 {
     --tw-rotate: 90deg;
-  }
-  
-  .focus-within\:max-h-screen:focus-within {
+}
+
+.focus-within\:max-h-screen:focus-within {
     max-height: 100vh;
-  }
+}
 
 .toggle-checkbox:checked {
     @apply: right-0 border-amber-400;
     right: 0;
     border-color: #f59e0b;
-  }
-  .toggle-checkbox:checked + .toggle-label {
+}
+
+.toggle-checkbox:checked+.toggle-label {
     @apply: bg-amber-400;
     background-color: #ffffff;
-  }
+}
 
 @-webkit-keyframes spinner {
     0% {
@@ -83,4 +84,8 @@ body {
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
+}
+
+html {
+    min-height: calc(100% + env(safe-area-inset-top));
 }

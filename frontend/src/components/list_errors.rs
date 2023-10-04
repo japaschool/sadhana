@@ -36,7 +36,7 @@ pub fn list_errors(props: &Props) -> Html {
 
     if let Some(error) = &props.error {
         html! {
-            <div class="relative rounded-sm border py-2 px-2 bg-red-900 bg-opacity-30 border-red-900">
+            <div class="relative rounded-md border py-2 px-2 bg-red-900 bg-opacity-30 border-red-900">
                 {
                     match &props.error_formatter {
                         Some(f) => {

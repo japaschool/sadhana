@@ -140,8 +140,9 @@ pub fn blank_page(props: &Props) -> Html {
     html! {
         <>
             <div class="bg-hero dark:bg-herod bg-no-repeat bg-cover bg-center h-screen w-full fixed -z-10" />
-            <div id="content" class={ format!("fixed top-0 {} left-0 right-0 overflow-y-auto", if props.show_footer {"bottom-16"} else {"bottom-0"}) }>
-                <div class="bg-transparent min-h-screen justify-center items-center py-6 sm:py-12">
+            <div id="content" class={ format!("fixed pt-safe-top top-0 {} left-0 right-0 overflow-y-auto", if props.show_footer {"bottom-16"} else {"bottom-0"}) }>
+                // 100vh-4rem means screen minus bottom-16; env(...) - the height of iPhone notch
+                <div class="bg-transparent min-h-[calc(100vh-4rem-env(safe-area-inset-top))] justify-center items-center py-[calc(1.5rem-env(safe-area-inset-top))] sm:py-[calc(3rem-env(safe-area-inset-top))]">
                     if props.loading && *loading {
                         <div class="bg-gray-500 bg-opacity-50 fixed left-0 top-0 z-50 h-full w-full overflow-hidden flex">
                             <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-10 w-10 m-auto"/>
