@@ -5,7 +5,6 @@
     <!-- iOS splash screen and icon -->
     <link rel="icon" type="image/png" sizes="196x196" href="images/favicon-196.png" />
     <link rel="apple-touch-icon" href="images/apple-icon-180.png" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
     <link rel="apple-touch-startup-image" href="images/apple-splash-2048-2732.jpg"
         media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
     <link rel="apple-touch-startup-image" href="images/apple-splash-2732-2048.jpg"
@@ -66,11 +65,8 @@
         media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
     <link rel="apple-touch-startup-image" href="images/apple-splash-1136-640.jpg"
         media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" />
-    <!--  -->
-    <!-- iOS with a notch, use whole screen -->
-    <!-- FIXME: messes up logo and back button on iphones with a notch blank_page  -->
-    <!-- <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" /> -->
-    <!--  -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta charset="utf-8" name="viewport"
         content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
     <link data-trunk rel="tailwind-css" href="styles/tailwind.css" />
@@ -85,22 +81,23 @@
     <link data-trunk rel="copy-file" href="service_worker.js">
     <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.8.1/datepicker.min.js"></script>
     <script>
         // Dark/Light mode automatic switch
         // Inspired by https://www.ditdot.hr/en/dark-mode-website-tutorial
         // Should be kept inline in this file to avoid FOUC
 
         // Dark mode OS media selector
-        const useDark = window.matchMedia("(prefers-color-scheme: dark)");
+        const useDark = window.matchMedia('(prefers-color-scheme: dark)');
 
         function toggleDarkMode() {
             if (
-                localStorage.getItem("color-theme") === '"dark"' ||
-                (!("color-theme" in localStorage) && useDark.matches)
+                localStorage.getItem('color-theme') === '"dark"' ||
+                (!('color-theme' in localStorage) && useDark.matches)
             ) {
-                document.documentElement.classList.add("dark");
+                document.documentElement.classList.add('dark');
             } else {
-                document.documentElement.classList.remove("dark");
+                document.documentElement.classList.remove('dark');
             }
         }
 
