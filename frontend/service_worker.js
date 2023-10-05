@@ -234,7 +234,7 @@ async function saveDefaultDiaryDay(url, resp) {
 
 async function fetchWrapper(req, opts) {
     const resp = await fetch(req, opts);
-    if (resp.status === 502) {
+    if (resp.status === 504) {
         throw new Error('Server unavailable');
     }
     return resp;
