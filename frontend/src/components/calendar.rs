@@ -109,16 +109,16 @@ pub fn calendar(props: &Props) -> Html {
 
         let highlight = html! {
             for props.highlight_date.iter().filter(|cb| cb.emit(Rc::new(*d))).map(|_| html! {
-                <span class="absolute ml-4 w-2 h-2 bg-red-500 rounded-full"></span>
+                <span id={id.to_string()} class="absolute ml-4 w-2 h-2 bg-red-500 rounded-full"></span>
             })
         };
 
         html! {
-            <div class="text-center">
-                <p class={ weekday_label_css }>{ &Locale::current().day_of_week(d).chars().nth(0).unwrap() }</p>
-                <div class={ date_css } id={ id.to_string() } onclick={ onclick_date.clone() }>
+            <div id={id.to_string()} class="text-center">
+                <p id={id.to_string()} class={ weekday_label_css }>{ &Locale::current().day_of_week(d).chars().nth(0).unwrap() }</p>
+                <div id={id.to_string()} class={ date_css } onclick={ onclick_date.clone() }>
                     {highlight}
-                    <p id={ id.to_string() } class={ date_label_css }>{ d.format("%-d") }</p>
+                    <p id={id.to_string()} class={ date_label_css }>{ d.format("%-d") }</p>
                 </div>
             </div>
         }
