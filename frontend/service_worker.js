@@ -20,8 +20,12 @@ self.addEventListener('install', function (e) {
     self.skipWaiting();
 });
 
-self.addEventListener('install', function (e) {
+self.addEventListener('activate', function (e) {
     console.info('Event: Activating');
+
+    if (self.clients && clients.claim) {
+        clients.claim();
+    }
 
     clearStaleCache();
 });
