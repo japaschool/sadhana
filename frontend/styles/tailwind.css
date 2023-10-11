@@ -89,3 +89,8 @@ body {
 html {
     min-height: calc(100% + env(safe-area-inset-top));
 }
+
+/* Workaround for plotly responsive graph not taking enough room on the screen */
+.plot-container {
+    min-height: 450px;
+}
