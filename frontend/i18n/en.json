@@ -121,5 +121,18 @@
   "copy_yatra_join_link": "Copy Join Yatra Link",
   "share_yatra_join_link": "Share Join Yatra Link",
   "already_joined_yatra": "You have already joined this yatra",
-  "last_yatra_admin_cannot_leave": "Last yatra admin can't leave. Add another admin or delete yatra instead."
+  "last_yatra_admin_cannot_leave": "Last yatra admin can't leave. Add another admin or delete yatra instead.",
+  "__months__": "------------------------------------",
+  "january": "January",
+  "february": "February",
+  "march": "March",
+  "april": "April",
+  "may": "May",
+  "june": "June",
+  "july": "July",
+  "august": "August",
+  "september": "September",
+  "october": "October",
+  "november": "November",
+  "december": "December"
 }
