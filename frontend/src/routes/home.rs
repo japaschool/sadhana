@@ -7,11 +7,16 @@ use regex::Regex;
 use wasm_bindgen::JsCast;
 use web_sys::{HtmlElement, HtmlInputElement, VisibilityState};
 use yew::prelude::*;
-use yew_hooks::{use_async, use_list};
+use yew_hooks::{use_async, use_bool_toggle, use_list};
 use yew_router::prelude::*;
 
 use crate::{
-    components::{blank_page::BlankPage, calendar::Calendar, list_errors::ListErrors},
+    components::{
+        blank_page::{BlankPage, ButtonType, HeaderButtonProps},
+        calendar::Calendar,
+        list_errors::ListErrors,
+        month_calendar::MonthCalendar,
+    },
     css::*,
     i18n::Locale,
     model::{DiaryEntry, PracticeDataType, PracticeEntryValue},
@@ -20,9 +25,29 @@ use crate::{
 
 use super::AppRoute;
 
+lazy_static! {
+    static ref DURATION_R: Regex = Regex::new(r#"(?:(\d+)[^\d]+)?(\d+)[^\d]+"#).unwrap();
+    static ref REJECT_TIME_R: Regex = Regex::new(r"[^\d]").unwrap();
+    static ref VALID_DURATION_R: Regex = {
+        let h = Locale::current().hours_label();
+        let m = Locale::current().minutes_label();
+        // There are 3 mutually exclusive regex patterns here.
+        // (1) 3 digits representing minutes. No hours are allowed.
+        // (2) Number up to 23 for hours only when no minutes are entered.
+        // (3) Number between 0 and 23 for hours when minutes are also present.
+        // (4) Optional separator between hours and minutes.
+        // (5) 2 digits for minutes in presence of hours. Limited to the number 59.
+        //
+        //                  |------1-----|     |---------2--------|               |---------3--------||-----4-----| |-----5-----|
+        let r = format!(r#"^(?:(\d{{1,3}}){m}?|([0-1]?[0-9]|2[0-3])(?:{h}?\s?|:)?|([0-1]?[0-9]|2[0-3])(?:{h}?\s?|:)?([0-5]?[0-9]){m}?)$"#);
+        Regex::new(&r).unwrap()
+    };
+}
+
 #[function_component(Home)]
 pub fn home() -> Html {
     let selected_date = use_state(|| Local::now().date_naive());
+    let show_month_cal = use_bool_toggle(false);
 
     // A copy of backend data with local changes
     let local_diary_entry = use_list(Vec::new());
@@ -123,25 +148,6 @@ pub fn home() -> Html {
             diary_entry.clone(),
         );
     }
-
-    lazy_static! {
-        static ref DURATION_R: Regex = Regex::new(r#"(?:(\d+)[^\d]+)?(\d+)[^\d]+"#).unwrap();
-        static ref REJECT_TIME_R: Regex = Regex::new(r"[^\d]").unwrap();
-        static ref VALID_DURATION_R: Regex = {
-            let h = Locale::current().hours_label();
-            let m = Locale::current().minutes_label();
-            // There are 3 mutually exclusive regex patterns here.
-            // (1) 3 digits representing minutes. No hours are allowed.
-            // (2) Number up to 23 for hours only when no minutes are entered.
-            // (3) Number between 0 and 23 for hours when minutes are also present.
-            // (4) Optional separator between hours and minutes.
-            // (5) 2 digits for minutes in presence of hours. Limited to the number 59.
-            //
-            //                  |------1-----|     |---------2--------|               |---------3--------||-----4-----| |-----5-----|
-            let r = format!(r#"^(?:(\d{{1,3}}){m}?|([0-1]?[0-9]|2[0-3])(?:{h}?\s?|:)?|([0-1]?[0-9]|2[0-3])(?:{h}?\s?|:)?([0-5]?[0-9]){m}?)$"#);
-            Regex::new(&r).unwrap()
-        };
-    };
 
     let get_new_val = |input: &HtmlInputElement, entry: &DiaryEntry| {
         let s = match entry.data_type {
@@ -401,15 +407,47 @@ pub fn home() -> Html {
         })
     };
 
+    let month_cal_onclick = {
+        let show_month_cal = show_month_cal.clone();
+        Callback::from(move |_| {
+            show_month_cal.toggle();
+        })
+    };
+
+    let month_cal_cancel = {
+        let show_month_cal = show_month_cal.clone();
+        Callback::from(move |_| {
+            show_month_cal.toggle();
+        })
+    };
+
+    let month_cal_button = HeaderButtonProps::new(
+        Locale::current().month_name(selected_date.month()),
+        month_cal_onclick,
+        Some("icon-calendar".into()),
+        ButtonType::Button,
+    );
+
     html! {
-        <BlankPage show_footer=true loading={diary_entry.loading} selected_page={AppRoute::Home}>
+        <BlankPage
+            left_button={month_cal_button}
+            show_footer=true
+            loading={diary_entry.loading}
+            selected_page={AppRoute::Home}
+            >
             <Calendar
                 selected_date={*selected_date}
-                date_onchange={selected_date_onchange}
+                date_onchange={selected_date_onchange.clone()}
                 highlight_date={cal_should_highlight}
                 />
             <ListErrors error={diary_entry.error.clone()} />
             <ListErrors error={save_diary_day_entry.error.clone()} />
+            if *show_month_cal {
+                <MonthCalendar
+                    selected_date={*selected_date}
+                    date_onchange={selected_date_onchange.clone()}
+                    close={month_cal_cancel}/>
+            }
             <div class={BODY_DIV_SPACE_10_CSS}>
                 <div class={TWO_COLS_CSS}>
                     {for local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, value})|

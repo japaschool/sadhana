@@ -80,3 +80,6 @@ npx pwa-asset-generator images/logo.png images -m site.webmanifest --padding "ca
 [Fix stocks to fills](https://docs.oslllo.com/svg-fixer/master/#/getting-started/cli?id=svgfixer-cli-installation)
 [Svg to ttl](https://icomoon.io/app/#/select/font)
 Note, you actually need to merge changes to style.css as it includes some important margins.
+
+### iOS PWA Compatibility
+https://firt.dev/notes/pwa-ios/

@@ -9,6 +9,9 @@ module.exports = {
       sans: ["montserrat", ...defaultTheme.fontFamily.sans]
     },
     extend: {
+      boxShadow: {
+        'inset-amber-400': '0 0 0 2px rgba(251, 191, 36, 1) inset',
+      },
       padding: {
         "safe-top": "env(safe-area-inset-top)"
         // "safe-bottom": "env(safe-area-inset-bottom)",

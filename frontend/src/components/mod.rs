@@ -5,5 +5,6 @@ pub mod clipboard_copy_button;
 pub mod draggable_list;
 pub mod grid;
 pub mod list_errors;
+pub mod month_calendar;
 pub mod pwd;
 pub mod user_context_provider;

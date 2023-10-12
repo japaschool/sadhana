@@ -1,12 +1,25 @@
 use chrono::NaiveDate;
 use gloo::storage::{LocalStorage, Storage};
 use i18n_codegen::i18n;
+use lazy_static::lazy_static;
 use once_cell::sync::Lazy;
 
 i18n!("i18n");
 
 pub const USER_LANGUAGE_STORAGE_KEY: &'static str = "user_language";
 pub const DEFAULT_LANGUAGE_KEY: &'static str = "sys";
+
+lazy_static! {
+    pub static ref DAYS: Vec<String> = vec![
+        Locale::current().mon(),
+        Locale::current().tue(),
+        Locale::current().wed(),
+        Locale::current().thu(),
+        Locale::current().fri(),
+        Locale::current().sat(),
+        Locale::current().sun(),
+    ];
+}
 
 pub static LANGUAGE_DATA: [(&'static str, &'static str); 3] =
     [("en", "English"), ("ru", "Русский"), ("uk", "Українська")];
@@ -50,6 +63,24 @@ impl Locale {
             "Fri" => self.fri(),
             "Sat" => self.sat(),
             "Sun" => self.sun(),
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn month_name(&self, month_num: u32) -> String {
+        match month_num {
+            1 => self.january(),
+            2 => self.february(),
+            3 => self.march(),
+            4 => self.april(),
+            5 => self.may(),
+            6 => self.june(),
+            7 => self.july(),
+            8 => self.august(),
+            9 => self.september(),
+            10 => self.october(),
+            11 => self.november(),
+            12 => self.december(),
             _ => unreachable!(),
         }
     }
