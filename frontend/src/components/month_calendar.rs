@@ -96,7 +96,7 @@ pub fn month_calendar(props: &Props) -> Html {
             <div class="relative">
                 <div class="container" >
                     <div
-                        class=" bg-white dark:bg-black dark:bg-opacity-80 bg-opacity-80 rounded-lg shadow p-4"
+                        class="bg-gradient-to-t from-neutral-300 via-neutral-100 to-white dark:from-zinc-900 dark:via-zinc-700 dark:to-zinc-600 rounded-lg shadow p-4"
                         style="width: 17rem"
                         >
                         <div class="flex justify-between items-center mb-2">
