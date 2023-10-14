@@ -1,5 +1,5 @@
 use crate::{
-    components::blank_page::BlankPage,
+    components::blank_page::{BlankPage, HeaderButtonProps},
     css::*,
     i18n::{Locale, DEFAULT_LANGUAGE_KEY, LANGUAGE_DATA, USER_LANGUAGE_STORAGE_KEY},
     routes::AppRoute,
@@ -7,6 +7,7 @@ use crate::{
 use gloo::storage::{LocalStorage, Storage};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
+use yew_router::prelude::use_navigator;
 
 #[function_component(Language)]
 pub fn language() -> Html {
@@ -38,7 +39,7 @@ pub fn language() -> Html {
         <BlankPage
             show_footer=true
             selected_page={AppRoute::Settings}
-            prev_link={ (Locale::current().back(), AppRoute::Settings) }
+            left_button={HeaderButtonProps::back_to(AppRoute::Settings)}
             header_label={ Locale::current().language() }
             >
             <div class={ BODY_DIV_CSS }>

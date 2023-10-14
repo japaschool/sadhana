@@ -1,6 +1,6 @@
 {
   "sadhana_pro": "Sadhana",
-  "modify_practices": "Modify practices",
+  "practices": "Practices",
   "need_an_account": "Need an account?",
   "have_an_account": "Have an account?",
   "forgot_password": "Forgot password?",
@@ -32,7 +32,6 @@
   "delete_practice_warning": "Are you sure you want to delete? Any logged data associated with this practice will be lost.",
   "delete_warning": "Are you sure you want to delete?",
   "enter_new_practice_name": "Rename practice to:",
-  "select_practices": "Select Practices",
   "user_details": "User Details",
   "add_new_practice": "Add new practice",
   "practice_name": "Practice name",

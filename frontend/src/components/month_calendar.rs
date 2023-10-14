@@ -7,7 +7,10 @@ use chrono::{Datelike, Local, Months, NaiveDate};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
-use crate::i18n::{Locale, DAYS};
+use crate::{
+    css::{LINKS_CSS, LINK_CSS},
+    i18n::{Locale, DAYS},
+};
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
@@ -18,7 +21,7 @@ pub struct Props {
     pub highlight_date: Option<Callback<Rc<NaiveDate>, bool>>, //TODO:
 }
 
-const DAY_CSS: &'static str = "cursor-pointer text-center text-sm rounded-full leading-loose transition-all ease-in-out duration-300";
+const DAY_CSS: &'static str = "cursor-pointer text-center text-md rounded-full leading-loose transition-all ease-in-out duration-300";
 
 #[function_component(MonthCalendar)]
 pub fn month_calendar(props: &Props) -> Html {
@@ -88,16 +91,25 @@ pub fn month_calendar(props: &Props) -> Html {
         })
     };
 
+    let today_onclick = {
+        let parent_cb = props.date_onchange.clone();
+        let close = props.close.clone();
+        Callback::from(move |_| {
+            parent_cb.emit(today);
+            close.emit(());
+        })
+    };
+
     html! {
         <div
-            class={"fixed left-0 top-0 flex w-full h-full items-center justify-center z-10 antialiased sans-serif"}
+            class={"fixed left-0 top-0 flex w-full h-full items-center justify-center z-10 antialiased"}
             >
             <div class="fixed top-0 bottom-0 left-0 right-0 bg-black bg-opacity-30 border-amber-400" onclick={cancel_onclick} />
             <div class="relative">
-                <div class="container" >
+                <div class="container">
                     <div
                         class="bg-gradient-to-t from-neutral-300 via-neutral-100 to-white dark:from-zinc-900 dark:via-zinc-700 dark:to-zinc-600 rounded-lg shadow p-4"
-                        style="width: 17rem"
+                        style="width: 19rem"
                         >
                         <div class="flex justify-between items-center mb-2">
                             <div>
@@ -139,13 +151,17 @@ pub fn month_calendar(props: &Props) -> Html {
 
                         <div class="flex flex-wrap -mx-1">
                             {for (1..num_blank_days).map(|_| html! {
-                                <div style="width: 14.28%" class="text-center border p-1 border-transparent text-sm"/>
+                                <div style="width: 14.28%" class="text-center border p-1 border-transparent text-md"/>
                             })}
                             {for (1..=num_days).map(|day| html! {
                                 <div id={day.to_string()} style="width: 14.28%" class="px-1 mb-1" onclick={day_onclick.clone()} >
                                     <div id={day.to_string()} class={day_class(day)}>{day}</div>
                                 </div>
                             })}
+                        </div>
+
+                        <div class="px-1">
+                            <a class={"cursor-pointer text-base font-bold text-amber-400"} onclick={today_onclick}>{"Today"}</a>
                         </div>
                     </div>
                 </div>

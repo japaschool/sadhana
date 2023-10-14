@@ -53,7 +53,7 @@ pub fn support_form() -> Html {
     html! {
         <BlankPage
             header_label={Locale::current().sf_send_us_message()}
-            left_button={HeaderButtonProps::back(nav)}
+            left_button={HeaderButtonProps::back()}
             >
             <ListErrors error={submit.error.clone()} />
             <form {onsubmit}>

@@ -9,8 +9,7 @@ use yew_router::prelude::*;
 
 use crate::{
     components::{
-        blank_page::{BlankPage, ButtonType, HeaderButtonProps},
-        calendar::Calendar,
+        blank_page::{BlankPage, ButtonType, CalendarProps, HeaderButtonProps},
         grid::*,
         list_errors::ListErrors,
     },
@@ -151,17 +150,6 @@ pub fn yatras() -> Html {
         })
     };
 
-    let edit_onclick = {
-        let nav = nav.clone();
-        let yatra = selected_yatra.clone();
-        Callback::from(move |e: MouseEvent| {
-            e.prevent_default();
-            yatra.iter().for_each(|y| {
-                nav.push(&AppRoute::YatraSettings { id: y.id.clone() });
-            });
-        })
-    };
-
     let grid = html! {
         <Grid>
             <Ghead>
@@ -239,7 +227,6 @@ pub fn yatras() -> Html {
 
     let grid_body = html! {
         <>
-        <Calendar selected_date={ *selected_date } date_onchange={ selected_date_onchange }/>
         <ListErrors error={yatras.error.clone()} />
         <ListErrors error={data.error.clone()} />
         <ListErrors error={new_yatra.error.clone()} />
@@ -279,12 +266,13 @@ pub fn yatras() -> Html {
             loading={ yatras.loading || data.loading }
             left_button={ HeaderButtonProps::blank() }
             right_button={
-                if selected_yatra.is_some() {
-                    HeaderButtonProps::new(Locale::current().settings(), edit_onclick, None, ButtonType::Button)
+                if let Some(yatra) = selected_yatra.as_ref() {
+                    HeaderButtonProps::new_redirect(Locale::current().settings(), AppRoute::YatraSettings { id: yatra.id.clone() }, None, ButtonType::Button)
                 } else {
                     HeaderButtonProps::blank()
                 }
             }
+            calendar={CalendarProps::week(*selected_date, selected_date_onchange)}
             >
             {
                 if !yatras.loading

@@ -8,7 +8,10 @@ use yew_hooks::{use_async, use_list, use_mount, use_set};
 use yew_router::prelude::*;
 
 use crate::{
-    components::{blank_page::BlankPage, list_errors::ListErrors},
+    components::{
+        blank_page::{BlankPage, HeaderButtonProps},
+        list_errors::ListErrors,
+    },
     css::*,
     i18n::Locale,
     model::{PracticeDataType, YatraUserPractice},
@@ -300,7 +303,7 @@ pub fn yatra_settings(props: &Props) -> Html {
         <BlankPage
             header_label={ yatra.data.iter().map(|y| y.name.clone()).next().unwrap_or_default() }
             loading={ leave.loading || yatra.loading || is_admin.loading || yatra_user_practices.loading || user_practices.loading || save.loading }
-            prev_link={ (Locale::current().back(), AppRoute::Yatras) }
+            left_button={HeaderButtonProps::back_to(AppRoute::Yatras)}
             >
             <ListErrors error={ yatra_user_practices.error.clone() } />
             <ListErrors error={ user_practices.error.clone() } />

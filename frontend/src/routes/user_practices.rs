@@ -7,7 +7,7 @@ use yew_router::prelude::*;
 
 use crate::{
     components::{
-        blank_page::BlankPage,
+        blank_page::{BlankPage, ButtonType, HeaderButtonProps},
         draggable_list::{DraggableList, Item},
         list_errors::ListErrors,
     },
@@ -130,8 +130,9 @@ pub fn user_practices() -> Html {
 
     html! {
             <BlankPage
-                header_label={Locale::current().select_practices()}
-                prev_link={(Locale::current().done(), AppRoute::Home)}
+                header_label={Locale::current().practices()} //TODO: add legend what symbols mean
+                left_button={HeaderButtonProps::back_to(AppRoute::Home)}
+                right_button={HeaderButtonProps::new_icon_redirect(AppRoute::NewUserPractice, "icon-plus")}
                 show_footer=true
                 selected_page={AppRoute::Home}
                 loading={server_practices.loading}>
@@ -171,11 +172,6 @@ pub fn user_practices() -> Html {
                                 />
                     }}}
                     </form>
-                    <div class="flex justify-center">
-                        <Link<AppRoute> classes={LINK_CSS_NEW_ACC} to={AppRoute::NewUserPractice}>
-                            {Locale::current().add_new_practice()}
-                        </Link<AppRoute>>
-                    </div>
                 </div>
             </BlankPage>
     }

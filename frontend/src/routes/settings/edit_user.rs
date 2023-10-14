@@ -87,7 +87,7 @@ pub fn edit_user() -> Html {
             <BlankPage
                 show_footer={ !*editing }
                 selected_page={AppRoute::Settings}
-                left_button={ if *editing { HeaderButtonProps::reset(Locale::current().cancel()) } else { HeaderButtonProps::back(nav) }}
+                left_button={ if *editing { HeaderButtonProps::reset(Locale::current().cancel()) } else { HeaderButtonProps::back() }}
                 right_button={ if *editing { HeaderButtonProps::submit(Locale::current().save()) } else { HeaderButtonProps::edit(edit_onclick) }}
                 loading={ update_user.loading }
                 header_label={ Locale::current().user_details() }

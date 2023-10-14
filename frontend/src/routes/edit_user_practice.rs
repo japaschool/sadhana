@@ -4,7 +4,10 @@ use yew_hooks::{use_async, use_mount};
 use yew_router::prelude::use_navigator;
 
 use crate::{
-    components::{blank_page::BlankPage, list_errors::ListErrors},
+    components::{
+        blank_page::{BlankPage, HeaderButtonProps},
+        list_errors::ListErrors,
+    },
     css::*,
     i18n::*,
     model::UserPractice,
@@ -86,7 +89,7 @@ pub fn edit_user_practice(props: &Props) -> Html {
     html! {
             <form {onsubmit}>
                 <BlankPage
-                    prev_link={(Locale::current().cancel(), AppRoute::UserPractices)}
+                    left_button={HeaderButtonProps::back_to(AppRoute::UserPractices)}
                     loading={update_user_practice.loading}
                     header_label={Locale::current().practice()}
                     >

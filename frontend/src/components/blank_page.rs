@@ -1,7 +1,11 @@
+use std::rc::Rc;
+
+use chrono::NaiveDate;
 use yew::{html::onclick::Event, prelude::*};
 use yew_hooks::{use_bool_toggle, use_timeout};
 use yew_router::prelude::*;
 
+use super::{calendar::Calendar, month_calendar::MonthCalendar};
 use crate::{css::*, i18n::Locale, routes::AppRoute};
 
 #[derive(Properties, Clone, PartialEq)]
@@ -10,8 +14,6 @@ pub struct Props {
     pub header_label: Option<String>,
     #[prop_or_default]
     pub header_sub_label: Option<String>,
-    #[prop_or_default]
-    pub prev_link: Option<(String, AppRoute)>,
     #[prop_or_default]
     pub left_button: Option<HeaderButtonProps>,
     #[prop_or_default]
@@ -22,7 +24,46 @@ pub struct Props {
     pub show_footer: bool,
     #[prop_or_default]
     pub selected_page: Option<AppRoute>,
+    #[prop_or_default]
+    pub calendar: Option<CalendarProps>,
     pub children: Children,
+}
+
+#[derive(Clone, PartialEq)]
+pub struct CalendarProps {
+    pub selected_date: NaiveDate,
+    pub highlight_date: Option<Callback<Rc<NaiveDate>, bool>>,
+    pub date_onchange: Callback<NaiveDate>,
+    pub show_month_calendar: bool,
+    pub month_calendar_onclose: Callback<()>,
+}
+
+impl CalendarProps {
+    pub fn new(
+        selected_date: NaiveDate,
+        date_onchange: Callback<NaiveDate>,
+        highlight_date: Callback<Rc<NaiveDate>, bool>,
+        show_month_calendar: bool,
+        month_calendar_onclose: Callback<()>,
+    ) -> Self {
+        Self {
+            show_month_calendar,
+            selected_date,
+            highlight_date: Some(highlight_date),
+            date_onchange,
+            month_calendar_onclose,
+        }
+    }
+
+    pub fn week(selected_date: NaiveDate, date_onchange: Callback<NaiveDate>) -> Self {
+        Self {
+            show_month_calendar: false,
+            selected_date,
+            highlight_date: None,
+            date_onchange,
+            month_calendar_onclose: Callback::default(),
+        }
+    }
 }
 
 #[derive(Clone, PartialEq)]
@@ -42,61 +83,149 @@ impl ButtonType {
 }
 
 #[derive(Clone, PartialEq)]
+pub enum Action {
+    Cb(Callback<Event>),
+    Redirect(AppRoute),
+    NavBack,
+}
+
+#[derive(Clone, PartialEq)]
 pub struct HeaderButtonProps {
-    label: String,
+    label: Option<String>,
     icon_css: Option<String>,
-    onclick: Callback<Event>,
+    action: Action,
     btn_type: ButtonType,
 }
 
 impl HeaderButtonProps {
-    pub fn new<S: Into<String>>(
+    pub fn new_cb<S: Into<String>>(
         label: S,
         onclick: Callback<Event>,
         icon_css: Option<String>,
         btn_type: ButtonType,
     ) -> Self {
         HeaderButtonProps {
-            label: label.into(),
+            label: Some(label.into()),
             icon_css,
-            onclick,
+            action: Action::Cb(onclick),
             btn_type,
         }
     }
 
+    pub fn new_redirect<S: Into<String>>(
+        label: S,
+        route: AppRoute,
+        icon_css: Option<String>,
+        btn_type: ButtonType,
+    ) -> Self {
+        HeaderButtonProps {
+            label: Some(label.into()),
+            icon_css,
+            action: Action::Redirect(route),
+            btn_type,
+        }
+    }
+
+    pub fn new_icon_cb<S: Into<String>>(
+        onclick: Callback<Event>,
+        icon_css: S,
+        btn_type: ButtonType,
+    ) -> Self {
+        HeaderButtonProps {
+            label: None,
+            icon_css: Some(icon_css.into()),
+            action: Action::Cb(onclick),
+            btn_type,
+        }
+    }
+
+    pub fn new_icon_redirect<S: Into<String>>(route: AppRoute, icon_css: S) -> Self {
+        HeaderButtonProps {
+            label: None,
+            icon_css: Some(icon_css.into()),
+            action: Action::Redirect(route),
+            btn_type: ButtonType::Button,
+        }
+    }
+
     pub fn edit(onclick: Callback<Event>) -> Self {
-        Self::new(Locale::current().edit(), onclick, None, ButtonType::Button)
+        Self::new_cb(Locale::current().edit(), onclick, None, ButtonType::Button)
     }
 
-    pub fn submit<S: Into<String>>(label: S) -> Self {
-        Self::new(label.into(), Callback::default(), None, ButtonType::Submit)
-    }
-
-    pub fn reset<S: Into<String>>(label: S) -> Self {
-        Self::new(label.into(), Callback::default(), None, ButtonType::Reset)
-    }
-
-    pub fn blank() -> Self {
-        Self::new("", Callback::default(), None, ButtonType::Button)
-    }
-
-    pub fn back(nav: Navigator) -> Self {
-        Self::new(
-            Locale::current().back(),
-            Callback::from(move |_| nav.back()),
-            Some("icon-chevron-left".into()),
+    pub fn done(redirect_to: AppRoute) -> Self {
+        Self::new_redirect(
+            Locale::current().done(),
+            redirect_to,
+            None,
             ButtonType::Button,
         )
     }
+
+    pub fn submit<S: Into<String>>(label: S) -> Self {
+        Self::new_cb(label, Callback::default(), None, ButtonType::Submit)
+    }
+
+    pub fn reset<S: Into<String>>(label: S) -> Self {
+        Self::new_cb(label.into(), Callback::default(), None, ButtonType::Reset)
+    }
+
+    pub fn blank() -> Self {
+        Self {
+            label: None,
+            action: Action::Cb(Callback::default()),
+            icon_css: None,
+            btn_type: ButtonType::Button,
+        }
+    }
+
+    pub fn back() -> Self {
+        HeaderButtonProps {
+            label: None,
+            icon_css: Some("icon-chevron-left".into()),
+            action: Action::NavBack,
+            btn_type: ButtonType::Button,
+        }
+    }
+
+    pub fn back_to(to: AppRoute) -> Self {
+        Self::new_icon_redirect(to, "icon-chevron-left")
+    }
+
+    pub fn month_calendar(onclick: Callback<Event>) -> Self {
+        Self::new_icon_cb(onclick, "icon-calendar", ButtonType::Button)
+    }
 }
 
-fn header_button(props: &Option<HeaderButtonProps>) -> Html {
+fn header_button(props: &Option<HeaderButtonProps>, nav: Navigator) -> Html {
     if let Some(ref rb) = props {
+        let css = format!(
+            "{} {HEADER_BUTTON_CSS}",
+            if rb.label.is_some() {
+                "text-base"
+            } else {
+                "text-xl"
+            }
+        );
+
+        let nav = nav.clone();
+        let onclick = {
+            match &rb.action {
+                Action::Cb(cb) => cb.clone(),
+                Action::Redirect(to) => {
+                    let route = to.clone();
+                    Callback::from(move |_| nav.push(&route))
+                }
+                Action::NavBack => Callback::from(move |_| nav.back()),
+            }
+        };
+
         html! {
-            <span class="text-zinc-500 ">
-                <button type={ rb.btn_type.as_str() } class={ LINK_CSS } onclick={ rb.onclick.clone() }>
-                    <i class={ format!("{}", rb.icon_css.to_owned().unwrap_or_default()) }></i>
-                    { &rb.label }
+            <span>
+                <button type={rb.btn_type.as_str()} class={css} onclick={onclick}>
+                    <i class={format!("text-2xl {}", rb.icon_css.to_owned().unwrap_or_default())}></i>
+                    if let Some(l) = rb.label.as_ref() {
+                        {l}
+                    }
                 </button>
             </span>
         }
@@ -105,8 +234,11 @@ fn header_button(props: &Option<HeaderButtonProps>) -> Html {
     }
 }
 
+pub const HEADER_BUTTON_CSS: &'static str = "no-underline text-amber-400";
+
 #[function_component(BlankPage)]
 pub fn blank_page(props: &Props) -> Html {
+    let nav = use_navigator().unwrap();
     let loading = use_bool_toggle(false);
 
     let timer = {
@@ -153,21 +285,8 @@ pub fn blank_page(props: &Props) -> Html {
                             <div class="relative">
                                 <div class="relative sm:max-w-md md:max-w-md lg:max-w-lg xl:max-w-lg 2xl:max-w-lg mx-auto">
                                     <div class="relative flex justify-between py-10">
-                                        {
-                                            if let Some((ref label, ref route)) = props.prev_link {
-                                                html! {
-                                                    <span>
-                                                        <Link<AppRoute> classes={ LINK_CSS } to={ route.clone() }>
-                                                            <i class="icon-chevron-left"></i>
-                                                            {label}
-                                                        </Link<AppRoute>>
-                                                    </span>
-                                                }
-                                            } else {
-                                                header_button(&props.left_button)
-                                            }
-                                        }
-                                        { header_button(&props.right_button) }
+                                        {header_button(&props.left_button, nav.clone())}
+                                        {header_button(&props.right_button, nav.clone())}
                                     </div>
                                 </div>
                             </div>
@@ -185,6 +304,22 @@ pub fn blank_page(props: &Props) -> Html {
                                         })}
                                     </div>
                                 }})
+                            }
+                            if let Some(cal) = props.calendar.as_ref() {
+                                if cal.show_month_calendar {
+                                    <MonthCalendar
+                                        selected_date={cal.selected_date}
+                                        date_onchange={cal.date_onchange.clone()}
+                                        close={cal.month_calendar_onclose.clone()}
+                                        />
+                                }
+                            }
+                            if let Some(cal) = props.calendar.as_ref() {
+                                <Calendar
+                                    selected_date={cal.selected_date}
+                                    date_onchange={cal.date_onchange.clone()}
+                                    highlight_date={cal.highlight_date.clone()}
+                                    />
                             }
                             { props.children.clone() }
                         </div>

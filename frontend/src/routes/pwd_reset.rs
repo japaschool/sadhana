@@ -1,5 +1,9 @@
 use crate::{
-    components::{blank_page::BlankPage, list_errors::ListErrors, pwd::Pwd},
+    components::{
+        blank_page::{BlankPage, HeaderButtonProps},
+        list_errors::ListErrors,
+        pwd::Pwd,
+    },
     css::*,
     i18n::Locale,
     model,
@@ -10,7 +14,7 @@ use common::error::AppError;
 use gloo_dialogs::alert;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_bool_toggle, use_mount};
-use yew_router::prelude::Redirect;
+use yew_router::prelude::{use_navigator, Redirect};
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
@@ -84,7 +88,7 @@ pub fn pwd_reset(props: &Props) -> Html {
     html! {
         <BlankPage header_label={ Locale::current().password_reset() }
             loading={ email.loading || reset_pwd.loading }
-            prev_link={ (Locale::current().cancel(), AppRoute::Home) }
+            left_button={HeaderButtonProps::back_to(AppRoute::Home)}
             >
             <ListErrors error={ email.error.clone() } error_formatter = { error_formatter.clone() } />
             <ListErrors error={ reset_pwd.error.clone() } error_formatter = { error_formatter.clone() } />

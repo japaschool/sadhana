@@ -17,7 +17,11 @@ use yew_hooks::{
 use yew_router::prelude::use_navigator;
 
 use crate::{
-    components::{blank_page::BlankPage, calendar::DATE_FORMAT, list_errors::ListErrors},
+    components::{
+        blank_page::{BlankPage, HeaderButtonProps},
+        calendar::DATE_FORMAT,
+        list_errors::ListErrors,
+    },
     css::*,
     i18n::*,
     model::{DiaryDay, DiaryEntry, PracticeDataType, PracticeEntryValue},
@@ -315,7 +319,7 @@ pub fn import() -> Html {
             show_footer=true
             selected_page={AppRoute::Settings}
             loading={*saving || save.loading || all_practices.loading}
-            prev_link={(Locale::current().cancel(), AppRoute::Settings)}
+            left_button={HeaderButtonProps::back_to(AppRoute::Settings)}
             >
             <ListErrors error={save.error.clone()} />
             <form {onsubmit}>

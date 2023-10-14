@@ -1,5 +1,9 @@
 use crate::{
-    components::{blank_page::BlankPage, list_errors::ListErrors, pwd::Pwd},
+    components::{
+        blank_page::{BlankPage, HeaderButtonProps},
+        list_errors::ListErrors,
+        pwd::Pwd,
+    },
     css::*,
     i18n::Locale,
     routes::AppRoute,
@@ -54,7 +58,7 @@ pub fn edit_password() -> Html {
         <form {onsubmit} >
             <BlankPage
                 header_label={ Locale::current().change_password() }
-                prev_link={ (Locale::current().cancel(), AppRoute::Settings) }
+                left_button={HeaderButtonProps::back_to(AppRoute::Settings)}
                 loading={ update_password.loading }
                 >
                 <ListErrors error={update_password.error.clone()} />

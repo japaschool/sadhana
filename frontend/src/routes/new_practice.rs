@@ -154,7 +154,7 @@ pub fn new_practice(props: &Props) -> Html {
     html! {
         <BlankPage
             header_label={ Locale::current().add_new_practice() }
-            left_button={ HeaderButtonProps::back(nav) }
+            left_button={ HeaderButtonProps::back() }
             loading={ save.loading }
             >
             <ListErrors error={save.error.clone()} {error_formatter} />

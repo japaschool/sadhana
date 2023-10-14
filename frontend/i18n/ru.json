@@ -1,6 +1,6 @@
 {
   "sadhana_pro": "Садхана",
-  "modify_practices": "Изменить практики",
+  "practices": "Практики",
   "need_an_account": "Создать пользователя?",
   "have_an_account": "Зарегистрированы?",
   "forgot_password": "Забыли пароль?",
@@ -32,7 +32,6 @@
   "delete_practice_warning": "Вы действительно хотите удалить? Все записи касающиеся этой практики будут перманентно удалены.",
   "delete_warning": "Вы действительно хотите удалить?",
   "enter_new_practice_name": "Переименовать в:",
-  "select_practices": "Выберите практики",
   "user_details": "Детали пользователя",
   "add_new_practice": "Создать практику",
   "practice_name": "Имя практики",
