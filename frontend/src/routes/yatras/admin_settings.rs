@@ -6,7 +6,7 @@ use yew_router::prelude::*;
 
 use crate::{
     components::{
-        blank_page::BlankPage,
+        blank_page::{BlankPage, HeaderButtonProps},
         clipboard_copy_button::CopyButton,
         draggable_list::{DraggableList, Item},
         list_errors::ListErrors,
@@ -190,7 +190,7 @@ pub fn admin_settings(props: &Props) -> Html {
     html! {
         <BlankPage
             header_label={ yatra.data.iter().map(|y| y.name.clone()).next().unwrap_or_default() }
-            prev_link={ (Locale::current().done(), AppRoute::YatraSettings { id: props.yatra_id.to_string() }) }
+            left_button={HeaderButtonProps::done(AppRoute::YatraSettings { id: props.yatra_id.to_string(), })}
             loading={ all_practices.loading }
             >
             <ListErrors error={all_practices.error.clone()} />

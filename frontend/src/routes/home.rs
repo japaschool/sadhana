@@ -12,10 +12,8 @@ use yew_router::prelude::*;
 
 use crate::{
     components::{
-        blank_page::{BlankPage, ButtonType, HeaderButtonProps},
-        calendar::Calendar,
+        blank_page::{BlankPage, ButtonType, CalendarProps, HeaderButtonProps},
         list_errors::ListErrors,
-        month_calendar::MonthCalendar,
     },
     css::*,
     i18n::Locale,
@@ -421,33 +419,34 @@ pub fn home() -> Html {
         })
     };
 
-    let month_cal_button = HeaderButtonProps::new(
-        Locale::current().month_name(selected_date.month()),
-        month_cal_onclick,
-        Some("icon-calendar".into()),
+    let month_cal_button = HeaderButtonProps::month_calendar(month_cal_onclick);
+
+    let calendar_props = CalendarProps::new(
+        *selected_date,
+        selected_date_onchange.clone(),
+        cal_should_highlight,
+        *show_month_cal,
+        month_cal_cancel,
+    );
+
+    let edit_practices_button = HeaderButtonProps::new_redirect(
+        Locale::current().practices(),
+        AppRoute::UserPractices,
+        None,
         ButtonType::Button,
     );
 
     html! {
         <BlankPage
             left_button={month_cal_button}
+            right_button={edit_practices_button}
             show_footer=true
             loading={diary_entry.loading}
             selected_page={AppRoute::Home}
+            calendar={calendar_props}
             >
-            <Calendar
-                selected_date={*selected_date}
-                date_onchange={selected_date_onchange.clone()}
-                highlight_date={cal_should_highlight}
-                />
             <ListErrors error={diary_entry.error.clone()} />
             <ListErrors error={save_diary_day_entry.error.clone()} />
-            if *show_month_cal {
-                <MonthCalendar
-                    selected_date={*selected_date}
-                    date_onchange={selected_date_onchange.clone()}
-                    close={month_cal_cancel}/>
-            }
             <div class={BODY_DIV_SPACE_10_CSS}>
                 <div class={TWO_COLS_CSS}>
                     {for local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, value})|
@@ -546,11 +545,6 @@ pub fn home() -> Html {
                                 }
                             }})
                     }
-                </div>
-                <div class="flex items-center justify-center links">
-                    <Link<AppRoute> classes={ LINK_CSS_NEW_ACC } to={AppRoute::UserPractices}>
-                        { Locale::current().modify_practices() }
-                    </Link<AppRoute>>
                 </div>
             </div>
         </BlankPage>
