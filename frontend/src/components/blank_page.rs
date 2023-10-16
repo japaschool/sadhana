@@ -201,7 +201,7 @@ fn header_button(props: &Option<HeaderButtonProps>, nav: Navigator) -> Html {
         let css = format!(
             "{} {HEADER_BUTTON_CSS}",
             if rb.label.is_some() {
-                "text-base"
+                "text-base font-bold"
             } else {
                 "text-xl"
             }
@@ -222,7 +222,7 @@ fn header_button(props: &Option<HeaderButtonProps>, nav: Navigator) -> Html {
         html! {
             <span>
                 <button type={rb.btn_type.as_str()} class={css} onclick={onclick}>
-                    <i class={format!("text-2xl {}", rb.icon_css.to_owned().unwrap_or_default())}></i>
+                    <i class={rb.icon_css.to_owned().unwrap_or_default()}></i>
                     if let Some(l) = rb.label.as_ref() {
                         {l}
                     }

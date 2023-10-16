@@ -341,7 +341,7 @@ fn charts_base(props: &ChartBaseProps) -> Html {
                 }
             }
 
-            min_eve_h != 12 && max_morning_h != 12 && max_morning_h + 24 - min_eve_h < 8
+            min_eve_h != 12 && max_morning_h != 12 && max_morning_h + 24 - min_eve_h < 11
         }
     };
 
