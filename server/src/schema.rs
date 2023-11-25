@@ -2,13 +2,30 @@
 
 pub mod sql_types {
     #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "bar_layout_enum"))]
+    pub struct BarLayoutEnum;
+
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "line_style_enum"))]
+    pub struct LineStyleEnum;
+
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "practice_data_type_enum"))]
     pub struct PracticeDataTypeEnum;
+
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "report_type_enum"))]
+    pub struct ReportTypeEnum;
+
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "trace_type_enum"))]
+    pub struct TraceTypeEnum;
 }
 
 diesel::table! {
     confirmations (id) {
         id -> Uuid,
+        #[max_length = 50]
         email -> Varchar,
         expires_at -> Timestamp,
     }
@@ -31,6 +48,39 @@ diesel::table! {
         user_id -> Uuid,
         practice_id -> Uuid,
         value -> Nullable<Jsonb>,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::TraceTypeEnum;
+    use super::sql_types::LineStyleEnum;
+
+    report_traces (id) {
+        id -> Uuid,
+        report_id -> Uuid,
+        practice_id -> Uuid,
+        trace_type -> Nullable<TraceTypeEnum>,
+        label -> Nullable<Text>,
+        y_axis -> Nullable<Text>,
+        show_average -> Nullable<Bool>,
+        line_style -> Nullable<LineStyleEnum>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::ReportTypeEnum;
+    use super::sql_types::BarLayoutEnum;
+
+    reports (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        report_type -> ReportTypeEnum,
+        name -> Text,
+        bar_layout -> Nullable<BarLayoutEnum>,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }
@@ -103,6 +153,9 @@ diesel::table! {
 
 diesel::joinable!(diary -> user_practices (practice_id));
 diesel::joinable!(diary -> users (user_id));
+diesel::joinable!(report_traces -> reports (report_id));
+diesel::joinable!(report_traces -> user_practices (practice_id));
+diesel::joinable!(reports -> users (user_id));
 diesel::joinable!(user_practices -> users (user_id));
 diesel::joinable!(yatra_practices -> yatras (yatra_id));
 diesel::joinable!(yatra_user_practices -> user_practices (user_practice_id));
@@ -114,6 +167,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     confirmations,
     default_user_practices,
     diary,
+    report_traces,
+    reports,
     user_practices,
     users,
     yatra_practices,

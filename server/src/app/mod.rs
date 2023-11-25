@@ -1,4 +1,5 @@
 pub mod diary;
+pub mod report;
 pub mod shared;
 pub mod support;
 pub mod user;
