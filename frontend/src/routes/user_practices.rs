@@ -142,7 +142,7 @@ pub fn user_practices() -> Html {
                     <form>{
                         if server_practices.loading || local_practices.current().is_empty() {
                             html!{}
-                    } else {html! {
+                        } else {html! {
                             <DraggableList
                                 items={server_practices
                                     .data
@@ -170,7 +170,7 @@ pub fn user_practices() -> Html {
                                 delete_popup_label={Locale::current().delete_practice_warning()}
                                 reorder={reorder.clone()}
                                 />
-                    }}}
+                        }}}
                     </form>
                 </div>
             </BlankPage>

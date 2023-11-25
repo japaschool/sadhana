@@ -2,7 +2,7 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 
 use self::{
-    charts::{Charts, SharedCharts},
+    charts::{create_report::CreateReport, Charts, SharedCharts},
     confirmation::Confirmation,
     edit_user_practice::EditUserPractice,
     home::Home,
@@ -83,6 +83,8 @@ pub enum AppRoute {
     NewUserPracticeWithName { practice: String },
     #[at("/charts")]
     Charts,
+    #[at("/charts/new")]
+    NewReport,
     #[at("/yatras")]
     Yatras,
     #[at("/yatra/:id/join")]
@@ -121,6 +123,7 @@ fn app_switch(routes: AppRoute) -> Html {
             html! { <NewPractice target={NewPracticeTarget::UserPractice} practice={practice} /> }
         }
         AppRoute::Charts => html! { <Charts/> },
+        AppRoute::NewReport => html! { <CreateReport/> },
         AppRoute::Yatras => html! { <Yatras/> },
         AppRoute::JoinYatra { id } => html! { <JoinYatra yatra_id={id}/> },
         AppRoute::YatraSettings { id } => html! { <YatraSettings yatra_id={id}/> },

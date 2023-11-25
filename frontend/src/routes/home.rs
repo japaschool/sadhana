@@ -8,7 +8,6 @@ use wasm_bindgen::JsCast;
 use web_sys::{HtmlElement, HtmlInputElement, VisibilityState};
 use yew::prelude::*;
 use yew_hooks::{use_async, use_bool_toggle, use_list};
-use yew_router::prelude::*;
 
 use crate::{
     components::{
@@ -475,7 +474,6 @@ pub fn home() -> Html {
                                         <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
                                             <span class=""><i class="icon-tick"></i>{ format!(" {}: ", practice) }</span>
                                             <input
-                                                id="checkbox"
                                                 type="checkbox"
                                                 onclick={ checkbox_onclick.clone() }
                                                 id={ idx.to_string() }

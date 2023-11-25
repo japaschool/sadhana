@@ -7,4 +7,5 @@ pub mod grid;
 pub mod list_errors;
 pub mod month_calendar;
 pub mod pwd;
+pub mod summary_details;
 pub mod user_context_provider;

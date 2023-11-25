@@ -100,6 +100,16 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                 web::scope("/support-form").route("", web::post().to(app::support::send_message)),
             )
             .service(
+                web::scope("/reports")
+                    .route("", web::post().to(app::report::create_report))
+                    .route("", web::get().to(app::report::get_reports)),
+            )
+            .service(
+                web::scope("/report/{report_id}")
+                    .route("", web::put().to(app::report::update_report))
+                    .route("", web::delete().to(app::report::delete_report)),
+            )
+            .service(
                 web::scope("/diary/{cob}")
                     .route("/report", web::get().to(app::diary::api::get_report_data))
                     .route(

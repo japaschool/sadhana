@@ -65,6 +65,7 @@
         media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
     <link rel="apple-touch-startup-image" href="images/apple-splash-1136-640.jpg"
         media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" />
+    <!-- Replace with theme-color https://css-tricks.com/meta-theme-color-and-trickery/ -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta charset="utf-8" name="viewport"
@@ -79,7 +80,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet" />
     <link data-trunk rel="copy-file" href="service_worker.js">
-    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
     <script>
         // Dark/Light mode automatic switch
@@ -87,7 +88,7 @@
         // Should be kept inline in this file to avoid FOUC
 
         // Dark mode OS media selector
-        const useDark = window.matchMedia('(prefers-color-scheme: dark)');
+        const useDark = window.matchMedia("(prefers-color-scheme: dark)");
 
         function toggleDarkMode() {
             if (
@@ -104,7 +105,7 @@
         toggleDarkMode();
 
         // Event listener to respond to the OS changes
-        useDark.addListener(evt => toggleDarkMode());
+        useDark.addEventListener('change', e => toggleDarkMode());
 
         // register ServiceWorker
         window.onload = () => {

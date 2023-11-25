@@ -18,6 +18,8 @@ pub struct Props {
     pub left_button: Option<HeaderButtonProps>,
     #[prop_or_default]
     pub right_button: Option<HeaderButtonProps>,
+    #[prop_or_default]
+    pub right_button2: Option<HeaderButtonProps>,
     #[prop_or(false)]
     pub loading: bool,
     #[prop_or(false)]
@@ -149,7 +151,7 @@ impl HeaderButtonProps {
     }
 
     pub fn edit(onclick: Callback<Event>) -> Self {
-        Self::new_cb(Locale::current().edit(), onclick, None, ButtonType::Button)
+        Self::new_cb("", onclick, Some("icon-edit".into()), ButtonType::Button)
     }
 
     pub fn done(redirect_to: AppRoute) -> Self {
@@ -196,37 +198,51 @@ impl HeaderButtonProps {
     }
 }
 
-fn header_button(props: &Option<HeaderButtonProps>, nav: Navigator) -> Html {
-    if let Some(ref rb) = props {
+fn header_button(
+    button_props: &Option<HeaderButtonProps>,
+    button2_props: &Option<HeaderButtonProps>,
+    nav: Navigator,
+) -> Html {
+    if let Some(ref bp) = button_props {
         let css = format!(
             "{} {HEADER_BUTTON_CSS}",
-            if rb.label.is_some() {
+            if bp.label.is_some() {
                 "text-base font-bold"
             } else {
                 "text-xl"
             }
         );
 
-        let nav = nav.clone();
-        let onclick = {
-            match &rb.action {
-                Action::Cb(cb) => cb.clone(),
-                Action::Redirect(to) => {
-                    let route = to.clone();
-                    Callback::from(move |_| nav.push(&route))
+        let button = |props: &HeaderButtonProps| {
+            let nav = nav.clone();
+
+            let onclick = {
+                match &props.action {
+                    Action::Cb(cb) => cb.clone(),
+                    Action::Redirect(to) => {
+                        let route = to.clone();
+                        Callback::from(move |_| nav.push(&route))
+                    }
+                    Action::NavBack => Callback::from(move |_| nav.back()),
                 }
-                Action::NavBack => Callback::from(move |_| nav.back()),
+            };
+
+            html! {
+                <button type={props.btn_type.as_str()} class={css} onclick={onclick}>
+                    <i class={props.icon_css.to_owned().unwrap_or_default()}></i>
+                    if let Some(l) = props.label.as_ref() {
+                        {l}
+                    }
+                </button>
             }
         };
 
         html! {
             <span>
-                <button type={rb.btn_type.as_str()} class={css} onclick={onclick}>
-                    <i class={rb.icon_css.to_owned().unwrap_or_default()}></i>
-                    if let Some(l) = rb.label.as_ref() {
-                        {l}
-                    }
-                </button>
+                {button.clone()(bp)}
+                if let Some(bp) = button2_props {
+                    {button(bp)}
+                }
             </span>
         }
     } else {
@@ -285,8 +301,8 @@ pub fn blank_page(props: &Props) -> Html {
                             <div class="relative">
                                 <div class="relative sm:max-w-md md:max-w-md lg:max-w-lg xl:max-w-lg 2xl:max-w-lg mx-auto">
                                     <div class="relative flex justify-between py-10">
-                                        {header_button(&props.left_button, nav.clone())}
-                                        {header_button(&props.right_button, nav.clone())}
+                                        {header_button(&props.left_button, &None, nav.clone())}
+                                        {header_button(&props.right_button, &props.right_button2, nav.clone())}
                                     </div>
                                 </div>
                             </div>

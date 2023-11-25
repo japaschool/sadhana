@@ -143,7 +143,7 @@ pub struct DiaryEntry {
     pub value: Option<PracticeEntryValue>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Copy, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Copy, Deserialize)]
 pub enum PracticeDataType {
     Int,
     Bool,

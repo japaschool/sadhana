@@ -6,6 +6,7 @@ use crate::model::*;
 
 use self::requests::*;
 
+pub mod report;
 pub mod requests;
 
 /// Login a user
