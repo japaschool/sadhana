@@ -246,7 +246,10 @@ mod tests {
             "email is malformed",
         ];
 
-        assert_eq!(res.1.sort(), expected.sort());
+        res.1.sort();
+        expected.sort();
+
+        assert_eq!(res.1, expected);
     }
 
     #[actix_rt::test]
