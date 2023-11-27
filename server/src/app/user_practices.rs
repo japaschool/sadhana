@@ -121,13 +121,11 @@ impl UserPractice {
                 .execute(conn)?;
 
             diesel::delete(yatra_user_practices::table)
-                .filter(
-                    yatra_user_practices::user_practice_id.eq_any(
-                        user_practices::table
-                            .select(user_practices::id)
-                            .filter(user_practices::id.eq(&practice)),
-                    ),
-                )
+                .filter(yatra_user_practices::user_practice_id.eq(&practice))
+                .execute(conn)?;
+
+            diesel::delete(report_traces::table)
+                .filter(report_traces::practice_id.eq(&practice))
                 .execute(conn)?;
 
             let order_key: i32 = user_practices::table
