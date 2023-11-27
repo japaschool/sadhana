@@ -86,9 +86,10 @@ pub fn pwd_reset(props: &Props) -> Html {
     }
 
     html! {
-        <BlankPage header_label={ Locale::current().password_reset() }
+        <BlankPage
+            header_label={Locale::current().password_reset()}
             loading={ email.loading || reset_pwd.loading }
-            left_button={HeaderButtonProps::back_to(AppRoute::Home)}
+            left_button={HeaderButtonProps::back()}
             >
             <ListErrors error={ email.error.clone() } error_formatter = { error_formatter.clone() } />
             <ListErrors error={ reset_pwd.error.clone() } error_formatter = { error_formatter.clone() } />

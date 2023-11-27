@@ -1,4 +1,4 @@
-use crate::{css::*, model::ConfirmationType};
+use crate::{components::blank_page::HeaderButtonProps, css::*, model::ConfirmationType};
 use common::error::AppError;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
@@ -58,15 +58,12 @@ pub fn confirmation(props: &Props) -> Html {
         let confirm_type = props.confirmation_type.clone();
         Callback::from(move |err| match err {
             AppError::UnprocessableEntity(err)
-                if err
-                    .iter()
-                    .find(|s| s.ends_with("already exists."))
-                    .is_some() =>
+                if err.iter().any(|s| s.ends_with("already exists.")) =>
             {
                 Some(match confirm_type {
                     ConfirmationType::PasswordReset => unreachable!(),
                     ConfirmationType::Registration => {
-                        Locale::current().user_already_exists(Email(&*email))
+                        Locale::current().user_already_exists(Email(&email))
                     }
                 })
             }
@@ -88,7 +85,9 @@ pub fn confirmation(props: &Props) -> Html {
     };
 
     html! {
-        <BlankPage {header_label}>
+        <BlankPage {header_label}
+            left_button={HeaderButtonProps::back()}
+            >
             <ListErrors error={send_signup_email.error.clone()} {error_formatter} />
             <form onsubmit={onsubmit_signup}>
                 <div class={ BODY_DIV_CSS }>

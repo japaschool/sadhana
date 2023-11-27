@@ -80,7 +80,6 @@
   "dark_mode": "Dark mode",
   "language": "Language",
   "default_language": "System default",
-  "about": "About",
   "help_and_support": "Help and support",
   "download_csv": "Download all practices (CSV)",
   "__support_form__": "------------------------------------",
@@ -133,5 +132,8 @@
   "september": "September",
   "october": "October",
   "november": "November",
-  "december": "December"
+  "december": "December",
+  "__about__": "------------------------------------",
+  "about": "About",
+  "about_text": "Sadhana Diary is a convenient and simple internet resource that allows you to monitor and develop personal spiritual practices.\nYour personal Sadhana Diary is available anytime and anywhere on the internet at the link:\nhttps: //sadhana.pro/\nhttps: //m.sadhana.pro/\nConvenient and intuitive multilingual interface. Creating and planning personal spiritual and daily practices. Monitoring compliance and completion of the diary.\nDevelopment and improvement of discipline by observing the dynamics of progress and graphic forms. Possibility of downloading the data in a tabular format and saving to personal devices.\nYou can always share your diary (internet link for viewing) with a mentor or friends and family.\nThe ability to create user groups for joint journal maintenance has been implemented.\nThe Sadhana Diary is constantly being improved, we will be glad to receive your feedback or participation in the project, for this use the feedback form."
 }

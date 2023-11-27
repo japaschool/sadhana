@@ -121,6 +121,10 @@ pub fn login() -> Html {
                             to={BaseRoute::PasswordReset}>{ Locale::current().forgot_password() }
                         </Link<BaseRoute>>
                         <Link<BaseRoute>
+                            classes={ LINK_CSS }
+                            to={BaseRoute::About}>{ Locale::current().about() }
+                        </Link<BaseRoute>>
+                        <Link<BaseRoute>
                             classes={ LINK_CSS_NEW_ACC }
                             to={BaseRoute::Register}>{ Locale::current().need_an_account() }
                         </Link<BaseRoute>>
