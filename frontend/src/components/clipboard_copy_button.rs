@@ -88,7 +88,7 @@ pub fn copy_button(props: &Props) -> Html {
                 class={ format!("{} fixed left-0 top-0 flex h-full w-full justify-center z-50", if *show_tooltip {"inline"} else {"hidden"}) }>
                 <span class="bg-slate-600 bg-opacity-50 rounded-2xl my-auto border p-4 text-white text-2xl">{ Locale::current().copied() }</span>
             </div>
-            <button {onclick} class={props.class.to_string()}>
+            <button type="button" {onclick} class={props.class.to_string()}>
                 <i class={if can_share {"icon-share"} else {"icon-doc-dup"}}></i>
                 {format!(" {}", button_label)}
             </button>

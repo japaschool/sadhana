@@ -57,6 +57,7 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                         "/practices",
                         web::get().to(app::shared::get_shared_report_practices),
                     )
+                    .route("/reports", web::get().to(app::shared::get_shared_reports))
                     .route("", web::get().to(app::shared::get_shared_report_data)),
             )
             .service(

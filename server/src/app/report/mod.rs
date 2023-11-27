@@ -2,6 +2,7 @@ use std::{collections::HashSet, fmt::Display, str::FromStr};
 
 use actix_web::{web, HttpRequest, HttpResponse};
 use common::error::AppError;
+use diesel::PgConnection;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -19,6 +20,31 @@ pub struct Report {
     pub id: Uuid,
     pub definition: ReportDefinition,
     pub name: String,
+}
+
+impl Report {
+    pub fn get_all(conn: &mut PgConnection, user_id: &Uuid) -> Result<Vec<Self>, AppError> {
+        let data = DBReport::get_all(conn, &user_id)?;
+
+        let mut res = Vec::with_capacity(data.len());
+
+        for (report, traces) in data {
+            let definition = match report.report_type {
+                ReportType::Graph => {
+                    ReportDefinition::Graph(GraphReport::try_from((report.bar_layout, traces))?)
+                }
+                ReportType::Grid => ReportDefinition::Grid(traces.into()),
+            };
+
+            res.push(Report {
+                id: report.id,
+                definition,
+                name: report.name,
+            });
+        }
+
+        Ok(res)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -128,24 +154,7 @@ pub async fn get_reports(
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
 
-    let data = web::block(move || DBReport::get_all(&mut conn, &user_id)).await??;
-
-    let mut res = Vec::with_capacity(data.len());
-
-    for (report, traces) in data {
-        let definition = match report.report_type {
-            ReportType::Graph => {
-                ReportDefinition::Graph(GraphReport::try_from((report.bar_layout, traces))?)
-            }
-            ReportType::Grid => ReportDefinition::Grid(traces.into()),
-        };
-
-        res.push(Report {
-            id: report.id,
-            definition,
-            name: report.name,
-        });
-    }
+    let res = web::block(move || Report::get_all(&mut conn, &user_id)).await??;
 
     Ok(HttpResponse::Ok().json(GetAllReportsResponse { reports: res }))
 }
