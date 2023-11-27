@@ -13,7 +13,7 @@ use crate::{
 
 use self::db::{Report as DBReport, ReportTrace as DBReportTrace};
 
-mod db;
+pub mod db;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Report {
@@ -103,6 +103,18 @@ pub struct PracticeTrace {
     pub practice: Uuid,
     pub y_axis: Option<YAxis>,
     pub show_average: bool,
+}
+
+impl PracticeTrace {
+    pub fn new_minimal(trace_type: GraphType, practice: Uuid) -> Self {
+        Self {
+            name: None,
+            type_: trace_type,
+            practice,
+            y_axis: None,
+            show_average: true,
+        }
+    }
 }
 
 impl TryFrom<DBReportTrace> for PracticeTrace {

@@ -34,6 +34,8 @@ impl Report {
                 .returning(reports::id)
                 .get_result(conn)?;
 
+            ReportTrace::update(conn, &report_id, report_definition)?;
+
             Ok::<_, DieselError>(report_id)
         })?;
 
@@ -55,7 +57,7 @@ impl Report {
                 .filter(reports::id.eq(&report_id))
                 .execute(conn)?;
 
-            ReportTrace::update(conn, &report_id, &report_definition)
+            ReportTrace::update(conn, report_id, report_definition)
         })?;
 
         Ok(())
