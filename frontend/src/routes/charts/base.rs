@@ -1,39 +1,24 @@
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
-    error::Error,
+    collections::{BTreeMap, HashSet},
     str::FromStr,
 };
 
-use super::{
-    GraphReport, PracticeTrace, Report, ReportDefinition, SelectedReportId, SELECTED_REPORT_ID_KEY,
-};
+use super::{GraphReport, PracticeTrace, Report, ReportDefinition, SelectedReportId};
 use crate::{
     components::{
-        blank_page::BlankPage,
-        chart::{self, BarGraphLayout, Chart, Graph, LineConf},
-        clipboard_copy_button::CopyButton,
+        chart::{self, Chart},
         grid::*,
-        list_errors::ListErrors,
     },
     css::*,
-    hooks::use_user_context,
-    i18n::{Locale, DAYS},
-    model::{PracticeDataType, PracticeEntryValue, ReportData, ReportDataEntry, UserPractice},
+    i18n::Locale,
+    model::{PracticeDataType, PracticeEntryValue, ReportDataEntry, UserPractice},
     routes::charts::GridReport,
-    services::{
-        get_chart_data, get_shared_chart_data, get_shared_practices, get_user_practices, user_info,
-    },
 };
-use chrono::Datelike;
 use chrono::Local;
 use common::ReportDuration;
-use csv::Writer;
 use gloo::storage::{LocalStorage, Storage};
-use wasm_bindgen::{JsCast, JsValue};
-use wasm_bindgen_futures::spawn_local;
-use web_sys::{BlobPropertyBag, HtmlElement, HtmlInputElement};
+use web_sys::HtmlInputElement;
 use yew::prelude::*;
-use yew_hooks::{use_async, use_mount};
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct ChartBaseProps {
@@ -53,9 +38,9 @@ pub struct ChartBaseProps {
     pub report: Option<Report>,
 }
 
-const DATE_FORMAT: &'static str = "%Y-%m-%d";
-const DATE_FORMAT_HR: &'static str = "%a, %d %b";
-const DURATION_STORAGE_KEY: &'static str = "charts.selected_duration";
+const DATE_FORMAT: &str = "%Y-%m-%d";
+const DATE_FORMAT_HR: &str = "%a, %d %b";
+const DURATION_STORAGE_KEY: &str = "charts.selected_duration";
 const TIME_CORRECTION_THRESHOLD_HOURS: u8 = 12;
 
 #[function_component(ChartsBase)]
@@ -137,7 +122,7 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
                             report_data.iter().map(|p| {
                                 (
                                     p.cob_date.format(DATE_FORMAT).to_string(),
-                                    y_value(&selected.data_type, &p, adjust_time),
+                                    y_value(&selected.data_type, p, adjust_time),
                                 )
                             })
                         })
@@ -198,7 +183,7 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
                     }
                 </Ghead>
                 <Gbody>
-                    {for grid_data_by_cob(&gr).iter().map(|(cob, data)| {
+                    {for grid_data_by_cob(gr).iter().map(|(cob, data)| {
                         html! {
                             <Gr>
                                 <Gd>{cob.format(DATE_FORMAT_HR).to_string()}</Gd>
@@ -219,10 +204,10 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
     };
 
     let data_body = match props.report.as_ref().map(|rep| &rep.definition) {
-        Some(ReportDefinition::Grid(grid_rep)) => html! {grid_report(&grid_rep)},
+        Some(ReportDefinition::Grid(grid_rep)) => html! {grid_report(grid_rep)},
         Some(ReportDefinition::Graph(GraphReport { bar_layout, traces })) => html! {
         <Chart
-            traces={graph_traces(&traces)}
+            traces={graph_traces(traces)}
             bar_mode={bar_layout.clone()}
             />
         },
@@ -258,7 +243,7 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
                 </div>
                 <div class="relative">
                     <select class={INPUT_CSS} id="duration" onchange={duration_onchange.clone()}>
-                        { for vec![
+                        { for [
                             (ReportDuration::Last7Days, Locale::current().last_week()),
                             (ReportDuration::Last30Days, Locale::current().last_month()),
                             (ReportDuration::Last90Days, Locale::current().last_quarter()),
@@ -297,14 +282,9 @@ fn average_value(
         .split_last()
         .filter(|(last, _)| last.cob_date == today)
         .map(|x| x.1)
-        .unwrap_or(&report_data);
+        .unwrap_or(report_data);
 
-    if report_data
-        .iter()
-        .filter(|v| v.value.is_some())
-        .next()
-        .is_none()
-    {
+    if !report_data.iter().any(|v| v.value.is_some()) {
         None
     } else {
         match data_type {
@@ -339,7 +319,7 @@ fn average_value(
                             PracticeEntryValue::Time { h, m } => {
                                 let mut h = *h;
                                 if overflow_time && h < 8 {
-                                    h = h + 24;
+                                    h += 24;
                                 }
                                 (h as u64) * 60 + (*m as u64)
                             }
@@ -356,7 +336,7 @@ fn average_value(
                 let m = (avg_mins % 60) as u8;
 
                 if overflow_time && h > 23 {
-                    h = h - 24;
+                    h -= 24;
                     d = 2;
                 }
 
@@ -375,7 +355,7 @@ fn average_value(
 /// Assumes time entries are clustered either in the morning or evening
 /// If there are outliers that are within 12 hours from the rest of the
 /// entries if they are moved into the next/previous day but aren't otherwise, returns true  
-fn overflow_time(report_data: &Vec<&ReportDataEntry>) -> bool {
+fn overflow_time(report_data: &[&ReportDataEntry]) -> bool {
     let mut min_eve_h = 12;
     let mut max_morning_h = 12;
     for h in report_data.iter().filter_map(|v| {

@@ -144,7 +144,6 @@ impl ReportEntry {
     pub fn get_report_data(
         conn: &mut PgConnection,
         user_id: &Uuid,
-        practice: &Option<String>,
         duration: &ReportDuration,
     ) -> Result<Vec<Self>, AppError> {
         use diesel::pg::expression::extensions::IntervalDsl;
@@ -163,7 +162,7 @@ impl ReportEntry {
                     t.cob_date :: date
                 from
                     generate_series(
-                        now() - $3,
+                        now() - $2,
                         now(),
                         interval '1 day'
                     ) as t(cob_date)
@@ -180,14 +179,12 @@ impl ReportEntry {
             where
                 up.user_id = $1
                 and up.is_active = true
-                and (up.practice = $2 or $2 is null)
             order by
                 dt.cob_date,
                 up.order_key;
         "#,
         )
         .bind::<DieselUuid, _>(user_id)
-        .bind::<Nullable<Text>, _>(practice)
         .bind::<Interval, _>(interval)
         .load::<Self>(conn)?;
 

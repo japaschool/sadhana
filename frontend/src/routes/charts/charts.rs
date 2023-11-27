@@ -1,23 +1,21 @@
-use std::{collections::HashSet, error::Error};
+use std::error::Error;
 
 use super::{
-    base::ChartsBase, graph_editor::GraphEditor, grid_editor::GridEditor, GridReport,
-    PracticeTrace, Report, ReportDefinition, SelectedReportId, SELECTED_REPORT_ID_KEY,
+    base::ChartsBase, graph_editor::GraphEditor, grid_editor::GridEditor, Report, ReportDefinition,
+    SelectedReportId, SELECTED_REPORT_ID_KEY,
 };
 use crate::{
     components::{
-        blank_page::{BlankPage, ButtonType, HeaderButtonProps},
-        chart::{self, BarGraphLayout},
+        blank_page::{BlankPage, HeaderButtonProps},
         clipboard_copy_button::CopyButton,
-        grid::*,
         list_errors::ListErrors,
     },
     css::*,
     hooks::use_user_context,
-    i18n::{Locale, DAYS},
-    model::{PracticeDataType, PracticeEntryValue, ReportData, ReportDataEntry, UserPractice},
-    routes::{charts::ReportForm, AppRoute},
-    services::{get_chart_data, get_user_practices, report::*, user_info},
+    i18n::Locale,
+    model::ReportData,
+    routes::AppRoute,
+    services::{get_user_practices, report::*},
 };
 use chrono::Local;
 use common::ReportDuration;
@@ -29,18 +27,12 @@ use web_sys::{BlobPropertyBag, HtmlElement};
 use yew::prelude::*;
 use yew_hooks::{use_async, use_bool_toggle, use_mount};
 
-#[derive(Properties, Clone, PartialEq)]
-pub struct Props {
-    #[prop_or(false)]
-    pub edit: bool,
-}
-
 #[function_component(Charts)]
-pub fn charts(props: &Props) -> Html {
+pub fn charts() -> Html {
     let today = Local::now().date_naive();
     let user_ctx = use_user_context();
     let duration = use_state(|| ReportDuration::Last7Days);
-    let editing = use_bool_toggle(props.edit);
+    let editing = use_bool_toggle(false);
     let active_report = use_state(|| None::<Report>);
 
     let reports = use_async(async move { get_reports().await.map(|res| res.reports) });
@@ -73,7 +65,7 @@ pub fn charts(props: &Props) -> Html {
     let report_data = {
         let duration = duration.clone();
         use_async(async move {
-            get_chart_data(&today, &None, &*duration)
+            get_report_data(&today, &duration)
                 .await
                 .map(|res| res.values)
         })
@@ -96,8 +88,8 @@ pub fn charts(props: &Props) -> Html {
             log::debug!("Resetting active");
             if let Some(reports) = reports.data.as_ref() {
                 log::debug!("Resetting active:: found some reports");
-                if let Some(current_report_id) =
-                    LocalStorage::get::<SelectedReportId>(SELECTED_REPORT_ID_KEY).ok()
+                if let Ok(current_report_id) =
+                    LocalStorage::get::<SelectedReportId>(SELECTED_REPORT_ID_KEY)
                 {
                     log::debug!("Resetting active:: found a saved in local storage report id");
                     active_report.set(
@@ -150,7 +142,7 @@ pub fn charts(props: &Props) -> Html {
         Callback::from(move |_: MouseEvent| {
             let duration = duration.clone();
             spawn_local(async move {
-                get_chart_data(&today, &None, &*duration)
+                get_report_data(&today, &*duration)
                     .await
                     .map(|data| {
                         let csv = to_csv_str(data).unwrap_or_default();

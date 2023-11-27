@@ -143,35 +143,6 @@ pub async fn create_user_practice(user_practice: NewUserPractice) -> Result<(), 
     .await
 }
 
-/// Get chart data for a practice
-pub async fn get_chart_data(
-    cob: &NaiveDate,
-    practice: &Option<String>,
-    duration: &ReportDuration,
-) -> Result<ReportData, AppError> {
-    let mut query = format!("duration={duration}");
-    if let Some(p) = practice {
-        query.push_str(&format!("&practice={}", encode(p)));
-    }
-    request_get(format!("/diary/{cob}/report?{query}").to_string()).await
-}
-
-/// Get shared chart data for a practice
-pub async fn get_shared_chart_data(
-    user_id: &str,
-    practice: &str,
-    duration: &ReportDuration,
-) -> Result<ReportData, AppError> {
-    request_get(
-        format!(
-            "/share/{user_id}?practice={}&duration={duration}",
-            encode(practice)
-        )
-        .to_string(),
-    )
-    .await
-}
-
 /// Get shared practices
 pub async fn get_shared_practices(user_id: &str) -> Result<AllUserPractices, AppError> {
     request_get(format!("/share/{user_id}/practices").to_string()).await

@@ -3,7 +3,6 @@ use actix_web::{web, HttpRequest, HttpResponse};
 use chrono::NaiveDate;
 use common::{error::AppError, ReportDuration};
 use serde::Deserialize;
-use urlencoding::decode;
 
 use super::{
     model::{DiaryDayEntry, DiaryEntryUpdate, IncompleteCob, ReportEntry},
@@ -89,7 +88,6 @@ pub async fn get_diary_day(
 
 #[derive(Deserialize, Debug)]
 pub struct ReportDataQueryParams {
-    practice: Option<String>,
     duration: ReportDuration,
 }
 
@@ -102,16 +100,10 @@ pub async fn get_report_data(
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
-    let practice = params
-        .practice
-        .as_ref()
-        .map(|p| decode(p).map(|p| p.into_owned()))
-        .transpose()?;
 
-    let data = web::block(move || {
-        ReportEntry::get_report_data(&mut conn, &user_id, &practice, &params.duration)
-    })
-    .await??;
+    let data =
+        web::block(move || ReportEntry::get_report_data(&mut conn, &user_id, &params.duration))
+            .await??;
     Ok(HttpResponse::Ok().json(ReportResponse::from(data)))
 }
 
