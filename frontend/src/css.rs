@@ -1,14 +1,14 @@
 use const_format::concatcp;
 
-pub const INPUT_CSS: &'static str = "rounded-md bg-transparent peer placeholder-transparent px-2 h-10 w-full border dark:border-white dark:text-zinc-100 border-zinc-500 dark:border-zinc-100 text-zinc-500 dark:text-zinc-100 focus:border-2 focus:border-zinc-500 dark:focus:border-zinc-100 focus:outline-none focus:ring-0";
-pub const TEXTAREA_CSS: &'static str = "rounded-md bg-transparent peer placeholder-transparent px-2 w-full border dark:border-white dark:text-zinc-100 border-zinc-500 dark:border-zinc-100 text-zinc-500 dark:text-zinc-100 focus:border-2 focus:border-zinc-500 dark:focus:border-zinc-100 focus:outline-none focus:ring-0";
-pub const INPUT_LABEL_CSS: &'static str = "absolute left-2 -top-7 dark:text-zinc-100 text-zinc-500 text-base peer-placeholder-shown:text-base dark:peer-placeholder-shown:text-white peer-placeholder-shown:text-zinc-500 dark:peer-placeholder-shown:text-zinc-100 peer-placeholder-shown:top-2 transition-all peer-focus:-left-0 peer-focus:-top-7 dark:peer-focus:text-white peer-focus:text-zinc-500 dark:peer-focus:text-zinc-100 peer-focus:text-base";
-pub const LINKS_CSS: &'static str = "relative flex justify-between sm:text-base links";
-pub const LINK_CSS: &'static str =
+pub const INPUT_CSS: &str = "rounded-md bg-transparent peer placeholder-transparent px-2 h-10 w-full border dark:border-white dark:text-zinc-100 border-zinc-500 dark:border-zinc-100 text-zinc-500 dark:text-zinc-100 focus:border-2 focus:border-zinc-500 dark:focus:border-zinc-100 focus:outline-none focus:ring-0";
+pub const TEXTAREA_CSS: &str = "rounded-md bg-transparent peer placeholder-transparent px-2 w-full border dark:border-white dark:text-zinc-100 border-zinc-500 dark:border-zinc-100 text-zinc-500 dark:text-zinc-100 focus:border-2 focus:border-zinc-500 dark:focus:border-zinc-100 focus:outline-none focus:ring-0";
+pub const INPUT_LABEL_CSS: &str = "absolute left-2 -top-7 dark:text-zinc-100 text-zinc-500 text-base peer-placeholder-shown:text-base dark:peer-placeholder-shown:text-white peer-placeholder-shown:text-zinc-500 dark:peer-placeholder-shown:text-zinc-100 peer-placeholder-shown:top-2 transition-all peer-focus:-left-0 peer-focus:-top-7 dark:peer-focus:text-white peer-focus:text-zinc-500 dark:peer-focus:text-zinc-100 peer-focus:text-base";
+pub const LINKS_CSS: &str = "relative flex justify-between sm:text-base links";
+pub const LINK_CSS: &str =
     "no-underline hover:underline text-base dark:text-zinc-100 text-zinc-500 dark:text-zinc-100";
-pub const LINK_CSS_NEW_ACC: &'static str =
+pub const LINK_CSS_NEW_ACC: &str =
     "no-underline hover:underline text-base text-amber-500 dark:text-amber-400 dark:amber-200";
-pub const SUBMIT_BTN_CSS: &'static str =
+pub const SUBMIT_BTN_CSS: &str =
     "rounded-md text-white w-full cursor-pointer text-base font-light mb-8 border border--amber-600 p-2 outline-none
     bg-opacity-10 bg-gradient-to-br from-amber-400 to-amber-500 
     hover:bg-amber-500 hover:bg-opacity-10
@@ -18,29 +18,29 @@ pub const SUBMIT_BTN_CSS: &'static str =
     dark:-active:bg-orange-900 
     active:translate-y-1";
 
-pub const BTN_CSS_NO_MARGIN: &'static str =
+pub const BTN_CSS_NO_MARGIN: &str =
     "bg-transparent hover:bg-amber-500 hover:bg-opacity-10 rounded-md text-white w-full cursor-pointer text-base font-light text-zinc-500 dark:text-zinc-100 border border-zinc-500 dark:border-zinc-100 p-2 outline-none";
 
-pub const BTN_CSS: &'static str = concatcp!("mb-8 ", BTN_CSS_NO_MARGIN);
+pub const BTN_CSS: &str = concatcp!("mb-8 ", BTN_CSS_NO_MARGIN);
 
-pub const BODY_DIV_BASE_CSS: &'static str = "
+pub const BODY_DIV_BASE_CSS: &str = "
     text-balance accent-amber-500 text-base leading-6 
     text-zinc-500 dark:text-zinc-100 sm:leading-7 
     overflow-x-hidden overflow-y-auto scrolling-touch 
     lg:max-h-sm scrollbar-w-2 scrollbar-track-gray-lighter 
     scrollbar-thumb-rounded scrollbar-thumb-gray";
 
-pub const BODY_DIV_SPACE_10_CSS: &'static str = concatcp!("pt-8 space-y-10 ", BODY_DIV_BASE_CSS);
+pub const BODY_DIV_SPACE_10_CSS: &str = concatcp!("pt-8 space-y-10 ", BODY_DIV_BASE_CSS);
 
-pub const BODY_DIV_NO_PADDING_CSS: &'static str =
+pub const BODY_DIV_NO_PADDING_CSS: &str =
     concatcp!("space-y-10 mx-auto max-w-md ", BODY_DIV_BASE_CSS);
 
-pub const BODY_DIV_CSS: &'static str = concatcp!("pt-8 ", BODY_DIV_NO_PADDING_CSS);
+pub const BODY_DIV_CSS: &str = concatcp!("pt-8 ", BODY_DIV_NO_PADDING_CSS);
 
-pub const MENU_CSS: &'static str ="text-zinc-500  dark:text-text-zinc-100 text-2xl flex justify-between whitespace-nowrap items-center";
-pub const FOOTER_ICON_CSS: &'static str =
+pub const MENU_CSS: &str ="text-zinc-500  dark:text-text-zinc-100 text-2xl flex justify-between whitespace-nowrap items-center";
+pub const FOOTER_ICON_CSS: &str =
     "inline-flex flex-col items-center justify-center px-5 group dark:text-zinc-100 menu";
 
-pub const TWO_COLS_NO_GAP_CSS: &'static str =
+pub const TWO_COLS_NO_GAP_CSS: &str =
     "grid-flow-row grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2";
-pub const TWO_COLS_CSS: &'static str = concatcp!("gap-9 ", TWO_COLS_NO_GAP_CSS);
+pub const TWO_COLS_CSS: &str = concatcp!("gap-9 ", TWO_COLS_NO_GAP_CSS);

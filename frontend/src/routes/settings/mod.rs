@@ -1,6 +1,9 @@
 use crate::{
-    components::blank_page::BlankPage, css::*, hooks::use_user_context, i18n::Locale,
-    routes::AppRoute,
+    components::blank_page::BlankPage,
+    css::*,
+    hooks::use_user_context,
+    i18n::Locale,
+    routes::{AppRoute, BaseRoute},
 };
 use gloo::storage::{LocalStorage, Storage};
 use inflector::Inflector;
@@ -74,7 +77,7 @@ pub fn settings() -> Html {
     let about_onclick = {
         let nav = nav.clone();
         Callback::from(move |_: MouseEvent| {
-            nav.push(&AppRoute::About);
+            nav.push(&BaseRoute::About);
         })
     };
     let import_onclick = {
@@ -84,9 +87,9 @@ pub fn settings() -> Html {
         })
     };
 
-    const UL_CSS: &'static str =
+    const UL_CSS: &str =
         "pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500";
-    const LI_DIV_CSS: &'static str =
+    const LI_DIV_CSS: &str =
         "relative flex justify-between items-center sm:text-base align-baseline";
 
     fn menu_li(icon: &str, label: String) -> Html {

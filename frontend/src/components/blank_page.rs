@@ -234,7 +234,7 @@ fn header_button(props: &Option<HeaderButtonProps>, nav: Navigator) -> Html {
     }
 }
 
-pub const HEADER_BUTTON_CSS: &'static str = "no-underline text-amber-400";
+pub const HEADER_BUTTON_CSS: &str = "no-underline text-amber-400";
 
 #[function_component(BlankPage)]
 pub fn blank_page(props: &Props) -> Html {

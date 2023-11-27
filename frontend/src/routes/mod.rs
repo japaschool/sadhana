@@ -42,6 +42,8 @@ pub enum BaseRoute {
     Register,
     #[at("/shared/:id")]
     SharedCharts { id: String },
+    #[at("/settings/about")]
+    About,
     #[at("/*")]
     AppRoute,
     #[at("/")]
@@ -67,8 +69,6 @@ pub enum AppRoute {
     Help,
     #[at("/settings/help/support-form")]
     SupportForm,
-    #[at("/settings/about")]
-    About,
     #[at("/settings/import")]
     Import,
     #[at("/settings/language")]
@@ -108,7 +108,6 @@ fn app_switch(routes: AppRoute) -> Html {
         AppRoute::EditPassword => html! { <EditPassword/> },
         AppRoute::SupportForm => html! { <SupportForm/> },
         AppRoute::Help => html! { <Help/> },
-        AppRoute::About => html! { <About/> },
         AppRoute::Import => html! { <Import/> },
         AppRoute::Language => html! { <Language/> },
         AppRoute::UserPractices => html! { <UserPractices /> },
@@ -143,6 +142,7 @@ pub fn switch(routes: BaseRoute) -> Html {
             html! { <Confirmation confirmation_type={ConfirmationType::Registration} /> }
         }
         BaseRoute::SharedCharts { id } => html! { <SharedCharts share_id={id}/> },
+        BaseRoute::About => html! { <About/> },
         BaseRoute::Home | BaseRoute::AppRoute => {
             html! { <UserContextProvider><Switch<AppRoute> render={app_switch} /></UserContextProvider> }
         }
