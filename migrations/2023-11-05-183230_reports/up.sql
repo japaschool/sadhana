@@ -28,5 +28,33 @@ create table report_traces (
     line_style line_style_enum
 );
 
-select
-    diesel_manage_updated_at('reports');
+select diesel_manage_updated_at('reports');
+
+insert into reports (user_id, report_type, name, bar_layout)
+select up.user_id,
+    case
+        when up.data_type in ('text', 'bool') then 'grid'::report_type_enum
+        else 'graph'
+    end,
+    up.practice,
+    case
+        when up.data_type not in ('text', 'bool') then 'grouped'::bar_layout_enum
+    end
+from user_practices up
+where trim(up.practice) != ''
+    and up.is_active = true;
+
+insert into report_traces (report_id, practice_id, trace_type, show_average)
+select r.id,
+    up.id,
+    case
+        when r.report_type = 'graph' then 'bar'::trace_type_enum
+        else null
+    end,
+    case
+        when r.report_type = 'graph' then true
+        else null
+    end
+from user_practices up
+    join reports r on r.name = up.practice
+    and r.user_id = up.user_id;

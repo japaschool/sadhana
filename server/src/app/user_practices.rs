@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use actix_web::{web, HttpRequest, HttpResponse};
 use common::error::AppError;
 use diesel::prelude::*;
@@ -5,10 +7,12 @@ use diesel::{PgConnection, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::db_types::PracticeDataType;
+use crate::app::report::db::Report;
+use crate::app::report::{GraphReport, GraphType, GridReport, PracticeTrace, ReportDefinition};
+use crate::db_types::{BarLayout, PracticeDataType, ReportType, TraceType};
 use crate::middleware::auth;
 use crate::middleware::state::AppState;
-use crate::schema::{diary, user_practices, yatra_user_practices};
+use crate::schema::{diary, report_traces, reports, user_practices, yatra_user_practices};
 
 #[derive(Debug, Queryable, Serialize, Deserialize)]
 pub struct UserPractice {
@@ -162,7 +166,7 @@ impl UserPractice {
                 .select(diesel::dsl::max(order_key))
                 .first(conn)?;
 
-            diesel::insert_into(user_practices)
+            let practice_id: Uuid = diesel::insert_into(user_practices)
                 .values((
                     user_id.eq(record.user_id),
                     practice.eq(&record.practice),
@@ -171,7 +175,23 @@ impl UserPractice {
                     is_required.eq(record.is_required),
                     order_key.eq(max_order_key.unwrap_or_default() + 1),
                 ))
-                .execute(conn)?;
+                .returning(id)
+                .get_result(conn)?;
+
+            let report_definition = match record.data_type {
+                PracticeDataType::Bool | PracticeDataType::Text => {
+                    ReportDefinition::Grid(GridReport {
+                        practices: HashSet::from([practice_id]),
+                    })
+                }
+                _ => ReportDefinition::Graph(GraphReport {
+                    bar_layout: BarLayout::Grouped,
+                    traces: vec![PracticeTrace::new_minimal(GraphType::Bar, practice_id)],
+                }),
+            };
+
+            Report::create(conn, &record.user_id, &record.practice, &report_definition)?;
+
             Ok(())
         })
     }
