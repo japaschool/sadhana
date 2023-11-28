@@ -1,7 +1,7 @@
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
-use crate::{components::summary_details::SummaryDetails, css::*, model::UserPractice};
+use crate::{components::summary_details::SummaryDetails, css::*, i18n::*, model::UserPractice};
 
 use super::GridReport;
 
@@ -78,7 +78,7 @@ pub fn grid_editor(props: &Props) -> Html {
 
     html! {
         <div class="pt-8 text-zinc-500 dark:text-zinc-100">
-            <SummaryDetails tab_index={1} label={"Settings"}>//FIXME: localise
+            <SummaryDetails tab_index={1} label={Locale::current().settings()}>
                 <div class="pt-8">
                     <div class={TWO_COLS_CSS}>
                         <div class="relative">
@@ -93,19 +93,24 @@ pub fn grid_editor(props: &Props) -> Html {
                                 autocomplete="off"
                                 />
                             <label for="name" class={INPUT_LABEL_CSS}>
-                                { format!(" {}", "Chart Name")} //FIXME: localise
+                                { format!(" {}", Locale::current().report_name())}
                             </label>
                         </div>
                     </div>
                 </div>
             </SummaryDetails>
-            <SummaryDetails tab_index={1} label={"Practices"}>//FIXME: localise
+            <SummaryDetails tab_index={1} label={Locale::current().practices()}>
                 <div class="pt-8">
                     <div class={TWO_COLS_CSS}>{for practices}</div>
                 </div>
             </SummaryDetails>
             <div class="relative">
-                <button type="button" class={BTN_CSS} onclick={delete_report_onclick.clone()}>{"Delete Report"}</button> //FIXME: localise
+                <button
+                    type="button"
+                    class={BTN_CSS}
+                    onclick={delete_report_onclick.clone()}>
+                    {Locale::current().report_delete()}
+                </button>
             </div>
         </div>
     }
