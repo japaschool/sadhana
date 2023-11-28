@@ -21,6 +21,7 @@ use chrono::Local;
 use common::ReportDuration;
 use csv::Writer;
 use gloo::storage::{LocalStorage, Storage};
+use gloo_dialogs::confirm;
 use wasm_bindgen::{JsCast, JsValue};
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{BlobPropertyBag, HtmlElement};
@@ -36,6 +37,22 @@ pub fn charts() -> Html {
     let active_report = use_state(|| None::<Report>);
 
     let reports = use_async(async move { get_reports().await.map(|res| res.reports) });
+
+    let delete_report = {
+        let reports = reports.clone();
+        let editing = editing.clone();
+        let active_report = active_report.clone();
+        use_async(async move {
+            if let Some(rep) = active_report.as_ref() {
+                delete_report(&rep.id).await.map(|_| {
+                    reports.run();
+                    editing.toggle();
+                })
+            } else {
+                Ok(())
+            }
+        })
+    };
 
     let update_report = {
         let active_report = active_report.clone();
@@ -74,10 +91,8 @@ pub fn charts() -> Html {
     {
         // Load state on mount
         let all_practices = all_practices.clone();
-        let reports = reports.clone();
         use_mount(move || {
             all_practices.run();
-            reports.run();
         });
     }
 
@@ -88,23 +103,32 @@ pub fn charts() -> Html {
             log::debug!("Resetting active");
             if let Some(reports) = reports.data.as_ref() {
                 log::debug!("Resetting active:: found some reports");
-                if let Ok(current_report_id) =
-                    LocalStorage::get::<SelectedReportId>(SELECTED_REPORT_ID_KEY)
-                {
-                    log::debug!("Resetting active:: found a saved in local storage report id");
-                    active_report.set(
+                let new_report = LocalStorage::get::<SelectedReportId>(SELECTED_REPORT_ID_KEY)
+                    .ok()
+                    .and_then(|current_report_id| {
                         reports
                             .iter()
                             .find(|rep| rep.id == current_report_id.report_id)
-                            .cloned(),
-                    );
-                } else {
-                    log::debug!("Resetting active:: taking first one");
-                    active_report.set(reports.first().cloned());
+                    })
+                    .or_else(|| reports.first());
+
+                if new_report.is_some() {
+                    active_report.set(new_report.cloned());
                 }
             }
         }
     };
+
+    {
+        let reports = reports.clone();
+        use_effect_with_deps(
+            move |_| {
+                reports.run();
+                || ()
+            },
+            all_practices.clone(),
+        );
+    }
 
     {
         let reset_active = reset_active.clone();
@@ -155,12 +179,9 @@ pub fn charts() -> Html {
                         .unwrap();
                         let url = web_sys::Url::create_object_url_with_blob(&b).unwrap();
                         let a = web_sys::window()
-                            .unwrap()
-                            .document()
-                            .unwrap()
-                            .create_element("a")
-                            .unwrap()
-                            .dyn_into::<HtmlElement>()
+                            .and_then(|w| w.document())
+                            .and_then(|d| d.create_element("a").ok())
+                            .and_then(|e| e.dyn_into::<HtmlElement>().ok())
                             .unwrap();
 
                         a.set_attribute("href", &url).unwrap();
@@ -221,6 +242,16 @@ pub fn charts() -> Html {
         })
     };
 
+    let report_ondelete = {
+        let delete = delete_report.clone();
+        Callback::from(move |_| {
+            //FIXME: localise
+            if confirm("Are you sure you want to delete the report?") {
+                delete.run();
+            }
+        })
+    };
+
     let editor = || match active_report.as_ref().map(|r| &r.definition) {
         Some(ReportDefinition::Graph(rep)) => html! {
             <GraphEditor
@@ -228,6 +259,7 @@ pub fn charts() -> Html {
                 report={rep.clone()}
                 report_name={active_report.as_ref().map(|r| r.name.clone()).unwrap_or_default()}
                 report_onchange={graph_report_onchange}
+                report_ondelete={report_ondelete.clone()}
                 />
         },
         Some(ReportDefinition::Grid(rep)) => html! {
@@ -236,6 +268,7 @@ pub fn charts() -> Html {
                 report={rep.clone()}
                 report_name={active_report.as_ref().map(|r| r.name.clone()).unwrap_or_default()}
                 report_onchange={grid_report_onchange}
+                report_ondelete={report_ondelete.clone()}
                 />
         },
         _ => html! {},
@@ -274,15 +307,18 @@ pub fn charts() -> Html {
                 <ListErrors error={all_practices.error.clone()} />
                 <ListErrors error={report_data.error.clone()} />
                 <ListErrors error={update_report.error.clone()} />
-                if all_practices.data.is_some(){
-                    <ChartsBase
-                        practices={all_practices.data.clone().unwrap_or_default()}
-                        reports={reports.data.clone().unwrap_or_default()}
-                        report_data={report_data.data.clone().unwrap_or_default()}
-                        report={(*active_report).clone()}
-                        {report_onchange}
-                        {dates_onchange}
-                        />
+                <ListErrors error={delete_report.error.clone()} />
+                if let Some(report) = active_report.as_ref() {
+                    if all_practices.data.is_some() {
+                        <ChartsBase
+                            practices={all_practices.data.clone().unwrap_or_default()}
+                            reports={reports.data.clone().unwrap_or_default()}
+                            report_data={report_data.data.clone().unwrap_or_default()}
+                            report={(*report).clone()}
+                            {report_onchange}
+                            {dates_onchange}
+                            />
+                    }
                 }
                 if *editing {
                     {editor()}
@@ -298,7 +334,7 @@ pub fn charts() -> Html {
                                     />
                             </div>
                             <div class="relative">
-                                <button onclick={download_onclick} class={BTN_CSS_NO_MARGIN}>
+                                <button type="button" onclick={download_onclick} class={BTN_CSS_NO_MARGIN}>
                                 <i class="icon-download"></i>{Locale::current().download_csv()}</button>
                             </div>
                         </div>

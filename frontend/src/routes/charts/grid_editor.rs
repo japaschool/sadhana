@@ -11,6 +11,7 @@ pub struct Props {
     pub report: GridReport,
     pub report_name: AttrValue,
     pub report_onchange: Callback<(String, GridReport)>,
+    pub report_ondelete: Callback<()>,
 }
 
 #[function_component(GridEditor)]
@@ -49,6 +50,13 @@ pub fn grid_editor(props: &Props) -> Html {
         Callback::from(move |e: InputEvent| {
             let input: HtmlInputElement = e.target_unchecked_into();
             report_name.set(input.value());
+        })
+    };
+
+    let delete_report_onclick = {
+        let cb = props.report_ondelete.clone();
+        Callback::from(move |_: MouseEvent| {
+            cb.emit(());
         })
     };
 
@@ -93,13 +101,11 @@ pub fn grid_editor(props: &Props) -> Html {
             </SummaryDetails>
             <SummaryDetails tab_index={1} label={"Practices"}>//FIXME: localise
                 <div class="pt-8">
-                    <div class={TWO_COLS_CSS}>
-                        {for practices}
-                    </div>
+                    <div class={TWO_COLS_CSS}>{for practices}</div>
                 </div>
             </SummaryDetails>
             <div class="relative">
-                <button class={BTN_CSS} /*onclick={add_trace_onclick.clone()}*/>{"Delete Chart"}</button> //FIXME: localise
+                <button type="button" class={BTN_CSS} onclick={delete_report_onclick.clone()}>{"Delete Report"}</button> //FIXME: localise
             </div>
         </div>
     }

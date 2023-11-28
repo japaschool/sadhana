@@ -34,8 +34,7 @@ pub struct ChartBaseProps {
     pub report_onchange: Callback<SelectedReportId>,
     #[prop_or_default]
     pub pull_data: Callback<(UserPractice, ReportDuration)>, //FIXME: remove practice
-    #[prop_or_default] //FIXME: remove optionality once changed shared charts
-    pub report: Option<Report>,
+    pub report: Report,
 }
 
 const DATE_FORMAT: &str = "%Y-%m-%d";
@@ -203,9 +202,9 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
         }
     };
 
-    let data_body = match props.report.as_ref().map(|rep| &rep.definition) {
-        Some(ReportDefinition::Grid(grid_rep)) => html! {grid_report(grid_rep)},
-        Some(ReportDefinition::Graph(GraphReport { bar_layout, traces })) => html! {
+    let data_body = match &props.report.definition {
+        ReportDefinition::Grid(grid_rep) => html! {grid_report(grid_rep)},
+        ReportDefinition::Graph(GraphReport { bar_layout, traces }) => html! {
         <Chart
             traces={graph_traces(traces)}
             bar_mode={bar_layout.clone()}
@@ -225,12 +224,7 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
                         >
                         {for props.reports.iter().map(|r| html!{
                             <option class={"text-black"}
-                                selected={
-                                    props.report
-                                        .as_ref()
-                                        .map(|inner| inner.id == r.id)
-                                        .unwrap_or(false)
-                            }
+                                selected={props.report.id == r.id}
                                 value={r.id.clone()}
                                 >
                                 {r.name.clone()}

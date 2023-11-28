@@ -33,7 +33,7 @@ pub struct Props {
     pub report: GraphReport,
     pub report_name: AttrValue,
     pub report_onchange: Callback<(String, GraphReport)>,
-    // pub delete_report: Callback<()>,
+    pub report_ondelete: Callback<()>,
 }
 
 #[function_component(GraphEditor)]
@@ -46,7 +46,7 @@ pub fn graph_editor(props: &Props) -> Html {
 
     for v in props.all_practices.iter() {
         let record = all_practices_by_data_type
-            .entry(v.data_type.clone())
+            .entry(v.data_type)
             .or_insert(vec![]);
         record.push(v.to_owned());
         practice_to_data_type.insert(v.id.clone(), v.clone());
@@ -168,8 +168,12 @@ pub fn graph_editor(props: &Props) -> Html {
         })
     };
 
-    //TODO:
-    let delete_report_onclick = { Callback::from(move |_: MouseEvent| {}) };
+    let delete_report_onclick = {
+        let cb = props.report_ondelete.clone();
+        Callback::from(move |_: MouseEvent| {
+            cb.emit(());
+        })
+    };
 
     // Assumes None is the same as Some(Y)
     let axises_eq = |l: &Option<YAxis>, r: &Option<YAxis>| {
@@ -226,7 +230,7 @@ pub fn graph_editor(props: &Props) -> Html {
                     .and_then(|dt| all_practices_by_data_type.get(&dt.data_type))
             })
             .flatten()
-            .or_else(|| Some(&props.all_practices))
+            .or(Some(&props.all_practices))
     };
 
     let graph_settings = html! {
@@ -345,10 +349,10 @@ pub fn graph_editor(props: &Props) -> Html {
             <div class="pt-8">
                 <div class={TWO_COLS_CSS}>
                     <div class="relative">
-                        <button class={BTN_CSS_NO_MARGIN} onclick={add_trace_onclick.clone()}>{"Add Trace"}</button> //FIXME: localise
+                        <button type="button" class={BTN_CSS_NO_MARGIN} onclick={add_trace_onclick.clone()}>{"Add Trace"}</button> //FIXME: localise
                     </div>
                     <div class="relative">
-                        <button class={BTN_CSS_NO_MARGIN} onclick={delete_report_onclick.clone()}>{"Delete Chart"}</button> //FIXME: localise
+                        <button type="button" class={BTN_CSS_NO_MARGIN} onclick={delete_report_onclick.clone()}>{"Delete Chart"}</button> //FIXME: localise
                     </div>
                 </div>
             </div>
