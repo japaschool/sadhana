@@ -88,12 +88,18 @@ pub fn shared_charts(props: &SharedChartsProps) -> Html {
 
     html! {
         <BlankPage
-            loading={reports.loading || user_info.loading}
+            loading={
+                reports.loading
+                || user_info.loading
+                || practices.loading
+                || report_data.loading
+            }
             header_label={user_info.data.as_ref().map(|u| u.name.to_owned()).unwrap_or_default()}
             >
             <ListErrors error={reports.error.clone()} />
             <ListErrors error={practices.error.clone()} />
             <ListErrors error={report_data.error.clone()} />
+            <ListErrors error={user_info.error.clone()} />
             if let Some(report) = active_report.as_ref() {
                 if reports.data.is_some(){
                     <ChartsBase

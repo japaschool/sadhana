@@ -22,7 +22,7 @@ enum ReportType {
 
 #[function_component(CreateReport)]
 pub fn create_report() -> Html {
-    let report_name = use_state(|| String::default());
+    let report_name = use_state(String::default);
     let report_type = use_state(|| ReportType::Graph);
     let nav = use_navigator().unwrap();
 
@@ -84,7 +84,7 @@ pub fn create_report() -> Html {
             <BlankPage
                 show_footer=false
                 loading={create.loading}
-                header_label={"Create new report"} //FIXME: Localise
+                header_label={Locale::current().report_add_new()}
                 left_button={HeaderButtonProps::back()}
                 right_button={HeaderButtonProps::submit(Locale::current().save())}
                 >
@@ -102,16 +102,16 @@ pub fn create_report() -> Html {
                             autocomplete="off"
                             />
                         <label for={"report_name"} class={INPUT_LABEL_CSS}>
-                            {"Report Name"} //FIXME: localise
+                            {Locale::current().report_name()}
                         </label>
                     </div>
                     <div class="relative">
                         <select class={INPUT_CSS} id={"report_type"} onchange={report_type_onchange}>
-                            <option class={"text-black"} value={"graph"} selected=true>{"Graph"}</option> //FIXME: localise
-                            <option class={"text-black"} value={"grid"}>{"Grid"}</option> //FIXME: localise
+                            <option class={"text-black"} value={"graph"} selected=true>{Locale::current().report_type_graph()}</option>
+                            <option class={"text-black"} value={"grid"}>{Locale::current().report_type_grid()}</option>
                         </select>
                         <label for={"report_type"} class={INPUT_LABEL_CSS}>
-                            {format!(" {}: ", "Report Type")} //FIXME: localise
+                            {format!(" {}: ",Locale::current().report_type())}
                         </label>
                     </div>
                 </div>

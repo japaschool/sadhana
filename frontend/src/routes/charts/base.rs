@@ -22,18 +22,11 @@ use yew::prelude::*;
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct ChartBaseProps {
-    #[prop_or_default]
     pub practices: Vec<UserPractice>,
-    #[prop_or_default]
     pub reports: Vec<Report>,
-    #[prop_or_default]
     pub report_data: Vec<ReportDataEntry>,
-    #[prop_or_default]
     pub dates_onchange: Callback<ReportDuration>,
-    #[prop_or_default]
     pub report_onchange: Callback<SelectedReportId>,
-    #[prop_or_default]
-    pub pull_data: Callback<(UserPractice, ReportDuration)>, //FIXME: remove practice
     pub report: Report,
 }
 
@@ -210,7 +203,6 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
             bar_mode={bar_layout.clone()}
             />
         },
-        _ => html! {},
     };
 
     html! {
@@ -232,7 +224,7 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
                     })}
                     </select>
                     <label for="reports" class={INPUT_LABEL_CSS}>
-                        {format!(" {}: ", "Report")} //FIXME: Locale
+                        {format!(" {}: ", Locale::current().reports())}
                     </label>
                 </div>
                 <div class="relative">

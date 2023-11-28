@@ -7,6 +7,7 @@ use crate::{
         summary_details::SummaryDetails,
     },
     css::*,
+    i18n::*,
     model::UserPractice,
 };
 
@@ -15,16 +16,15 @@ use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
 lazy_static! {
-    //FIXME: localise
-    static ref ALL_AXISES: Vec<(YAxis, &'static str)> = vec![
-        (YAxis::Y, "Left"),
-        (YAxis::Y2, "Right"),
-        (YAxis::Y3, "Left 2"),
-        (YAxis::Y4, "Right 2"),
-        (YAxis::Y5, "Left 3"),
-        (YAxis::Y6, "Right 3"),
-        (YAxis::Y7, "Left 4"),
-        (YAxis::Y8, "Right 4"),
+    static ref ALL_AXISES: Vec<(YAxis, String)> = vec![
+        (YAxis::Y, Locale::current().left()),
+        (YAxis::Y2, Locale::current().right()),
+        (YAxis::Y3, format!("{} 2", Locale::current().left())),
+        (YAxis::Y4, format!("{} 2", Locale::current().right())),
+        (YAxis::Y5, format!("{} 3", Locale::current().left())),
+        (YAxis::Y6, format!("{} 3", Locale::current().right())),
+        (YAxis::Y7, format!("{} 4", Locale::current().left())),
+        (YAxis::Y8, format!("{} 4", Locale::current().right())),
     ];
 }
 #[derive(Properties, PartialEq)]
@@ -234,7 +234,7 @@ pub fn graph_editor(props: &Props) -> Html {
     };
 
     let graph_settings = html! {
-        <SummaryDetails tab_index={0} label={"Settings"}>//FIXME: localise
+        <SummaryDetails tab_index={0} label={Locale::current().settings()}>
             <div class="pt-8">
                 <div class={TWO_COLS_CSS}>
                     <div class="relative">
@@ -249,17 +249,32 @@ pub fn graph_editor(props: &Props) -> Html {
                             autocomplete="off"
                             />
                         <label for="name" class={INPUT_LABEL_CSS}>
-                            { format!(" {}", "Chart Name")} //FIXME: localise
+                            { format!(" {}", Locale::current().report_name())}
                         </label>
                     </div>
                     <div class="relative">
                         <select class={INPUT_CSS} id="bar-layout" onchange={bar_layout_onchange}>
-                                <option selected={report.bar_layout == BarGraphLayout::Grouped} value={BarGraphLayout::Grouped.to_string()} class={"text-black"}>{"Grouped"}</option> //FIXME: localise
-                                <option selected={report.bar_layout == BarGraphLayout::Stacked} value={BarGraphLayout::Stacked.to_string()} class={"text-black"}>{"Stacked"}</option> //FIXME: localise
-                                <option selected={report.bar_layout == BarGraphLayout::Overlaid} value={BarGraphLayout::Overlaid.to_string()} class={"text-black"}>{"Overlaid"}</option> //FIXME: localise
+                                <option
+                                    selected={report.bar_layout == BarGraphLayout::Grouped}
+                                    value={BarGraphLayout::Grouped.to_string()}
+                                    class={"text-black"}>
+                                    {Locale::current().report_bar_layout_grouped()}
+                                </option>
+                                <option
+                                    selected={report.bar_layout == BarGraphLayout::Stacked}
+                                    value={BarGraphLayout::Stacked.to_string()}
+                                    class={"text-black"}>
+                                    {Locale::current().report_bar_layout_stacked()}
+                                </option>
+                                <option
+                                    selected={report.bar_layout == BarGraphLayout::Overlaid}
+                                    value={BarGraphLayout::Overlaid.to_string()}
+                                    class={"text-black"}>
+                                    {Locale::current().report_bar_layout_overlaid()}
+                                </option>
                         </select>
                         <label for="bar-layout" class={INPUT_LABEL_CSS}>
-                            {format!(" {}: ", "Bar Layout")} //FIXME: localise
+                            {format!(" {}: ", Locale::current().report_bar_layout())}
                         </label>
                     </div>
                 </div>
@@ -268,12 +283,19 @@ pub fn graph_editor(props: &Props) -> Html {
     };
 
     let graph_trace_editors = report.traces.iter().enumerate().map(|(idx, PracticeTrace { name, type_, practice, y_axis, show_average })| html! {
-        <SummaryDetails tab_index={(idx + 1) as u8} label={format!("Trace {}", idx + 1)}> //FIXME: localise
+        <SummaryDetails tab_index={(idx + 1) as u8} label={format!("{} {}", Locale::current().report_trace(), idx + 1)}>
             <div class="pt-8">
                 <div class={TWO_COLS_CSS}>
                     <div class="relative">
                         <select class={INPUT_CSS} id={idx.to_string()} onchange={practice_onchange.clone()} required=true>
-                            <option class={"text-black"} value="" selected={practice.is_none()} disabled=true style="display:none">{"Choose a practice"}</option> //FIXME: localise
+                            <option 
+                                class={"text-black"} 
+                                value="" 
+                                selected={practice.is_none()} 
+                                disabled=true 
+                                style="display:none">
+                                {Locale::current().choose_practice()}
+                            </option>
                             {for practices_for_trace(idx, y_axis, practice).iter().flat_map(|inner| inner.iter()).map(|p| html! {
                                 <option selected={practice.iter().any(|inner| *inner == p.id)} value={p.id.clone()} class={"text-black"}>
                                     {p.practice.clone()}
@@ -281,12 +303,19 @@ pub fn graph_editor(props: &Props) -> Html {
                             })}
                         </select>
                         <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
-                            {format!(" {}: ", "Practice")} //FIXME: localise
+                            {format!(" {}: ", Locale::current().practice())} 
                         </label>
                     </div>
                     <div class="relative">
                         <select class={INPUT_CSS} id={idx.to_string()} onchange={axis_onchange.clone()} disabled={practice.is_none()}>
-                            <option class={"text-black"} value="" selected={y_axis.is_none()} disabled=true style="display:none">{"Choose an axis"}</option> //FIXME: localise
+                            <option 
+                                class={"text-black"} 
+                                value="" 
+                                selected={y_axis.is_none()} 
+                                disabled=true 
+                                style="display:none">
+                                {Locale::current().report_choose_axis()}
+                            </option>
                             {for axises_for_trace(practice).iter().map(|(axis, label)| html! {
                                 <option selected={y_axis.iter().any(|a| a == axis)} value={axis.to_string()} class={"text-black"}>
                                     {label}
@@ -294,17 +323,32 @@ pub fn graph_editor(props: &Props) -> Html {
                             })}
                         </select>
                         <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
-                            {format!(" {}: ", "Axis")} //FIXME: localise
+                            {format!(" {}: ", Locale::current().report_axis())}
                         </label>
                     </div>
                     <div class="relative">
                         <select class={INPUT_CSS} id={idx.to_string()} onchange={graph_type_onchange.clone()}>
-                            <option class={"text-black"} value={"bar"} selected={*type_ == GraphType::Bar}>{"Bar"}</option> //FIXME: localise
-                            <option class={"text-black"} value={"line"} selected={matches!(*type_, GraphType::Line(_))}>{"Line"}</option> //FIXME: localise
-                            <option class={"text-black"} value={"dot"} selected={*type_ == GraphType::Dot}>{"Dot"}</option> //FIXME: localise
+                            <option 
+                                class={"text-black"} 
+                                value={"bar"} 
+                                selected={*type_ == GraphType::Bar}>
+                                {Locale::current().report_graph_type_bar()}
+                            </option> 
+                            <option 
+                                class={"text-black"} 
+                                value={"line"} 
+                                selected={matches!(*type_, GraphType::Line(_))}>
+                                {Locale::current().report_graph_type_line()}
+                            </option> 
+                            <option 
+                                class={"text-black"} 
+                                value={"dot"} 
+                                selected={*type_ == GraphType::Dot}>
+                                {Locale::current().report_graph_type_dot()}
+                            </option> 
                         </select>
                         <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
-                            {format!(" {}: ", "Graph Type")} //FIXME: localise
+                            {format!(" {}: ",  Locale::current().report_graph_type())} 
                         </label>
                     </div>
                     <div class="relative">
@@ -317,12 +361,12 @@ pub fn graph_editor(props: &Props) -> Html {
                             class={INPUT_CSS}
                             />
                         <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
-                            {"Trace Name"} //FIXME: localise
+                            {Locale::current().report_trace_label()}
                         </label>
                     </div>
                     <div class="relative">
                         <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
-                            <span>{"Show Average"}</span> //FIXME: localise
+                            <span>{Locale::current().report_show_average()}</span> 
                             <input
                                 id="checkbox"
                                 type="checkbox"
@@ -333,7 +377,12 @@ pub fn graph_editor(props: &Props) -> Html {
                         </label>
                     </div>
                     <div class="relative">
-                        <button id={idx.to_string()} class={BTN_CSS} onclick={delete_trace_onclick.clone()}>{"Delete Trace"}</button> //FIXME: localise
+                        <button 
+                            id={idx.to_string()} 
+                            class={BTN_CSS} 
+                            onclick={delete_trace_onclick.clone()}>
+                            {Locale::current().report_trace_delete()}
+                        </button> 
                     </div>
                 </div>
             </div>
@@ -349,10 +398,20 @@ pub fn graph_editor(props: &Props) -> Html {
             <div class="pt-8">
                 <div class={TWO_COLS_CSS}>
                     <div class="relative">
-                        <button type="button" class={BTN_CSS_NO_MARGIN} onclick={add_trace_onclick.clone()}>{"Add Trace"}</button> //FIXME: localise
+                        <button 
+                            type="button" 
+                            class={BTN_CSS_NO_MARGIN} 
+                            onclick={add_trace_onclick.clone()}>
+                            {Locale::current().report_trace_add()}
+                        </button> 
                     </div>
                     <div class="relative">
-                        <button type="button" class={BTN_CSS_NO_MARGIN} onclick={delete_report_onclick.clone()}>{"Delete Chart"}</button> //FIXME: localise
+                        <button 
+                            type="button" 
+                            class={BTN_CSS_NO_MARGIN} 
+                            onclick={delete_report_onclick.clone()}>
+                            {Locale::current().report_delete()}
+                        </button> 
                     </div>
                 </div>
             </div>

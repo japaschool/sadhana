@@ -245,8 +245,7 @@ pub fn charts() -> Html {
     let report_ondelete = {
         let delete = delete_report.clone();
         Callback::from(move |_| {
-            //FIXME: localise
-            if confirm("Are you sure you want to delete the report?") {
+            if confirm(Locale::current().report_delete_confirmation_msg().as_str()) {
                 delete.run();
             }
         })
@@ -279,7 +278,12 @@ pub fn charts() -> Html {
             <BlankPage
                 show_footer={!*editing}
                 selected_page={AppRoute::Charts}
-                loading={all_practices.data.is_none()} //FIXME: add other async calls
+                loading={
+                    all_practices.loading
+                    || report_data.loading
+                    || update_report.loading
+                    || delete_report.loading
+                }
                 header_label={user_ctx.name.clone()}
                 left_button={
                     if *editing {
@@ -328,8 +332,8 @@ pub fn charts() -> Html {
                             <div class="relative">
                                 <CopyButton
                                     class={BTN_CSS_NO_MARGIN}
-                                    share_button_label={Locale::current().share_charts_link()}
-                                    copy_button_label={Locale::current().copy_charts_link()}
+                                    share_button_label={Locale::current().share_reports_link()}
+                                    copy_button_label={Locale::current().copy_reports_link()}
                                     relative_link={format!("/shared/{}", user_ctx.id)}
                                     />
                             </div>
