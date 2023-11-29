@@ -215,7 +215,7 @@ impl YatraPractice {
     ) -> Result<(), AppError> {
         use crate::schema::yatra_practices::dsl::*;
 
-        Yatra::ensure_admin_user(conn, &user_id, &record.yatra_id)?;
+        Yatra::ensure_admin_user(conn, user_id, &record.yatra_id)?;
 
         let subq = yatra_practices
             .filter(yatra_id.eq(&record.yatra_id))
@@ -242,7 +242,7 @@ impl YatraPractice {
         practice: &str,
         update: &YatraPracticeUpdate,
     ) -> Result<(), AppError> {
-        Yatra::ensure_admin_user(conn, &user_id, &yatra_id)?;
+        Yatra::ensure_admin_user(conn, user_id, yatra_id)?;
 
         diesel::update(yatra_practices::table)
             .set(yatra_practices::practice.eq(&update.practice))
@@ -287,7 +287,7 @@ impl YatraPractice {
         yatra_id: &Uuid,
         practice: &str,
     ) -> Result<(), AppError> {
-        Yatra::ensure_admin_user(conn, &user_id, &yatra_id)?;
+        Yatra::ensure_admin_user(conn, user_id, yatra_id)?;
 
         conn.transaction(|conn| Self::delete_int(conn, yatra_id, Some(practice)))?;
 
@@ -313,7 +313,7 @@ impl YatraPractice {
         yatra_id: &Uuid,
         data: &Vec<UpdateYatraPracticeOrderKey>,
     ) -> Result<(), AppError> {
-        Yatra::ensure_admin_user(conn, &user_id, &yatra_id)?;
+        Yatra::ensure_admin_user(conn, user_id, yatra_id)?;
 
         conn.transaction(|conn| {
             for row in data {

@@ -24,7 +24,7 @@ pub struct Report {
 
 impl Report {
     pub fn get_all(conn: &mut PgConnection, user_id: &Uuid) -> Result<Vec<Self>, AppError> {
-        let data = DBReport::get_all(conn, &user_id)?;
+        let data = DBReport::get_all(conn, user_id)?;
 
         let mut res = Vec::with_capacity(data.len());
 

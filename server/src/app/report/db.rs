@@ -127,7 +127,7 @@ impl ReportTrace {
                 .iter()
                 .map(|t| NewReportTrace {
                     report_id: report_id.to_owned(),
-                    practice_id: t.practice.clone(),
+                    practice_id: t.practice,
                     trace_type: Some((&t.type_).into()),
                     label: t.name.clone(),
                     y_axis: t.y_axis.as_ref().map(|a| a.to_string()),

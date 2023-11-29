@@ -51,7 +51,7 @@ pub async fn reset_password(
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
 
-    let confirmation_id = form.data.confirmation_id.clone();
+    let confirmation_id = form.data.confirmation_id;
     let pwd = form.data.password.clone();
 
     web::block(move || User::reset_pwd(&mut conn, &confirmation_id, &pwd)).await??;
