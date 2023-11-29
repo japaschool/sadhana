@@ -297,7 +297,7 @@ pub async fn update_user_practice_order_key(
         .iter()
         .enumerate()
         .map(|(idx, practice)| UpdateUserPracticeOrderKey {
-            practice: practice.clone(),
+            practice: *practice,
             order_key: idx as i32,
         })
         .collect();

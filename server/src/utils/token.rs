@@ -12,7 +12,7 @@ static ONE_YEAR: i64 = 365 * 60 * 60 * 24; // in seconds
 pub fn decode(token: &str) -> jsonwebtoken::errors::Result<TokenData<Claims>> {
     jsonwebtoken::decode::<Claims>(
         token,
-        &DecodingKey::from_secret(&KEY.as_bytes()),
+        &DecodingKey::from_secret(KEY.as_bytes()),
         &Validation::default(),
     )
 }
@@ -22,7 +22,7 @@ pub fn generate(user_id: Uuid, now: i64) -> Result<String, Error> {
     jsonwebtoken::encode(
         &Header::default(),
         &claims,
-        &EncodingKey::from_secret(&KEY.as_bytes()),
+        &EncodingKey::from_secret(KEY.as_bytes()),
     )
 }
 

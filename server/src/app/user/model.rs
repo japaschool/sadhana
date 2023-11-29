@@ -75,7 +75,7 @@ impl User {
             .filter(users::email.eq(email))
             .limit(1)
             .first::<User>(conn)?;
-        let password_matches = hasher::verify(&naive_password, &user.hash)?;
+        let password_matches = hasher::verify(naive_password, &user.hash)?;
 
         if !password_matches {
             return Err(AppError::Unauthorized("Invalid password".into()));
@@ -113,7 +113,7 @@ impl User {
     ) -> Result<(), AppError> {
         let user = users::table.filter(users::id.eq(&id)).first::<User>(conn)?;
 
-        let password_matches = hasher::verify(&current_password, &user.hash)?;
+        let password_matches = hasher::verify(current_password, &user.hash)?;
 
         if !password_matches {
             return Err(AppError::Unauthorized("Invalid password".into()));
