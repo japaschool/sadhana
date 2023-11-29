@@ -7,7 +7,6 @@ use crate::{
 use gloo::storage::{LocalStorage, Storage};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
-use yew_router::prelude::use_navigator;
 
 #[function_component(Language)]
 pub fn language() -> Html {

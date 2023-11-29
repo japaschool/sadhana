@@ -17,9 +17,7 @@ fn p<S: Display>(text: S) -> Html {
 
 fn default(error: &AppError, nav: Navigator) -> Html {
     match error {
-        AppError::UnprocessableEntity(error_info) => {
-            error_info.iter().map(|e| p(e)).collect::<Html>()
-        }
+        AppError::UnprocessableEntity(error_info) => error_info.iter().map(p).collect::<Html>(),
         AppError::RequestError => p(Locale::current().request_error()),
         AppError::InternalServerError => p(Locale::current().internal_server_error()),
         AppError::Unauthorized(_) => {

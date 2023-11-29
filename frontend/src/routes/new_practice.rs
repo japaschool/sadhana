@@ -76,7 +76,7 @@ pub fn new_practice(props: &Props) -> Html {
                     .await
                 }
             })
-            .and_then(|_| Ok(nav.back()))
+            .map(|_| nav.back())
         })
     };
 
@@ -133,7 +133,7 @@ pub fn new_practice(props: &Props) -> Html {
         let form = form_data.clone();
         Callback::from(move |err| match err {
             AppError::UnprocessableEntity(err)
-                if err.iter().find(|s| s.contains("already exists.")).is_some() =>
+                if err.iter().any(|s| s.contains("already exists.")) =>
             {
                 Some(Locale::current().practice_already_exists(PracticeName(&form.practice)))
             }

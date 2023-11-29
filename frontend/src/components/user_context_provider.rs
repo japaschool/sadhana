@@ -32,10 +32,7 @@ pub fn user_context_provider(props: &Props) -> Html {
                 log::debug!("Fetching current user info");
                 current_user.run();
             } else if location
-                .filter(|l| {
-                    let path = l.path();
-                    path.starts_with("/register") || path.starts_with("/login")
-                })
+                .filter(|l| l.path().starts_with("/register") || l.path().starts_with("/login"))
                 .is_none()
             {
                 navigator.push(&AppRoute::Login);

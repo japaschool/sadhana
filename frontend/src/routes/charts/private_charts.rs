@@ -166,7 +166,7 @@ pub fn charts() -> Html {
         Callback::from(move |_: MouseEvent| {
             let duration = duration.clone();
             spawn_local(async move {
-                get_report_data(&today, &*duration)
+                get_report_data(&today, &duration)
                     .await
                     .map(|data| {
                         let csv = to_csv_str(data).unwrap_or_default();
@@ -174,7 +174,7 @@ pub fn charts() -> Html {
                             js_sys::Array::from_iter(std::iter::once(JsValue::from_str(&csv)));
                         let b = web_sys::Blob::new_with_str_sequence_and_options(
                             &json_jsvalue_array,
-                            &BlobPropertyBag::new().type_("text/csv"),
+                            BlobPropertyBag::new().type_("text/csv"),
                         )
                         .unwrap();
                         let url = web_sys::Url::create_object_url_with_blob(&b).unwrap();

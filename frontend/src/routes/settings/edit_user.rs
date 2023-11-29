@@ -1,7 +1,6 @@
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::prelude::*;
-use yew_router::prelude::use_navigator;
 
 use crate::{
     components::{
@@ -18,10 +17,9 @@ use crate::{
 
 #[function_component(EditUser)]
 pub fn edit_user() -> Html {
-    let user_info = use_state(|| UpdateUser::default());
+    let user_info = use_state(UpdateUser::default);
     let editing = use_bool_toggle(false);
     let user_ctx = use_user_context();
-    let nav = use_navigator().unwrap();
 
     {
         let user_info = user_info.clone();

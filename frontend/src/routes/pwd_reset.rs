@@ -14,7 +14,7 @@ use common::error::AppError;
 use gloo_dialogs::alert;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_bool_toggle, use_mount};
-use yew_router::prelude::{use_navigator, Redirect};
+use yew_router::prelude::Redirect;
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
@@ -24,7 +24,7 @@ pub struct Props {
 
 #[function_component(PwdReset)]
 pub fn pwd_reset(props: &Props) -> Html {
-    let pwd = use_state(|| String::default());
+    let pwd = use_state(String::default);
 
     let pwd_onchange = {
         let pwd = pwd.clone();

@@ -16,7 +16,7 @@ use crate::{
 #[function_component(Login)]
 pub fn login() -> Html {
     let user_ctx = use_user_context();
-    let login_info = use_state(|| LoginInfo::default());
+    let login_info = use_state(LoginInfo::default);
     let user_login = {
         let login_info = login_info.clone();
         use_async(async move {

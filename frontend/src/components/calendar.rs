@@ -14,15 +14,15 @@ pub struct Props {
     pub highlight_date: Option<Callback<Rc<NaiveDate>, bool>>,
 }
 
-pub const DATE_FORMAT: &'static str = "%Y-%m-%d";
+pub const DATE_FORMAT: &str = "%Y-%m-%d";
 
-const DATE_CSS: &'static str =
+const DATE_CSS: &str =
     "flex group rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center";
 
-pub const HOVER_TODAY_DATE_COLOR_CSS: &'static str = "hover:bg-amber-400 dark:hover:bg-amber-400";
-pub const HOVER_DATE_COLOR_CSS: &'static str = "hover:bg-zinc-300 dark:hover:bg-slate-800";
-pub const SELECTED_TODAY_DATE_COLOR_CSS: &'static str = "bg-amber-400";
-pub const SELECTED_DATE_COLOR_CSS: &'static str = "border-2 border-amber-400";
+pub const HOVER_TODAY_DATE_COLOR_CSS: &str = "hover:bg-amber-400 dark:hover:bg-amber-400";
+pub const HOVER_DATE_COLOR_CSS: &str = "hover:bg-zinc-300 dark:hover:bg-slate-800";
+pub const SELECTED_TODAY_DATE_COLOR_CSS: &str = "bg-amber-400";
+pub const SELECTED_DATE_COLOR_CSS: &str = "border-2 border-amber-400";
 
 #[function_component(Calendar)]
 pub fn calendar(props: &Props) -> Html {
@@ -30,9 +30,9 @@ pub fn calendar(props: &Props) -> Html {
 
     let week = {
         let d = props.selected_date.week(Weekday::Mon).first_day();
-        let mut res = vec![d.clone()];
+        let mut res = vec![d];
         for i in 1..7 {
-            res.push(d.clone().checked_add_days(Days::new(i)).unwrap());
+            res.push(d.checked_add_days(Days::new(i)).unwrap());
         }
         res
     };
@@ -48,7 +48,7 @@ pub fn calendar(props: &Props) -> Html {
 
     let next_week_onclick = {
         let cb = props.date_onchange.clone();
-        let selected_date = props.selected_date.clone();
+        let selected_date = props.selected_date;
         Callback::from(move |_: MouseEvent| {
             if selected_date.weekday() == Weekday::Sun {
                 cb.emit(selected_date.succ_opt().unwrap());
@@ -60,7 +60,7 @@ pub fn calendar(props: &Props) -> Html {
 
     let prev_week_onclick = {
         let cb = props.date_onchange.clone();
-        let selected_date = props.selected_date.clone();
+        let selected_date = props.selected_date;
         Callback::from(move |_: MouseEvent| {
             if selected_date.weekday() == Weekday::Mon {
                 cb.emit(selected_date.pred_opt().unwrap());
@@ -104,7 +104,7 @@ pub fn calendar(props: &Props) -> Html {
 
         html! {
             <div id={id.to_string()} class="text-center">
-                <p id={id.to_string()} class={ weekday_label_css }>{ &Locale::current().day_of_week(d).chars().nth(0).unwrap() }</p>
+                <p id={id.to_string()} class={ weekday_label_css }>{ &Locale::current().day_of_week(d).chars().next().unwrap() }</p>
                 <div id={id.to_string()} class={ format!("{DATE_CSS} {date_css}") } onclick={ onclick_date.clone() }>
                     {highlight}
                     <p id={id.to_string()} class={ date_label_css }>{ d.format("%-d") }</p>

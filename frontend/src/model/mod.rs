@@ -202,7 +202,7 @@ pub enum PracticeEntryValue {
 }
 
 lazy_static! {
-    static ref DURATION_R: Regex = Regex::new(r#"(?:(\d+)[^\d]+)?(\d+)[^\d]+"#).unwrap();
+    static ref DURATION_R: Regex = Regex::new(r"(?:(\d+)[^\d]+)?(\d+)[^\d]+").unwrap();
 }
 
 impl TryFrom<(&PracticeDataType, &str)> for PracticeEntryValue {
@@ -213,16 +213,16 @@ impl TryFrom<(&PracticeDataType, &str)> for PracticeEntryValue {
             PracticeDataType::Int => value
                 .1
                 .parse()
-                .map(|i| PracticeEntryValue::Int(i))
+                .map(PracticeEntryValue::Int)
                 .with_context(|| format!("Failed to parse int from {}", value.1))?,
             PracticeDataType::Bool => value
                 .1
                 .parse()
-                .map(|b| PracticeEntryValue::Bool(b))
+                .map(PracticeEntryValue::Bool)
                 .with_context(|| format!("Failed to parse bool from {}", value.1))?,
             PracticeDataType::Time => value
                 .1
-                .split_once(":")
+                .split_once(':')
                 .and_then(|(h, m)| {
                     let h = h.parse().ok()?;
                     let m = m.parse().ok()?;

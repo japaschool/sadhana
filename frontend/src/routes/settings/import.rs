@@ -170,7 +170,7 @@ pub fn import() -> Html {
                 .transpose()?;
             let entry = DiaryEntry {
                 practice: h.to_owned(),
-                data_type: data_type.clone(),
+                data_type,
                 value,
             };
             diary_day.push(entry);
@@ -195,9 +195,9 @@ pub fn import() -> Html {
 
                 for (row_num, row) in rdr.records().enumerate() {
                     let dd = row
-                        .map_err(|e| anyhow::Error::from(e))
+                        .map_err(anyhow::Error::from)
                         .with_context(|| Locale::current().import_row_parse_err())
-                        .and_then(|row| to_diary_day(row, &*headers));
+                        .and_then(|row| to_diary_day(row, &headers));
                     if let Ok(dd) = dd {
                         successes.push(dd);
                     } else {

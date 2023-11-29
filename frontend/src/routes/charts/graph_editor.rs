@@ -177,7 +177,7 @@ pub fn graph_editor(props: &Props) -> Html {
 
     // Assumes None is the same as Some(Y)
     let axises_eq = |l: &Option<YAxis>, r: &Option<YAxis>| {
-        l.as_ref().or_else(|| Some(&YAxis::Y)) == r.as_ref().or_else(|| Some(&YAxis::Y))
+        l.as_ref().or(Some(&YAxis::Y)) == r.as_ref().or(Some(&YAxis::Y))
     };
 
     let is_shared_axis = |trace_idx, axis: &Option<YAxis>| {

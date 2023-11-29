@@ -48,7 +48,7 @@ pub fn copy_button(props: &Props) -> Html {
                     w.navigator()
                         .can_share()
                         .unwrap_or(false)
-                        .then(|| w.navigator().share_with_data(&ShareData::new().url(&msg)))
+                        .then(|| w.navigator().share_with_data(ShareData::new().url(&msg)))
                 })
                 .next()
                 .is_none()

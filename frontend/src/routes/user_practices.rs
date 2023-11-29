@@ -7,7 +7,7 @@ use yew_router::prelude::*;
 
 use crate::{
     components::{
-        blank_page::{BlankPage, ButtonType, HeaderButtonProps},
+        blank_page::{BlankPage, HeaderButtonProps},
         draggable_list::{DraggableList, Item},
         list_errors::ListErrors,
     },

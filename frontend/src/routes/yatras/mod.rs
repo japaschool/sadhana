@@ -24,7 +24,7 @@ pub mod admin_settings;
 pub mod join;
 pub mod settings;
 
-const SELECTED_YATRA_ID_KEY: &'static str = "selected_yatra";
+const SELECTED_YATRA_ID_KEY: &str = "selected_yatra";
 
 #[function_component(Yatras)]
 pub fn yatras() -> Html {
@@ -37,7 +37,7 @@ pub fn yatras() -> Html {
         let selected_yatra = selected_yatra.clone();
         use_async(async move {
             if let Some(y) = selected_yatra.as_ref() {
-                get_yatra_data(&y.id, &*selected_date).await
+                get_yatra_data(&y.id, &selected_date).await
             } else {
                 Ok(YatraData::default())
             }
@@ -80,7 +80,7 @@ pub fn yatras() -> Html {
         use_effect_with_deps(
             move |all| {
                 let yatra = LocalStorage::get::<String>(SELECTED_YATRA_ID_KEY)
-                    .map(|s| s.replace("\"", ""))
+                    .map(|s| s.replace('\"', ""))
                     .ok()
                     .and_then(|id| {
                         all.data

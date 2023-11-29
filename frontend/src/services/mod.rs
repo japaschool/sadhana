@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use common::{error::AppError, ReportDuration};
+use common::error::AppError;
 use urlencoding::encode; //FIXME: should be gone
 
 use crate::model::*;
@@ -71,13 +71,6 @@ pub async fn update_user_password(
 pub async fn get_diary_day(date: &NaiveDate) -> Result<DiaryDay, AppError> {
     log::debug!("Fetching journal entry for {}", date);
     request_get(format!("/diary/{}", date.format("%F"))).await
-}
-
-/// Save all diary entries for a date
-//TODO: remove if no longer required from both frontend & backend
-pub async fn save_diary(cob: &NaiveDate, data: &SaveDiaryDay<'_>) -> Result<(), AppError> {
-    log::debug!("Saving diary day: {:?}", data);
-    request_put(format!("/diary/{}", cob.format("%F")), data).await
 }
 
 /// Save a diary entry for a date
@@ -256,12 +249,12 @@ pub async fn get_yatra_user_practices(yatra_id: &str) -> Result<YatraUserPractic
 
 pub async fn update_yatra_user_practices(
     yatra_id: &str,
-    practices: &Vec<YatraUserPractice>,
+    practices: &[YatraUserPractice],
 ) -> Result<(), AppError> {
     request_put(
         format!("/yatra/{yatra_id}/user-practices"),
         &YatraUserPractices {
-            practices: practices.clone(),
+            practices: practices.to_vec(),
         },
     )
     .await
@@ -269,7 +262,7 @@ pub async fn update_yatra_user_practices(
 
 pub async fn send_support_message(subject: &str, message: &str) -> Result<(), AppError> {
     request_post(
-        format!("/support-form"),
+        "/support-form".to_string(),
         &SupportMessageForm::new(subject, message),
     )
     .await

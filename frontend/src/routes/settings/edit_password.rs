@@ -16,8 +16,8 @@ use yew_router::prelude::use_navigator;
 
 #[function_component(EditPassword)]
 pub fn edit_password() -> Html {
-    let new_password = use_state(|| String::new());
-    let current_pwd = use_state(|| String::default());
+    let new_password = use_state(String::new);
+    let current_pwd = use_state(String::default);
     let nav = use_navigator().unwrap();
 
     let update_password = {
@@ -25,7 +25,7 @@ pub fn edit_password() -> Html {
         let current_pwd = current_pwd.clone();
         let nav = nav.clone();
         use_async(async move {
-            services::update_user_password(&*current_pwd, &*new_password)
+            services::update_user_password(&current_pwd, &new_password)
                 .await
                 .map(|_| nav.push(&AppRoute::Settings))
         })

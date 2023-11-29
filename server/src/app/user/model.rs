@@ -86,7 +86,7 @@ impl User {
     }
 
     pub fn generate_token(&self) -> Result<Token, AppError> {
-        let now = Utc::now().timestamp_nanos() / 1_000_000_000; // nanosecond -> second
+        let now = Utc::now().timestamp_nanos_opt().unwrap() / 1_000_000_000; // nanosecond -> second
         let token = token::generate(self.id, now)?;
         Ok(token)
     }
@@ -182,16 +182,16 @@ impl Confirmation {
         email: &str,
         fail_if_user_exists: bool,
     ) -> Result<Self, AppError> {
-        if fail_if_user_exists {
-            if let Ok(_) = users::table
+        if fail_if_user_exists
+            && users::table
                 .filter(users::email.eq(email))
                 .first::<User>(conn)
-            {
-                return Err(AppError::UnprocessableEntity(vec![format!(
-                    "User with email {} already exists.",
-                    email
-                )]));
-            }
+                .is_ok()
+        {
+            return Err(AppError::UnprocessableEntity(vec![format!(
+                "User with email {} already exists.",
+                email
+            )]));
         }
 
         let res: Self = diesel::insert_into(confirmations::table)

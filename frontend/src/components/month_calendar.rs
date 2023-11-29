@@ -7,10 +7,7 @@ use chrono::{Datelike, Local, Months, NaiveDate};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
-use crate::{
-    css::{LINKS_CSS, LINK_CSS},
-    i18n::{Locale, DAYS},
-};
+use crate::i18n::{Locale, DAYS};
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
@@ -21,7 +18,7 @@ pub struct Props {
     pub highlight_date: Option<Callback<Rc<NaiveDate>, bool>>, //TODO:
 }
 
-const DAY_CSS: &'static str = "cursor-pointer text-center text-md rounded-full leading-loose transition-all ease-in-out duration-300";
+const DAY_CSS: & str = "cursor-pointer text-center text-md rounded-full leading-loose transition-all ease-in-out duration-300";
 
 #[function_component(MonthCalendar)]
 pub fn month_calendar(props: &Props) -> Html {
