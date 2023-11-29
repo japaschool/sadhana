@@ -11,7 +11,7 @@ use yew_plotly::plotly::common::{
     Position, TickMode,
 };
 use yew_plotly::plotly::configuration::DisplayModeBar;
-use yew_plotly::plotly::layout::{Axis, BarMode, Legend, Margin};
+use yew_plotly::plotly::layout::{Axis, BarMode, Legend, Margin, RangeMode};
 use yew_plotly::plotly::{Bar, Configuration, Layout, Plot, Scatter, Trace};
 use yew_plotly::Plotly;
 
@@ -166,19 +166,19 @@ lazy_static! {
     static ref COLORS: Vec<NamedColor> = vec![
         NamedColor::DarkOrange,
         NamedColor::FireBrick,
-        NamedColor::Tomato,
-        NamedColor::IndianRed,
-        NamedColor::DarkMagenta,
         NamedColor::DarkKhaki,
-        NamedColor::SlateBlue,
+        NamedColor::Sienna,
+        NamedColor::MediumPurple,
+        NamedColor::LightSteelBlue,
+        NamedColor::DarkMagenta,
         NamedColor::LightSalmon,
+        NamedColor::IndianRed,
         NamedColor::PaleVioletRed,
+        NamedColor::Tomato,
         NamedColor::Olive,
         NamedColor::LightSeaGreen,
         NamedColor::PaleTurquoise,
-        NamedColor::LightSteelBlue,
-        NamedColor::Sienna,
-        NamedColor::MediumPurple,
+        NamedColor::SlateBlue,
     ];
 }
 
@@ -230,6 +230,10 @@ pub fn chart(props: &Props) -> Html {
         if !y_axises.contains(&y_axis_key_str) {
             let mut y_axis = Axis::new();
 
+            if PracticeDataType::Int == *y_axis_type || PracticeDataType::Duration == *y_axis_type {
+                y_axis = y_axis.range_mode(RangeMode::ToZero);
+            }
+
             if PracticeDataType::Time == *y_axis_type {
                 y_axis = y_axis.tick_format("%H:%M");
             }
@@ -264,7 +268,6 @@ pub fn chart(props: &Props) -> Html {
 
         let trace: Box<dyn Trace> = match type_ {
             GraphType::Bar => Bar::new(x_values.clone(), y_values.clone())
-                // .marker(Marker::new().color(NamedColor::DarkOrange))
                 .marker(Marker::new().color(COLORS[i % COLORS.len()]))
                 .name(name.to_owned().unwrap_or_default())
                 .show_legend(name.is_some())
