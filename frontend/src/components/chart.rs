@@ -333,7 +333,8 @@ pub fn chart(props: &Props) -> Html {
     let config = Configuration::default()
         .display_mode_bar(DisplayModeBar::False)
         .static_plot(true)
-        .responsive(true);
+        .responsive(true)
+        .locale(&Locale::current().to_string());
 
     plot.set_layout(layout);
     plot.set_configuration(config);

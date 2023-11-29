@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use chrono::NaiveDate;
 use gloo::storage::{LocalStorage, Storage};
 use i18n_codegen::i18n;
@@ -6,8 +8,8 @@ use once_cell::sync::Lazy;
 
 i18n!("i18n");
 
-pub const USER_LANGUAGE_STORAGE_KEY: &'static str = "user_language";
-pub const DEFAULT_LANGUAGE_KEY: &'static str = "sys";
+pub const USER_LANGUAGE_STORAGE_KEY: &str = "user_language";
+pub const DEFAULT_LANGUAGE_KEY: &str = "sys";
 
 lazy_static! {
     pub static ref DAYS: Vec<String> = vec![
@@ -21,7 +23,7 @@ lazy_static! {
     ];
 }
 
-pub static LANGUAGE_DATA: [(&'static str, &'static str); 3] =
+pub static LANGUAGE_DATA: [(&str, &str); 3] =
     [("en", "English"), ("ru", "Русский"), ("uk", "Українська")];
 
 static LANG: Lazy<String> = Lazy::new(|| {
@@ -35,7 +37,7 @@ static LANG: Lazy<String> = Lazy::new(|| {
                     .and_then(|x| x.as_string())
             })
         })
-        .and_then(|l| l.split("_").next().map(|x| x.to_owned()))
+        .and_then(|l| l.split('_').next().map(|x| x.to_owned()))
         .unwrap_or("ru".to_string())
 });
 
@@ -83,5 +85,17 @@ impl Locale {
             12 => self.december(),
             _ => unreachable!(),
         }
+    }
+}
+
+impl Display for Locale {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Locale::Ua => "uk",
+            Locale::Ru => "ru",
+            _ => "en",
+        };
+
+        write!(f, "{}", s)
     }
 }
