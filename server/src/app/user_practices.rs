@@ -8,11 +8,11 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::app::report::db::Report;
-use crate::app::report::{GraphReport, GraphType, GridReport, PracticeTrace, ReportDefinition};
-use crate::db_types::{BarLayout, PracticeDataType, ReportType, TraceType};
+use crate::app::report::{GraphReport, GridReport, PracticeTrace, ReportDefinition, TraceType};
+use crate::db_types::{BarLayout, PracticeDataType};
 use crate::middleware::auth;
 use crate::middleware::state::AppState;
-use crate::schema::{diary, report_traces, reports, user_practices, yatra_user_practices};
+use crate::schema::{diary, report_traces, user_practices, yatra_user_practices};
 
 #[derive(Debug, Queryable, Serialize, Deserialize)]
 pub struct UserPractice {
@@ -184,7 +184,7 @@ impl UserPractice {
                 }
                 _ => ReportDefinition::Graph(GraphReport {
                     bar_layout: BarLayout::Grouped,
-                    traces: vec![PracticeTrace::new_minimal(GraphType::Bar, practice_id)],
+                    traces: vec![PracticeTrace::new_minimal(TraceType::Bar, practice_id)],
                 }),
             };
 

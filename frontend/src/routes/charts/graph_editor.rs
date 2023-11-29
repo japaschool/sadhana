@@ -132,7 +132,7 @@ pub fn graph_editor(props: &Props) -> Html {
             let input: HtmlInputElement = e.target_unchecked_into();
             let idx: usize = input.id().parse().unwrap();
             let mut new_traces = report.traces.clone();
-            new_traces[idx].name = Some(input.value().trim().to_string()).filter(|s| !s.is_empty());
+            new_traces[idx].label = Some(input.value().trim().to_string()).filter(|s| !s.is_empty());
             report.set(GraphReport::new(report.bar_layout.clone(), new_traces));
         })
     };
@@ -282,7 +282,7 @@ pub fn graph_editor(props: &Props) -> Html {
         </SummaryDetails>
     };
 
-    let graph_trace_editors = report.traces.iter().enumerate().map(|(idx, PracticeTrace { name, type_, practice, y_axis, show_average })| html! {
+    let graph_trace_editors = report.traces.iter().enumerate().map(|(idx, PracticeTrace { label, type_, practice, y_axis, show_average })| html! {
         <SummaryDetails tab_index={(idx + 1) as u8} label={format!("{} {}", Locale::current().report_trace(), idx + 1)}>
             <div class="pt-8">
                 <div class={TWO_COLS_CSS}>
@@ -355,8 +355,8 @@ pub fn graph_editor(props: &Props) -> Html {
                         <input
                             type="text"
                             id={idx.to_string()}
-                            placeholder="Name"
-                            value={name.to_owned().unwrap_or_default()}
+                            placeholder="Label"
+                            value={label.to_owned().unwrap_or_default()}
                             oninput={trace_name_oninput.clone()}
                             class={INPUT_CSS}
                             />

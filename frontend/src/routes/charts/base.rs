@@ -83,7 +83,7 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
             .filter(|trace| trace.practice.is_some())
             .map(
                 |PracticeTrace {
-                     name,
+                     label,
                      type_,
                      practice,
                      y_axis,
@@ -125,7 +125,7 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
                         .and_then(|p| average_value(&p.data_type, &report_data, adjust_time));
 
                     chart::Graph {
-                        name: name.to_owned(),
+                        name: label.to_owned(),
                         type_: type_.to_owned(),
                         x_values,
                         y_values,

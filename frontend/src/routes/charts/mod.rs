@@ -1,24 +1,21 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
-use crate::{
-    components::chart::{BarGraphLayout, GraphType, YAxis},
-    model::ReportDataEntry,
-};
+use crate::components::chart::{BarGraphLayout, GraphType, YAxis};
 use serde::{Deserialize, Serialize};
 
 mod base;
-mod charts;
 pub mod create_report;
 mod graph_editor;
 mod grid_editor;
+mod private_charts;
 mod shared_charts;
 
-pub use charts::Charts;
+pub use private_charts::Charts;
 pub use shared_charts::SharedCharts;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct PracticeTrace {
-    pub name: Option<String>, //FIXME: rename to label
+    pub label: Option<String>,
     pub type_: GraphType,
     pub practice: Option<String>,
     pub y_axis: Option<YAxis>,
@@ -28,7 +25,7 @@ pub struct PracticeTrace {
 impl Default for PracticeTrace {
     fn default() -> Self {
         Self {
-            name: Default::default(),
+            label: Default::default(),
             type_: GraphType::Bar,
             practice: Default::default(),
             y_axis: Default::default(),
