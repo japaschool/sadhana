@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    db_types::{BarLayout, LineStyle as DBLineStyle, ReportType, TraceType},
+    db_types::{BarLayout, LineStyle as DBLineStyle, ReportType, TraceType as DBTraceType},
     middleware::{auth, state::AppState},
 };
 
@@ -99,14 +99,14 @@ fn err<S: Into<String>>(msg: S) -> AppError {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PracticeTrace {
     pub name: Option<String>,
-    pub type_: GraphType, //FIXME: Rename both field and type to TraceType
+    pub type_: TraceType,
     pub practice: Uuid,
     pub y_axis: Option<YAxis>,
     pub show_average: bool,
 }
 
 impl PracticeTrace {
-    pub fn new_minimal(trace_type: GraphType, practice: Uuid) -> Self {
+    pub fn new_minimal(trace_type: TraceType, practice: Uuid) -> Self {
         Self {
             name: None,
             type_: trace_type,
@@ -122,11 +122,11 @@ impl TryFrom<DBReportTrace> for PracticeTrace {
 
     fn try_from(value: DBReportTrace) -> Result<Self, Self::Error> {
         let graph_type = match value.trace_type.ok_or(err("Missing trace type"))? {
-            TraceType::Bar => GraphType::Bar,
-            TraceType::Line => GraphType::Line(LineConf {
+            DBTraceType::Bar => TraceType::Bar,
+            DBTraceType::Line => TraceType::Line(LineConf {
                 style: value.line_style.ok_or(err("Missing line style"))?.into(),
             }),
-            TraceType::Dot => GraphType::Dot,
+            DBTraceType::Dot => TraceType::Dot,
         };
 
         Ok(PracticeTrace {
@@ -302,30 +302,30 @@ impl Display for YAxis {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub enum GraphType {
+pub enum TraceType {
     Bar,
     Line(LineConf),
     Dot,
 }
 
-impl From<&GraphType> for TraceType {
-    fn from(value: &GraphType) -> Self {
+impl From<&TraceType> for DBTraceType {
+    fn from(value: &TraceType) -> Self {
         match value {
-            GraphType::Bar => TraceType::Bar,
-            GraphType::Line(_) => TraceType::Line,
-            GraphType::Dot => TraceType::Dot,
+            TraceType::Bar => DBTraceType::Bar,
+            TraceType::Line(_) => DBTraceType::Line,
+            TraceType::Dot => DBTraceType::Dot,
         }
     }
 }
 
-impl TryFrom<&GraphType> for DBLineStyle {
+impl TryFrom<&TraceType> for DBLineStyle {
     type Error = ();
 
-    fn try_from(value: &GraphType) -> Result<Self, Self::Error> {
+    fn try_from(value: &TraceType) -> Result<Self, Self::Error> {
         match value {
-            GraphType::Bar => Err(()),
-            GraphType::Line(conf) => Ok(conf.into()),
-            GraphType::Dot => Err(()),
+            TraceType::Bar => Err(()),
+            TraceType::Line(conf) => Ok(conf.into()),
+            TraceType::Dot => Err(()),
         }
     }
 }
