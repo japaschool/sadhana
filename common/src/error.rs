@@ -166,7 +166,7 @@ impl From<ValidationErrors> for AppError {
             })
             .collect();
 
-        AppError::UnprocessableEntity(error_messages.into())
+        AppError::UnprocessableEntity(error_messages)
     }
 }
 

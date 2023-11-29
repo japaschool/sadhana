@@ -37,7 +37,7 @@ impl Deref for UseUserContextHandle {
     type Target = UserInfo;
 
     fn deref(&self) -> &Self::Target {
-        &(*self.inner)
+        &self.inner
     }
 }
 

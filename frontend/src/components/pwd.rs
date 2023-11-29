@@ -13,8 +13,8 @@ pub struct Props {
 
 #[function_component(Pwd)]
 pub fn pwd(props: &Props) -> Html {
-    let new_pwd = use_state(|| String::default());
-    let confirm_pwd = use_state(|| String::default());
+    let new_pwd = use_state(String::default);
+    let confirm_pwd = use_state(String::default);
 
     let confirm_pwd_html = use_mut_ref(|| None);
 

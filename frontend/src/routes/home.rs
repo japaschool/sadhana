@@ -23,7 +23,7 @@ use crate::{
 use super::AppRoute;
 
 lazy_static! {
-    static ref DURATION_R: Regex = Regex::new(r#"(?:(\d+)[^\d]+)?(\d+)[^\d]+"#).unwrap();
+    static ref DURATION_R: Regex = Regex::new(r"(?:(\d+)[^\d]+)?(\d+)[^\d]+").unwrap();
     static ref REJECT_TIME_R: Regex = Regex::new(r"[^\d]").unwrap();
     static ref VALID_DURATION_R: Regex = {
         let h = Locale::current().hours_label();
@@ -52,12 +52,12 @@ pub fn home() -> Html {
 
     let diary_entry = {
         let selected_date = selected_date.clone();
-        use_async(async move { get_diary_day(&*selected_date).await.map(|je| je.diary_day) })
+        use_async(async move { get_diary_day(&selected_date).await.map(|je| je.diary_day) })
     };
 
     let incomplete_days = {
         let selected = selected_date.clone();
-        use_async(async move { get_incomplete_days(&*selected).await.map(|res| res.days) })
+        use_async(async move { get_incomplete_days(&selected).await.map(|res| res.days) })
     };
 
     let save_diary_day_entry = {
@@ -66,7 +66,7 @@ pub fn home() -> Html {
         let incomplete_days = incomplete_days.clone();
         use_async(async move {
             if let Some(e) = entry.as_ref() {
-                save_diary_entry(&*cob, e).await.map(|_| {
+                save_diary_entry(&cob, e).await.map(|_| {
                     entry.set(None);
                     if incomplete_days
                         .data
@@ -342,7 +342,7 @@ pub fn home() -> Html {
         })
     };
 
-    const TIME_PATTERN: &'static str = "--:--";
+    const TIME_PATTERN: &str = "--:--";
 
     let onfocus_time = {
         Callback::from(move |e: FocusEvent| {
@@ -398,9 +398,7 @@ pub fn home() -> Html {
                 && incomplete_days
                     .data
                     .iter()
-                    .filter(|inner| inner.contains(date.as_ref()))
-                    .next()
-                    .is_some()
+                    .any(|inner| inner.contains(date.as_ref()))
         })
     };
 

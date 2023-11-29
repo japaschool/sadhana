@@ -23,7 +23,7 @@ pub struct Props {
 #[function_component(EditUserPractice)]
 pub fn edit_user_practice(props: &Props) -> Html {
     let nav = use_navigator().unwrap();
-    let practice = use_state(|| UserPractice::default());
+    let practice = use_state(UserPractice::default);
 
     let current_practice = {
         let p = props.practice.clone();
@@ -34,7 +34,7 @@ pub fn edit_user_practice(props: &Props) -> Html {
         let practice = practice.clone();
         let nav = nav.clone();
         use_async(async move {
-            services::update_user_practice(&*practice)
+            services::update_user_practice(&practice)
                 .await
                 .map(|_| nav.back())
         })

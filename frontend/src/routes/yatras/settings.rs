@@ -36,7 +36,7 @@ pub fn yatra_settings(props: &Props) -> Html {
     let yatra_user_practices = {
         let yatra_id = props.yatra_id.clone();
         use_async(async move {
-            get_yatra_user_practices(&yatra_id.as_str())
+            get_yatra_user_practices(yatra_id.as_str())
                 .await
                 .map(|res| res.practices)
         })
@@ -81,7 +81,7 @@ pub fn yatra_settings(props: &Props) -> Html {
         let yatra_id = props.yatra_id.clone();
         let nav = nav.clone();
         use_async(async move {
-            update_yatra_user_practices(yatra_id.as_str(), &*mapped_practices.current())
+            update_yatra_user_practices(yatra_id.as_str(), &mapped_practices.current())
                 .await
                 .map(|_| nav.push(&AppRoute::Yatras))
         })
@@ -242,14 +242,13 @@ pub fn yatra_settings(props: &Props) -> Html {
                                                 || yp
                                                     .user_practice
                                                     .iter()
-                                                    .find(|p| **p == up.practice)
-                                                    .is_some())
+                                                    .any(|p| *p == up.practice))
                                     })
                                     .map(|up| {
                                         html! {
                                             <option
                                                 class={ "text-black" }
-                                                selected={ yp.user_practice.iter().find(|p| **p == up.practice).is_some() }
+                                                selected={ yp.user_practice.iter().any(|p| **p == up.practice) }
                                                 value={ up.practice.clone() } >
                                                 { up.practice.clone() }
                                             </option>
@@ -273,8 +272,7 @@ pub fn yatra_settings(props: &Props) -> Html {
             AppError::UnprocessableEntity(err)
                 if err
                     .iter()
-                    .find(|s| s.ends_with("Can't delete last yatra admin"))
-                    .is_some() =>
+                    .any(|s| s.ends_with("Can't delete last yatra admin")) =>
             {
                 Some(Locale::current().last_yatra_admin_cannot_leave())
             }
@@ -302,7 +300,14 @@ pub fn yatra_settings(props: &Props) -> Html {
     html! {
         <BlankPage
             header_label={ yatra.data.iter().map(|y| y.name.clone()).next().unwrap_or_default() }
-            loading={ leave.loading || yatra.loading || is_admin.loading || yatra_user_practices.loading || user_practices.loading || save.loading }
+            loading={
+                leave.loading
+                || yatra.loading
+                || is_admin.loading
+                || yatra_user_practices.loading
+                || user_practices.loading
+                || save.loading
+            }
             left_button={HeaderButtonProps::back_to(AppRoute::Yatras)}
             >
             <ListErrors error={ yatra_user_practices.error.clone() } />

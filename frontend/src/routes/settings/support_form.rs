@@ -1,7 +1,6 @@
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::use_async;
-use yew_router::prelude::use_navigator;
 
 use crate::{
     components::{
@@ -15,14 +14,13 @@ use crate::{
 
 #[function_component(SupportForm)]
 pub fn support_form() -> Html {
-    let nav = use_navigator().unwrap();
-    let subject = use_state(|| String::default());
-    let message = use_state(|| String::default());
+    let subject = use_state(String::default);
+    let message = use_state(String::default);
 
     let submit = {
         let subject = subject.clone();
         let message = message.clone();
-        use_async(async move { send_support_message(&*subject, &*message).await })
+        use_async(async move { send_support_message(&subject, &message).await })
     };
 
     let onsubmit = {

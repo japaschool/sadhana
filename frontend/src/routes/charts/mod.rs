@@ -102,7 +102,7 @@ impl GridReport {
     }
 }
 
-pub const SELECTED_REPORT_ID_KEY: &'static str = "SelectedReportId";
+pub const SELECTED_REPORT_ID_KEY: &str = "SelectedReportId";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SelectedReportId {

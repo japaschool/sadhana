@@ -29,7 +29,7 @@ pub struct Props {
 #[function_component(AdminSettings)]
 pub fn admin_settings(props: &Props) -> Html {
     let reload = use_state(|| true);
-    let rename_yatra_name = use_state(|| String::default());
+    let rename_yatra_name = use_state(String::default);
     let ordered_practices = use_list(vec![]);
     let nav = use_navigator().unwrap();
     let yatra = {
@@ -115,7 +115,7 @@ pub fn admin_settings(props: &Props) -> Html {
             spawn_local(async move {
                 delete_yatra_practice(yatra_id.as_str(), &practice)
                     .await
-                    .and_then(|_| Ok(all_practices.run()))
+                    .map(|_| all_practices.run())
                     .unwrap()
             });
         })
@@ -131,7 +131,7 @@ pub fn admin_settings(props: &Props) -> Html {
             spawn_local(async move {
                 update_yatra_practice(yatra_id.as_str(), &from, &to)
                     .await
-                    .and_then(|_| Ok(all_practices.run()))
+                    .map(|_| all_practices.run())
                     .unwrap()
             });
         })

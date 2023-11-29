@@ -52,10 +52,7 @@ pub fn join_yatra(props: &Props) -> Html {
     let error_formatter = {
         Callback::from(move |err| match err {
             AppError::UnprocessableEntity(err)
-                if err
-                    .iter()
-                    .find(|s| s.ends_with("already exists."))
-                    .is_some() =>
+                if err.iter().any(|s| s.ends_with("already exists.")) =>
             {
                 Some(Locale::current().already_joined_yatra())
             }

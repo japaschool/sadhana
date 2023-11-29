@@ -37,12 +37,11 @@ pub fn create_report() -> Html {
             };
             create_new_report(report)
                 .await
-                .and_then(|res| {
+                .map(|res| {
                     LocalStorage::set(SELECTED_REPORT_ID_KEY, SelectedReportId::new(res.report_id))
-                        .unwrap();
-                    Ok(())
+                        .unwrap()
                 })
-                .and_then(|_| Ok(nav.back()))
+                .map(|_| nav.back())
         })
     };
 
