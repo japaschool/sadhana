@@ -98,7 +98,7 @@ fn err<S: Into<String>>(msg: S) -> AppError {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PracticeTrace {
-    pub name: Option<String>,
+    pub label: Option<String>,
     pub type_: TraceType,
     pub practice: Uuid,
     pub y_axis: Option<YAxis>,
@@ -108,7 +108,7 @@ pub struct PracticeTrace {
 impl PracticeTrace {
     pub fn new_minimal(trace_type: TraceType, practice: Uuid) -> Self {
         Self {
-            name: None,
+            label: None,
             type_: trace_type,
             practice,
             y_axis: None,
@@ -130,7 +130,7 @@ impl TryFrom<DBReportTrace> for PracticeTrace {
         };
 
         Ok(PracticeTrace {
-            name: value.label,
+            label: value.label,
             type_: graph_type,
             practice: value.practice_id,
             y_axis: value.y_axis.map(|a| a.parse()).transpose()?,

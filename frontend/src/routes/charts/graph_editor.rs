@@ -132,7 +132,7 @@ pub fn graph_editor(props: &Props) -> Html {
             let input: HtmlInputElement = e.target_unchecked_into();
             let idx: usize = input.id().parse().unwrap();
             let mut new_traces = report.traces.clone();
-            new_traces[idx].label = Some(input.value().trim().to_string()).filter(|s| !s.is_empty());
+            new_traces[idx].label = Some(input.value().to_string()).filter(|s| !s.is_empty());
             report.set(GraphReport::new(report.bar_layout.clone(), new_traces));
         })
     };
@@ -307,12 +307,12 @@ pub fn graph_editor(props: &Props) -> Html {
                         </label>
                     </div>
                     <div class="relative">
-                        <select class={INPUT_CSS} id={idx.to_string()} onchange={axis_onchange.clone()} disabled={practice.is_none()}>
+                        <select class={INPUT_CSS} id={idx.to_string()} onchange={axis_onchange.clone()}>
                             <option 
                                 class={"text-black"} 
                                 value="" 
                                 selected={y_axis.is_none()} 
-                                disabled=true 
+                                disabled=true
                                 style="display:none">
                                 {Locale::current().report_choose_axis()}
                             </option>
@@ -356,6 +356,7 @@ pub fn graph_editor(props: &Props) -> Html {
                             type="text"
                             id={idx.to_string()}
                             placeholder="Label"
+                            autocomplete="off"
                             value={label.to_owned().unwrap_or_default()}
                             oninput={trace_name_oninput.clone()}
                             class={INPUT_CSS}
@@ -378,6 +379,7 @@ pub fn graph_editor(props: &Props) -> Html {
                     </div>
                     <div class="relative">
                         <button 
+                            type="button"
                             id={idx.to_string()} 
                             class={BTN_CSS} 
                             onclick={delete_trace_onclick.clone()}>

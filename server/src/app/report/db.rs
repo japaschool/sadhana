@@ -129,7 +129,7 @@ impl ReportTrace {
                     report_id: report_id.to_owned(),
                     practice_id: t.practice,
                     trace_type: Some((&t.type_).into()),
-                    label: t.name.clone(),
+                    label: t.label.clone(),
                     y_axis: t.y_axis.as_ref().map(|a| a.to_string()),
                     show_average: Some(t.show_average),
                     line_style: (&t.type_).try_into().ok(),
