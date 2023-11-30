@@ -73,7 +73,8 @@ pub fn create_report() -> Html {
 
     let onsubmit = {
         let create = create.clone();
-        Callback::from(move |_| {
+        Callback::from(move |e: SubmitEvent| {
+            e.prevent_default();
             create.run();
         })
     };
