@@ -167,7 +167,7 @@ lazy_static! {
         NamedColor::DarkOrange,
         NamedColor::FireBrick,
         NamedColor::DarkKhaki,
-        NamedColor::Sienna,
+        NamedColor::SlateBlue,
         NamedColor::MediumPurple,
         NamedColor::LightSteelBlue,
         NamedColor::DarkMagenta,
