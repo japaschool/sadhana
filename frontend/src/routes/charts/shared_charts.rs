@@ -20,6 +20,7 @@ pub struct SharedChartsProps {
 #[function_component(SharedCharts)]
 pub fn shared_charts(props: &SharedChartsProps) -> Html {
     let active_report = use_state(|| None::<Report>);
+    let duration = use_state(|| ReportDuration::Last30Days);
 
     let user_info = {
         let share_id = props.share_id.clone();
@@ -43,20 +44,6 @@ pub fn shared_charts(props: &SharedChartsProps) -> Html {
         })
     };
 
-    {
-        // Load state on mount
-        let reports = reports.clone();
-        let practices = practices.clone();
-        let user_info = user_info.clone();
-        use_mount(move || {
-            reports.run();
-            practices.run();
-            user_info.run();
-        });
-    }
-
-    let duration = use_state(|| ReportDuration::Last30Days);
-
     let report_data = {
         let duration = duration.clone();
         let share_id = props.share_id.clone();
@@ -66,6 +53,36 @@ pub fn shared_charts(props: &SharedChartsProps) -> Html {
                 .map(|res| res.values)
         })
     };
+
+    {
+        // Load state on mount
+        let reports = reports.clone();
+        let practices = practices.clone();
+        let user_info = user_info.clone();
+        let report_data = report_data.clone();
+        use_mount(move || {
+            reports.run();
+            practices.run();
+            user_info.run();
+            report_data.run();
+        });
+    }
+
+    {
+        let active = active_report.clone();
+        use_effect_with_deps(
+            move |reports| {
+                active.set(
+                    reports
+                        .data
+                        .as_ref()
+                        .and_then(|inner| inner.iter().next().cloned()),
+                );
+                || ()
+            },
+            reports.clone(),
+        );
+    }
 
     let dates_onchange = {
         let report_data = report_data.clone();
