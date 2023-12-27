@@ -21,7 +21,6 @@ log = { version = "0.4", features = [
 wasm-logger = "0.2"
 lazy_static = "1.4"
 parking_lot = "0.12"
-dotenv_codegen = "0.15"
 gloo = { version = "0.10", features = ["file", "futures"] }
 gloo-dialogs = "0.2"
 gloo-events = "0.2"

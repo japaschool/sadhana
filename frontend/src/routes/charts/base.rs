@@ -33,7 +33,6 @@ pub struct ChartBaseProps {
 const DATE_FORMAT: &str = "%Y-%m-%d";
 const DATE_FORMAT_HR: &str = "%a, %d %b";
 const DURATION_STORAGE_KEY: &str = "charts.selected_duration";
-const TIME_CORRECTION_THRESHOLD_HOURS: u8 = 12;
 
 #[function_component(ChartsBase)]
 pub fn charts_base(props: &ChartBaseProps) -> Html {
@@ -103,10 +102,14 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
                         vec![]
                     };
 
-                    let adjust_time = selected_practice
+                    let adjust_time = if selected_practice
                         .filter(|p| p.data_type == PracticeDataType::Time)
                         .is_some()
-                        && overflow_time(&report_data);
+                    {
+                        overflow_time(&report_data)
+                    } else {
+                        0
+                    };
 
                     let (x_values, y_values): (Vec<_>, Vec<_>) = selected_practice
                         .iter()
@@ -260,7 +263,7 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
 fn average_value(
     data_type: &PracticeDataType,
     report_data: &Vec<&ReportDataEntry>,
-    overflow_time: bool,
+    overflow_time: i8,
 ) -> Option<chart::GraphAverage> {
     let today = Local::now().date_naive();
     // Remove today's data from the average calculation as it might not be full yet
@@ -303,11 +306,14 @@ fn average_value(
                     .flat_map(|e| {
                         e.value.iter().map(|v| match v {
                             PracticeEntryValue::Time { h, m } => {
-                                let mut h = *h;
-                                if overflow_time && h < 8 {
-                                    h += 24;
+                                // Start in day 2 to allow moving forward and backward by a day
+                                let mut h2 = *h + 48;
+                                if overflow_time > 0 && *h < 12 {
+                                    h2 += 24;
+                                } else if overflow_time < 0 && *h > 15 {
+                                    h2 -= 24;
                                 }
-                                (h as u64) * 60 + (*m as u64)
+                                (h2 as u64) * 60 + (*m as u64)
                             }
                             _ => 0,
                         })
@@ -318,13 +324,10 @@ fn average_value(
                         .filter_map(|x| x.value.as_ref().map(|_| 1))
                         .sum::<u64>();
                 let mut h = (avg_mins / 60) as u8;
-                let mut d = 1;
+                let d = h / 24;
                 let m = (avg_mins % 60) as u8;
 
-                if overflow_time && h > 23 {
-                    h -= 24;
-                    d = 2;
-                }
+                h %= 24;
 
                 PracticeEntryValue::Time { h, m }
                     .as_time_str()
@@ -337,33 +340,40 @@ fn average_value(
     }
 }
 
-/// Calculate whether time entries spill into the next day
-/// Assumes time entries are clustered either in the morning or evening
-/// If there are outliers that are within 12 hours from the rest of the
-/// entries if they are moved into the next/previous day but aren't otherwise, returns true  
-fn overflow_time(report_data: &[&ReportDataEntry]) -> bool {
-    let mut min_eve_h = 12;
-    let mut max_morning_h = 12;
+/// Calculate whether time entries spill into the previous/next day.
+/// Assumes time entries are clustered either in the morning or evening.
+/// Counts number of entries in the morning and evening. If most are in
+/// evening but there are some in the morning, returns +1 to shift those
+/// morning ones into the next day.
+/// Similarly, if most are morning but some evening, returns -1 to move
+/// the evening entries into the previous day.
+fn overflow_time(report_data: &[&ReportDataEntry]) -> i8 {
+    let mut morning_cnt = 0;
+    let mut evening_cnt = 0;
+
     for h in report_data.iter().filter_map(|v| {
         v.value.as_ref().and_then(|v| match v {
             PracticeEntryValue::Time { h, m: _ } => Some(*h),
             _ => None,
         })
     }) {
-        if h < 24 && h > 18 && (h < min_eve_h || min_eve_h == 12) {
-            min_eve_h = h;
+        if h < 24 && h > 15 {
+            evening_cnt += 1;
         }
-        if h < 8 && (h > max_morning_h || max_morning_h == 12) {
-            max_morning_h = h;
+
+        if h < 12 {
+            morning_cnt += 1;
         }
     }
 
-    min_eve_h != 12
-        && max_morning_h != 12
-        && max_morning_h + 24 - min_eve_h < TIME_CORRECTION_THRESHOLD_HOURS
+    if morning_cnt > evening_cnt {
+        -1
+    } else {
+        1
+    }
 }
 
-fn y_value(data_type: &PracticeDataType, entry: &ReportDataEntry, adjust_time: bool) -> String {
+fn y_value(data_type: &PracticeDataType, entry: &ReportDataEntry, adjust_time: i8) -> String {
     match data_type {
         PracticeDataType::Int => entry
             .value
@@ -375,14 +385,13 @@ fn y_value(data_type: &PracticeDataType, entry: &ReportDataEntry, adjust_time: b
             .value
             .as_ref()
             .and_then(|v| {
-                let mut d = 1;
-                match v {
-                    PracticeEntryValue::Time { h, m: _ }
-                        if adjust_time && *h < TIME_CORRECTION_THRESHOLD_HOURS =>
-                    {
-                        d = 2
+                let mut d = 2;
+                if let PracticeEntryValue::Time { h, m: _ } = v {
+                    if adjust_time < 0 && *h > 15 {
+                        d -= 1;
+                    } else if adjust_time > 0 && *h < 12 {
+                        d += 1;
                     }
-                    _ => (),
                 }
                 v.as_time_str().map(|s| format!("2020-01-0{d} {s}:00"))
             })

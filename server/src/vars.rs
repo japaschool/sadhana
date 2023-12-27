@@ -1,4 +1,4 @@
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use std::env::var;
 
 pub fn smtp_username() -> String {

@@ -12,4 +12,5 @@ USER vscode
 
 RUN rustup target add wasm32-unknown-unknown
 
-RUN cargo install trunk wasm-bindgen-cli
+RUN cargo install trunk wasm-bindgen-cli 
+RUN cargo install diesel_cli --no-default-features --features postgres
