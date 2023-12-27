@@ -4,15 +4,12 @@ use actix_web::{
     App, HttpServer,
 };
 use diesel_migrations::*;
-use dotenv::dotenv;
+use dotenvy::dotenv;
 #[cfg(not(target_env = "msvc"))]
 use jemallocator::Jemalloc;
 
 #[macro_use]
 extern crate log;
-
-#[macro_use]
-extern crate dotenv_codegen;
 
 mod app;
 mod constants;

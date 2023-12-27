@@ -883,33 +883,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "dotenv"
-version = "0.15.0"
+name = "dotenvy"
+version = "0.15.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
-
-[[package]]
-name = "dotenv_codegen"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56966279c10e4f8ee8c22123a15ed74e7c8150b658b26c619c53f4a56eb4a8aa"
-dependencies = [
- "dotenv_codegen_implementation",
- "proc-macro-hack",
-]
-
-[[package]]
-name = "dotenv_codegen_implementation"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53e737a3522cd45f6adc19b644ce43ef53e1e9045f2d2de425c1f468abd4cf33"
-dependencies = [
- "dotenv",
- "proc-macro-hack",
- "proc-macro2 1.0.69",
- "quote 1.0.33",
- "syn 1.0.109",
-]
+checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
 name = "dyn-clone"
@@ -1052,7 +1029,6 @@ dependencies = [
  "console_error_panic_hook",
  "const_format",
  "csv",
- "dotenv_codegen",
  "futures",
  "gloo 0.10.0",
  "gloo-dialogs 0.2.0",
@@ -2409,12 +2385,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "proc-macro-hack"
-version = "0.5.20+deprecated"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc375e1527247fe1a97d8b7156678dfe7c1af2fc075c9a4db3690ecd2a148068"
-
-[[package]]
 name = "proc-macro2"
 version = "0.4.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2918,8 +2888,7 @@ dependencies = [
  "diesel",
  "diesel-derive-enum",
  "diesel_migrations",
- "dotenv",
- "dotenv_codegen",
+ "dotenvy",
  "env_logger",
  "futures",
  "jemallocator",
