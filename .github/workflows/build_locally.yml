@@ -1,4 +1,4 @@
-name: Build sadhana locally on a server
+name: Build locally on a server
 on: 
    workflow_dispatch:
 jobs:
