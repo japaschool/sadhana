@@ -18,9 +18,9 @@ jobs:
             StrictHostKeyChecking no
           END
       env:
-          SSH_USER: ${{ secrets.SSH_USERNAME }}
+          SSH_USER: sadhana
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
           
     - name: Executing update script
-      run: ssh sadhana 'bash -s < /home/sadhana/sadhana_update.sh'
+      run: ssh sadhana 'bash -s < /home/sadhana/scripts/sadhana_update.sh'
