@@ -1,9 +1,7 @@
 name: Test it
 
-on:
-  push:
-    branches:
-      - main
+on: 
+   workflow_dispatch:
 
 jobs:
   build:
@@ -28,4 +26,4 @@ jobs:
               SSH_HOST: ${{ secrets.SSH_HOST }}
               
       - name: Executing update script
-        run: ssh sadhana -c 'DOCKER_HOST=unix:///run/user/1108/docker.sock /usr/bin/docker-compose -f /home/sadhana/docker/docker-compose.yml up -d'
+        run: ssh sadhana  'bash -s < /home/sadhana/sadhana_reload.sh'
