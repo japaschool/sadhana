@@ -1,0 +1,31 @@
+name: Docker Build and Upload
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure SSH
+        run: |
+              mkdir -p ~/.ssh/
+              echo "$SSH_KEY" > ~/.ssh/sadhana.key
+              chmod 600 ~/.ssh/sadhana.key
+              cat >>~/.ssh/config <<END
+              Host sadhana
+                HostName $SSH_HOST
+                User $SSH_USER
+                IdentityFile ~/.ssh/sadhana.key
+                StrictHostKeyChecking no
+              END
+        env:
+              SSH_USER: ${{ secrets.SSH_USERNAME }}
+              SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+              SSH_HOST: ${{ secrets.SSH_HOST }}
+              
+      - name: Executing update script
+        run: ssh sadhana 'bash -s < cd ~/docker ; docker-compose up -d'
