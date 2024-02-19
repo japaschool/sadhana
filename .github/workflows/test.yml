@@ -28,4 +28,4 @@ jobs:
               SSH_HOST: ${{ secrets.SSH_HOST }}
               
       - name: Executing update script
-        run: ssh sadhana 'bash -s < docker-compose -f /home/sadhana/docker/docker-compose.yml up -d'
+        run: ssh sadhana 'bash -s < /usr/bin/docker-compose -f /home/sadhana/docker/docker-compose.yml up -d'
