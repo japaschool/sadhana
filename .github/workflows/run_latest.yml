@@ -1,4 +1,4 @@
-name: Test it
+name: Run latest version from Docker Hub
 
 on: 
    workflow_dispatch:
