@@ -1,9 +1,7 @@
 name: Docker Build and Upload
 
-on:
-  push:
-    branches:
-      - main
+on: 
+   workflow_dispatch:
 
 jobs:
   build:
