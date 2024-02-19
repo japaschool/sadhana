@@ -38,4 +38,4 @@ jobs:
               SSH_HOST: ${{ secrets.SSH_HOST }}
               
       - name: Executing update script
-        run: ssh sadhana 'bash -s < cd /home/sadhana/docker ; docker-compose up -d'
+        run: ssh sadhana 'bash -s < /home/sadhana/sadhana_reload.sh'
