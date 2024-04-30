@@ -134,7 +134,7 @@ pub fn register_with_id(props: &Props) -> Html {
                                 id="name"
                                 type="text"
                                 placeholder="Name"
-                                pattern="^[^\\s].*"
+                                pattern="[\\S\\s]+[\\S]+"
                                 class={ INPUT_CSS }
                                 value={ register_info.name.clone() }
                                 oninput={ oninput_name }

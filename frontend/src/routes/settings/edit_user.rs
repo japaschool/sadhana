@@ -50,7 +50,7 @@ pub fn edit_user() -> Html {
         Callback::from(move |e: InputEvent| {
             let input: HtmlInputElement = e.target_unchecked_into();
             let mut new_info = (*user_info).clone();
-            new_info.name = input.value();
+            new_info.name = input.value().trim().to_string();
             user_info.set(new_info);
         })
     };
@@ -117,6 +117,7 @@ pub fn edit_user() -> Html {
                             oninput={ name_oninput.clone() }
                             readonly={ !*editing }
                             minlength="3"
+                            pattern="[\\S\\s]+[\\S]+"
                             />
                         <label for="name"
                             class={ INPUT_LABEL_CSS }>
