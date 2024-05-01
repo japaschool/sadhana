@@ -44,23 +44,20 @@ pub fn user_context_provider(props: &Props) -> Html {
         /* If local storage has a token either log the user in or show error if couldn't fetch user data. */
         let user_ctx = user_ctx.clone();
         let navigator = navigator.clone();
-        use_effect_with_deps(
-            move |current_user| {
-                if let Some(user_info) = &current_user.data {
-                    user_ctx.set(user_info.user.clone());
-                }
+        use_effect_with(current_user, move |current_user| {
+            if let Some(user_info) = &current_user.data {
+                user_ctx.set(user_info.user.clone());
+            }
 
-                if let Some(error) = &current_user.error {
-                    match error {
-                        AppError::Unauthorized(_) | AppError::Forbidden => set_token(None),
-                        _ => (),
-                    }
-                    navigator.push(&AppRoute::Login);
+            if let Some(error) = &current_user.error {
+                match error {
+                    AppError::Unauthorized(_) | AppError::Forbidden => set_token(None),
+                    _ => (),
                 }
-                || ()
-            },
-            current_user,
-        )
+                navigator.push(&AppRoute::Login);
+            }
+            || ()
+        })
     }
 
     html! {

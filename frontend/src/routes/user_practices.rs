@@ -32,7 +32,10 @@ pub fn user_practices() -> Html {
 
     let reorder_practices = {
         let op = ordered_practices.clone();
-        use_async(async move { reorder_user_practices(op.current().as_ref()).await })
+        use_async(async move {
+            let op = op.current().to_owned();
+            reorder_user_practices(&op).await
+        })
     };
 
     {
@@ -46,22 +49,19 @@ pub fn user_practices() -> Html {
 
     {
         let local = local_practices.clone();
-        use_effect_with_deps(
-            move |practices| {
-                log::debug!("All Practices loaded. Initialising active practices");
+        use_effect_with(server_practices.clone(), move |practices| {
+            log::debug!("All Practices loaded. Initialising active practices");
 
-                local.set(
-                    practices
-                        .data
-                        .iter()
-                        .flat_map(|inner| inner.iter())
-                        .map(|p| (p.id.clone(), p.to_owned()))
-                        .collect(),
-                );
-                || ()
-            },
-            server_practices.clone(),
-        );
+            local.set(
+                practices
+                    .data
+                    .iter()
+                    .flat_map(|inner| inner.iter())
+                    .map(|p| (p.id.clone(), p.to_owned()))
+                    .collect(),
+            );
+            || ()
+        });
     }
 
     let is_hidden = {

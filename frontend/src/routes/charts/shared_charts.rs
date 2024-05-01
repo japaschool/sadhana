@@ -70,18 +70,15 @@ pub fn shared_charts(props: &SharedChartsProps) -> Html {
 
     {
         let active = active_report.clone();
-        use_effect_with_deps(
-            move |reports| {
-                active.set(
-                    reports
-                        .data
-                        .as_ref()
-                        .and_then(|inner| inner.iter().next().cloned()),
-                );
-                || ()
-            },
-            reports.clone(),
-        );
+        use_effect_with(reports.clone(), move |reports| {
+            active.set(
+                reports
+                    .data
+                    .as_ref()
+                    .and_then(|inner| inner.iter().next().cloned()),
+            );
+            || ()
+        });
     }
 
     let dates_onchange = {

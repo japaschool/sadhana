@@ -28,15 +28,12 @@ pub fn login() -> Html {
     };
 
     /* Hook into changes of user_login */
-    use_effect_with_deps(
-        move |user_login| {
-            if let Some(user_info) = &user_login.data {
-                user_ctx.login(user_info.user.clone());
-            }
-            || ()
-        },
-        user_login.clone(),
-    );
+    use_effect_with(user_login.clone(), move |user_login| {
+        if let Some(user_info) = &user_login.data {
+            user_ctx.login(user_info.user.clone());
+        }
+        || ()
+    });
 
     let onsubmit = {
         let user_login = user_login.clone();

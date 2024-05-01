@@ -49,13 +49,10 @@ pub fn edit_user_practice(props: &Props) -> Html {
 
     {
         let practice = practice.clone();
-        use_effect_with_deps(
-            move |current| {
-                current.data.iter().for_each(|p| practice.set(p.to_owned()));
-                || ()
-            },
-            current_practice.clone(),
-        );
+        use_effect_with(current_practice.clone(), move |current| {
+            current.data.iter().for_each(|p| practice.set(p.to_owned()));
+            || ()
+        });
     }
 
     let practice_oninput = {

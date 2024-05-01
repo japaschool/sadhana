@@ -107,7 +107,7 @@ pub fn calendar(props: &Props) -> Html {
                 <p id={id.to_string()} class={ weekday_label_css }>{ &Locale::current().day_of_week(d).chars().next().unwrap() }</p>
                 <div id={id.to_string()} class={ format!("{DATE_CSS} {date_css}") } onclick={ onclick_date.clone() }>
                     {highlight}
-                    <p id={id.to_string()} class={ date_label_css }>{ d.format("%-d") }</p>
+                    <p id={id.to_string()} class={ date_label_css }>{ d.format("%-d").to_string() }</p>
                 </div>
             </div>
         }

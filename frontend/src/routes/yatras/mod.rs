@@ -64,55 +64,46 @@ pub fn yatras() -> Html {
 
     {
         let nav = nav.clone();
-        use_effect_with_deps(
-            move |res| {
-                res.data
-                    .iter()
-                    .for_each(|y| nav.push(&AppRoute::YatraSettings { id: y.id.clone() }));
-                || ()
-            },
-            new_yatra.clone(),
-        );
+        use_effect_with(new_yatra.clone(), move |res| {
+            res.data
+                .iter()
+                .for_each(|y| nav.push(&AppRoute::YatraSettings { id: y.id.clone() }));
+            || ()
+        });
     }
 
     {
         let selected = selected_yatra.clone();
-        use_effect_with_deps(
-            move |all| {
-                let yatra = LocalStorage::get::<String>(SELECTED_YATRA_ID_KEY)
-                    .map(|s| s.replace('\"', ""))
-                    .ok()
-                    .and_then(|id| {
-                        all.data
-                            .iter()
-                            .flat_map(|all| all.iter())
-                            .find(|y| y.id == id)
-                    })
-                    .or(all.data.iter().flat_map(|all| all.iter()).next())
-                    .cloned();
-
-                log::debug!(
-                    "Setting selected yatra to {:?}; all yatras: {:?}",
-                    yatra,
+        use_effect_with(yatras.clone(), move |all| {
+            let yatra = LocalStorage::get::<String>(SELECTED_YATRA_ID_KEY)
+                .map(|s| s.replace('\"', ""))
+                .ok()
+                .and_then(|id| {
                     all.data
-                );
+                        .iter()
+                        .flat_map(|all| all.iter())
+                        .find(|y| y.id == id)
+                })
+                .or(all.data.iter().flat_map(|all| all.iter()).next())
+                .cloned();
 
-                selected.set(yatra);
-                || ()
-            },
-            yatras.clone(),
-        );
+            log::debug!(
+                "Setting selected yatra to {:?}; all yatras: {:?}",
+                yatra,
+                all.data
+            );
+
+            selected.set(yatra);
+            || ()
+        });
     }
 
     {
         let data = data.clone();
-        use_effect_with_deps(
-            move |_| {
-                data.run();
-                || ()
-            },
-            (selected_yatra.clone(), selected_date.clone()),
-        );
+        use_effect_with((selected_yatra.clone(), selected_date.clone()), move |_| {
+            data.run();
+            || ()
+        });
     }
 
     let selected_date_onchange = {

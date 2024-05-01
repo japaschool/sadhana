@@ -8,11 +8,11 @@ thiserror = "1"
 actix-web = { version = "4", optional = true }
 diesel = { version = "2.1", features = ["r2d2", "uuid"], optional = true }
 bcrypt = { version = "0.15", optional = true }
-jsonwebtoken = { version = "8", optional = true }
+jsonwebtoken = { version = "9", optional = true }
 uuid = { version = "1", optional = true }
-validator = { version = "0.16", optional = true }
+validator = { version = "0.18", optional = true }
 log = "0.4"
-lettre = { version = "0.10", optional = true, default-features = false, features = [
+lettre = { version = "0.11", optional = true, default-features = false, features = [
     "smtp-transport",
     "tokio1-rustls-tls",
     "hostname",

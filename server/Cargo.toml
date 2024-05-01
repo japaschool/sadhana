@@ -9,7 +9,7 @@ edition = "2021"
 common = { path = "../common", features = ["backend"] }
 actix-web = "4"
 actix-http = "3"
-actix-cors = "0.6"
+actix-cors = "0.7"
 actix-service = "2"
 actix-rt = "2"
 actix-files = "0.6"
@@ -17,7 +17,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
 dotenvy = "0.15"
 log = "0.4"
-env_logger = "0.10"
+env_logger = "0.11"
 diesel = { version = "2.1", features = [
     "postgres",
     "r2d2",
@@ -27,16 +27,16 @@ diesel = { version = "2.1", features = [
 ] }
 diesel_migrations = "2.1"
 diesel-derive-enum = { version = "2.1", features = ["postgres"] }
-validator = { version = "0.16", features = ["derive"] }
+validator = { version = "0.18", features = ["derive"] }
 bcrypt = { version = "0.15" }
 uuid = { version = "1", features = ["serde", "v4"] }
-jsonwebtoken = { version = "8" }
+jsonwebtoken = { version = "9" }
 thiserror = "1.0"
 futures = { version = "0.3" }
 chrono = { version = "0.4", features = ["serde"] }
 lazy_static = "1.4"
 # derive_more = "0.99"
-lettre = { version = "0.10", default-features = false, features = [
+lettre = { version = "0.11", default-features = false, features = [
     "smtp-transport",
     "tokio1-rustls-tls",
     "hostname",

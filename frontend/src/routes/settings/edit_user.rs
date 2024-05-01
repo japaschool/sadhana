@@ -23,13 +23,10 @@ pub fn edit_user() -> Html {
 
     {
         let user_info = user_info.clone();
-        use_effect_with_deps(
-            move |ctx| {
-                user_info.set(UpdateUser::new(&ctx.name));
-                || ()
-            },
-            user_ctx.clone(),
-        );
+        use_effect_with(user_ctx.clone(), move |ctx| {
+            user_info.set(UpdateUser::new(&ctx.name));
+            || ()
+        });
     }
 
     let update_user = {

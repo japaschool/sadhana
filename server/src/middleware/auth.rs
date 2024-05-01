@@ -175,26 +175,6 @@ pub fn get_current_user(req: &HttpRequest) -> Result<User, AppError> {
         })
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use actix_web::http::Method;
-    #[test]
-    fn is_match_path_and_method_test() {
-        let route = SkipAuthRoute {
-            path: "/api/healthcheck",
-            method: Method::GET,
-        };
-        assert!(route.matches_path_and_method("/api/healthcheck", &Method::GET));
-
-        let route = SkipAuthRoute {
-            path: "/api/{this-is-slug}/healthcheck",
-            method: Method::POST,
-        };
-        assert!(route.matches_path_and_method("/api/1234/healthcheck", &Method::POST));
-    }
-}
-
 const SKIP_AUTH_API_ROUTES: [SkipAuthRoute; 9] = [
     SkipAuthRoute {
         path: "/api/users",
@@ -233,3 +213,23 @@ const SKIP_AUTH_API_ROUTES: [SkipAuthRoute; 9] = [
         method: Method::GET,
     },
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::http::Method;
+    #[test]
+    fn is_match_path_and_method_test() {
+        let route = SkipAuthRoute {
+            path: "/api/healthcheck",
+            method: Method::GET,
+        };
+        assert!(route.matches_path_and_method("/api/healthcheck", &Method::GET));
+
+        let route = SkipAuthRoute {
+            path: "/api/{this-is-slug}/healthcheck",
+            method: Method::POST,
+        };
+        assert!(route.matches_path_and_method("/api/1234/healthcheck", &Method::POST));
+    }
+}

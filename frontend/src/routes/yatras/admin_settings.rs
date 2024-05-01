@@ -64,7 +64,8 @@ pub fn admin_settings(props: &Props) -> Html {
         let yatra_id = props.yatra_id.clone();
         let op = ordered_practices.clone();
         use_async(async move {
-            reorder_yatra_practices(yatra_id.as_str(), op.current().to_owned()).await
+            let op = op.current().to_owned();
+            reorder_yatra_practices(yatra_id.as_str(), op).await
         })
     };
 
@@ -73,24 +74,18 @@ pub fn admin_settings(props: &Props) -> Html {
         // to this page after a new practice has been added. Without it (and its use_effect_with_deps)
         // the reload does not happen.
         let all_practices = all_practices.clone();
-        use_effect_with_deps(
-            move |_| {
-                all_practices.run();
-                || ()
-            },
-            reload.clone(),
-        );
+        use_effect_with(reload.clone(), move |_| {
+            all_practices.run();
+            || ()
+        });
     }
 
     {
         let yatra = yatra.clone();
-        use_effect_with_deps(
-            move |_| {
-                yatra.run();
-                || ()
-            },
-            rename_yatra.clone(),
-        );
+        use_effect_with(rename_yatra.clone(), move |_| {
+            yatra.run();
+            || ()
+        });
     }
 
     {

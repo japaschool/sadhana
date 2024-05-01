@@ -81,7 +81,8 @@ pub fn yatra_settings(props: &Props) -> Html {
         let yatra_id = props.yatra_id.clone();
         let nav = nav.clone();
         use_async(async move {
-            update_yatra_user_practices(yatra_id.as_str(), &mapped_practices.current())
+            let mapped_practices = mapped_practices.current().to_owned();
+            update_yatra_user_practices(yatra_id.as_str(), &mapped_practices)
                 .await
                 .map(|_| nav.push(&AppRoute::Yatras))
         })
@@ -114,38 +115,32 @@ pub fn yatra_settings(props: &Props) -> Html {
 
     {
         let nav = nav.clone();
-        use_effect_with_deps(
-            move |res| {
-                log::debug!("Created yatra {:?}", res.data);
-                res.data
-                    .iter()
-                    .for_each(|y| nav.push(&AppRoute::YatraSettings { id: y.id.clone() }));
-                || ()
-            },
-            new_yatra.clone(),
-        );
+        use_effect_with(new_yatra.clone(), move |res| {
+            log::debug!("Created yatra {:?}", res.data);
+            res.data
+                .iter()
+                .for_each(|y| nav.push(&AppRoute::YatraSettings { id: y.id.clone() }));
+            || ()
+        });
     }
 
     {
         let mapped_practices = mapped_practices.clone();
         let mapped_user_practices = mapped_user_practices.clone();
-        use_effect_with_deps(
-            move |yp| {
+        use_effect_with(yatra_user_practices.clone(), move |yp| {
+            yp.data
+                .iter()
+                .for_each(|inner| mapped_practices.set(inner.clone()));
+            mapped_user_practices.set(
                 yp.data
                     .iter()
-                    .for_each(|inner| mapped_practices.set(inner.clone()));
-                mapped_user_practices.set(
-                    yp.data
-                        .iter()
-                        .flat_map(|inner| inner.iter())
-                        .filter_map(|yp| yp.user_practice.clone())
-                        .collect::<HashSet<_>>(),
-                );
+                    .flat_map(|inner| inner.iter())
+                    .filter_map(|yp| yp.user_practice.clone())
+                    .collect::<HashSet<_>>(),
+            );
 
-                || ()
-            },
-            yatra_user_practices.clone(),
-        )
+            || ()
+        })
     }
 
     let leave_onclick = {

@@ -8,11 +8,12 @@ use yew_router::prelude::{use_navigator, Navigator};
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
     pub error: Option<AppError>,
+    #[prop_or_default]
     pub error_formatter: Option<Callback<AppError, Option<String>>>,
 }
 
 fn p<S: Display>(text: S) -> Html {
-    html! { <p class="text-gray dark:text-zinc-100 left-2">{ text }</p> }
+    html! { <p class="text-gray dark:text-zinc-100 left-2">{ text.to_string() }</p> }
 }
 
 fn default(error: &AppError, nav: Navigator) -> Html {
