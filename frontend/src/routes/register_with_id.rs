@@ -50,30 +50,24 @@ pub fn register_with_id(props: &Props) -> Html {
 
     {
         let register_info = register_info.clone();
-        use_effect_with_deps(
-            move |confirmation| {
-                let mut info = (*register_info).clone();
-                confirmation.data.iter().for_each(|c| {
-                    info.email = c.email.clone();
-                    info.confirmation_id = c.id.clone();
-                });
-                register_info.set(info);
-                || ()
-            },
-            signup_confirmation.clone(),
-        );
+        use_effect_with(signup_confirmation.clone(), move |confirmation| {
+            let mut info = (*register_info).clone();
+            confirmation.data.iter().for_each(|c| {
+                info.email = c.email.clone();
+                info.confirmation_id = c.id.clone();
+            });
+            register_info.set(info);
+            || ()
+        });
     }
 
     // Hook into changes of user_register. Once a user is successfully registered, log him in
-    use_effect_with_deps(
-        move |user_register| {
-            if let Some(user_info) = &user_register.data {
-                user_ctx.login(user_info.user.clone());
-            }
-            || ()
-        },
-        user_register.clone(),
-    );
+    use_effect_with(user_register.clone(), move |user_register| {
+        if let Some(user_info) = &user_register.data {
+            user_ctx.login(user_info.user.clone());
+        }
+        || ()
+    });
 
     let onsubmit = {
         let user_register = user_register.clone();

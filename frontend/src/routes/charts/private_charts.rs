@@ -121,24 +121,18 @@ pub fn charts() -> Html {
 
     {
         let reports = reports.clone();
-        use_effect_with_deps(
-            move |_| {
-                reports.run();
-                || ()
-            },
-            all_practices.clone(),
-        );
+        use_effect_with(all_practices.clone(), move |_| {
+            reports.run();
+            || ()
+        });
     }
 
     {
         let reset_active = reset_active.clone();
-        use_effect_with_deps(
-            move |_| {
-                reset_active();
-                || ()
-            },
-            reports.clone(),
-        );
+        use_effect_with(reports.clone(), move |_| {
+            reset_active();
+            || ()
+        });
     }
 
     let dates_onchange = {

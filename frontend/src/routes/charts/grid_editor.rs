@@ -21,13 +21,10 @@ pub fn grid_editor(props: &Props) -> Html {
 
     {
         let cb = props.report_onchange.clone();
-        use_effect_with_deps(
-            move |(name, rep)| {
-                cb.emit(((**name).clone(), (**rep).clone()));
-                || ()
-            },
-            (report_name.clone(), report.clone()),
-        );
+        use_effect_with((report_name.clone(), report.clone()), move |(name, rep)| {
+            cb.emit(((**name).clone(), (**rep).clone()));
+            || ()
+        });
     }
 
     let checkbox_onclick = {

@@ -122,28 +122,22 @@ pub fn home() -> Html {
         // Fetch data from server on date change
         let diary_entry = diary_entry.clone();
         let incomplete_days = incomplete_days.clone();
-        use_effect_with_deps(
-            move |_| {
-                diary_entry.run();
-                incomplete_days.run();
-                || ()
-            },
-            selected_date.clone(),
-        );
+        use_effect_with(selected_date.clone(), move |_| {
+            diary_entry.run();
+            incomplete_days.run();
+            || ()
+        });
     }
 
     {
         // Update local state from server data when the later changes
         let local = local_diary_entry.clone();
-        use_effect_with_deps(
-            move |je| {
-                je.data.iter().for_each(|data| {
-                    local.set(data.clone());
-                });
-                || ()
-            },
-            diary_entry.clone(),
-        );
+        use_effect_with(diary_entry.clone(), move |je| {
+            je.data.iter().for_each(|data| {
+                local.set(data.clone());
+            });
+            || ()
+        });
     }
 
     let get_new_val = |input: &HtmlInputElement, entry: &DiaryEntry| {

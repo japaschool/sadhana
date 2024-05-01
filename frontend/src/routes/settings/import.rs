@@ -51,10 +51,12 @@ pub fn import() -> Html {
         let successes = successes.clone();
         let nav = nav.clone();
         use_async(async move {
-            log::debug!("Saving: {:?}", successes.current());
+            let successes = successes.current().to_owned();
+
+            log::debug!("Saving: {:?}", successes);
+
             let res = join_all(
                 successes
-                    .current()
                     .iter()
                     .map(|(cob, dd)| save_diary_owned(cob, dd.clone())),
             )

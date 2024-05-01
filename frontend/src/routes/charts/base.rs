@@ -44,13 +44,10 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
 
     {
         let cb = props.dates_onchange.clone();
-        use_effect_with_deps(
-            move |d| {
-                cb.emit((**d).clone());
-                || ()
-            },
-            duration.clone(),
-        );
+        use_effect_with(duration.clone(), move |d| {
+            cb.emit((**d).clone());
+            || ()
+        });
     }
 
     let duration_onchange = {

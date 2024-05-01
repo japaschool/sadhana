@@ -71,15 +71,12 @@ pub fn copy_button(props: &Props) -> Html {
 
     {
         let timeout = tooltip_timeout.clone();
-        use_effect_with_deps(
-            move |show| {
-                if **show {
-                    timeout.reset();
-                }
-                || ()
-            },
-            show_tooltip.clone(),
-        );
+        use_effect_with(show_tooltip.clone(), move |show| {
+            if **show {
+                timeout.reset();
+            }
+            || ()
+        });
     }
 
     html! {
