@@ -50,6 +50,8 @@
         "eamodio.gitlens",
         "streetsidesoftware.code-spell-checker",
         "nhoizey.gremlins",
+        "bradlc.vscode-tailwindcss",
+        "kahole.magit"
     ],
     // Use 'forwardPorts' to make a list of ports inside the container available locally.
     // "forwardPorts": [],
