@@ -388,8 +388,6 @@ pub fn graph_editor(props: &Props) -> Html {
                     </div>
                 </div>
             </div>
-        // <div class="group-focus:max-h-screen focus-within:max-h-screen max-h-0 px-4 overflow-hidden">
-            // <p class="pl-4 pr-4 pt-0 pb-2">{"Answer: "}<a href="https://stackoverflow.com">{"Under development"}</a></p>
         </SummaryDetails>
     }).collect::<Html>();
 

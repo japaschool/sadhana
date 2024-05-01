@@ -123,5 +123,14 @@
     </script>
     <title>Sadhana Pro</title>
 </head>
-
+<body>
+    <link data-trunk rel="rust" data-wasm-opt="z"/>
+    <div class="bg-hero dark:bg-herod bg-no-repeat bg-cover bg-center h-screen w-full fixed -z-10" />
+    <div class="absolute flex w-full py-10 flex-col justify-center px-4">
+        <p>Loading...</p>
+    </div>
+    <div class="bg-gray-500 bg-opacity-50 fixed left-0 top-0 z-50 h-full w-full overflow-hidden flex">
+        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-10 w-10 m-auto"/>
+    </div>
+</body>
 </html>
