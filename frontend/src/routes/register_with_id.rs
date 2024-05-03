@@ -72,7 +72,7 @@ pub fn register_with_id(props: &Props) -> Html {
     let onsubmit = {
         let user_register = user_register.clone();
         Callback::from(move |e: SubmitEvent| {
-            e.prevent_default(); /* Prevent event propagation */
+            e.prevent_default();
             user_register.run();
         })
     };
@@ -81,10 +81,20 @@ pub fn register_with_id(props: &Props) -> Html {
         Callback::from(move |e: InputEvent| {
             let input: HtmlInputElement = e.target_unchecked_into();
             let mut info = (*register_info).clone();
-            info.name = input.value().trim().to_string();
+            info.name = input.value();
             register_info.set(info);
         })
     };
+
+    let onblur_name = {
+        let register_info = register_info.clone();
+        Callback::from(move |_: FocusEvent| {
+            let mut info = (*register_info).clone();
+            info.name = register_info.name.trim().to_string();
+            register_info.set(info);
+        })
+    };
+
     let oninput_password = {
         let register_info = register_info.clone();
         Callback::from(move |pwd: String| {
@@ -131,7 +141,8 @@ pub fn register_with_id(props: &Props) -> Html {
                                 pattern="[\\S\\s]+[\\S]+"
                                 class={ INPUT_CSS }
                                 value={ register_info.name.clone() }
-                                oninput={ oninput_name }
+                                oninput={oninput_name}
+                                onblur={onblur_name}
                                 required = true
                                 minlength="3"
                                 maxlength="256"

@@ -47,7 +47,16 @@ pub fn edit_user() -> Html {
         Callback::from(move |e: InputEvent| {
             let input: HtmlInputElement = e.target_unchecked_into();
             let mut new_info = (*user_info).clone();
-            new_info.name = input.value().trim().to_string();
+            new_info.name = input.value();
+            user_info.set(new_info);
+        })
+    };
+
+    let name_onblur = {
+        let user_info = user_info.clone();
+        Callback::from(move |_: FocusEvent| {
+            let mut new_info = (*user_info).clone();
+            new_info.name = user_info.name.trim().to_string();
             user_info.set(new_info);
         })
     };
@@ -111,7 +120,8 @@ pub fn edit_user() -> Html {
                             placeholder="Name"
                             class={ INPUT_CSS }
                             value={ user_info.name.clone() }
-                            oninput={ name_oninput.clone() }
+                            oninput={ name_oninput }
+                            onblur={ name_onblur }
                             readonly={ !*editing }
                             minlength="3"
                             pattern="[\\S\\s]+[\\S]+"
