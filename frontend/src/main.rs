@@ -5,6 +5,7 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 
 use crate::routes::*;
+use components::user_context_provider::UserContextProvider;
 
 mod components;
 mod css;
@@ -19,7 +20,9 @@ mod web_sys_ext;
 fn app() -> Html {
     html! {
         <BrowserRouter>
-        <Switch<BaseRoute> render={switch} />
+            <UserContextProvider>
+                <Switch<BaseRoute> render={switch} />
+            </UserContextProvider>
         </BrowserRouter>
     }
 }
