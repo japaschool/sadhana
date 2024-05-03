@@ -1,11 +1,13 @@
 use const_format::concatcp;
 
-pub const INPUT_CSS: &str = "rounded-md bg-transparent peer placeholder-transparent px-2 h-10 w-full border dark:border-white dark:text-zinc-100 border-zinc-500 dark:border-zinc-100 text-zinc-500 dark:text-zinc-100 focus:border-2 focus:border-zinc-500 dark:focus:border-zinc-100 focus:outline-none focus:ring-0";
-pub const TEXTAREA_CSS: &str = "rounded-md bg-transparent peer placeholder-transparent px-2 w-full border dark:border-white dark:text-zinc-100 border-zinc-500 dark:border-zinc-100 text-zinc-500 dark:text-zinc-100 focus:border-2 focus:border-zinc-500 dark:focus:border-zinc-100 focus:outline-none focus:ring-0";
+pub const INPUT_CSS: &str = "rounded-md bg-transparent peer placeholder-transparent px-2 h-10 w-full border dark:border-white dark:text-zinc-100 border-zinc-500 dark:border-zinc-100 text-zinc-500 focus:border-2 focus:border-zinc-500 dark:focus:border-zinc-100 focus:outline-none focus:ring-0";
+pub const TEXTAREA_CSS: &str = "rounded-md bg-transparent peer placeholder-transparent px-2 w-full border dark:border-white dark:text-zinc-100 border-zinc-500 dark:border-zinc-100 text-zinc-500 focus:border-2 focus:border-zinc-500 dark:focus:border-zinc-100 focus:outline-none focus:ring-0";
 pub const INPUT_LABEL_CSS: &str = "absolute left-2 -top-7 dark:text-zinc-100 text-zinc-500 text-base peer-placeholder-shown:text-base dark:peer-placeholder-shown:text-white peer-placeholder-shown:text-zinc-500 dark:peer-placeholder-shown:text-zinc-100 peer-placeholder-shown:top-2 transition-all peer-focus:-left-0 peer-focus:-top-7 dark:peer-focus:text-white peer-focus:text-zinc-500 dark:peer-focus:text-zinc-100 peer-focus:text-base";
 pub const LINKS_CSS: &str = "relative flex justify-between sm:text-base links";
 pub const LINK_CSS: &str =
-    "no-underline hover:underline text-base dark:text-zinc-100 text-zinc-500 dark:text-zinc-100";
+    "no-underline hover:underline text-base dark:text-zinc-100 text-zinc-500";
+pub const LINK_SMALL_CSS: &str =
+    "no-underline hover:underline text-sm dark:text-zinc-100 text-zinc-500";
 pub const LINK_CSS_NEW_ACC: &str =
     "no-underline hover:underline text-base text-amber-500 dark:text-amber-400 dark:amber-200";
 pub const SUBMIT_BTN_CSS: &str =

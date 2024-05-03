@@ -71,7 +71,7 @@ pub fn settings() -> Html {
     let help_onclick = {
         let nav = nav.clone();
         Callback::from(move |_: MouseEvent| {
-            nav.push(&AppRoute::Help);
+            nav.push(&BaseRoute::Help);
         })
     };
     let about_onclick = {

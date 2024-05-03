@@ -3,14 +3,18 @@ use yew::prelude::*;
 use crate::{
     components::blank_page::{BlankPage, HeaderButtonProps},
     css::*,
+    hooks::use_user_context,
     i18n::*,
     routes::AppRoute,
 };
 
 #[function_component(About)]
 pub fn about() -> Html {
+    let ctx = use_user_context();
+
     html! {
         <BlankPage
+            show_footer={ctx.is_authenticated()}
             selected_page={AppRoute::Settings}
             left_button={HeaderButtonProps::back()}
             >

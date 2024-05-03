@@ -17,7 +17,7 @@ use self::{
     user_practices::UserPractices,
     yatras::{admin_settings::AdminSettings, join::JoinYatra, settings::YatraSettings, Yatras},
 };
-use crate::{components::user_context_provider::UserContextProvider, model::ConfirmationType};
+use crate::model::ConfirmationType;
 
 pub mod charts;
 pub mod confirmation;
@@ -42,8 +42,10 @@ pub enum BaseRoute {
     Register,
     #[at("/shared/:id")]
     SharedCharts { id: String },
-    #[at("/settings/about")]
+    #[at("/about")]
     About,
+    #[at("/help")]
+    Help,
     #[at("/*")]
     AppRoute,
     #[at("/")]
@@ -65,9 +67,7 @@ pub enum AppRoute {
     EditUser,
     #[at("/settings/edit-password")]
     EditPassword,
-    #[at("/settings/help")]
-    Help,
-    #[at("/settings/help/support-form")]
+    #[at("/help/support-form")]
     SupportForm,
     #[at("/settings/import")]
     Import,
@@ -109,7 +109,6 @@ fn app_switch(routes: AppRoute) -> Html {
         AppRoute::EditUser => html! { <EditUser/> },
         AppRoute::EditPassword => html! { <EditPassword/> },
         AppRoute::SupportForm => html! { <SupportForm/> },
-        AppRoute::Help => html! { <Help/> },
         AppRoute::Import => html! { <Import/> },
         AppRoute::Language => html! { <Language/> },
         AppRoute::UserPractices => html! { <UserPractices /> },
@@ -146,8 +145,9 @@ pub fn switch(routes: BaseRoute) -> Html {
         }
         BaseRoute::SharedCharts { id } => html! { <SharedCharts share_id={id}/> },
         BaseRoute::About => html! { <About/> },
+        BaseRoute::Help => html! { <Help/> },
         BaseRoute::Home | BaseRoute::AppRoute => {
-            html! { <UserContextProvider><Switch<AppRoute> render={app_switch} /></UserContextProvider> }
+            html! { <Switch<AppRoute> render={app_switch} /> }
         }
     }
 }
