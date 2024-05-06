@@ -36,6 +36,7 @@ pub fn user_context_provider(props: &Props) -> Html {
                     l.path().starts_with("/register")
                         || l.path().starts_with("/login")
                         || l.path().starts_with("/reset")
+                        || l.path().starts_with("/shared")
                 })
                 .is_none()
             {
