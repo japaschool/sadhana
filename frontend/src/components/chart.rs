@@ -278,7 +278,7 @@ pub fn chart(props: &Props) -> Html {
                 .marker(
                     Marker::new()
                         .color(COLORS[i % COLORS.len()])
-                        .symbol(MarkerSymbol::Asterisk)
+                        .symbol(MarkerSymbol::CircleDot)
                         .line(Line::new().width(2.0).color(COLORS[i % COLORS.len()]))
                         .size(10),
                 )
