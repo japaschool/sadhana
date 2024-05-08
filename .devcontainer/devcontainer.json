@@ -51,7 +51,13 @@
         "streetsidesoftware.code-spell-checker",
         "nhoizey.gremlins",
         "bradlc.vscode-tailwindcss",
-        "kahole.magit"
+        "kahole.magit",
+        "kaiwood.center-editor-window",
+        "naumovs.color-highlight",
+        "mhutchie.git-graph",
+        "oderwat.indent-rainbow",
+        "ms-vscode.makefile-tools",
+        "hdevalke.rust-test-lens"
     ],
     // Use 'forwardPorts' to make a list of ports inside the container available locally.
     // "forwardPorts": [],

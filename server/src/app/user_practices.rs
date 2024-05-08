@@ -188,7 +188,14 @@ impl UserPractice {
                 }),
             };
 
-            Report::create(conn, &record.user_id, &record.practice, &report_definition)?;
+            Report::create(conn, &record.user_id, &record.practice, &report_definition)
+                .map(|_| ())
+                .or_else(|err| match err {
+                    AppError::UnprocessableEntity(msgs) => {
+                        log::warn!("Suppressed a failure to create a new report while creating a new practice {} for user {} with the following message: {}", record.practice, record.user_id, msgs.join("\n"));
+                        Ok(())},
+                    e => Err(e),
+                })?;
 
             Ok(())
         })
