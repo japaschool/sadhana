@@ -11,6 +11,9 @@ const dateR = /(\d{4}-\d{2}-\d{2})/;
 const cacheTtlDays = 10;
 const defaultDiaryDayKey = '/default-diary-day';
 
+const connStatusBroadcast = new BroadcastChannel('ConnectionStatus');
+var connOnline = true;
+
 self.addEventListener('install', function (e) {
     console.info('Event: Install');
 
@@ -40,11 +43,15 @@ self.addEventListener('fetch', (event) => {
                 // Go to the network first
                 try {
                     const fetchedResponse = await fetchWrapper(event.request.clone(), { credentials: 'same-origin' });
+                    // Notify clients we're online
+                    broadcastOnline();
                     cache.put(event.request, fetchedResponse.clone());
                     saveDefaultDiaryDay(event.request.url, fetchedResponse.clone());
                     return fetchedResponse;
                 } catch {
                     console.log('Cound not fetch from server; serving from cache.');
+                    // Notify clients we're offline
+                    broadcastOffline();
                     // When server unreachable fetch cached response
                     const cachedResp = await cache.match(event.request, { ignoreVary: true });
                     if (cachedResp) {
@@ -69,9 +76,13 @@ self.addEventListener('fetch', (event) => {
                 const x = await sendOfflinePostRequestsToServer().catch((e) => console.error(e));
                 // Try sending original put request to the server
                 const fetchedResponse = await fetchWrapper(event.request.clone(), { credentials: 'same-origin' });
+                // Notify clients we're online
+                broadcastOnline();
                 return fetchedResponse;
             } catch {
                 console.info('Saving %s into DB for later processing', event.request.url);
+                // Notify clients we're offline
+                broadcastOffline();
                 var authHeader = event.request.headers.get('Authorization');
                 var reqUrl = event.request.url;
                 var method = event.request.method;
@@ -242,4 +253,21 @@ async function fetchWrapper(req, opts) {
         throw new Error('Server unavailable');
     }
     return resp;
+}
+
+function broadcastOffline() {
+    if (connOnline) {
+        console.log("We're now offline");
+        connOnline = false;
+    }
+    // Posting offline message to clients every time
+    connStatusBroadcast.postMessage({ connection_status: "OFFLINE" });
+}
+
+function broadcastOnline() {
+    if (!connOnline) {
+        console.log("We're now online");
+        connStatusBroadcast.postMessage({ connection_status: "ONLINE" });
+        connOnline = true;
+    }
 }

@@ -1,6 +1,10 @@
 use std::rc::Rc;
 
 use chrono::NaiveDate;
+use gloo::utils::format::JsValueSerdeExt;
+use serde::Deserialize;
+use wasm_bindgen::{closure::Closure, JsCast, JsValue};
+use web_sys::{BroadcastChannel, MessageEvent};
 use yew::{html::onclick::Event, prelude::*};
 use yew_hooks::{use_bool_toggle, use_timeout};
 use yew_router::prelude::*;
@@ -252,10 +256,32 @@ fn header_button(
 
 pub const HEADER_BUTTON_CSS: &str = "no-underline text-amber-400";
 
+#[derive(Debug, Deserialize)]
+struct ConnStatusMessage {
+    connection_status: String,
+}
+
 #[function_component(BlankPage)]
 pub fn blank_page(props: &Props) -> Html {
     let nav = use_navigator().unwrap();
     let loading = use_bool_toggle(false);
+    let conn_status_channel = BroadcastChannel::new("ConnectionStatus").ok();
+    let online = use_bool_toggle(true);
+
+    if let Some(cc) = conn_status_channel {
+        let online = online.clone();
+        let cl: Closure<dyn Fn(JsValue)> = Closure::new(move |args: JsValue| {
+            if let Some(ConnStatusMessage { connection_status }) = args
+                .dyn_into::<MessageEvent>()
+                .ok()
+                .and_then(|ev| ev.data().into_serde::<ConnStatusMessage>().ok())
+            {
+                online.set(connection_status == "ONLINE");
+            }
+        });
+        cc.set_onmessage(Some(cl.as_ref().unchecked_ref()));
+        cl.forget();
+    };
 
     let timer = {
         let loading = loading.clone();
@@ -288,7 +314,20 @@ pub fn blank_page(props: &Props) -> Html {
     html! {
         <>
             <div class="bg-hero dark:bg-herod bg-no-repeat bg-cover bg-center h-screen w-full fixed -z-10" />
-            <div id="content" class={ format!("fixed pt-safe-top top-0 {} left-0 right-0 overflow-y-auto", if props.show_footer {"bottom-16"} else {"bottom-0"}) }>
+            if !*online {
+            <div class="absolute bg-red-500 w-full h-4 top-[env(safe-area-inset-top)] z-10 overscroll-none">
+                <p class="text-white text-center overflow-hidden text-xs">{Locale::current().offline_msg()}</p>
+            </div>
+            }
+            <div
+                id="content"
+                class={
+                    format!(
+                        "fixed pt-safe-top top-0 {} left-0 right-0 overflow-y-auto {}",
+                        if props.show_footer {"bottom-16"} else {"bottom-0"},
+                        if !*online {"top-4"} else {""})
+                    }
+                >
                 // 100vh-4rem means screen minus bottom-16; env(...) - the height of iPhone notch
                 <div class="bg-transparent min-h-[calc(100vh-4rem-env(safe-area-inset-top))] justify-center items-center py-[calc(1.5rem-env(safe-area-inset-top))] sm:py-[calc(3rem-env(safe-area-inset-top))]">
                     if props.loading && *loading {

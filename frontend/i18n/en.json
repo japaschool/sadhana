@@ -83,6 +83,7 @@
   "download_csv": "Download data (CSV)",
   "left": "Left",
   "right": "Right",
+  "offline_msg": "The server's unreachable. Working offline.",
   "__support_form__": "------------------------------------",
   "sf_send_us_message": "Send us a message",
   "sf_subject": "Subject",
