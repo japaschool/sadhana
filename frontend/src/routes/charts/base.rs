@@ -211,7 +211,7 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
                 <div class="relative">
                     <select
                         class={INPUT_CSS}
-                        id="reports"
+                        id="report"
                         onchange={report_onchange.clone()}
                         >
                         {for props.reports.iter().map(|r| html!{
@@ -223,8 +223,8 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
                             </option>
                     })}
                     </select>
-                    <label for="reports" class={INPUT_LABEL_CSS}>
-                        {format!(" {}: ", Locale::current().reports())}
+                    <label for="report" class={INPUT_LABEL_CSS}>
+                        {format!(" {}: ", Locale::current().report())}
                     </label>
                 </div>
                 <div class="relative">
