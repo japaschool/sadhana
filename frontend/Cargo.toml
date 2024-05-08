@@ -57,4 +57,6 @@ features = [
   "Blob",
   "Url",
   "VisibilityState",
+  "BroadcastChannel",
+  "MessageEvent",
 ]
