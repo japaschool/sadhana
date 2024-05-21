@@ -23,7 +23,11 @@ pub struct Props {
 #[function_component(RegisterWithId)]
 pub fn register_with_id(props: &Props) -> Html {
     let user_ctx = use_user_context();
-    let register_info = use_state(RegisterInfo::default);
+    let register_info = use_state(|| RegisterInfo {
+        lang: Locale::current().to_string(),
+        confirmation_id: props.id.to_string(),
+        ..RegisterInfo::default()
+    });
     let user_register = {
         let register_info = register_info.clone();
         use_async(async move {

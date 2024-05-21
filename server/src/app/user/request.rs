@@ -5,8 +5,6 @@ use validator::Validate;
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Signup {
     pub user: SignupUser,
-    //TODO: use confirmation id to validate email before registering a new user
-    // pub confirmation_id: Uuid,
 }
 
 #[derive(Clone, Deserialize, Serialize, Debug, Validate)]
@@ -17,6 +15,8 @@ pub struct SignupUser {
     pub password: String,
     #[validate(length(min = 3, message = "name must be at least 3 letters long"))]
     pub name: String,
+    pub lang: String,
+    pub confirmation_id: Uuid,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
