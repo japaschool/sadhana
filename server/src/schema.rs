@@ -39,6 +39,7 @@ diesel::table! {
         practice -> Text,
         data_type -> PracticeDataTypeEnum,
         order_key -> Nullable<Int4>,
+        lang -> Text,
     }
 }
 

@@ -32,12 +32,17 @@ pub async fn signup(
     form.user.validate()?;
 
     let mut conn = state.get_conn()?;
+
     let (user, token) = web::block(move || {
+        // Ensure confirmation is still valid
+        Confirmation::get(&mut conn, &form.user.confirmation_id)?;
+
         User::signup(
             &mut conn,
             &form.user.email,
             &form.user.name,
             &form.user.password,
+            &form.user.lang,
         )
     })
     .await??;
@@ -180,6 +185,7 @@ mod tests {
     };
     use diesel::prelude::*;
     use diesel::{QueryDsl, RunQueryDsl};
+    use uuid::Uuid;
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
@@ -211,6 +217,8 @@ mod tests {
                     email: "xyz@gmail.com".into(),
                     password: "abcdef".into(),
                     name: "X Yz".into(),
+                    lang: "ru".into(),
+                    confirmation_id: Uuid::new_v4(),
                 },
             },
         )
@@ -233,6 +241,8 @@ mod tests {
                     email: "invalid email".into(),
                     password: "".into(),
                     name: "a".into(),
+                    lang: "ru".into(),
+                    confirmation_id: Uuid::new_v4(),
                 },
             },
         )
@@ -263,6 +273,8 @@ mod tests {
                 email: test_email.into(),
                 password: "abcdef".into(),
                 name: "X Yz".into(),
+                lang: "ru".into(),
+                confirmation_id: Uuid::new_v4(),
             },
         };
 
@@ -294,6 +306,8 @@ mod tests {
                 email: test_email.into(),
                 password: test_pwd.into(),
                 name: "X Yz".into(),
+                lang: "ru".into(),
+                confirmation_id: Uuid::new_v4(),
             },
         };
 

@@ -49,7 +49,13 @@ pub fn language() -> Html {
                         onchange={ language_onchange }
                         required=true
                         >
-                        <option class={ "text-black" } value={ DEFAULT_LANGUAGE_KEY } selected={ is_checked_lang(DEFAULT_LANGUAGE_KEY) }>{ Locale::current().default_language().as_str() }</option>
+                        <option
+                            class={ "text-black" }
+                            value={ DEFAULT_LANGUAGE_KEY }
+                            selected={ is_checked_lang(DEFAULT_LANGUAGE_KEY) }
+                            >
+                            { Locale::current().default_language().as_str() }
+                        </option>
                         {
                             LANGUAGE_DATA
                                 .iter()

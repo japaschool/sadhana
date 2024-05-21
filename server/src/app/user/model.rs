@@ -6,7 +6,11 @@ use crate::{
 use chrono::{DateTime, Duration, NaiveDateTime, Utc};
 use common::error::AppError;
 use diesel::{
-    pg::PgConnection, prelude::*, sql_query, sql_types::Uuid as DieselUuid, upsert::excluded,
+    pg::PgConnection,
+    prelude::*,
+    sql_query,
+    sql_types::{Text, Uuid as DieselUuid},
+    upsert::excluded,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -30,6 +34,7 @@ impl User {
         email: &'a str,
         username: &'a str,
         naive_password: &'a str,
+        lang: &'a str,
     ) -> Result<(User, Token), AppError> {
         use diesel::prelude::*;
         let hashed_password = hasher::hash_password(naive_password)?;
@@ -52,9 +57,11 @@ impl User {
             insert into user_practices (user_id, practice, data_type, is_active, order_key)
                 select $1, practice, data_type, true, order_key
                 from default_user_practices
+                where lang = $2
             "#,
             )
             .bind::<DieselUuid, _>(&user.id)
+            .bind::<Text, _>(&lang)
             .execute(conn)?;
 
             // Cleanup confirmations

@@ -77,6 +77,7 @@ pub struct RegisterInfo {
     pub email: String,
     pub password: String,
     pub name: String,
+    pub lang: String,
 }
 
 #[derive(Clone, PartialEq, Serialize, Debug)]
