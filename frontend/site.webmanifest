@@ -1,6 +1,10 @@
 {
   "display": "standalone",
   "short_name": "Sadhana Pro",
+  "name": "Sadhana Pro",
+  "background_color": "#7c6d63",
+  "theme_color": "#7c6d63",
+  "start_url": "/",
   "icons": [
     {
       "src": "images/manifest-icon-192.maskable.png",
@@ -25,6 +29,14 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/images/banner-narrow-01.png",
+      "type": "image/png",
+      "sizes": "627x950",
+      "form_factor": "narrow"
     }
   ]
 }
