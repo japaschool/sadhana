@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, str::FromStr};
 
 use chrono::NaiveDate;
 use gloo::storage::{LocalStorage, Storage};
@@ -84,6 +84,21 @@ impl Locale {
             11 => self.november(),
             12 => self.december(),
             _ => unreachable!(),
+        }
+    }
+
+    pub fn chrono(&self) -> chrono::Locale {
+        let default = || match self {
+            Locale::Ua => chrono::Locale::uk_UA,
+            Locale::Ru => chrono::Locale::ru_RU,
+            Locale::En => chrono::Locale::en_IE,
+        };
+        if LANG.as_str()[..2] == self.to_string() {
+            chrono::Locale::from_str(LANG.as_str())
+                .ok()
+                .unwrap_or_else(default)
+        } else {
+            default()
         }
     }
 }
