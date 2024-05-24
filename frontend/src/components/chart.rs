@@ -5,7 +5,7 @@ use std::str::FromStr;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use yew::prelude::*;
-use yew_plotly::plotly::color::NamedColor;
+use yew_plotly::plotly::color::{NamedColor, Rgb};
 use yew_plotly::plotly::common::{
     Anchor, AxisSide, DashType, Font, Line, LineShape, Marker, MarkerSymbol, Mode, Orientation,
     Position, TickMode,
@@ -197,7 +197,7 @@ pub fn chart(props: &Props) -> Html {
     let mut layout = Layout::new()
         .paper_background_color(NamedColor::Transparent)
         .plot_background_color(NamedColor::Transparent)
-        .font(Font::new().color(NamedColor::DarkGray))
+        .font(Font::new().color(Rgb::new(164, 147, 147)))
         .margin(Margin::new().left(40).right(40).top(10))
         .show_legend(props.traces.iter().any(|t| t.name.is_some()))
         .auto_size(true)
