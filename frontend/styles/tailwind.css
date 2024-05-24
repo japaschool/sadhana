@@ -8,6 +8,13 @@ input::-webkit-calendar-picker-indicator {
     background: none;
 }
 
+/* Remove the icon chrome/safary add on the right of input with type number */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
 /* Spinner */
 .loader {
     border-top-color: #380202;

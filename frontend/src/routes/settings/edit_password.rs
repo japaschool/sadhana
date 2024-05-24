@@ -11,7 +11,7 @@ use crate::{
 };
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
-use yew_hooks::use_async;
+use yew_hooks::{use_async, use_bool_toggle};
 use yew_router::prelude::use_navigator;
 
 #[function_component(EditPassword)]
@@ -19,6 +19,7 @@ pub fn edit_password() -> Html {
     let new_password = use_state(String::new);
     let current_pwd = use_state(String::default);
     let nav = use_navigator().unwrap();
+    let show_pwd = use_bool_toggle(false);
 
     let update_password = {
         let new_password = new_password.clone();
@@ -54,6 +55,13 @@ pub fn edit_password() -> Html {
         })
     };
 
+    let toggle_show_pwd_onclick = {
+        let show_pwd = show_pwd.clone();
+        Callback::from(move |_| {
+            show_pwd.toggle();
+        })
+    };
+
     html! {
         <form {onsubmit} >
             <BlankPage
@@ -66,7 +74,7 @@ pub fn edit_password() -> Html {
                     <div class="relative">
                         <input
                             id="current_pwd"
-                            type="password"
+                            type={if *show_pwd {"text"} else {"password"}}
                             placeholder="Current Password"
                             class={ INPUT_CSS }
                             value={ (*current_pwd).clone() }
@@ -76,6 +84,9 @@ pub fn edit_password() -> Html {
                             minlength="5"
                             maxlength="256"
                             />
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
+                            <i class={if *show_pwd {"icon-eye-cross"} else {"icon-eye"}} onclick={toggle_show_pwd_onclick} />
+                        </div>
                         <label for="current_pwd"
                             class={ INPUT_LABEL_CSS }>
                             <i class="icon-key"></i>{ format!(" {}", Locale::current().current_password()) }
