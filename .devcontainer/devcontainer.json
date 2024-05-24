@@ -57,7 +57,8 @@
         "mhutchie.git-graph",
         "oderwat.indent-rainbow",
         "ms-vscode.makefile-tools",
-        "hdevalke.rust-test-lens"
+        "hdevalke.rust-test-lens",
+        "shuworks.vscode-jump-to-hint"
     ],
     // Use 'forwardPorts' to make a list of ports inside the container available locally.
     // "forwardPorts": [],

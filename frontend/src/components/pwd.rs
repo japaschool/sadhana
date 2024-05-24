@@ -1,6 +1,7 @@
 use crate::{css::*, i18n::Locale};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
+use yew_hooks::use_bool_toggle;
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
@@ -15,7 +16,7 @@ pub struct Props {
 pub fn pwd(props: &Props) -> Html {
     let new_pwd = use_state(String::default);
     let confirm_pwd = use_state(String::default);
-
+    let show_pwd = use_bool_toggle(false);
     let confirm_pwd_html = use_mut_ref(|| None);
 
     let onfocus = {
@@ -57,12 +58,19 @@ pub fn pwd(props: &Props) -> Html {
     let new_pwd_oninput = oninput(new_pwd.clone(), confirm_pwd.clone(), true);
     let confirm_pwd_oninput = oninput(confirm_pwd.clone(), new_pwd.clone(), false);
 
+    let toggle_show_pwd_onclick = {
+        let show_pwd = show_pwd.clone();
+        Callback::from(move |_| {
+            show_pwd.toggle();
+        })
+    };
+
     html! {
         <>
             <div class="relative">
                 <input
                     id="new_pwd"
-                    type="password"
+                    type={if *show_pwd {"text"} else {"password"}}
                     placeholder="New Password"
                     class={ INPUT_CSS }
                     value={ (*new_pwd).clone() }
@@ -73,6 +81,9 @@ pub fn pwd(props: &Props) -> Html {
                     maxlength="256"
                     readonly={ props.readonly }
                     />
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
+                    <i class={if *show_pwd {"icon-eye-cross"} else {"icon-eye"}} onclick={toggle_show_pwd_onclick.clone()} />
+                </div>
                 <label for="new_pwd"
                     class={ INPUT_LABEL_CSS }>
                     <i class="icon-key"></i>{ format!(" {}", Locale::current().new_password()) }
@@ -81,7 +92,7 @@ pub fn pwd(props: &Props) -> Html {
             <div class="relative">
                 <input
                     id="confirm_pwd"
-                    type="password"
+                    type={if *show_pwd {"text"} else {"password"}}
                     placeholder="Confirm Password"
                     class={ INPUT_CSS }
                     oninput={ confirm_pwd_oninput }
@@ -93,6 +104,9 @@ pub fn pwd(props: &Props) -> Html {
                     maxlength="256"
                     readonly={ props.readonly }
                     />
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
+                    <i class={if *show_pwd {"icon-eye-cross"} else {"icon-eye"}} onclick={toggle_show_pwd_onclick.clone()} />
+                </div>
                 <label for="confirm_pwd"
                     class={ INPUT_LABEL_CSS }>
                     <i class="icon-key"></i>{ format!(" {}", Locale::current().confirm_password()) }

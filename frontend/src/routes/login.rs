@@ -17,6 +17,8 @@ use crate::{
 pub fn login() -> Html {
     let user_ctx = use_user_context();
     let login_info = use_state(LoginInfo::default);
+    let show_pwd = use_bool_toggle(false);
+
     let user_login = {
         let login_info = login_info.clone();
         use_async(async move {
@@ -73,6 +75,13 @@ pub fn login() -> Html {
         })
     };
 
+    let toggle_show_pwd_onclick = {
+        let show_pwd = show_pwd.clone();
+        Callback::from(move |_| {
+            show_pwd.toggle();
+        })
+    };
+
     html! {
         <BlankPage header_label={ Locale::current().login() } loading={ user_login.loading }>
             <ListErrors error={ user_login.error.clone() } error_formatter={ error_formatter } />
@@ -96,13 +105,16 @@ pub fn login() -> Html {
                         <input
                             autocomplete="off"
                             id="password"
-                            type="password"
+                            type={if *show_pwd {"text"} else {"password"}}
                             placeholder="Password"
                             class={ INPUT_CSS }
                             value={login_info.password.clone()}
                             oninput={oninput_password}
                             required = true
                             />
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
+                            <i class={if *show_pwd {"icon-eye-cross"} else {"icon-eye"}} onclick={toggle_show_pwd_onclick} />
+                        </div>
                         <label for="password"
                             class={ INPUT_LABEL_CSS }>
                             <i class="icon-key"></i>{ format!(" {}", Locale::current().password()) }
