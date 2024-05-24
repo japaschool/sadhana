@@ -37,6 +37,11 @@ pub fn calendar(props: &Props) -> Html {
         res
     };
 
+    let selected_date_str = props
+        .selected_date
+        .format_localized("%A %e %B %Y", Locale::current().chrono())
+        .to_string();
+
     let onclick_date = {
         let cb = props.date_onchange.clone();
         Callback::from(move |ev: MouseEvent| {
@@ -115,7 +120,7 @@ pub fn calendar(props: &Props) -> Html {
 
     html! {
         <div class="relative" {ondblclick} >
-            <div class="pb-5 flex justify-center overflow-x-scroll mx-auto max-w-sm">
+            <div class="pb-2 flex justify-center overflow-x-scroll mx-auto max-w-sm">
                 <div class="flex text-zinc-500 dark:text-zinc-100 group w-16" onclick={ prev_week_onclick.clone() }>
                     <div class="flex items-center"><i class="icon-chevron-left"></i></div>
                 </div>
@@ -129,6 +134,9 @@ pub fn calendar(props: &Props) -> Html {
                 <div class="flex text-zinc-500 dark:text-zinc-100 justify-end group w-16" onclick={ next_week_onclick.clone() }>
                     <div class="flex items-center"><i class="icon-chevron-right"></i></div>
                 </div>
+            </div>
+            <div class="flex justify-center">
+                <p class="text-sm dark:text-zinc-100 text-zinc-500">{selected_date_str}</p>
             </div>
         </div>
     }
