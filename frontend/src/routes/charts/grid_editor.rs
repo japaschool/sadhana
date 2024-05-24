@@ -75,7 +75,7 @@ pub fn grid_editor(props: &Props) -> Html {
 
     html! {
         <div class="pt-8 text-zinc-500 dark:text-zinc-100">
-            <SummaryDetails tab_index={1} label={Locale::current().settings()}>
+            <SummaryDetails label={Locale::current().settings()}>
                 <div class="pt-8">
                     <div class={TWO_COLS_CSS}>
                         <div class="relative">
@@ -96,7 +96,7 @@ pub fn grid_editor(props: &Props) -> Html {
                     </div>
                 </div>
             </SummaryDetails>
-            <SummaryDetails tab_index={1} label={Locale::current().practices()}>
+            <SummaryDetails label={Locale::current().practices()}>
                 <div class="pt-8">
                     <div class={TWO_COLS_CSS}>{for practices}</div>
                 </div>

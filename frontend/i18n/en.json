@@ -163,5 +163,10 @@
   "copy_reports_link": "Copy reports sharing link",
   "__about__": "------------------------------------",
   "about": "About",
-  "about_text": "Sadhana Diary is a convenient and simple internet resource that allows you to monitor and develop personal spiritual practices.\nYour personal Sadhana Diary is available anytime and anywhere on the internet at the link:\nhttps: //sadhana.pro/\nhttps: //m.sadhana.pro/\nConvenient and intuitive multilingual interface. Creating and planning personal spiritual and daily practices. Monitoring compliance and completion of the diary.\nDevelopment and improvement of discipline by observing the dynamics of progress and graphic forms. Possibility of downloading the data in a tabular format and saving to personal devices.\nYou can always share your diary (internet link for viewing) with a mentor or friends and family.\nThe ability to create user groups for joint journal maintenance has been implemented.\nThe Sadhana Diary is constantly being improved, we will be glad to receive your feedback or participation in the project, for this use the feedback form."
+  "about_text": "Sadhana Diary is a convenient and simple internet resource that allows you to monitor and develop personal spiritual practices.\nYour personal Sadhana Diary is available anytime and anywhere on the internet at the link:\nhttps: //sadhana.pro/\nhttps: //m.sadhana.pro/\nConvenient and intuitive multilingual interface. Creating and planning personal spiritual and daily practices. Monitoring compliance and completion of the diary.\nDevelopment and improvement of discipline by observing the dynamics of progress and graphic forms. Possibility of downloading the data in a tabular format and saving to personal devices.\nYou can always share your diary (internet link for viewing) with a mentor or friends and family.\nThe ability to create user groups for joint journal maintenance has been implemented.\nThe Sadhana Diary is constantly being improved, we will be glad to receive your feedback or participation in the project, for this use the feedback form.",
+  "__help__": "------------------------------------",
+  "help_faq": "FAQ",
+  "help_registration": "How to register a new user",
+  "help_add_practice": "How to add a new practice",
+  "help_rename_practice": "How to rename a practice"
 }

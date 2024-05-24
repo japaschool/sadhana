@@ -231,7 +231,7 @@ pub fn graph_editor(props: &Props) -> Html {
     };
 
     let graph_settings = html! {
-        <SummaryDetails tab_index={0} label={Locale::current().settings()}>
+        <SummaryDetails label={Locale::current().settings()}>
             <div class="pt-8">
                 <div class={TWO_COLS_CSS}>
                     <div class="relative">
@@ -280,7 +280,7 @@ pub fn graph_editor(props: &Props) -> Html {
     };
 
     let graph_trace_editors = report.traces.iter().enumerate().map(|(idx, PracticeTrace { label, type_, practice, y_axis, show_average })| html! {
-        <SummaryDetails tab_index={(idx + 1) as u8} label={format!("{} {}", Locale::current().report_trace(), idx + 1)}>
+        <SummaryDetails label={format!("{} {}", Locale::current().report_trace(), idx + 1)}>
             <div class="pt-8">
                 <div class={TWO_COLS_CSS}>
                     <div class="relative">
