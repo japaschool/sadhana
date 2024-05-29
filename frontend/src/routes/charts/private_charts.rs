@@ -278,7 +278,6 @@ pub fn charts() -> Html {
                     || update_report.loading
                     || delete_report.loading
                 }
-                header_label={user_ctx.name.clone()}
                 left_button={
                     if *editing {
                         HeaderButtonProps::reset(Locale::current().cancel())

@@ -18,6 +18,9 @@ module.exports = {
         // "safe-left": "env(safe-area-inset-left)",
         // "safe-right": "env(safe-area-inset-right)",
       },
+      future: {
+        hoverOnlyWhenSupported: true,
+      },
       backgroundImage: {
         hero: "linear-gradient(rgba(255, 252, 250, 0.4), #f9fafb), url('images/background.jpg')",
         herod:
