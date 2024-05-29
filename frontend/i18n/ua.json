@@ -168,5 +168,8 @@
   "help_faq": "Питання що часто задаються",
   "help_registration": "Як зареєструвати нового користувача",
   "help_add_practice": "Як додати нову практику",
-  "help_rename_practice": "Як перейменувати практику"
+  "help_rename_practice": "Як перейменувати практику",
+  "__prompt__": "------------------------------------",
+  "prompt_title_add_dur": "Додати до {practice_name}",
+  "prompt_desc_add_dur": "Введіть кількість хвилин, яку потрібно додати до {practice_name}"
 }

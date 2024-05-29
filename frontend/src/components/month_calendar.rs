@@ -7,7 +7,10 @@ use chrono::{Datelike, Local, Months, NaiveDate};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
-use crate::i18n::{Locale, DAYS};
+use crate::{
+    css::POPUP_BG_CSS,
+    i18n::{Locale, DAYS},
+};
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
@@ -105,7 +108,7 @@ pub fn month_calendar(props: &Props) -> Html {
             <div class="relative">
                 <div class="container">
                     <div
-                        class="bg-gradient-to-t from-neutral-300 via-neutral-100 to-white dark:from-zinc-900 dark:via-zinc-700 dark:to-zinc-600 rounded-lg shadow p-4 border border-zinc-500 dark:border-zinc-100"
+                        class={format!("{} rounded-lg shadow p-4 border border-zinc-500 dark:border-zinc-100", POPUP_BG_CSS)}
                         style="width: 19rem"
                         >
                         <div class="flex justify-between items-center mb-2">

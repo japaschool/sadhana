@@ -168,5 +168,8 @@
   "help_faq": "FAQ",
   "help_registration": "How to register a new user",
   "help_add_practice": "How to add a new practice",
-  "help_rename_practice": "How to rename a practice"
+  "help_rename_practice": "How to rename a practice",
+  "__prompt__": "------------------------------------",
+  "prompt_title_add_dur": "Add to {practice_name}",
+  "prompt_desc_add_dur": "Enter how many minutes to add to {practice_name}"
 }

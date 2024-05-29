@@ -331,7 +331,7 @@ pub fn blank_page(props: &Props) -> Html {
                 // 100vh-4rem means screen minus bottom-16; env(...) - the height of iPhone notch
                 <div class="bg-transparent min-h-[calc(100vh-4rem-env(safe-area-inset-top))] justify-center items-center py-[calc(1.5rem-env(safe-area-inset-top))] sm:py-[calc(3rem-env(safe-area-inset-top))]">
                     if props.loading && *loading {
-                        <div class="bg-gray-500 bg-opacity-50 fixed left-0 top-0 z-50 h-full w-full overflow-hidden flex">
+                        <div class="bg-gray-500 bg-opacity-50 fixed left-0 top-0 z-10 h-full w-full overflow-hidden flex">
                             <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-10 w-10 m-auto"/>
                         </div>
                     }
@@ -382,7 +382,7 @@ pub fn blank_page(props: &Props) -> Html {
                 </div>
             </div>
             if props.show_footer {
-                <div id="footer" class="fixed bottom-0 left-0 z-50 w-full h-16 bg-white/50 border-t border-zinc-200/50 dark:bg-zinc-700/50  dark:border-zinc-700/50">
+                <div id="footer" class="fixed bottom-0 left-0 z-10 w-full h-16 bg-white/50 border-t border-zinc-200/50 dark:bg-zinc-700/50  dark:border-zinc-700/50">
                     <div class="bg-transparent justify-center">
                         <div class="relative py-3 sm:max-w-xl sm:mx-auto">
                             <div class="relative px-8 sm:rounded-3xl sm:px-20">
