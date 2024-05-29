@@ -13,9 +13,10 @@ use crate::{
     components::{
         blank_page::{BlankPage, ButtonType, CalendarProps, HeaderButtonProps},
         list_errors::ListErrors,
+        prompt::Prompt,
     },
     css::*,
-    i18n::Locale,
+    i18n::{Locale, PracticeName},
     model::{DiaryEntry, PracticeDataType, PracticeEntryValue},
     services::{get_diary_day, get_incomplete_days, save_diary_entry},
 };
@@ -49,6 +50,8 @@ pub fn home() -> Html {
     // A copy of backend data with local changes
     let local_diary_entry = use_list(Vec::new());
     let current_entry = use_state(|| None::<DiaryEntry>);
+
+    let add_duration_prompt_idx = use_state(|| None::<usize>);
 
     let diary_entry = {
         let selected_date = selected_date.clone();
@@ -199,7 +202,7 @@ pub fn home() -> Html {
         }
 
         VALID_DURATION_R
-            .captures_iter(&input.value())
+            .captures_iter(&input_value)
             .for_each(|cap| {
                 let (hours, minutes) = match (cap.get(1), cap.get(2), cap.get(3), cap.get(4)) {
                     (Some(minutes_only), _, _, _) => {
@@ -410,6 +413,18 @@ pub fn home() -> Html {
         })
     };
 
+    let add_duration_onclick = {
+        let idx = add_duration_prompt_idx.clone();
+        Callback::from(move |e: MouseEvent| {
+            if (*idx).is_some() {
+                idx.set(None);
+            } else {
+                let el: HtmlElement = e.target_unchecked_into();
+                idx.set(el.id().parse().ok());
+            }
+        })
+    };
+
     let month_cal_button = HeaderButtonProps::month_calendar(month_cal_onclick);
 
     let calendar_props = CalendarProps::new(
@@ -427,6 +442,31 @@ pub fn home() -> Html {
         ButtonType::Button,
     );
 
+    let add_duraction = {
+        let idx = add_duration_prompt_idx.clone();
+        let local_state = local_diary_entry.clone();
+        let save = save_diary_day_entry.clone();
+        let save_buffer = current_entry.clone();
+        Callback::from(move |value: String| {
+            log::debug!("Add duration {}", value.to_string());
+
+            if let Ok(add_minutes) = value.parse::<u16>() {
+                if let Some(idx) = *idx {
+                    let mut entry = local_state.current()[idx].clone();
+                    if let Some(PracticeEntryValue::Duration(minutes)) = entry.value {
+                        if add_minutes > 0 {
+                            entry.value = Some(PracticeEntryValue::Duration(minutes + add_minutes));
+                            local_state.update(idx, entry.clone());
+                            save_buffer.set(Some(entry));
+                            save.run();
+                        }
+                    }
+                }
+            }
+            idx.set(None);
+        })
+    };
+
     html! {
         <BlankPage
             left_button={month_cal_button}
@@ -436,6 +476,14 @@ pub fn home() -> Html {
             selected_page={AppRoute::Home}
             calendar={calendar_props}
             >
+            if let Some(idx) = *add_duration_prompt_idx {
+            <Prompt
+                title={Locale::current().prompt_title_add_dur(PracticeName(&local_diary_entry.current()[idx].practice))}
+                description={Locale::current().prompt_desc_add_dur(PracticeName(&local_diary_entry.current()[idx].practice))}
+                onsuccess={add_duraction.clone()}
+                oncancel={add_duration_onclick.clone()}
+                />
+            }
             <ListErrors error={diary_entry.error.clone()} />
             <ListErrors error={save_diary_day_entry.error.clone()} />
             <div class={BODY_DIV_SPACE_10_CSS}>
@@ -488,6 +536,11 @@ pub fn home() -> Html {
                                             class={ format!("{} text-center", INPUT_CSS) }
                                             placeholder={ idx.to_string() }
                                             />
+                                        if value.is_some() {
+                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 cursor-pointer">
+                                                <i id={idx.to_string()} class="icon-plus" onclick={add_duration_onclick.clone()} />
+                                            </div>
+                                        }
                                         <label for={ idx.to_string() } class={ INPUT_LABEL_CSS }>
                                             <i class="icon-clock"></i>
                                             { format!(" {}: ", practice) }

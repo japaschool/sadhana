@@ -10,8 +10,8 @@ pub const LINK_SMALL_CSS: &str =
     "no-underline hover:underline text-sm dark:text-zinc-100 text-zinc-500";
 pub const LINK_CSS_NEW_ACC: &str =
     "no-underline hover:underline text-base text-amber-500 dark:text-amber-400 dark:amber-200";
-pub const SUBMIT_BTN_CSS: &str =
-    "rounded-md text-white w-full cursor-pointer text-base font-light mb-8 border border--amber-600 p-2 outline-none
+pub const SUBMIT_BTN_CSS_NO_MARGIN: &str =
+    "rounded-md text-white w-full cursor-pointer text-base font-light border border--amber-600 p-2 outline-none
     bg-opacity-10 bg-gradient-to-br from-amber-400 to-amber-500 
     hover:bg-amber-500 hover:bg-opacity-10
     active:bg-amber-500 active:bg-opacity-25
@@ -19,10 +19,9 @@ pub const SUBMIT_BTN_CSS: &str =
     dark:-hover:bg-orange-900 dark:hover:bg-opacity-30
     dark:-active:bg-orange-900 
     active:translate-y-1";
-
+pub const SUBMIT_BTN_CSS: &str = concatcp!("mb-8 ", SUBMIT_BTN_CSS_NO_MARGIN);
 pub const BTN_CSS_NO_MARGIN: &str =
-    "bg-transparent hover:bg-amber-500 hover:bg-opacity-10 rounded-md text-white w-full cursor-pointer text-base font-light text-zinc-500 dark:text-zinc-100 border border-zinc-500 dark:border-zinc-100 p-2 outline-none";
-
+    "bg-transparent hover:bg-amber-500 hover:bg-opacity-10 rounded-md text-white w-full cursor-pointer text-base font-light text-zinc-500 dark:text-zinc-100 border border-zinc-500 dark:border-zinc-100 p-2 outline-none active:translate-y-1";
 pub const BTN_CSS: &str = concatcp!("mb-8 ", BTN_CSS_NO_MARGIN);
 
 pub const BODY_DIV_BASE_CSS: &str = "
@@ -46,3 +45,5 @@ pub const FOOTER_ICON_CSS: &str =
 pub const TWO_COLS_NO_GAP_CSS: &str =
     "grid-flow-row grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2";
 pub const TWO_COLS_CSS: &str = concatcp!("gap-9 ", TWO_COLS_NO_GAP_CSS);
+
+pub const POPUP_BG_CSS: &str = "bg-gradient-to-t from-neutral-300 via-neutral-100 to-white dark:from-zinc-900 dark:via-zinc-700 dark:to-zinc-600";
