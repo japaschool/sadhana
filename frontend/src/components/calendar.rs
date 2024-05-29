@@ -120,7 +120,7 @@ pub fn calendar(props: &Props) -> Html {
 
     html! {
         <div class="relative" {ondblclick} >
-            <div class="pb-2 flex justify-center overflow-x-scroll mx-auto max-w-sm">
+            <div class="pb-1 flex justify-center overflow-x-scroll mx-auto max-w-sm">
                 <div class="flex text-zinc-500 dark:text-zinc-100 group w-16" onclick={ prev_week_onclick.clone() }>
                     <div class="flex items-center"><i class="icon-chevron-left"></i></div>
                 </div>
