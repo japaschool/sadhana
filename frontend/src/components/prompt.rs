@@ -50,6 +50,7 @@ pub fn prompt(props: &Props) -> Html {
                                 autofocus=true
                                 id={"input"}
                                 type="number"
+                                pattern="[0-9]*"
                                 value={(*input_value).clone()}
                                 {oninput}
                                 class={ format!("{} text-center", INPUT_CSS) }
