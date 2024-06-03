@@ -36,8 +36,10 @@ details summary::-webkit-details-marker {
     font-size: 1.3em;
 }
 
-.menu:hover {
-    color: #f59e0b !important;
+@media (hover: hover) and (pointer: fine) {
+    .menu:hover {
+        color: #f59e0b !important;
+    }
 }
 
 .links {
