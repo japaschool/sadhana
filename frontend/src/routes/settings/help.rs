@@ -71,6 +71,19 @@ pub fn help() -> Html {
                                 />
                         </div>
                     </SummaryDetails>
+                    <SummaryDetails label={Locale::current().help_add_graph_report()}>
+                        <div class="aspect-video">
+                            <iframe
+                                class="w-full h-full"
+                                src="https://www.youtube.com/embed/gJ9jqB-nGtg?si=kNgEOfzfgWE99wco"
+                                title="YouTube video player"
+                                frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                referrerpolicy="strict-origin-when-cross-origin"
+                                allowfullscreen=true
+                                />
+                        </div>
+                    </SummaryDetails>
                 </div>
             </div>
             if ctx.is_authenticated() {
