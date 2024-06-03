@@ -47,3 +47,5 @@ pub const TWO_COLS_NO_GAP_CSS: &str =
 pub const TWO_COLS_CSS: &str = concatcp!("gap-9 ", TWO_COLS_NO_GAP_CSS);
 
 pub const POPUP_BG_CSS: &str = "bg-gradient-to-t from-neutral-300 via-neutral-100 to-white dark:from-zinc-900 dark:via-zinc-700 dark:to-zinc-600";
+
+pub const CHECKBOX_INPUT_CSS: &str = "w-5 h-5 my-auto accent-amber-400";

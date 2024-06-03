@@ -365,13 +365,16 @@ pub fn graph_editor(props: &Props) -> Html {
                     <div class="relative">
                         <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
                             <span>{Locale::current().report_show_average()}</span> 
-                            <input
-                                id="checkbox"
-                                type="checkbox"
-                                onclick={show_avg_onclick.clone()}
-                                id={idx.to_string()}
-                                checked={*show_average}
-                                />
+                            <div>
+                                <input
+                                    id="checkbox"
+                                    type="checkbox"
+                                    class={CHECKBOX_INPUT_CSS}
+                                    onclick={show_avg_onclick.clone()}
+                                    id={idx.to_string()}
+                                    checked={*show_average}
+                                    />
+                            </div>
                         </label>
                     </div>
                     <div class="relative">

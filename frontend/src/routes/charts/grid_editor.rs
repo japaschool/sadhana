@@ -62,12 +62,15 @@ pub fn grid_editor(props: &Props) -> Html {
             <div class="relative" key={p.id.clone()} >
                 <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
                     <span class=""><i class="icon-tick"></i>{format!(" {}: ", p.practice)}</span>
-                    <input
-                        type="checkbox"
-                        onclick={checkbox_onclick.clone()}
-                        id={p.id.clone()}
-                        checked={report.practices.contains(&p.id)}
-                        />
+                    <div>
+                        <input
+                            type="checkbox"
+                            class={CHECKBOX_INPUT_CSS}
+                            onclick={checkbox_onclick.clone()}
+                            id={p.id.clone()}
+                            checked={report.practices.contains(&p.id)}
+                            />
+                    </div>
                 </label>
             </div>
         }

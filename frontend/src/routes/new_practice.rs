@@ -201,11 +201,14 @@ pub fn new_practice(props: &Props) -> Html {
                         <div class="relative">
                             <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
                                 <span><i class="icon-tick"></i>{format!(" {}: ", Locale::current().is_required())}</span>
-                                <input
+                                <div>
+                                    <input
                                     id="checkbox"
                                     type="checkbox"
+                                    class={CHECKBOX_INPUT_CSS}
                                     onclick={required_onclick.clone()}
                                     />
+                                </div>
                             </label>
                             <div class="pt-2">
                                 <p class="text-xs text-zinc-500 dark:text-zinc-200">{Locale::current().is_required_memo()}</p>

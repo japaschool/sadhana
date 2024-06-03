@@ -513,12 +513,15 @@ pub fn home() -> Html {
                                     <div class="relative" key={ practice.clone() } >
                                         <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
                                             <span class=""><i class="icon-tick"></i>{ format!(" {}: ", practice) }</span>
-                                            <input
+                                            <div class="flex">
+                                                <input
                                                 type="checkbox"
+                                                class={CHECKBOX_INPUT_CSS}
                                                 onclick={ checkbox_onclick.clone() }
                                                 id={ idx.to_string() }
                                                 checked={ value.iter().find_map(|v| v.as_bool()).unwrap_or(false) }
                                                 />
+                                            </div>
                                         </label>
                                     </div>
                                     },
