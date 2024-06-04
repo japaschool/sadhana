@@ -23,6 +23,45 @@ pub fn help() -> Html {
         })
     };
 
+    let yt_links = [
+        (
+            Locale::current().help_registration(),
+            "Hw1DQ3sRNAk?si=lpVPuUCQp8j-xJmC",
+        ),
+        (
+            Locale::current().help_ios_web_app(),
+            "KBViu8I4cJI?si=j-PwU1VGld1Yoa6z",
+        ),
+        (
+            Locale::current().help_add_practice(),
+            "cbQ5aVXvXiU?si=dPGawgCnPL8C1yzo",
+        ),
+        (
+            Locale::current().help_rename_practice(),
+            "jVfngYlbA68?si=xwMbf4WgtnGih5bj",
+        ),
+        (
+            Locale::current().help_add_graph_report(),
+            "gJ9jqB-nGtg?si=kNgEOfzfgWE99wco",
+        ),
+        (
+            Locale::current().help_graph_show_avg(),
+            "qqLOm_HZYWk?si=pOLdH4lBKoiYkjvY",
+        ),
+        (
+            Locale::current().help_graph_add_practice(),
+            "WY8LUyf_NaM?si=FxLay9PK9EDzXYlL",
+        ),
+        (
+            Locale::current().help_graph_bar_chart_layouts(),
+            "QbW1nANFX-w?si=fmBqDzuncfP0XlfU",
+        ),
+        (
+            Locale::current().help_add_table_report(),
+            "Bg8eAmoT-_I?si=RNpD3jYqs8RKxSjH",
+        ),
+    ];
+
     html! {
         <BlankPage
             show_footer={ctx.is_authenticated()}
@@ -32,58 +71,20 @@ pub fn help() -> Html {
             <div class={BODY_DIV_SPACE_10_CSS}>
                 <div class="text-center">
                     <h5 class="mb-4 text-xl font-medium leading-tight">{Locale::current().help_faq()}</h5>
-                    <SummaryDetails label={Locale::current().help_registration()}>
-                        <div class="aspect-video">
-                            <iframe
-                                class="w-full h-full"
-                                src="https://www.youtube.com/embed/Hw1DQ3sRNAk?si=lpVPuUCQp8j-xJmC"
-                                title="YouTube video player"
-                                frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                referrerpolicy="strict-origin-when-cross-origin"
-                                allowfullscreen=true
-                                />
-                        </div>
-                    </SummaryDetails>
-                    <SummaryDetails label={Locale::current().help_add_practice()}>
-                        <div class="aspect-video">
-                            <iframe
-                                class="w-full h-full"
-                                src="https://www.youtube.com/embed/cbQ5aVXvXiU?si=dPGawgCnPL8C1yzo"
-                                title="YouTube video player"
-                                frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                referrerpolicy="strict-origin-when-cross-origin"
-                                allowfullscreen=true
-                                />
-                        </div>
-                    </SummaryDetails>
-                    <SummaryDetails label={Locale::current().help_rename_practice()}>
-                        <div class="aspect-video">
-                            <iframe
-                                class="w-full h-full"
-                                src="https://www.youtube.com/embed/jVfngYlbA68?si=xwMbf4WgtnGih5bj"
-                                title="YouTube video player"
-                                frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                referrerpolicy="strict-origin-when-cross-origin"
-                                allowfullscreen=true
-                                />
-                        </div>
-                    </SummaryDetails>
-                    <SummaryDetails label={Locale::current().help_add_graph_report()}>
-                        <div class="aspect-video">
-                            <iframe
-                                class="w-full h-full"
-                                src="https://www.youtube.com/embed/gJ9jqB-nGtg?si=kNgEOfzfgWE99wco"
-                                title="YouTube video player"
-                                frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                referrerpolicy="strict-origin-when-cross-origin"
-                                allowfullscreen=true
-                                />
-                        </div>
-                    </SummaryDetails>
+                    {for yt_links.iter().map(|(title, link)| html!{
+                        <SummaryDetails label={title.to_string()}>
+                            <div class="aspect-video">
+                                <iframe
+                                    class="w-full h-full"
+                                    src={format!("https://www.youtube.com/embed/{link}")}
+                                    frameborder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    referrerpolicy="strict-origin-when-cross-origin"
+                                    allowfullscreen=true
+                                    />
+                            </div>
+                        </SummaryDetails>
+                    })}
                 </div>
             </div>
             if ctx.is_authenticated() {
