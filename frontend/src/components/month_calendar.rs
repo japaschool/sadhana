@@ -119,16 +119,16 @@ pub fn month_calendar(props: &Props) -> Html {
                             <div>
                                 <button
                                     type="button"
-                                    class="transition ease-in-out duration-100 inline-flex cursor-pointer hover:bg-gray-200 p-1 rounded-full"
+                                    class="transition ease-in-out duration-100 inline-flex cursor-pointer can-hover:hover:bg-gray-200 p-1 rounded-full"
                                     onclick={prev_month_onclick}
                                     >
-                                    <svg class="h-6 w-6 text-gray-500 dark:text-white inline-flex"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg class="h-6 w-6 text-gray-500 dark:text-white inline-flex" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                                     </svg>
                                 </button>
                                 <button
                                     type="button"
-                                    class="transition ease-in-out duration-100 inline-flex cursor-pointer hover:bg-gray-200 p-1 rounded-full"
+                                    class="transition ease-in-out duration-100 inline-flex cursor-pointer can-hover:hover:bg-gray-200 p-1 rounded-full"
                                     onclick={next_month_onclick}
                                     >
                                     <svg class="h-6 w-6 text-gray-500 dark:text-white inline-flex"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
