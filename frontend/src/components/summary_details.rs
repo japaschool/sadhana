@@ -14,7 +14,7 @@ pub fn summary_details(props: &Props) -> Html {
                 <div class="items-center inline-flex justify-center rotate-180 transform transition group-open:-rotate-90 absolute left-0 mb-auto ml-auto">
                     <i class="icon-chevron-left"></i>
                 </div>
-                <div class="transition pl-4 hover:opacity-50">{props.label.to_string()}</div>
+                <p class="transition can-hover:hover:opacity-50 pl-4 text-left">{props.label.to_string()}</p>
             </summary>
             <div class="group-open:max-h-screen focus-within:max-h-screen max-h-0 px-4 overflow-hidden">
                 {props.children.clone()}

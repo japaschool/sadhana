@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 const defaultTheme = require("tailwindcss/defaultTheme");
+const plugin = require('tailwindcss/plugin')
 
 module.exports = {
   darkMode: 'class',
@@ -29,6 +30,8 @@ module.exports = {
     }
   },
   plugins: [
-    // require('@tailwindcss/forms'),
+    plugin(function ({ addVariant }) {
+      addVariant('can-hover', '@media (hover: hover) and (pointer: fine)')
+    })
   ]
 };
