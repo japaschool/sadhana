@@ -96,14 +96,16 @@ pub async fn get_report_data(
     state: web::Data<AppState>,
     req: HttpRequest,
     params: web::Query<ReportDataQueryParams>,
-    _path: web::Path<CobSlug>,
+    path: web::Path<CobSlug>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
+    let cob = path.into_inner();
 
-    let data =
-        web::block(move || ReportEntry::get_report_data(&mut conn, &user_id, &params.duration))
-            .await??;
+    let data = web::block(move || {
+        ReportEntry::get_report_data(&mut conn, &user_id, &cob, &params.duration)
+    })
+    .await??;
     Ok(HttpResponse::Ok().json(ReportResponse::from(data)))
 }
 

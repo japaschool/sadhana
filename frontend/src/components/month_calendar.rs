@@ -16,7 +16,7 @@ use crate::{
 pub struct Props {
     pub selected_date: NaiveDate,
     pub date_onchange: Callback<NaiveDate>,
-    pub close: Callback<()>,
+    pub close: Callback<MouseEvent>,
     #[prop_or_default]
     pub highlight_date: Option<Callback<Rc<NaiveDate>, bool>>, //TODO:
 }
@@ -72,8 +72,8 @@ pub fn month_calendar(props: &Props) -> Html {
 
     let cancel_onclick = {
         let close = props.close.clone();
-        Callback::from(move |_| {
-            close.emit(());
+        Callback::from(move |e| {
+            close.emit(e);
         })
     };
 
@@ -87,16 +87,16 @@ pub fn month_calendar(props: &Props) -> Html {
             let selected_date =
                 NaiveDate::from_ymd_opt(month_start.year(), month_start.month(), day).unwrap();
             parent_cb.emit(selected_date);
-            close.emit(());
+            close.emit(e);
         })
     };
 
     let today_onclick = {
         let parent_cb = props.date_onchange.clone();
         let close = props.close.clone();
-        Callback::from(move |_| {
+        Callback::from(move |e| {
             parent_cb.emit(today);
-            close.emit(());
+            close.emit(e);
         })
     };
 

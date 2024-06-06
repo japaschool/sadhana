@@ -1,4 +1,5 @@
 use actix_web::{web, HttpResponse};
+use chrono::Local;
 use common::{error::AppError, ReportDuration};
 use serde::Deserialize;
 use uuid::Uuid;
@@ -26,10 +27,12 @@ pub async fn get_shared_report_data(
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user_id = path.into_inner();
+    let cob = Local::now().date_naive();
 
-    let data =
-        web::block(move || ReportEntry::get_report_data(&mut conn, &user_id, &params.duration))
-            .await??;
+    let data = web::block(move || {
+        ReportEntry::get_report_data(&mut conn, &user_id, &cob, &params.duration)
+    })
+    .await??;
 
     Ok(HttpResponse::Ok().json(ReportResponse::from(data)))
 }
