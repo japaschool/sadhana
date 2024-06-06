@@ -7,7 +7,7 @@ use regex::Regex;
 use wasm_bindgen::JsCast;
 use web_sys::{HtmlElement, HtmlInputElement, VisibilityState};
 use yew::prelude::*;
-use yew_hooks::{use_async, use_bool_toggle, use_list};
+use yew_hooks::{use_async, use_list};
 
 use crate::{
     components::{
@@ -45,7 +45,6 @@ lazy_static! {
 #[function_component(Home)]
 pub fn home() -> Html {
     let selected_date = use_state(|| Local::now().date_naive());
-    let show_month_cal = use_bool_toggle(false);
 
     // A copy of backend data with local changes
     let local_diary_entry = use_list(Vec::new());
@@ -399,20 +398,6 @@ pub fn home() -> Html {
         })
     };
 
-    let month_cal_onclick = {
-        let show_month_cal = show_month_cal.clone();
-        Callback::from(move |_| {
-            show_month_cal.toggle();
-        })
-    };
-
-    let month_cal_cancel = {
-        let show_month_cal = show_month_cal.clone();
-        Callback::from(move |_| {
-            show_month_cal.toggle();
-        })
-    };
-
     let add_duration_onclick = {
         let idx = add_duration_prompt_idx.clone();
         Callback::from(move |e: MouseEvent| {
@@ -425,14 +410,11 @@ pub fn home() -> Html {
         })
     };
 
-    let month_cal_button = HeaderButtonProps::month_calendar(month_cal_onclick);
-
     let calendar_props = CalendarProps::new(
         *selected_date,
         selected_date_onchange.clone(),
         cal_should_highlight,
-        *show_month_cal,
-        month_cal_cancel,
+        true,
     );
 
     let edit_practices_button = HeaderButtonProps::new_redirect(
@@ -469,7 +451,6 @@ pub fn home() -> Html {
 
     html! {
         <BlankPage
-            left_button={month_cal_button}
             right_button={edit_practices_button}
             show_footer=true
             loading={diary_entry.loading}

@@ -41,7 +41,6 @@ pub struct CalendarProps {
     pub highlight_date: Option<Callback<Rc<NaiveDate>, bool>>,
     pub date_onchange: Callback<NaiveDate>,
     pub show_month_calendar: bool,
-    pub month_calendar_onclose: Callback<()>,
 }
 
 impl CalendarProps {
@@ -50,14 +49,12 @@ impl CalendarProps {
         date_onchange: Callback<NaiveDate>,
         highlight_date: Callback<Rc<NaiveDate>, bool>,
         show_month_calendar: bool,
-        month_calendar_onclose: Callback<()>,
     ) -> Self {
         Self {
             show_month_calendar,
             selected_date,
             highlight_date: Some(highlight_date),
             date_onchange,
-            month_calendar_onclose,
         }
     }
 
@@ -67,7 +64,6 @@ impl CalendarProps {
             selected_date,
             highlight_date: None,
             date_onchange,
-            month_calendar_onclose: Callback::default(),
         }
     }
 }
@@ -202,22 +198,19 @@ impl HeaderButtonProps {
     }
 }
 
-fn header_button(
-    button_props: &Option<HeaderButtonProps>,
-    button2_props: &Option<HeaderButtonProps>,
-    nav: Navigator,
-) -> Html {
-    if let Some(ref bp) = button_props {
-        let css = format!(
-            "{} {HEADER_BUTTON_CSS}",
-            if bp.label.is_some() {
-                "text-base font-bold"
-            } else {
-                "text-xl"
-            }
-        );
+fn header_button(buttons: &[&HeaderButtonProps], nav: Navigator) -> Html {
+    let css = format!(
+        "{} {HEADER_BUTTON_CSS}",
+        if buttons.iter().any(|p| p.label.is_some()) {
+            "text-base font-bold"
+        } else {
+            "text-xl"
+        }
+    );
 
-        let button = |props: &HeaderButtonProps| {
+    html! {
+        <span>
+        {for buttons.iter().map(|props| {
             let nav = nav.clone();
 
             let onclick = {
@@ -232,25 +225,15 @@ fn header_button(
             };
 
             html! {
-                <button type={props.btn_type.as_str()} class={css} onclick={onclick}>
+                <button type={props.btn_type.as_str()} class={css.clone()} onclick={onclick}>
                     <i class={props.icon_css.to_owned().unwrap_or_default()}></i>
                     if let Some(l) = props.label.as_ref() {
                         {l}
                     }
                 </button>
             }
-        };
-
-        html! {
-            <span>
-                {button.clone()(bp)}
-                if let Some(bp) = button2_props {
-                    {button(bp)}
-                }
-            </span>
-        }
-    } else {
-        html! {}
+        })}
+        </span>
     }
 }
 
@@ -267,6 +250,7 @@ pub fn blank_page(props: &Props) -> Html {
     let loading = use_bool_toggle(false);
     let conn_status_channel = BroadcastChannel::new("ConnectionStatus").ok();
     let online = use_bool_toggle(true);
+    let show_month_cal = use_bool_toggle(false);
 
     if let Some(cc) = conn_status_channel {
         let online = online.clone();
@@ -311,6 +295,29 @@ pub fn blank_page(props: &Props) -> Html {
         }
     };
 
+    let month_cal_toggle = {
+        let show_month_cal = show_month_cal.clone();
+        Callback::from(move |_| {
+            show_month_cal.toggle();
+        })
+    };
+
+    let month_cal_button = props.calendar.as_ref().and_then(|cal| {
+        cal.show_month_calendar
+            .then(|| HeaderButtonProps::month_calendar(month_cal_toggle.clone()))
+    });
+
+    let left_buttons = month_cal_button
+        .iter()
+        .chain(props.left_button.iter())
+        .collect::<Vec<_>>();
+
+    let right_buttons = props
+        .right_button
+        .iter()
+        .chain(props.right_button2.iter())
+        .collect::<Vec<_>>();
+
     html! {
         <>
             <div class="bg-hero dark:bg-herod bg-no-repeat bg-cover bg-center h-screen w-full fixed -z-10" />
@@ -340,8 +347,8 @@ pub fn blank_page(props: &Props) -> Html {
                             <div class="relative">
                                 <div class="relative sm:max-w-md md:max-w-md lg:max-w-lg xl:max-w-lg 2xl:max-w-lg mx-auto">
                                     <div class="relative flex justify-between py-10">
-                                        {header_button(&props.left_button, &None, nav.clone())}
-                                        {header_button(&props.right_button, &props.right_button2, nav.clone())}
+                                        {header_button(&left_buttons, nav.clone())}
+                                        {header_button(&right_buttons, nav.clone())}
                                     </div>
                                 </div>
                             </div>
@@ -361,11 +368,11 @@ pub fn blank_page(props: &Props) -> Html {
                                 }})
                             }
                             if let Some(cal) = props.calendar.as_ref() {
-                                if cal.show_month_calendar {
+                                if *show_month_cal {
                                     <MonthCalendar
                                         selected_date={cal.selected_date}
                                         date_onchange={cal.date_onchange.clone()}
-                                        close={cal.month_calendar_onclose.clone()}
+                                        close={month_cal_toggle.clone()}
                                         />
                                 }
                             }
