@@ -1,4 +1,3 @@
-use chrono::{Local, NaiveDate};
 use common::error::AppError;
 use gloo::storage::{LocalStorage, Storage};
 use gloo_dialogs::prompt;
@@ -14,6 +13,7 @@ use crate::{
         list_errors::ListErrors,
     },
     css::*,
+    hooks::SessionStateContext,
     i18n::Locale,
     model::{PracticeDataType, Yatra, YatraData},
     routes::AppRoute,
@@ -28,16 +28,16 @@ const SELECTED_YATRA_ID_KEY: &str = "selected_yatra";
 
 #[function_component(Yatras)]
 pub fn yatras() -> Html {
+    let session_ctx = use_context::<SessionStateContext>().expect("No session state found");
     let nav = use_navigator().unwrap();
     let yatras = use_async(async move { get_user_yatras().await.map(|y| y.yatras) });
     let selected_yatra = use_state(|| None::<Yatra>);
-    let selected_date = use_state(|| Local::now().date_naive());
     let data = {
-        let selected_date = selected_date.clone();
+        let session = session_ctx.clone();
         let selected_yatra = selected_yatra.clone();
         use_async(async move {
             if let Some(y) = selected_yatra.as_ref() {
-                get_yatra_data(&y.id, &selected_date).await
+                get_yatra_data(&y.id, &session.selected_date).await
             } else {
                 Ok(YatraData::default())
             }
@@ -100,18 +100,11 @@ pub fn yatras() -> Html {
 
     {
         let data = data.clone();
-        use_effect_with((selected_yatra.clone(), selected_date.clone()), move |_| {
+        use_effect_with((selected_yatra.clone(), session_ctx.clone()), move |_| {
             data.run();
             || ()
         });
     }
-
-    let selected_date_onchange = {
-        let selected = selected_date.clone();
-        Callback::from(move |new_date: NaiveDate| {
-            selected.set(new_date);
-        })
-    };
 
     let yatra_onchange = {
         let selected = selected_yatra.clone();
@@ -263,7 +256,7 @@ pub fn yatras() -> Html {
                     HeaderButtonProps::blank()
                 }
             }
-            calendar={CalendarProps::week(*selected_date, selected_date_onchange)}
+            calendar={CalendarProps::no_highlights()}
             >
             {
                 if !yatras.loading

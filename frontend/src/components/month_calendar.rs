@@ -9,13 +9,12 @@ use yew::prelude::*;
 
 use crate::{
     css::POPUP_BG_CSS,
+    hooks::SessionStateContext,
     i18n::{Locale, DAYS},
 };
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
-    pub selected_date: NaiveDate,
-    pub date_onchange: Callback<NaiveDate>,
     pub close: Callback<MouseEvent>,
     #[prop_or_default]
     pub highlight_date: Option<Callback<Rc<NaiveDate>, bool>>, //TODO:
@@ -26,8 +25,14 @@ const DAY_CSS: & str = "cursor-pointer text-center text-md rounded-full leading-
 #[function_component(MonthCalendar)]
 pub fn month_calendar(props: &Props) -> Html {
     let today: NaiveDate = Local::now().date_naive();
+    let session_ctx = use_context::<SessionStateContext>().expect("No session state ctx found");
     let month_start = use_state(|| {
-        NaiveDate::from_ymd_opt(props.selected_date.year(), props.selected_date.month(), 1).unwrap()
+        NaiveDate::from_ymd_opt(
+            session_ctx.selected_date.year(),
+            session_ctx.selected_date.month(),
+            1,
+        )
+        .unwrap()
     });
     let num_blank_days = month_start.weekday().number_from_monday();
     let next_month_start = month_start.checked_add_months(Months::new(1)).unwrap();
@@ -40,7 +45,7 @@ pub fn month_calendar(props: &Props) -> Html {
             && month_start.month() == today.month()
             && month_start.year() == today.year()
     };
-    let is_selected = |day| props.selected_date.day() as i64 == day;
+    let is_selected = |day| session_ctx.selected_date.day() as i64 == day;
 
     let day_class = |day| {
         let color_css = match (is_selected(day), is_today(day)) {
@@ -78,24 +83,24 @@ pub fn month_calendar(props: &Props) -> Html {
     };
 
     let day_onclick = {
-        let parent_cb = props.date_onchange.clone();
         let month_start = month_start.clone();
         let close = props.close.clone();
+        let session = session_ctx.clone();
         Callback::from(move |e: MouseEvent| {
             let input: HtmlInputElement = e.target_unchecked_into();
             let day: u32 = input.id().parse().unwrap();
             let selected_date =
                 NaiveDate::from_ymd_opt(month_start.year(), month_start.month(), day).unwrap();
-            parent_cb.emit(selected_date);
+            session.dispatch(selected_date);
             close.emit(e);
         })
     };
 
     let today_onclick = {
-        let parent_cb = props.date_onchange.clone();
+        let session = session_ctx.clone();
         let close = props.close.clone();
         Callback::from(move |e| {
-            parent_cb.emit(today);
+            session.dispatch(today);
             close.emit(e);
         })
     };

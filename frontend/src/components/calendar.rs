@@ -4,12 +4,10 @@ use chrono::{prelude::*, Days};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
-use crate::i18n::Locale;
+use crate::{hooks::SessionStateContext, i18n::Locale};
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
-    pub selected_date: NaiveDate,
-    pub date_onchange: Callback<NaiveDate>,
     #[prop_or_default]
     pub highlight_date: Option<Callback<Rc<NaiveDate>, bool>>,
 }
@@ -27,9 +25,11 @@ pub const SELECTED_DATE_COLOR_CSS: &str = "border-2 border-amber-400";
 #[function_component(Calendar)]
 pub fn calendar(props: &Props) -> Html {
     let today: NaiveDate = Local::now().date_naive();
+    let session_state =
+        use_context::<SessionStateContext>().expect("No session state context found");
 
     let week = {
-        let d = props.selected_date.week(Weekday::Mon).first_day();
+        let d = session_state.selected_date.week(Weekday::Mon).first_day();
         let mut res = vec![d];
         for i in 1..7 {
             res.push(d.checked_add_days(Days::new(i)).unwrap());
@@ -37,48 +37,50 @@ pub fn calendar(props: &Props) -> Html {
         res
     };
 
-    let selected_date_str = props
+    let selected_date_str = session_state
         .selected_date
         .format_localized("%A %e %B %Y", Locale::current().chrono())
         .to_string();
 
     let onclick_date = {
-        let cb = props.date_onchange.clone();
+        let ss = session_state.clone();
         Callback::from(move |ev: MouseEvent| {
             let input: HtmlInputElement = ev.target_unchecked_into();
             let new_date = NaiveDate::parse_from_str(input.id().as_str(), DATE_FORMAT).unwrap();
-            cb.emit(new_date);
+            ss.dispatch(new_date);
         })
     };
 
     let next_week_onclick = {
-        let cb = props.date_onchange.clone();
-        let selected_date = props.selected_date;
+        let selected_date = session_state.selected_date;
+        let ss = session_state.clone();
         Callback::from(move |_: MouseEvent| {
-            if selected_date.weekday() == Weekday::Sun {
-                cb.emit(selected_date.succ_opt().unwrap());
+            let new_date = if selected_date.weekday() == Weekday::Sun {
+                selected_date.succ_opt().unwrap()
             } else {
-                cb.emit(selected_date.checked_add_days(Days::new(7)).unwrap());
-            }
+                selected_date.checked_add_days(Days::new(7)).unwrap()
+            };
+            ss.dispatch(new_date);
         })
     };
 
     let prev_week_onclick = {
-        let cb = props.date_onchange.clone();
-        let selected_date = props.selected_date;
+        let selected_date = session_state.selected_date;
+        let ss = session_state.clone();
         Callback::from(move |_: MouseEvent| {
-            if selected_date.weekday() == Weekday::Mon {
-                cb.emit(selected_date.pred_opt().unwrap());
+            let new_date = if selected_date.weekday() == Weekday::Mon {
+                selected_date.pred_opt().unwrap()
             } else {
-                cb.emit(selected_date.checked_sub_days(Days::new(7)).unwrap());
-            }
+                selected_date.checked_sub_days(Days::new(7)).unwrap()
+            };
+            ss.dispatch(new_date);
         })
     };
 
     let ondblclick = {
-        let cb = props.date_onchange.clone();
+        let ss = session_state.clone();
         Callback::from(move |_: MouseEvent| {
-            cb.emit(today);
+            ss.dispatch(today);
         })
     };
 
@@ -127,7 +129,7 @@ pub fn calendar(props: &Props) -> Html {
                 {for week.iter().map(|d| html! {
                     <div class="flex group justify-center w-16">
                         <div class="flex items-center">
-                        { calendar_day(*d == props.selected_date, d) }
+                        { calendar_day(*d == session_state.selected_date, d) }
                         </div>
                     </div>
                 })}
