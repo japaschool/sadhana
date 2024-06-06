@@ -37,33 +37,19 @@ pub struct Props {
 
 #[derive(Clone, PartialEq)]
 pub struct CalendarProps {
-    pub selected_date: NaiveDate,
     pub highlight_date: Option<Callback<Rc<NaiveDate>, bool>>,
-    pub date_onchange: Callback<NaiveDate>,
-    pub show_month_calendar: bool,
 }
 
 impl CalendarProps {
-    pub fn new(
-        selected_date: NaiveDate,
-        date_onchange: Callback<NaiveDate>,
-        highlight_date: Callback<Rc<NaiveDate>, bool>,
-        show_month_calendar: bool,
-    ) -> Self {
+    pub fn new(highlight_date: Callback<Rc<NaiveDate>, bool>) -> Self {
         Self {
-            show_month_calendar,
-            selected_date,
             highlight_date: Some(highlight_date),
-            date_onchange,
         }
     }
 
-    pub fn week(selected_date: NaiveDate, date_onchange: Callback<NaiveDate>) -> Self {
+    pub fn no_highlights() -> Self {
         Self {
-            show_month_calendar: false,
-            selected_date,
             highlight_date: None,
-            date_onchange,
         }
     }
 }
@@ -302,10 +288,10 @@ pub fn blank_page(props: &Props) -> Html {
         })
     };
 
-    let month_cal_button = props.calendar.as_ref().and_then(|cal| {
-        cal.show_month_calendar
-            .then(|| HeaderButtonProps::month_calendar(month_cal_toggle.clone()))
-    });
+    let month_cal_button = props
+        .calendar
+        .as_ref()
+        .map(|_| HeaderButtonProps::month_calendar(month_cal_toggle.clone()));
 
     let left_buttons = month_cal_button
         .iter()
@@ -367,19 +353,11 @@ pub fn blank_page(props: &Props) -> Html {
                                     </div>
                                 }})
                             }
-                            if let Some(cal) = props.calendar.as_ref() {
-                                if *show_month_cal {
-                                    <MonthCalendar
-                                        selected_date={cal.selected_date}
-                                        date_onchange={cal.date_onchange.clone()}
-                                        close={month_cal_toggle.clone()}
-                                        />
-                                }
+                            if *show_month_cal {
+                                <MonthCalendar close={month_cal_toggle.clone()} />
                             }
                             if let Some(cal) = props.calendar.as_ref() {
                                 <Calendar
-                                    selected_date={cal.selected_date}
-                                    date_onchange={cal.date_onchange.clone()}
                                     highlight_date={cal.highlight_date.clone()}
                                     />
                             }

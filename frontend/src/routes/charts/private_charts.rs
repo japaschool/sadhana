@@ -11,13 +11,12 @@ use crate::{
         list_errors::ListErrors,
     },
     css::*,
-    hooks::use_user_context,
+    hooks::{use_user_context, SessionStateContext},
     i18n::Locale,
     model::ReportData,
     routes::AppRoute,
     services::{get_user_practices, report::*},
 };
-use chrono::{Local, NaiveDate};
 use common::ReportDuration;
 use csv::Writer;
 use gloo::storage::{LocalStorage, Storage};
@@ -30,11 +29,11 @@ use yew_hooks::{use_async, use_bool_toggle, use_mount};
 
 #[function_component(Charts)]
 pub fn charts() -> Html {
+    let session_ctx = use_context::<SessionStateContext>().expect("No session state found");
     let user_ctx = use_user_context();
     let duration = use_state(|| ReportDuration::Last7Days);
     let editing = use_bool_toggle(false);
     let active_report = use_state(|| None::<Report>);
-    let selected_date = use_state(|| Local::now().date_naive());
 
     let reports = use_async(async move { get_reports().await.map(|res| res.reports) });
 
@@ -81,10 +80,10 @@ pub fn charts() -> Html {
 
     let report_data = {
         let duration = duration.clone();
-        let selected_date = selected_date.clone();
+        let session = session_ctx.clone();
         use_async(async move {
-            log::debug!("Getting report data for {:?}", *selected_date);
-            get_report_data(&selected_date, &duration)
+            log::debug!("Getting report data for {:?}", session.selected_date);
+            get_report_data(&session.selected_date, &duration)
                 .await
                 .map(|res| res.values)
         })
@@ -101,7 +100,7 @@ pub fn charts() -> Html {
     {
         // Fetch data from server on date change
         let report_data = report_data.clone();
-        use_effect_with(selected_date.clone(), move |_| {
+        use_effect_with(session_ctx.clone(), move |_| {
             report_data.run();
             || ()
         });
@@ -168,10 +167,10 @@ pub fn charts() -> Html {
 
     let download_onclick = {
         let duration = duration.clone();
-        let selected_date = selected_date.clone();
+        let session = session_ctx.clone();
         Callback::from(move |_: MouseEvent| {
             let duration = duration.clone();
-            let selected_date = selected_date.clone();
+            let selected_date = session.selected_date;
             spawn_local(async move {
                 get_report_data(&selected_date, &duration)
                     .await
@@ -280,26 +279,12 @@ pub fn charts() -> Html {
         _ => html! {},
     };
 
-    let selected_date_onchange = {
-        let selected = selected_date.clone();
-        Callback::from(move |new_date: NaiveDate| {
-            selected.set(new_date);
-        })
-    };
-
-    let calendar_props = CalendarProps::new(
-        *selected_date,
-        selected_date_onchange.clone(),
-        Callback::from(move |_| false),
-        true,
-    );
-
     html! {
         <form {onsubmit} {onreset}>
             <BlankPage
                 show_footer={!*editing}
                 selected_page={AppRoute::Charts}
-                calendar={calendar_props}
+                calendar={CalendarProps::no_highlights()}
                 loading={
                     all_practices.loading
                     || report_data.loading

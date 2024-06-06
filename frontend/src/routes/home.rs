@@ -16,6 +16,7 @@ use crate::{
         prompt::Prompt,
     },
     css::*,
+    hooks::SessionStateContext,
     i18n::{Locale, PracticeName},
     model::{DiaryEntry, PracticeDataType, PracticeEntryValue},
     services::{get_diary_day, get_incomplete_days, save_diary_entry},
@@ -44,7 +45,7 @@ lazy_static! {
 
 #[function_component(Home)]
 pub fn home() -> Html {
-    let selected_date = use_state(|| Local::now().date_naive());
+    let session_ctx = use_context::<SessionStateContext>().expect("No session state found");
 
     // A copy of backend data with local changes
     let local_diary_entry = use_list(Vec::new());
@@ -53,28 +54,36 @@ pub fn home() -> Html {
     let add_duration_prompt_idx = use_state(|| None::<usize>);
 
     let diary_entry = {
-        let selected_date = selected_date.clone();
-        use_async(async move { get_diary_day(&selected_date).await.map(|je| je.diary_day) })
+        let session = session_ctx.clone();
+        use_async(async move {
+            get_diary_day(&session.selected_date)
+                .await
+                .map(|je| je.diary_day)
+        })
     };
 
     let incomplete_days = {
-        let selected = selected_date.clone();
-        use_async(async move { get_incomplete_days(&selected).await.map(|res| res.days) })
+        let session = session_ctx.clone();
+        use_async(async move {
+            get_incomplete_days(&session.selected_date)
+                .await
+                .map(|res| res.days)
+        })
     };
 
     let save_diary_day_entry = {
-        let cob = selected_date.clone();
+        let session = session_ctx.clone();
         let entry = current_entry.clone();
         let incomplete_days = incomplete_days.clone();
         use_async(async move {
             if let Some(e) = entry.as_ref() {
-                save_diary_entry(&cob, e).await.map(|_| {
+                save_diary_entry(&session.selected_date, e).await.map(|_| {
                     entry.set(None);
                     if incomplete_days
                         .data
                         .as_ref()
                         .unwrap_or(&vec![])
-                        .contains(&*cob)
+                        .contains(&session.selected_date)
                         || e.value.is_none()
                     {
                         incomplete_days.run();
@@ -124,7 +133,7 @@ pub fn home() -> Html {
         // Fetch data from server on date change
         let diary_entry = diary_entry.clone();
         let incomplete_days = incomplete_days.clone();
-        use_effect_with(selected_date.clone(), move |_| {
+        use_effect_with(session_ctx.clone(), move |_| {
             diary_entry.run();
             incomplete_days.run();
             || ()
@@ -379,13 +388,6 @@ pub fn home() -> Html {
     let onblur_duration = onblur_time_dur(false);
     let onblur_time = onblur_time_dur(true);
 
-    let selected_date_onchange = {
-        let selected = selected_date.clone();
-        Callback::from(move |new_date: NaiveDate| {
-            selected.set(new_date);
-        })
-    };
-
     let cal_should_highlight = {
         let today = Local::now().date_naive();
         let incomplete_days = incomplete_days.clone();
@@ -409,13 +411,6 @@ pub fn home() -> Html {
             }
         })
     };
-
-    let calendar_props = CalendarProps::new(
-        *selected_date,
-        selected_date_onchange.clone(),
-        cal_should_highlight,
-        true,
-    );
 
     let edit_practices_button = HeaderButtonProps::new_redirect(
         Locale::current().practices(),
@@ -455,7 +450,7 @@ pub fn home() -> Html {
             show_footer=true
             loading={diary_entry.loading}
             selected_page={AppRoute::Home}
-            calendar={calendar_props}
+            calendar={CalendarProps::new(cal_should_highlight)}
             >
             if let Some(idx) = *add_duration_prompt_idx {
             <Prompt
