@@ -1,6 +1,10 @@
 use super::base::ChartsBase;
 use crate::{
-    components::{blank_page::BlankPage, list_errors::ListErrors},
+    components::{
+        blank_page::{BlankPage, CalendarProps},
+        list_errors::ListErrors,
+    },
+    hooks::SessionStateContext,
     routes::charts::{Report, SelectedReportId},
     services::{
         get_shared_practices,
@@ -19,6 +23,7 @@ pub struct SharedChartsProps {
 
 #[function_component(SharedCharts)]
 pub fn shared_charts(props: &SharedChartsProps) -> Html {
+    let session_ctx = use_context::<SessionStateContext>().expect("No session state found");
     let active_report = use_state(|| None::<Report>);
     let duration = use_state(|| ReportDuration::Last30Days);
 
@@ -47,8 +52,9 @@ pub fn shared_charts(props: &SharedChartsProps) -> Html {
     let report_data = {
         let duration = duration.clone();
         let share_id = props.share_id.clone();
+        let session = session_ctx.clone();
         use_async(async move {
-            get_shared_report_data(&share_id, &duration)
+            get_shared_report_data(&share_id, &session.selected_date, &duration)
                 .await
                 .map(|res| res.values)
         })
@@ -65,6 +71,14 @@ pub fn shared_charts(props: &SharedChartsProps) -> Html {
             practices.run();
             user_info.run();
             report_data.run();
+        });
+    }
+
+    {
+        let report_data = report_data.clone();
+        use_effect_with(session_ctx.clone(), move |_| {
+            report_data.run();
+            || ()
         });
     }
 
@@ -108,6 +122,7 @@ pub fn shared_charts(props: &SharedChartsProps) -> Html {
                 || practices.loading
                 || report_data.loading
             }
+            calendar={CalendarProps::no_highlights()}
             header_label={user_info.data.as_ref().map(|u| u.name.to_owned()).unwrap_or_default()}
             >
             <ListErrors error={reports.error.clone()} />
