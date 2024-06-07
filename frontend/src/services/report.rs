@@ -20,9 +20,11 @@ pub async fn get_report_data(
 /// Get shared chart data for a practice
 pub async fn get_shared_report_data(
     user_id: &str,
+    end_date: &NaiveDate,
     duration: &ReportDuration,
 ) -> Result<ReportData, AppError> {
-    request_get(format!("/share/{user_id}?duration={duration}").to_string()).await
+    request_get(format!("/share/{user_id}?end_date={end_date}&duration={duration}").to_string())
+        .await
 }
 
 pub async fn get_reports() -> Result<ReportsResponse, AppError> {

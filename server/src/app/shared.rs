@@ -1,5 +1,5 @@
 use actix_web::{web, HttpResponse};
-use chrono::Local;
+use chrono::NaiveDate;
 use common::{error::AppError, ReportDuration};
 use serde::Deserialize;
 use uuid::Uuid;
@@ -15,6 +15,7 @@ use super::{
 #[derive(Deserialize, Debug)]
 pub struct ReportDataQueryParams {
     duration: ReportDuration,
+    end_date: NaiveDate,
 }
 
 type UserIdSlug = Uuid;
@@ -27,10 +28,9 @@ pub async fn get_shared_report_data(
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user_id = path.into_inner();
-    let cob = Local::now().date_naive();
 
     let data = web::block(move || {
-        ReportEntry::get_report_data(&mut conn, &user_id, &cob, &params.duration)
+        ReportEntry::get_report_data(&mut conn, &user_id, &params.end_date, &params.duration)
     })
     .await??;
 
