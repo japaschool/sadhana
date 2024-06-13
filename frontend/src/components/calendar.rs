@@ -17,8 +17,10 @@ pub const DATE_FORMAT: &str = "%Y-%m-%d";
 const DATE_CSS: &str =
     "flex group rounded-full mt-2 mx-1 transition-all duration-300 cursor-pointer justify-center";
 
-pub const HOVER_TODAY_DATE_COLOR_CSS: &str = "hover:bg-amber-400 dark:hover:bg-amber-400";
-pub const HOVER_DATE_COLOR_CSS: &str = "hover:bg-zinc-300 dark:hover:bg-slate-800";
+pub const HOVER_TODAY_DATE_COLOR_CSS: &str =
+    "can-hover:hover:bg-amber-400 dark:can-hover:hover:bg-amber-400";
+pub const HOVER_DATE_COLOR_CSS: &str =
+    "can-hover:hover:bg-zinc-300 dark:can-hover:hover:bg-slate-800";
 pub const SELECTED_TODAY_DATE_COLOR_CSS: &str = "bg-amber-400";
 pub const SELECTED_DATE_COLOR_CSS: &str = "border-2 border-amber-400";
 
