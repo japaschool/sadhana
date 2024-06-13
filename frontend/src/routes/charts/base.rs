@@ -39,7 +39,7 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
     let duration = use_state(|| {
         let res = LocalStorage::get::<ReportDuration>(DURATION_STORAGE_KEY);
         log::debug!("Duration in storage {:?}", res);
-        res.unwrap_or(ReportDuration::Last7Days)
+        res.unwrap_or(ReportDuration::Week)
     });
 
     {
@@ -230,10 +230,12 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
                 <div class="relative">
                     <select class={INPUT_CSS} id="duration" onchange={duration_onchange.clone()}>
                         { for [
-                            (ReportDuration::Last7Days, Locale::current().last_week()),
-                            (ReportDuration::Last30Days, Locale::current().last_month()),
-                            (ReportDuration::Last90Days, Locale::current().last_quarter()),
-                            (ReportDuration::Last365Days, Locale::current().last_year()),
+                            (ReportDuration::Week, Locale::current().report_dur_week()),
+                            (ReportDuration::Month, Locale::current().report_dur_month()),
+                            (ReportDuration::Quarter, Locale::current().report_dur_quarter()),
+                            (ReportDuration::HalfYear, Locale::current().report_dur_half_year()),
+                            (ReportDuration::Year, Locale::current().report_dur_year()),
+                            (ReportDuration::AllData, Locale::current().report_dur_all_data()),
                             ].iter().map(|(dur, label)| html!{
                                 <option
                                     class={"text-black"}

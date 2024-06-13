@@ -25,7 +25,7 @@ pub struct SharedChartsProps {
 pub fn shared_charts(props: &SharedChartsProps) -> Html {
     let session_ctx = use_context::<SessionStateContext>().expect("No session state found");
     let active_report = use_state(|| None::<Report>);
-    let duration = use_state(|| ReportDuration::Last30Days);
+    let duration = use_state(|| ReportDuration::Month);
 
     let user_info = {
         let share_id = props.share_id.clone();
