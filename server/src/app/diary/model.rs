@@ -150,10 +150,12 @@ impl ReportEntry {
         use diesel::pg::expression::extensions::IntervalDsl;
 
         let interval = match duration {
-            ReportDuration::Last7Days => 6.days(),
-            ReportDuration::Last30Days => 29.days(),
-            ReportDuration::Last90Days => 89.days(),
-            ReportDuration::Last365Days => 364.days(),
+            ReportDuration::Week => Some(1.week()),
+            ReportDuration::Month => Some(1.month()),
+            ReportDuration::Quarter => Some(3.months()),
+            ReportDuration::HalfYear => Some(6.months()),
+            ReportDuration::Year => Some(1.year()),
+            ReportDuration::AllData => None,
         };
 
         let res = sql_query(
@@ -163,7 +165,16 @@ impl ReportEntry {
                     t.cob_date :: date
                 from
                     generate_series(
-                        $3 - $2,
+                        coalesce($3 - $2 + interval '1 day', 
+                            (
+                                -- All data option
+                                select 
+                                    coalesce(min(cob_date), now() - interval '7 days') 
+                                from 
+                                    diary 
+                                where 
+                                    user_id = $1
+                            )),
                         $3,
                         interval '1 day'
                     ) as t(cob_date)
@@ -186,7 +197,7 @@ impl ReportEntry {
         "#,
         )
         .bind::<DieselUuid, _>(user_id)
-        .bind::<Interval, _>(interval)
+        .bind::<Nullable<Interval>, _>(interval)
         .bind::<Date, _>(cob)
         .load::<Self>(conn)?;
 

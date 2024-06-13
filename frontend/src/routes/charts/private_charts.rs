@@ -31,7 +31,7 @@ use yew_hooks::{use_async, use_bool_toggle, use_mount};
 pub fn charts() -> Html {
     let session_ctx = use_context::<SessionStateContext>().expect("No session state found");
     let user_ctx = use_user_context();
-    let duration = use_state(|| ReportDuration::Last7Days);
+    let duration = use_state(|| ReportDuration::Week);
     let editing = use_bool_toggle(false);
     let active_report = use_state(|| None::<Report>);
 

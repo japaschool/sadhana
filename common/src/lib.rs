@@ -9,10 +9,12 @@ pub mod error;
 
 #[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
 pub enum ReportDuration {
-    Last7Days,
-    Last30Days,
-    Last90Days,
-    Last365Days,
+    Week,
+    Month,
+    Quarter,
+    HalfYear,
+    Year,
+    AllData,
 }
 
 impl fmt::Display for ReportDuration {
@@ -26,10 +28,12 @@ impl FromStr for ReportDuration {
 
     fn from_str(input: &str) -> Result<ReportDuration, Self::Err> {
         match input {
-            "Last7Days" => Ok(ReportDuration::Last7Days),
-            "Last30Days" => Ok(ReportDuration::Last30Days),
-            "Last90Days" => Ok(ReportDuration::Last90Days),
-            "Last365Days" => Ok(ReportDuration::Last365Days),
+            "Week" => Ok(ReportDuration::Week),
+            "Month" => Ok(ReportDuration::Month),
+            "Quarter" => Ok(ReportDuration::Quarter),
+            "HalfYear" => Ok(ReportDuration::HalfYear),
+            "Year" => Ok(ReportDuration::Year),
+            "AllData" => Ok(ReportDuration::AllData),
             _ => Err(()),
         }
     }
