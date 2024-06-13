@@ -362,14 +362,14 @@ fn to_csv_str(data: ReportData) -> Result<String, Box<dyn Error>> {
     let mut cob = None;
     let mut row = vec![];
     for entry in data.values {
-        let entry_str = entry.value.map(|v| v.to_string()).unwrap_or_default();
+        let value_str = entry.value.map(|v| v.to_string()).unwrap_or_default();
         if cob.is_none() {
             row.push(entry.cob_date.to_string());
-            row.push(entry_str);
+            row.push(value_str);
             cob = Some(entry.cob_date);
             practices.push(entry.practice);
         } else if cob == Some(entry.cob_date) {
-            row.push(entry_str);
+            row.push(value_str);
             if !practices_done {
                 practices.push(entry.practice);
             }
@@ -381,9 +381,10 @@ fn to_csv_str(data: ReportData) -> Result<String, Box<dyn Error>> {
             }
             cob = Some(entry.cob_date);
             wrt.write_record(row)?;
-            row = vec![entry.cob_date.to_string(), entry_str];
+            row = vec![entry.cob_date.to_string(), value_str];
         }
     }
+    wrt.write_record(row)?;
     let res = String::from_utf8(wrt.into_inner()?)?;
     Ok(res)
 }
