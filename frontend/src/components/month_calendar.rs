@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::collections::HashSet;
 
 use super::calendar::{
     HOVER_DATE_COLOR_CSS, HOVER_TODAY_DATE_COLOR_CSS, SELECTED_TODAY_DATE_COLOR_CSS,
@@ -6,18 +6,20 @@ use super::calendar::{
 use chrono::{Datelike, Local, Months, NaiveDate};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
+use yew_hooks::use_async;
 
 use crate::{
     css::POPUP_BG_CSS,
     hooks::SessionStateContext,
     i18n::{Locale, DAYS},
+    services::get_incomplete_days,
 };
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
     pub close: Callback<MouseEvent>,
-    #[prop_or_default]
-    pub highlight_date: Option<Callback<Rc<NaiveDate>, bool>>, //TODO:
+    #[prop_or(false)]
+    pub highlight_incomplete_dates: bool,
 }
 
 const DAY_CSS: & str = "cursor-pointer text-center text-md rounded-full leading-loose transition-all ease-in-out duration-300";
@@ -38,14 +40,14 @@ pub fn month_calendar(props: &Props) -> Html {
     let next_month_start = month_start.checked_add_months(Months::new(1)).unwrap();
     let num_days = next_month_start
         .signed_duration_since(*month_start)
-        .num_days();
+        .num_days() as u32;
 
     let is_today = |day| {
-        today.day() as i64 == day
+        today.day() == day
             && month_start.month() == today.month()
             && month_start.year() == today.year()
     };
-    let is_selected = |day| session_ctx.selected_date.day() as i64 == day;
+    let is_selected = |day| session_ctx.selected_date.day() == day;
 
     let day_class = |day| {
         let color_css = match (is_selected(day), is_today(day)) {
@@ -56,6 +58,29 @@ pub fn month_calendar(props: &Props) -> Html {
         };
         format!("text-zinc-500 dark:text-zinc-100 {DAY_CSS} {color_css}")
     };
+
+    let incomplete_days = {
+        let enabled = props.highlight_incomplete_dates;
+        let month_start = month_start.clone();
+        use_async(async move {
+            if enabled {
+                let end = next_month_start.pred_opt().unwrap();
+                get_incomplete_days(&month_start, &end)
+                    .await
+                    .map(|res| res.days.iter().map(|d| d.day()).collect::<HashSet<_>>())
+            } else {
+                Ok(HashSet::default())
+            }
+        })
+    };
+
+    {
+        let incomplete_days = incomplete_days.clone();
+        use_effect_with(month_start.clone(), move |_| {
+            incomplete_days.run();
+            || ()
+        });
+    }
 
     let next_month_onclick = {
         let month_start = month_start.clone();
@@ -160,6 +185,9 @@ pub fn month_calendar(props: &Props) -> Html {
                             })}
                             {for (1..=num_days).map(|day| html! {
                                 <div id={day.to_string()} style="width: 14.28%" class="px-1 mb-1" onclick={day_onclick.clone()} >
+                                    if incomplete_days.data.as_ref().iter().any(|data| data.contains(&day)) {
+                                        <span id={day.to_string()} class="absolute ml-5 w-2 h-2 bg-red-500 rounded-full"></span>
+                                    }
                                     <div id={day.to_string()} class={day_class(day)}>{day}</div>
                                 </div>
                             })}
