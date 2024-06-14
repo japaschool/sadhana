@@ -6,7 +6,7 @@ var CACHE = {
 
 const diaryDayPutUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}/entry');
 const diaryDayGetUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}$');
-const incompleteDaysGetUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}/incomplete-days$');
+const incompleteDaysGetUrlR = new RegExp('.*/api/diary/incomplete-days/.*');
 const dateR = /(\d{4}-\d{2}-\d{2})/;
 const cacheTtlDays = 10;
 const defaultDiaryDayKey = '/default-diary-day';

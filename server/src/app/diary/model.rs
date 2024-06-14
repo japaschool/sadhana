@@ -215,12 +215,9 @@ impl IncompleteCob {
     pub fn get_incomplete_days(
         conn: &mut PgConnection,
         user_id: &Uuid,
-        date: &NaiveDate,
+        from: &NaiveDate,
+        to: &NaiveDate,
     ) -> Result<Vec<Self>, AppError> {
-        let week = date.week(chrono::Weekday::Mon);
-        let start = week.first_day();
-        let end = week.last_day();
-
         let res = sql_query(
             r#"
             with dates as (
@@ -248,8 +245,8 @@ impl IncompleteCob {
                 and dates.cob_date < now()
             "#,
         )
-        .bind::<Date, _>(&start)
-        .bind::<Date, _>(&end)
+        .bind::<Date, _>(from)
+        .bind::<Date, _>(to)
         .bind::<DieselUuid, _>(&user_id)
         .load(conn)?;
 

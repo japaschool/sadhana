@@ -111,18 +111,21 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                     .route("", web::delete().to(app::report::delete_report)),
             )
             .service(
-                web::scope("/diary/{cob}")
-                    .route("/report", web::get().to(app::diary::api::get_report_data))
+                web::scope("/diary")
                     .route(
                         "/incomplete-days",
                         web::get().to(app::diary::api::get_incomplete_days),
                     )
-                    .route(
-                        "/entry",
-                        web::put().to(app::diary::api::upsert_diary_day_entry),
-                    )
-                    .route("", web::put().to(app::diary::api::upsert_diary_day))
-                    .route("", web::get().to(app::diary::api::get_diary_day)),
+                    .service(
+                        web::scope("/{cob}")
+                            .route("/report", web::get().to(app::diary::api::get_report_data))
+                            .route(
+                                "/entry",
+                                web::put().to(app::diary::api::upsert_diary_day_entry),
+                            )
+                            .route("", web::put().to(app::diary::api::upsert_diary_day))
+                            .route("", web::get().to(app::diary::api::get_diary_day)),
+                    ),
             ),
     )
     .service(

@@ -89,9 +89,17 @@ pub async fn save_diary_owned(cob: &NaiveDate, data: DiaryDay) -> Result<(), App
     request_put(format!("/diary/{}", cob.format("%F")), &data).await
 }
 
-/// Gets incomplete days for the week the date is in
-pub async fn get_incomplete_days(date: &NaiveDate) -> Result<IncompleteDays, AppError> {
-    request_get(format!("/diary/{}/incomplete-days", date.format("%F"))).await
+/// Gets incomplete days between passed dates
+pub async fn get_incomplete_days(
+    from: &NaiveDate,
+    to: &NaiveDate,
+) -> Result<IncompleteDays, AppError> {
+    request_get(format!(
+        "/diary/incomplete-days?from={}&to={}",
+        from.format("%F"),
+        to.format("%F")
+    ))
+    .await
 }
 
 /// Get user practice

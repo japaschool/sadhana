@@ -1,6 +1,3 @@
-use std::rc::Rc;
-
-use chrono::prelude::*;
 use gloo_events::EventListener;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -19,7 +16,7 @@ use crate::{
     hooks::SessionStateContext,
     i18n::{Locale, PracticeName},
     model::{DiaryEntry, PracticeDataType, PracticeEntryValue},
-    services::{get_diary_day, get_incomplete_days, save_diary_entry},
+    services::{get_diary_day, save_diary_entry},
 };
 
 use super::AppRoute;
@@ -62,32 +59,13 @@ pub fn home() -> Html {
         })
     };
 
-    let incomplete_days = {
-        let session = session_ctx.clone();
-        use_async(async move {
-            get_incomplete_days(&session.selected_date)
-                .await
-                .map(|res| res.days)
-        })
-    };
-
     let save_diary_day_entry = {
         let session = session_ctx.clone();
         let entry = current_entry.clone();
-        let incomplete_days = incomplete_days.clone();
         use_async(async move {
             if let Some(e) = entry.as_ref() {
                 save_diary_entry(&session.selected_date, e).await.map(|_| {
                     entry.set(None);
-                    if incomplete_days
-                        .data
-                        .as_ref()
-                        .unwrap_or(&vec![])
-                        .contains(&session.selected_date)
-                        || e.value.is_none()
-                    {
-                        incomplete_days.run();
-                    }
                 })
             } else {
                 Ok(())
@@ -100,13 +78,11 @@ pub fn home() -> Html {
         // Mostly needed to refresh the app on a phone after it was minimized to
         // pick up any concurrent changes
         let diary_entry = diary_entry.clone();
-        let incomplete_days = incomplete_days.clone();
         use_effect(move || {
             let onwakeup = Callback::from(move |_: Event| {
                 if let Some(doc) = web_sys::window().and_then(|w| w.document()) {
                     if doc.visibility_state() == VisibilityState::Visible {
                         diary_entry.run();
-                        incomplete_days.run();
                     } else {
                         // Blur active element when app minimised so its data is saved
                         if let Some(e) = doc
@@ -132,10 +108,8 @@ pub fn home() -> Html {
     {
         // Fetch data from server on date change
         let diary_entry = diary_entry.clone();
-        let incomplete_days = incomplete_days.clone();
         use_effect_with(session_ctx.clone(), move |_| {
             diary_entry.run();
-            incomplete_days.run();
             || ()
         });
     }
@@ -388,18 +362,6 @@ pub fn home() -> Html {
     let onblur_duration = onblur_time_dur(false);
     let onblur_time = onblur_time_dur(true);
 
-    let cal_should_highlight = {
-        let today = Local::now().date_naive();
-        let incomplete_days = incomplete_days.clone();
-        Callback::from(move |date: Rc<NaiveDate>| -> bool {
-            today > *date
-                && incomplete_days
-                    .data
-                    .iter()
-                    .any(|inner| inner.contains(date.as_ref()))
-        })
-    };
-
     let add_duration_onclick = {
         let idx = add_duration_prompt_idx.clone();
         Callback::from(move |e: MouseEvent| {
@@ -450,7 +412,7 @@ pub fn home() -> Html {
             show_footer=true
             loading={diary_entry.loading}
             selected_page={AppRoute::Home}
-            calendar={CalendarProps::new(cal_should_highlight)}
+            calendar={CalendarProps::new()}
             >
             if let Some(idx) = *add_duration_prompt_idx {
             <Prompt

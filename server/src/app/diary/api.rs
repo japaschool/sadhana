@@ -109,17 +109,24 @@ pub async fn get_report_data(
     Ok(HttpResponse::Ok().json(ReportResponse::from(data)))
 }
 
+#[derive(Deserialize, Debug)]
+pub struct IncompleteDaysQuery {
+    from: NaiveDate,
+    to: NaiveDate,
+}
+
 pub async fn get_incomplete_days(
     state: web::Data<AppState>,
     req: HttpRequest,
-    path: web::Path<CobSlug>,
+    query: web::Query<IncompleteDaysQuery>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
-    let cob = path.into_inner();
 
-    let res =
-        web::block(move || IncompleteCob::get_incomplete_days(&mut conn, &user_id, &cob)).await??;
+    let res = web::block(move || {
+        IncompleteCob::get_incomplete_days(&mut conn, &user_id, &query.from, &query.to)
+    })
+    .await??;
 
     Ok(HttpResponse::Ok().json(IncompleteDays {
         days: res.iter().map(|c| c.cob_date).collect(),

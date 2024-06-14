@@ -1,6 +1,3 @@
-use std::rc::Rc;
-
-use chrono::NaiveDate;
 use gloo::utils::format::JsValueSerdeExt;
 use serde::Deserialize;
 use wasm_bindgen::{closure::Closure, JsCast, JsValue};
@@ -37,19 +34,19 @@ pub struct Props {
 
 #[derive(Clone, PartialEq)]
 pub struct CalendarProps {
-    pub highlight_date: Option<Callback<Rc<NaiveDate>, bool>>,
+    pub highlight_incomplete_dates: bool,
 }
 
 impl CalendarProps {
-    pub fn new(highlight_date: Callback<Rc<NaiveDate>, bool>) -> Self {
+    pub fn new() -> Self {
         Self {
-            highlight_date: Some(highlight_date),
+            highlight_incomplete_dates: true,
         }
     }
 
     pub fn no_highlights() -> Self {
         Self {
-            highlight_date: None,
+            highlight_incomplete_dates: false,
         }
     }
 }
@@ -354,12 +351,13 @@ pub fn blank_page(props: &Props) -> Html {
                                 }})
                             }
                             if *show_month_cal {
-                                <MonthCalendar close={month_cal_toggle.clone()} />
+                                <MonthCalendar
+                                    close={month_cal_toggle.clone()}
+                                    highlight_incomplete_dates={props.calendar.as_ref().map(|cal| cal.highlight_incomplete_dates).unwrap_or(false)}
+                                    />
                             }
                             if let Some(cal) = props.calendar.as_ref() {
-                                <Calendar
-                                    highlight_date={cal.highlight_date.clone()}
-                                    />
+                                <Calendar highlight_incomplete_dates={cal.highlight_incomplete_dates} />
                             }
                             { props.children.clone() }
                         </div>

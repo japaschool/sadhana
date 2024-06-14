@@ -1,15 +1,16 @@
-use std::rc::Rc;
+use std::collections::HashSet;
 
 use chrono::{prelude::*, Days};
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
+use yew_hooks::{use_async, use_mount};
 
-use crate::{hooks::SessionStateContext, i18n::Locale};
+use crate::{hooks::SessionStateContext, i18n::Locale, services::get_incomplete_days};
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
-    #[prop_or_default]
-    pub highlight_date: Option<Callback<Rc<NaiveDate>, bool>>,
+    #[prop_or(false)]
+    pub highlight_incomplete_dates: bool,
 }
 
 pub const DATE_FORMAT: &str = "%Y-%m-%d";
@@ -43,6 +44,36 @@ pub fn calendar(props: &Props) -> Html {
         .selected_date
         .format_localized("%A %e %B %Y", Locale::current().chrono())
         .to_string();
+
+    let incomplete_days = {
+        let start = *week.first().unwrap();
+        let end = *week.last().unwrap();
+        let enabled = props.highlight_incomplete_dates;
+        use_async(async move {
+            if enabled {
+                get_incomplete_days(&start, &end)
+                    .await
+                    .map(|res| res.days.iter().map(|d| d.day()).collect::<HashSet<_>>())
+            } else {
+                Ok(HashSet::default())
+            }
+        })
+    };
+
+    {
+        let incomplete_days = incomplete_days.clone();
+        use_mount(move || {
+            incomplete_days.run();
+        });
+    }
+
+    {
+        let incomplete_days = incomplete_days.clone();
+        use_effect_with(session_state.clone(), move |_| {
+            incomplete_days.run();
+            || ()
+        });
+    }
 
     let onclick_date = {
         let ss = session_state.clone();
@@ -105,17 +136,13 @@ pub fn calendar(props: &Props) -> Html {
 
         let id = d.format(DATE_FORMAT);
 
-        let highlight = html! {
-            for props.highlight_date.iter().filter(|cb| cb.emit(Rc::new(*d))).map(|_| html! {
-                <span id={id.to_string()} class="absolute ml-4 w-2 h-2 bg-red-500 rounded-full"></span>
-            })
-        };
-
         html! {
             <div id={id.to_string()} class="text-center">
                 <p id={id.to_string()} class={ weekday_label_css }>{ &Locale::current().day_of_week(d).chars().next().unwrap() }</p>
                 <div id={id.to_string()} class={ format!("{DATE_CSS} {date_css}") } onclick={ onclick_date.clone() }>
-                    {highlight}
+                    if incomplete_days.data.as_ref().iter().any(|data| data.contains(&d.day())) {
+                        <span id={id.to_string()} class="absolute ml-4 w-2 h-2 bg-red-500 rounded-full"></span>
+                    }
                     <p id={id.to_string()} class={ date_label_css }>{ d.format("%-d").to_string() }</p>
                 </div>
             </div>
