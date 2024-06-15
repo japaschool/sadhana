@@ -128,51 +128,58 @@ pub fn user_practices() -> Html {
         })
     };
 
+    fn display_practice(p: &UserPractice) -> String {
+        format!(
+            "{} {}",
+            p.practice,
+            p.is_required
+                .and_then(|required| required.then_some("*"))
+                .unwrap_or_default()
+        )
+    }
+
     html! {
-            <BlankPage
-                header_label={Locale::current().practices()} //TODO: add legend what symbols mean
-                left_button={HeaderButtonProps::back_to(AppRoute::Home)}
-                right_button={HeaderButtonProps::new_icon_redirect(AppRoute::NewUserPractice, "icon-plus")}
-                show_footer=true
-                selected_page={AppRoute::Home}
-                loading={server_practices.loading}>
-                <ListErrors error={server_practices.error.clone()} />
-                <ListErrors error={reorder_practices.error.clone()} />
-                <div class={format!("space-y-10 {}", BODY_DIV_CSS)}>
-                    <form>{
-                        if server_practices.loading || local_practices.current().is_empty() {
-                            html!{}
-                        } else {html! {
-                            <DraggableList
-                                items={server_practices
-                                    .data
-                                    .as_ref()
-                                    .unwrap_or(&vec![])
-                                    .iter()
-                                    .map(|p|
-                                        Item {
-                                            id: p.id.clone(),
-                                            name: local_practices
-                                                .current()
-                                                .get(&p.id)
-                                                .unwrap()
-                                                .practice
-                                                .clone()
-                                    })
-                                    .collect::<Vec<_>>()
-                            }
-                                toggle_hidden={toggle_hidden.clone()}
-                                is_hidden={is_hidden.clone()}
-                                rename={rename.clone()}
-                                rename_popup_label={Locale::current().enter_new_practice_name()}
-                                request_new_name=false
-                                delete={delete.clone()}
-                                delete_popup_label={Locale::current().delete_practice_warning()}
-                                reorder={reorder.clone()}
-                                />
-                        }}}
-                    </form>
-                </div>
-            </BlankPage>
+        <BlankPage
+            header_label={Locale::current().practices()}
+            left_button={HeaderButtonProps::back_to(AppRoute::Home)}
+            right_button={HeaderButtonProps::new_icon_redirect(AppRoute::NewUserPractice, "icon-plus")}
+            show_footer=true
+            selected_page={AppRoute::Home}
+            loading={server_practices.loading}>
+            <ListErrors error={server_practices.error.clone()} />
+            <ListErrors error={reorder_practices.error.clone()} />
+            <div class={format!("mx-auto max-w-md {}", BODY_DIV_BASE_CSS)}>
+                <form>{
+                    if server_practices.loading || local_practices.current().is_empty() {
+                        html!{}
+                    } else {html! {
+                        <DraggableList
+                            items={server_practices
+                                .data
+                                .as_ref()
+                                .unwrap_or(&vec![])
+                                .iter()
+                                .map(|p|
+                                    Item {
+                                        id: p.id.clone(),
+                                        name: display_practice(local_practices.current().get(&p.id).unwrap())
+                                    }
+                                )
+                                .collect::<Vec<_>>()
+                        }
+                            toggle_hidden={toggle_hidden.clone()}
+                            is_hidden={is_hidden.clone()}
+                            rename={rename.clone()}
+                            rename_popup_label={Locale::current().enter_new_practice_name()}
+                            request_new_name=false
+                            delete={delete.clone()}
+                            delete_popup_label={Locale::current().delete_practice_warning()}
+                            reorder={reorder.clone()}
+                            />
+                    }}}
+                </form>
+                <p class="text-xs text-zinc-500 dark:text-zinc-200">{Locale::current().asterisk_is_required_memo()}</p>
+            </div>
+        </BlankPage>
     }
 }
