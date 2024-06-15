@@ -242,7 +242,7 @@ impl IncompleteCob {
                 and up.is_active = true
                 and d.value is null
                 and up.user_id = $3
-                and dates.cob_date < now()
+                and dates.cob_date < current_date
             "#,
         )
         .bind::<Date, _>(from)
