@@ -106,6 +106,16 @@ pub fn home() -> Html {
     }
 
     {
+        // Refresh calendar when we save changes to refresh incomplete day marker
+        let ctx = session_ctx.clone();
+        use_effect_with(save_diary_day_entry.clone(), move |_| {
+            let dummy_change_date = ctx.selected_date;
+            ctx.dispatch(dummy_change_date);
+            || ()
+        });
+    }
+
+    {
         // Fetch data from server on date change
         let diary_entry = diary_entry.clone();
         use_effect_with(session_ctx.clone(), move |_| {
