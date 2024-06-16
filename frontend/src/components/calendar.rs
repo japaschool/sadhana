@@ -1,7 +1,8 @@
 use std::collections::HashSet;
 
 use chrono::{prelude::*, Days};
-use web_sys::HtmlInputElement;
+use gloo_events::EventListener;
+use web_sys::{HtmlInputElement, VisibilityState};
 use yew::prelude::*;
 use yew_hooks::{use_async, use_mount};
 
@@ -27,7 +28,7 @@ pub const SELECTED_DATE_COLOR_CSS: &str = "border-2 border-amber-400";
 
 #[function_component(Calendar)]
 pub fn calendar(props: &Props) -> Html {
-    let today: NaiveDate = Local::now().date_naive();
+    let today = use_state(|| Local::now().date_naive());
     let session_state =
         use_context::<SessionStateContext>().expect("No session state context found");
 
@@ -75,6 +76,27 @@ pub fn calendar(props: &Props) -> Html {
         });
     }
 
+    {
+        let today = today.clone();
+        use_effect(move || {
+            let onwakeup = Callback::from(move |_: Event| {
+                if let Some(doc) = web_sys::window().and_then(|w| w.document()) {
+                    if doc.visibility_state() == VisibilityState::Visible {
+                        today.set(Local::now().date_naive());
+                    }
+                }
+            });
+
+            // Create a Closure from a Box<dyn Fn> - this has to be 'static
+            let listener =
+                EventListener::new(&web_sys::window().unwrap(), "visibilitychange", move |e| {
+                    onwakeup.emit(e.clone());
+                });
+
+            move || drop(listener)
+        });
+    }
+
     let onclick_date = {
         let ss = session_state.clone();
         Callback::from(move |ev: MouseEvent| {
@@ -112,13 +134,14 @@ pub fn calendar(props: &Props) -> Html {
 
     let ondblclick = {
         let ss = session_state.clone();
+        let today = today.clone();
         Callback::from(move |_: MouseEvent| {
-            ss.dispatch(today);
+            ss.dispatch(*today);
         })
     };
 
     let calendar_day = |for_selected_date: bool, d: &NaiveDate| -> Html {
-        let date_css = match (for_selected_date, *d == today) {
+        let date_css = match (for_selected_date, *d == *today) {
             (true, true) => format!("{SELECTED_TODAY_DATE_COLOR_CSS} h-9 w-9"),
             (true, false) => format!("{SELECTED_DATE_COLOR_CSS} h-8 w-8"),
             (false, true) => format!("{HOVER_TODAY_DATE_COLOR_CSS} h-8 w-8"),
