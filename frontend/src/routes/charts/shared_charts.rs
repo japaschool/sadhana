@@ -122,7 +122,7 @@ pub fn shared_charts(props: &SharedChartsProps) -> Html {
                 || practices.loading
                 || report_data.loading
             }
-            calendar={CalendarProps::no_highlights()}
+            calendar={CalendarProps::no_override_selected_date()}
             header_label={user_info.data.as_ref().map(|u| u.name.to_owned()).unwrap_or_default()}
             >
             <ListErrors error={reports.error.clone()} />

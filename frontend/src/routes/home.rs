@@ -116,7 +116,7 @@ pub fn home() -> Html {
                 }
             });
 
-            // Create a Closure from a Box<dyn Fn> - this has to be 'static
+            // Create a Closure from a Box<dyn   Fn> - this has to be 'static
             let listener =
                 EventListener::new(&web_sys::window().unwrap(), "visibilitychange", move |e| {
                     onwakeup.emit(e.clone());
@@ -125,16 +125,6 @@ pub fn home() -> Html {
             move || drop(listener)
         });
     }
-
-    // {
-    //     // Refresh calendar when we save changes to refresh incomplete day marker
-    //     let ctx = session_ctx.clone();
-    //     use_effect_with(save_diary_day_entry.clone(), move |_| {
-    //         let dummy_change_date = ctx.selected_date;
-    //         ctx.dispatch(dummy_change_date);
-    //         || ()
-    //     });
-    // }
 
     {
         // Fetch data from server on date change
@@ -437,13 +427,23 @@ pub fn home() -> Html {
         })
     };
 
+    let date_is_incomplete = (session_ctx.selected_date < today)
+        .then_some(0)
+        .and_then(|_| required_practices.data.as_ref())
+        .map(|required| {
+            local_diary_entry
+                .current()
+                .iter()
+                .any(|v| required.contains(&v.practice) && v.value.is_none())
+        });
+
     html! {
         <BlankPage
             right_button={edit_practices_button}
             show_footer=true
             loading={diary_entry.loading}
             selected_page={AppRoute::Home}
-            calendar={CalendarProps::new()}
+            calendar={CalendarProps::new(date_is_incomplete)}
             >
             if let Some(idx) = *add_duration_prompt_idx {
             <Prompt

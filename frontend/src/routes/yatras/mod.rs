@@ -256,7 +256,7 @@ pub fn yatras() -> Html {
                     HeaderButtonProps::blank()
                 }
             }
-            calendar={CalendarProps::no_highlights()}
+            calendar={CalendarProps::no_override_selected_date()}
             >
             {
                 if !yatras.loading
