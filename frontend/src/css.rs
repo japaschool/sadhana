@@ -1,8 +1,18 @@
 use const_format::concatcp;
 
-pub const INPUT_CSS: &str = "rounded-md bg-transparent peer placeholder-transparent px-2 h-10 w-full border dark:border-white dark:text-zinc-100 border-zinc-500 dark:border-zinc-100 text-zinc-500 focus:border-2 focus:border-zinc-500 dark:focus:border-zinc-100 focus:outline-none focus:ring-0";
-pub const TEXTAREA_CSS: &str = "rounded-md bg-transparent peer placeholder-transparent px-2 w-full border dark:border-white dark:text-zinc-100 border-zinc-500 dark:border-zinc-100 text-zinc-500 focus:border-2 focus:border-zinc-500 dark:focus:border-zinc-100 focus:outline-none focus:ring-0";
-pub const INPUT_LABEL_CSS: &str = "absolute left-2 -top-7 dark:text-zinc-100 text-zinc-500 text-base peer-placeholder-shown:text-base dark:peer-placeholder-shown:text-white peer-placeholder-shown:text-zinc-500 dark:peer-placeholder-shown:text-zinc-100 peer-placeholder-shown:top-2 transition-all peer-focus:-left-0 peer-focus:-top-7 dark:peer-focus:text-white peer-focus:text-zinc-500 dark:peer-focus:text-zinc-100 peer-focus:text-base";
+pub const TEXTAREA_CSS: &str = "
+    rounded-md bg-transparent peer placeholder-transparent px-2 w-full \
+    border dark:border-white border-zinc-500 dark:border-zinc-100 \
+    group-[.is-incomplete]:border-red-500 group-[.is-incomplete]:dark:border-red-500 \
+    focus:border-2 focus:outline-none focus:ring-0";
+
+pub const INPUT_CSS: &str = concatcp!("h-10 ", TEXTAREA_CSS);
+
+pub const INPUT_LABEL_CSS: &str = "
+    absolute left-2 -top-7 transition-all \
+    dark:peer-placeholder-shown:text-white peer-placeholder-shown:top-2 \
+    peer-focus:-left-0 peer-focus:-top-7";
+
 pub const LINKS_CSS: &str = "relative flex justify-between sm:text-base links";
 pub const LINK_CSS: &str =
     "no-underline hover:underline text-base dark:text-zinc-100 text-zinc-500";
@@ -11,13 +21,13 @@ pub const LINK_SMALL_CSS: &str =
 pub const LINK_CSS_NEW_ACC: &str =
     "no-underline hover:underline text-base text-amber-500 dark:text-amber-400 dark:amber-200";
 pub const SUBMIT_BTN_CSS_NO_MARGIN: &str =
-    "rounded-md text-white w-full cursor-pointer text-base font-light border border--amber-600 p-2 outline-none
-    bg-opacity-10 bg-gradient-to-br from-amber-400 to-amber-500 
-    hover:bg-amber-500 hover:bg-opacity-10
-    active:bg-amber-500 active:bg-opacity-25
-    dark:-bg-opacity-10 dark:from-orange-900/50 dark:to-dark-orange-900/100
-    dark:-hover:bg-orange-900 dark:hover:bg-opacity-30
-    dark:-active:bg-orange-900 
+    "rounded-md text-white w-full cursor-pointer text-base font-light border border--amber-600 p-2 outline-none \
+    bg-opacity-10 bg-gradient-to-br from-amber-400 to-amber-500 \
+    hover:bg-amber-500 hover:bg-opacity-10 \
+    active:bg-amber-500 active:bg-opacity-25 \
+    dark:-bg-opacity-10 dark:from-orange-900/50 dark:to-dark-orange-900/100 \
+    dark:-hover:bg-orange-900 dark:hover:bg-opacity-30 \
+    dark:-active:bg-orange-900 \
     active:translate-y-1";
 pub const SUBMIT_BTN_CSS: &str = concatcp!("mb-8 ", SUBMIT_BTN_CSS_NO_MARGIN);
 pub const BTN_CSS_NO_MARGIN: &str =
