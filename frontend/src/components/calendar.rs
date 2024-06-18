@@ -12,6 +12,8 @@ use crate::{hooks::SessionStateContext, i18n::Locale, services::get_incomplete_d
 pub struct Props {
     #[prop_or(false)]
     pub highlight_incomplete_dates: bool,
+    #[prop_or_default]
+    pub selected_date_incomplete: Option<bool>,
 }
 
 pub const DATE_FORMAT: &str = "%Y-%m-%d";
@@ -97,6 +99,19 @@ pub fn calendar(props: &Props) -> Html {
         });
     }
 
+    let is_incomplete_day = |day| {
+        if session_state.selected_date.day() == day {
+            if let Some(selected_date_incomplete) = props.selected_date_incomplete.as_ref() {
+                return *selected_date_incomplete;
+            }
+        }
+        incomplete_days
+            .data
+            .as_ref()
+            .iter()
+            .any(|data| data.contains(&day))
+    };
+
     let onclick_date = {
         let ss = session_state.clone();
         Callback::from(move |ev: MouseEvent| {
@@ -163,7 +178,7 @@ pub fn calendar(props: &Props) -> Html {
             <div id={id.to_string()} class="text-center">
                 <p id={id.to_string()} class={ weekday_label_css }>{ &Locale::current().day_of_week(d).chars().next().unwrap() }</p>
                 <div id={id.to_string()} class={ format!("{DATE_CSS} {date_css}") } onclick={ onclick_date.clone() }>
-                    if incomplete_days.data.as_ref().iter().any(|data| data.contains(&d.day())) {
+                    if is_incomplete_day(d.day()) {
                         <span id={id.to_string()} class="absolute ml-4 w-2 h-2 bg-red-500 rounded-full"></span>
                     }
                     <p id={id.to_string()} class={ date_label_css }>{ d.format("%-d").to_string() }</p>

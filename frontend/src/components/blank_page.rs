@@ -35,18 +35,21 @@ pub struct Props {
 #[derive(Clone, PartialEq)]
 pub struct CalendarProps {
     pub highlight_incomplete_dates: bool,
+    pub selected_date_incomplete: Option<bool>,
 }
 
 impl CalendarProps {
-    pub fn new() -> Self {
+    pub fn new(selected_date_incomplete: Option<bool>) -> Self {
         Self {
             highlight_incomplete_dates: true,
+            selected_date_incomplete,
         }
     }
 
-    pub fn no_highlights() -> Self {
+    pub fn no_override_selected_date() -> Self {
         Self {
-            highlight_incomplete_dates: false,
+            highlight_incomplete_dates: true,
+            selected_date_incomplete: None,
         }
     }
 }
@@ -357,7 +360,10 @@ pub fn blank_page(props: &Props) -> Html {
                                     />
                             }
                             if let Some(cal) = props.calendar.as_ref() {
-                                <Calendar highlight_incomplete_dates={cal.highlight_incomplete_dates} />
+                                <Calendar
+                                    highlight_incomplete_dates={cal.highlight_incomplete_dates}
+                                    selected_date_incomplete={cal.selected_date_incomplete}
+                                    />
                             }
                             { props.children.clone() }
                         </div>

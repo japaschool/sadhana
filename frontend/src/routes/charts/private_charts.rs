@@ -284,7 +284,7 @@ pub fn charts() -> Html {
             <BlankPage
                 show_footer={!*editing}
                 selected_page={AppRoute::Charts}
-                calendar={CalendarProps::no_highlights()}
+                calendar={CalendarProps::no_override_selected_date()}
                 loading={
                     all_practices.loading
                     || report_data.loading
