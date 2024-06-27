@@ -51,12 +51,14 @@ pub fn month_calendar(props: &Props) -> Html {
 
     let day_class = |day| {
         let color_css = match (is_selected(day), is_today(day)) {
-            (true, true) => SELECTED_TODAY_DATE_COLOR_CSS,
-            (true, false) => "shadow-inset-amber-400",
-            (false, true) => HOVER_TODAY_DATE_COLOR_CSS,
-            (false, false) => HOVER_DATE_COLOR_CSS,
+            (true, true) => {
+                format!("text-zinc-500 dark:text-zinc-100 {SELECTED_TODAY_DATE_COLOR_CSS}")
+            }
+            (true, false) => "text-zinc-500 dark:text-zinc-100 shadow-inset-amber-400".into(),
+            (false, true) => format!("text-amber-400 {HOVER_TODAY_DATE_COLOR_CSS}"),
+            (false, false) => format!("text-zinc-500 dark:text-zinc-100 {HOVER_DATE_COLOR_CSS}"),
         };
-        format!("text-zinc-500 dark:text-zinc-100 {DAY_CSS} {color_css}")
+        format!("{DAY_CSS} {color_css}")
     };
 
     let incomplete_days = {

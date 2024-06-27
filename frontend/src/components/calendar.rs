@@ -167,9 +167,9 @@ pub fn calendar(props: &Props) -> Html {
             weekday_label_css = format!("{weekday_label_css} font-semibold");
         }
         let date_label_css = if for_selected_date {
-            "text-zinc-500 dark:text-zinc-100 my-auto font-bold"
+            "text-zinc-500 dark:text-zinc-100 my-auto font-bold".into()
         } else {
-            "text-zinc-500 dark:text-zinc-100 dark:group-hover:text-white group-hover:text-zinc-100 my-auto group-hover:font-bold transition-all duration-300"
+            format!("{} dark:can-hover:group-hover:text-white can-hover:group-hover:text-zinc-100 my-auto can-hover:group-hover:font-bold transition-all duration-300", if *d == *today {"text-amber-400"} else {"text-zinc-500 dark:text-zinc-100"})
         };
 
         let id = d.format(DATE_FORMAT);
