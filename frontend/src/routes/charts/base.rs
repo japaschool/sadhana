@@ -403,9 +403,16 @@ fn y_value(data_type: &PracticeDataType, entry: &ReportDataEntry, adjust_time: i
                 _ => None,
             })
             .unwrap_or_default(),
-        PracticeDataType::Text | PracticeDataType::Bool => entry
+        PracticeDataType::Text => entry
             .value
             .as_ref()
+            .map(|_| "1".to_string())
+            .unwrap_or_default(),
+        PracticeDataType::Bool => entry
+            .value
+            .as_ref()
+            .and_then(|v| v.as_bool())
+            .filter(|&b| b)
             .map(|_| "1".to_string())
             .unwrap_or_default(),
     }
