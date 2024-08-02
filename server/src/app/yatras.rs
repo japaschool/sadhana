@@ -1,7 +1,12 @@
 use actix_web::{web, HttpRequest, HttpResponse};
 use chrono::NaiveDate;
 use common::error::AppError;
-use diesel::{dsl::sql, prelude::*, sql_query, sql_types::Uuid as DieselUuid, sql_types::*};
+use diesel::{
+    dsl::{self, sql},
+    prelude::*,
+    sql_query,
+    sql_types::{Uuid as DieselUuid, *},
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use urlencoding::decode;
@@ -11,8 +16,8 @@ use crate::{
     db_types::PracticeDataType,
     middleware::{auth, state::AppState},
     schema::{
-        sql_types::PracticeDataTypeEnum, user_practices, yatra_practices, yatra_user_practices,
-        yatra_users, yatras,
+        sql_types::PracticeDataTypeEnum, user_practices, users, yatra_practices,
+        yatra_user_practices, yatra_users, yatras,
     },
 };
 
@@ -35,7 +40,11 @@ impl Yatra {
         Ok(())
     }
 
-    pub fn leave(conn: &mut PgConnection, user_id: &Uuid, yatra_id: &Uuid) -> Result<(), AppError> {
+    fn ensure_has_other_admins(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        yatra_id: &Uuid,
+    ) -> Result<(), AppError> {
         let admins_qty: i64 = yatra_users::table
             .select(diesel::dsl::count_star())
             .filter(
@@ -51,6 +60,12 @@ impl Yatra {
                 "Can't delete last yatra admin".into(),
             ]));
         }
+
+        Ok(())
+    }
+
+    pub fn leave(conn: &mut PgConnection, user_id: &Uuid, yatra_id: &Uuid) -> Result<(), AppError> {
+        Self::ensure_has_other_admins(conn, user_id, yatra_id)?;
 
         conn.transaction(|conn| {
             sql_query(
@@ -98,6 +113,26 @@ impl Yatra {
         Ok(cnt > 0)
     }
 
+    pub fn toggle_is_admin(
+        conn: &mut PgConnection,
+        current_user_id: &Uuid,
+        user_id: &Uuid,
+        yatra_id: &Uuid,
+    ) -> Result<(), AppError> {
+        Self::ensure_admin_user(conn, current_user_id, yatra_id)?;
+        Self::ensure_has_other_admins(conn, user_id, yatra_id)?;
+
+        diesel::update(yatra_users::table)
+            .set(yatra_users::is_admin.eq(dsl::not(yatra_users::is_admin)))
+            .filter(
+                yatra_users::yatra_id
+                    .eq(&yatra_id)
+                    .and(yatra_users::user_id.eq(&user_id)),
+            )
+            .execute(conn)?;
+        Ok(())
+    }
+
     pub fn get_yatra(conn: &mut PgConnection, yatra_id: &Uuid) -> Result<Self, AppError> {
         let res = yatras::table
             .select((yatras::id, yatras::name))
@@ -116,8 +151,8 @@ impl Yatra {
         if res {
             Ok(())
         } else {
-            Err(AppError::Unauthorized(format!(
-                "User {} is not authorized to alter yatra {}",
+            Err(AppError::Forbidden(format!(
+                "User {} is not allowed to alter yatra {}",
                 user_id, yatra_id
             )))
         }
@@ -328,6 +363,29 @@ impl YatraPractice {
             }
             Ok(())
         })
+    }
+}
+
+#[derive(Debug, Queryable, Serialize, Clone)]
+pub struct YatraUser {
+    pub user_id: Uuid,
+    pub user_name: String,
+    pub is_admin: bool,
+}
+
+impl YatraUser {
+    pub fn get_yatra_users(
+        conn: &mut PgConnection,
+        yatra_id: &Uuid,
+    ) -> Result<Vec<Self>, AppError> {
+        let res = yatra_users::table
+            .inner_join(users::table)
+            .filter(yatra_users::yatra_id.eq(&yatra_id))
+            .select((users::id, users::name, yatra_users::is_admin))
+            .order_by(users::name)
+            .load(conn)?;
+
+        Ok(res)
     }
 }
 
@@ -659,6 +717,54 @@ pub async fn get_yatra_practices(
     Ok(HttpResponse::Ok().json(YatraPracticesResponse { practices }))
 }
 
+/// Get yatra users
+pub async fn get_yatra_users(
+    state: web::Data<AppState>,
+    path: web::Path<YatraIdSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let yatra_id = path.into_inner();
+
+    let users = web::block(move || YatraUser::get_yatra_users(&mut conn, &yatra_id)).await??;
+
+    Ok(HttpResponse::Ok().json(YatraUsersResponse { users }))
+}
+
+/// Get yatra users
+pub async fn delete_yatra_user(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    path: web::Path<YatraIdUserIdSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let (yatra_id, user_id) = path.into_inner();
+    let current_user_id = auth::get_current_user(&req)?.id;
+
+    web::block(move || {
+        Yatra::ensure_admin_user(&mut conn, &current_user_id, &yatra_id)?;
+        Yatra::leave(&mut conn, &user_id, &yatra_id)
+    })
+    .await??;
+
+    Ok(HttpResponse::Ok().json(()))
+}
+
+/// Get yatra users
+pub async fn toggle_is_admin(
+    state: web::Data<AppState>,
+    req: HttpRequest,
+    path: web::Path<YatraIdUserIdSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let (yatra_id, user_id) = path.into_inner();
+    let current_user_id = auth::get_current_user(&req)?.id;
+
+    web::block(move || Yatra::toggle_is_admin(&mut conn, &current_user_id, &user_id, &yatra_id))
+        .await??;
+
+    Ok(HttpResponse::Ok().json(()))
+}
+
 /// Create yatra practice
 pub async fn create_yatra_practice(
     state: web::Data<AppState>,
@@ -782,6 +888,7 @@ pub async fn update_yatra_user_practices(
 
 type YatraIdSlug = Uuid;
 type YatraIdPracticeSlug = (Uuid, String);
+type YatraIdUserIdSlug = (Uuid, Uuid);
 
 #[derive(Deserialize, Debug)]
 pub struct YatraDataQueryParams {
@@ -882,6 +989,11 @@ pub struct YatraResponse {
 #[derive(Serialize, Debug)]
 pub struct YatraPracticesResponse {
     pub practices: Vec<YatraPractice>,
+}
+
+#[derive(Serialize, Debug)]
+pub struct YatraUsersResponse {
+    pub users: Vec<YatraUser>,
 }
 
 #[derive(Serialize, Debug, Deserialize)]

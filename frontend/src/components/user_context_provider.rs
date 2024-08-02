@@ -55,9 +55,8 @@ pub fn user_context_provider(props: &Props) -> Html {
             }
 
             if let Some(error) = &current_user.error {
-                match error {
-                    AppError::Unauthorized(_) | AppError::Forbidden => set_token(None),
-                    _ => (),
+                if let AppError::Unauthorized(_) = error {
+                    set_token(None);
                 }
                 navigator.push(&AppRoute::Login);
             }
