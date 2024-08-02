@@ -71,6 +71,18 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                     .route("", web::delete().to(app::yatras::delete_yatra))
                     .route("", web::put().to(app::yatras::rename_yatra))
                     .service(
+                        web::scope("/users")
+                            .route(
+                                "/{user_id}",
+                                web::delete().to(app::yatras::delete_yatra_user),
+                            )
+                            .route(
+                                "/{user_id}/is_admin",
+                                web::put().to(app::yatras::toggle_is_admin),
+                            )
+                            .route("", web::get().to(app::yatras::get_yatra_users)),
+                    )
+                    .service(
                         web::scope("/practices")
                             .route(
                                 "/reorder",

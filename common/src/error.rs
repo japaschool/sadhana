@@ -28,8 +28,8 @@ pub enum AppError {
     Unauthorized(String),
 
     /// 403
-    #[error("Forbidden")]
-    Forbidden,
+    #[error("Forbidden: {}", _0)]
+    Forbidden(String),
 
     /// 404
     #[error("Not Found")]
@@ -57,7 +57,7 @@ impl ResponseError for AppError {
     fn error_response(&self) -> HttpResponse {
         match self {
             AppError::Unauthorized(ref msg) => HttpResponse::Unauthorized().json(msg),
-            AppError::Forbidden => HttpResponse::Forbidden().finish(),
+            AppError::Forbidden(ref msg) => HttpResponse::Forbidden().json(msg),
             AppError::NotFound => HttpResponse::NotFound().finish(),
             AppError::UnprocessableEntity(ref msg) => HttpResponse::UnprocessableEntity().json(msg),
             AppError::InternalServerError => HttpResponse::InternalServerError().finish(),
@@ -68,7 +68,7 @@ impl ResponseError for AppError {
     fn status_code(&self) -> StatusCode {
         match *self {
             AppError::Unauthorized(_) => StatusCode::UNAUTHORIZED,
-            AppError::Forbidden => StatusCode::FORBIDDEN,
+            AppError::Forbidden(_) => StatusCode::FORBIDDEN,
             AppError::NotFound => StatusCode::NOT_FOUND,
             AppError::UnprocessableEntity(_) => StatusCode::UNPROCESSABLE_ENTITY,
             AppError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,

@@ -85,7 +85,9 @@ where
                 401 => Err(AppError::Unauthorized(
                     data.json::<String>().await.unwrap_or_default(),
                 )),
-                403 => Err(AppError::Forbidden),
+                403 => Err(AppError::Forbidden(
+                    data.json::<String>().await.unwrap_or_default(),
+                )),
                 404 => Err(AppError::NotFound),
                 500 => Err(AppError::InternalServerError),
                 422 => {

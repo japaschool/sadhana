@@ -189,15 +189,14 @@ pub fn draggable_list(props: &Props) -> Html {
             <label class="flex w-full justify-between whitespace-nowrap mb-6">
                 <span>{ item.name.clone() }</span>
             </label>
-            { if props.toggle_hidden_enabled {
-                html! {
+            if props.toggle_hidden_enabled {
                 <label>
                     <i onclick={ toggle_hidden.clone() }
                         id={ item.id.clone() }
                         class={format!("cursor-pointer {}", if !props.is_hidden.emit(item.id.to_owned()) {"icon-eye"} else {"icon-eye-cross"})}
                         />
                 </label>
-            }} else { html! {}}}
+            }
             <label>
                 <i onclick={ rename.clone() } id={ item.id.clone() } class="cursor-pointer icon-edit"/>
             </label>

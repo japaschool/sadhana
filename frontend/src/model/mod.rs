@@ -407,6 +407,18 @@ pub struct YatraPractices {
     pub practices: Vec<YatraPractice>,
 }
 
+#[derive(Debug, Deserialize, Clone, PartialEq)]
+pub struct YatraUser {
+    pub user_id: String,
+    pub user_name: String,
+    pub is_admin: bool,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct YatraUsers {
+    pub users: Vec<YatraUser>,
+}
+
 #[derive(Debug, Serialize)]
 pub struct UpdateYatraPracticesOrderKey {
     pub practices: Vec<String>,

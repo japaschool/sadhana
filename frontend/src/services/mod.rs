@@ -204,6 +204,21 @@ pub async fn get_yatra_practices(yatra_id: &str) -> Result<YatraPractices, AppEr
     request_get(format!("/yatra/{yatra_id}/practices")).await
 }
 
+/// Get yatra users
+pub async fn get_yatra_users(yatra_id: &str) -> Result<YatraUsers, AppError> {
+    request_get(format!("/yatra/{yatra_id}/users")).await
+}
+
+/// Delete yatra user
+pub async fn delete_yatra_user(yatra_id: &str, user_id: &str) -> Result<(), AppError> {
+    request_delete(format!("/yatra/{yatra_id}/users/{user_id}")).await
+}
+
+/// Toggle is_admin flag for a yatra user
+pub async fn toggle_is_admin_yatra_user(yatra_id: &str, user_id: &str) -> Result<(), AppError> {
+    request_put(format!("/yatra/{yatra_id}/users/{user_id}/is_admin"), &()).await
+}
+
 /// Reorder yatra practices
 pub async fn reorder_yatra_practices(
     yatra_id: &str,
