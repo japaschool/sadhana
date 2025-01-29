@@ -43,7 +43,7 @@
         "mutantdino.resourcemonitor",
         "matklad.rust-analyzer",
         "tamasfe.even-better-toml",
-        "serayuzgur.crates",
+        "fill-labs.dependi",
         "swellaby.vscode-rust-test-adapter",
         "ms-vscode.test-adapter-converter",
         "yzhang.markdown-all-in-one",
