@@ -178,9 +178,12 @@ pub fn charts() -> Html {
                         let csv = to_csv_str(data).unwrap_or_default();
                         let json_jsvalue_array =
                             js_sys::Array::from_iter(std::iter::once(JsValue::from_str(&csv)));
+                        let prop = BlobPropertyBag::new();
+                        prop.set_type("text/csv");
+
                         let b = web_sys::Blob::new_with_str_sequence_and_options(
                             &json_jsvalue_array,
-                            BlobPropertyBag::new().type_("text/csv"),
+                            &prop,
                         )
                         .unwrap();
                         let url = web_sys::Url::create_object_url_with_blob(&b).unwrap();

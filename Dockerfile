@@ -12,7 +12,7 @@ RUN chmod +x cargo-chef
 RUN cp cargo-chef /usr/local/cargo/bin/
 
 # RUN cargo install trunk wasm-bindgen-cli
-RUN wget -qO- https://github.com/thedodd/trunk/releases/download/v0.21.7/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
+RUN wget -qO- https://github.com/thedodd/trunk/releases/download/v0.21.13/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
 RUN chmod +x trunk
 RUN cp trunk /usr/local/cargo/bin/
 
