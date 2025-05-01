@@ -3,17 +3,16 @@ use std::fmt::Display;
 use std::str::FromStr;
 
 use lazy_static::lazy_static;
-use serde::{Deserialize, Serialize};
-use yew::prelude::*;
-use yew_plotly::plotly::color::{NamedColor, Rgb};
-use yew_plotly::plotly::common::{
+use plotly::color::{NamedColor, Rgb};
+use plotly::common::{
     Anchor, AxisSide, DashType, Font, Line, LineShape, Marker, MarkerSymbol, Mode, Orientation,
     Position, TickMode,
 };
-use yew_plotly::plotly::configuration::DisplayModeBar;
-use yew_plotly::plotly::layout::{Axis, BarMode, Legend, Margin, RangeMode};
-use yew_plotly::plotly::{Bar, Configuration, Layout, Plot, Scatter, Trace};
-use yew_plotly::Plotly;
+use plotly::configuration::DisplayModeBar;
+use plotly::layout::{Axis, BarMode, Legend, Margin, RangeMode};
+use plotly::{Bar, Configuration, Layout, Plot, Scatter, Trace};
+use serde::{Deserialize, Serialize};
+use yew::prelude::*;
 
 use crate::i18n::*;
 use crate::model::PracticeDataType;
@@ -343,4 +342,61 @@ pub fn chart(props: &Props) -> Html {
     plot.set_configuration(config);
 
     html! { <Plotly plot={plot}/> }
+}
+
+#[derive(Properties, Clone, PartialEq)]
+pub struct PlotlyProps {
+    /// Plot data and layout
+    pub plot: Plot,
+}
+
+struct Plotly {
+    /// Reference to the parent DOM node
+    node_ref: NodeRef,
+}
+
+impl Component for Plotly {
+    type Message = ();
+    type Properties = PlotlyProps;
+
+    fn create(_ctx: &Context<Self>) -> Self {
+        Plotly {
+            node_ref: NodeRef::default(),
+        }
+    }
+
+    fn view(&self, _ctx: &Context<Self>) -> Html {
+        html! {
+            <div ref={ self.node_ref.clone() } />
+        }
+    }
+
+    fn destroy(&mut self, _ctx: &Context<Self>) {
+        if let Some(node) = self.node_ref.get() {
+            PlotlyJS::purge(node.into());
+        }
+    }
+
+    fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {
+        if let Some(node) = self.node_ref.get() {
+            let props_obj = ctx.props().plot.to_js_object().into();
+            if first_render {
+                PlotlyJS::newPlot(node.into(), props_obj);
+            } else {
+                PlotlyJS::react(node.into(), props_obj);
+            }
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+mod PlotlyJS {
+    use wasm_bindgen::prelude::*;
+
+    #[wasm_bindgen(js_namespace = Plotly)]
+    extern "C" {
+        pub(crate) fn newPlot(node: JsValue, obj: JsValue);
+        pub(crate) fn react(node: JsValue, obj: JsValue);
+        pub(crate) fn purge(node: JsValue);
+    }
 }
