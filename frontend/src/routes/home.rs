@@ -517,8 +517,12 @@ pub fn home() -> Html {
                                         placeholder={idx.to_string()}
                                         />
                                     if value.is_some() {
-                                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 cursor-pointer">
-                                            <i id={idx.to_string()} class="icon-plus" onclick={add_duration_onclick.clone()} />
+                                        <div
+                                            id={idx.to_string()}
+                                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 cursor-pointer"
+                                            onclick={add_duration_onclick.clone()}
+                                            >
+                                            <i  class="icon-plus"  />
                                         </div>
                                     }
                                     <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
