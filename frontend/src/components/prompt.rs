@@ -59,9 +59,17 @@ pub fn prompt(props: &Props) -> Html {
                         </div>
                         </div>
                         <div class="px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                            <button type="reset" class={format!("inline-flex w-full justify-center px-3 py-2 sm:ml-3 sm:w-auto {}", BTN_CSS_NO_MARGIN)} onclick={props.oncancel.clone()}>
+                            <button
+                                type="reset"
+                                class={format!("inline-flex w-full justify-center px-3 py-2 sm:ml-3 sm:w-auto {}", BTN_CSS_NO_MARGIN)}
+                                onclick={props.oncancel.clone()}
+                                >
                             <i class=""></i>{Locale::current().cancel()}</button>
-                            <button type="submit" class={format!("inline-flex w-full justify-center px-3 py-2 sm:mt-0 sm:w-auto {}", SUBMIT_BTN_CSS_NO_MARGIN)} onclick={submit}>
+                            <button
+                                type="submit"
+                                class={format!("inline-flex w-full justify-center px-3 py-2 sm:mt-0 sm:w-auto {}", SUBMIT_BTN_CSS_NO_MARGIN)}
+                                onclick={submit}
+                                >
                             <i class=""></i>{Locale::current().save()}</button>
                         </div>
                     </div>
