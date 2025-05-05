@@ -2,8 +2,8 @@ use std::collections::HashSet;
 
 use chrono::Local;
 use gloo_events::EventListener;
+use js_sys::RegExp;
 use lazy_static::lazy_static;
-use regex::Regex;
 use wasm_bindgen::JsCast;
 use web_sys::{HtmlElement, HtmlInputElement, VisibilityState};
 use yew::prelude::*;
@@ -25,9 +25,7 @@ use crate::{
 use super::AppRoute;
 
 lazy_static! {
-    static ref DURATION_R: Regex = Regex::new(r"(?:(\d+)[^\d]+)?(\d+)[^\d]+").unwrap();
-    static ref REJECT_TIME_R: Regex = Regex::new(r"[^\d]").unwrap();
-    static ref VALID_DURATION_R: Regex = {
+    static ref VALID_DURATION_R_P: String = {
         let h = Locale::current().hours_label();
         let m = Locale::current().minutes_label();
         // There are 3 mutually exclusive regex patterns here.
@@ -37,9 +35,8 @@ lazy_static! {
         // (4) Optional separator between hours and minutes.
         // (5) 2 digits for minutes in presence of hours. Limited to the number 59.
         //
-        //                  |------1-----|     |---------2--------|               |---------3--------||-----4-----| |-----5-----|
-        let r = format!(r#"^(?:(\d{{1,3}}){m}?|([0-1]?[0-9]|2[0-3])(?:{h}?\s?|:)?|([0-1]?[0-9]|2[0-3])(?:{h}?\s?|:)?([0-5]?[0-9]){m}?)$"#);
-        Regex::new(&r).unwrap()
+        //          |------1-----|     |---------2--------|               |---------3--------||-----4-----| |-----5-----|
+        format!(r#"^(?:(\d{{1,3}}){m}?|([0-1]?[0-9]|2[0-3])(?:{h}?\s?|:)?|([0-1]?[0-9]|2[0-3])(?:{h}?\s?|:)?([0-5]?[0-9]){m}?)$"#)
     };
 }
 
@@ -198,42 +195,14 @@ pub fn home() -> Html {
     let backspace_key_pressed = use_mut_ref(|| false);
 
     let format_duration = |input: &mut HtmlInputElement| {
-        let input_value = input.value();
-
-        if input_value.is_empty() {
-            return;
-        }
-
-        VALID_DURATION_R
-            .captures_iter(&input_value)
-            .for_each(|cap| {
-                let (hours, minutes) = match (cap.get(1), cap.get(2), cap.get(3), cap.get(4)) {
-                    (Some(minutes_only), _, _, _) => {
-                        let mins = minutes_only.as_str().parse::<u32>().unwrap();
-                        ((mins / 60).to_string(), (mins % 60).to_string())
-                    }
-                    (_, Some(hours_only), _, _) => (hours_only.as_str().to_owned(), "0".into()),
-                    (_, _, Some(hours), Some(minutes)) => {
-                        (hours.as_str().to_owned(), minutes.as_str().to_owned())
-                    }
-                    _ => unreachable!(),
-                };
-                let hours_str = if hours == "0" {
-                    String::new()
-                } else {
-                    format!("{}{}", hours, Locale::current().hours_label(),)
-                };
-                input.set_value(&format!(
-                    "{}{}{}",
-                    hours_str,
-                    minutes,
-                    Locale::current().minutes_label()
-                ));
-            });
+        format_duration_str(&input.value())
+            .iter()
+            .for_each(|new_value| input.set_value(new_value));
     };
 
     let oninput_duration = {
         let back = backspace_key_pressed.clone();
+        let valid_dur_r = RegExp::new(&VALID_DURATION_R_P, "");
         Callback::from(move |e: InputEvent| {
             let input: HtmlInputElement = e.target_unchecked_into();
 
@@ -245,7 +214,7 @@ pub fn home() -> Html {
             let mut s = input.value();
 
             // Remove any invalid characters
-            while !VALID_DURATION_R.is_match(&s) {
+            while !valid_dur_r.test(&s) {
                 let mut new_s = String::with_capacity(s.len());
                 let mut i = 0;
                 for ch in s.chars() {
@@ -273,7 +242,10 @@ pub fn home() -> Html {
         let input_value = input.value();
 
         // Remove anything but digits
-        let mut sanitized = REJECT_TIME_R.replace_all(&input_value, "").to_string();
+        let mut sanitized = input_value
+            .chars()
+            .filter(|c| c.is_ascii_digit())
+            .collect::<String>();
 
         // Inject zeroes in the relevant places
         if sanitized.len() == 1 && sanitized.parse::<u32>().unwrap() > 2 {
@@ -522,7 +494,7 @@ pub fn home() -> Html {
                                             class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 cursor-pointer"
                                             onclick={add_duration_onclick.clone()}
                                             >
-                                            <i  class="icon-plus"  />
+                                            <i id={idx.to_string()} class="icon-plus"  />
                                         </div>
                                     }
                                     <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
@@ -579,5 +551,64 @@ pub fn home() -> Html {
                 </div>
             </div>
         </BlankPage>
+    }
+}
+
+fn format_duration_str(input_value: &str) -> Option<String> {
+    let valid_dur_r = RegExp::new(&VALID_DURATION_R_P, "");
+
+    if input_value.is_empty() {
+        return None;
+    }
+
+    valid_dur_r.exec(input_value).map(|cap| {
+        let (hours, minutes) = match (cap.get(1), cap.get(2), cap.get(3), cap.get(4)) {
+            (minutes_only, _, _, _) if !minutes_only.is_undefined() => {
+                let mins = minutes_only.as_string().unwrap().parse::<u32>().unwrap();
+                ((mins / 60).to_string(), (mins % 60).to_string())
+            }
+            (_, hours_only, _, _) if !hours_only.is_undefined() => {
+                (hours_only.as_string().unwrap(), "0".into())
+            }
+            (_, _, hours, minutes) if !hours.is_undefined() && !minutes.is_undefined() => {
+                (hours.as_string().unwrap(), minutes.as_string().unwrap())
+            }
+            _ => unreachable!(),
+        };
+        let hours_str = if hours == "0" {
+            String::new()
+        } else {
+            format!("{}{}", hours, Locale::current().hours_label(),)
+        };
+        format!(
+            "{}{}{}",
+            hours_str,
+            minutes,
+            Locale::current().minutes_label()
+        )
+    })
+}
+
+#[cfg(all(test, target_arch = "wasm32"))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_format_duration() {
+        let input = "90"; // 90 minutes
+        let expected = Some("1h30m".to_string());
+        assert_eq!(format_duration(input), expected);
+
+        let input = "120"; // 120 minutes
+        let expected = Some("2h0m".to_string());
+        assert_eq!(format_duration(input), expected);
+
+        let input = ""; // Empty input
+        let expected = None;
+        assert_eq!(format_duration(input), expected);
+
+        let input = "23h"; // Invalid input
+        let expected = None;
+        assert_eq!(format_duration(input), expected);
     }
 }

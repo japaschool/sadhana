@@ -2,8 +2,8 @@ use std::fmt::Display;
 
 use anyhow::{anyhow, Context};
 use chrono::{naive::NaiveDate, NaiveDateTime};
+use js_sys::RegExp;
 use lazy_static::lazy_static;
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 use crate::i18n::Locale;
@@ -187,12 +187,6 @@ impl TryFrom<&str> for PracticeDataType {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct PracticeEntry {
-    pub practice_name: String,
-    pub value: PracticeEntryValue,
-}
-
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum PracticeEntryValue {
     Int(u16),
@@ -203,7 +197,7 @@ pub enum PracticeEntryValue {
 }
 
 lazy_static! {
-    static ref DURATION_R: Regex = Regex::new(r"(?:(\d+)[^\d]+)?(\d+)[^\d]+").unwrap();
+    static ref DURATION_R_P: String = r"(?:(\d+)[^\d]+)?(\d+)[^\d]+".to_string();
 }
 
 impl TryFrom<(&PracticeDataType, &str)> for PracticeEntryValue {
@@ -231,15 +225,17 @@ impl TryFrom<(&PracticeDataType, &str)> for PracticeEntryValue {
                 })
                 .ok_or_else(|| anyhow!("Couldn't parse time from {}", value.1))?,
             PracticeDataType::Text => PracticeEntryValue::Text(value.1.to_owned()),
-            PracticeDataType::Duration => DURATION_R
-                .captures_iter(value.1)
+            PracticeDataType::Duration => RegExp::new(&DURATION_R_P, "")
+                .exec(value.1)
+                .iter()
                 .filter_map(|cap| {
-                    cap.get(2).and_then(|m_str| {
-                        m_str.as_str().parse().ok().map(|m: u16| {
+                    cap.get(2).as_string().and_then(|m_str| {
+                        m_str.parse::<u16>().ok().map(|m| {
                             PracticeEntryValue::Duration(
                                 m + 60
                                     * cap
                                         .get(1)
+                                        .as_string()
                                         .and_then(|h_str| h_str.as_str().parse::<u16>().ok())
                                         .unwrap_or_default(),
                             )
