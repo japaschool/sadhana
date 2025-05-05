@@ -2,7 +2,7 @@
 
 # [Choice] Debian OS version (use bullseye on local arm64/Apple Silicon): buster, bullseye
 ARG VARIANT="bullseye"
-FROM mcr.microsoft.com/vscode/devcontainers/rust:1-${VARIANT}
+FROM mcr.microsoft.com/devcontainers/rust:1-${VARIANT}
 
 # [Optional] Uncomment this section to install additional packages.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
@@ -12,5 +12,5 @@ USER vscode
 
 RUN rustup target add wasm32-unknown-unknown
 
-RUN cargo install trunk wasm-bindgen-cli 
-RUN cargo install diesel_cli --no-default-features --features postgres
+RUN cargo install cargo-binstall
+RUN cargo binstall -y trunk wasm-bindgen-cli diesel_cli
