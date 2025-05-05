@@ -234,10 +234,6 @@ type ReportIdSlug = Uuid;
 pub struct NewReportForm {
     pub report: NewReport,
 }
-#[derive(Debug, Deserialize)]
-pub struct ReportForm {
-    pub report: Report,
-}
 
 #[derive(Debug, Serialize)]
 pub struct CreateReportResponse {
