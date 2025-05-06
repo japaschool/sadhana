@@ -71,6 +71,8 @@ self.addEventListener('fetch', (event) => {
             }));
     } else if (event.request.method === 'PUT' && diaryDayPutUrlR.test(event.request.url)) {
         event.respondWith(Promise.resolve().then(async () => {
+            const authHeader = event.request.headers.get('Authorization');
+            const reqUrl = event.request.url;
             try {
                 // Try sending saved puts
                 const x = await sendOfflinePostRequestsToServer().catch((e) => console.error(e));
@@ -78,14 +80,14 @@ self.addEventListener('fetch', (event) => {
                 const fetchedResponse = await fetchWrapper(event.request.clone(), { credentials: 'same-origin' });
                 // Notify clients we're online
                 broadcastOnline();
+                //Update local cache
+                Promise.resolve(event.request.text()).then((payload) => { updateDiaryDayCachedGet(reqUrl, authHeader, payload); });
                 return fetchedResponse;
             } catch {
                 console.info('Saving %s into DB for later processing', event.request.url);
                 // Notify clients we're offline
                 broadcastOffline();
-                var authHeader = event.request.headers.get('Authorization');
-                var reqUrl = event.request.url;
-                var method = event.request.method;
+                const method = event.request.method;
                 Promise.resolve(event.request.text()).then((payload) => {
                     //Update local cache
                     updateDiaryDayCachedGet(reqUrl, authHeader, payload);
