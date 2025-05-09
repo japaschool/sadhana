@@ -69,11 +69,11 @@ where
 
     if let Ok(data) = response {
         if data.status().is_success() {
-            log::debug!("Got Ok response with data {:?}", data);
+            // log::debug!("Got Ok response with data {:?}", data);
 
             let data: Result<T, _> = data.json::<T>().await;
             if let Ok(data) = data {
-                log::debug!("Response: {:?}", data);
+                // log::debug!("Response: {:?}", data);
 
                 Ok(data)
             } else {

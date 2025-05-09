@@ -35,70 +35,89 @@ self.addEventListener('activate', function (e) {
 
 self.addEventListener('fetch', (event) => {
     if (event.request.method === 'GET') {
-        // Open the cache
-        event.respondWith(sendOfflinePostRequestsToServer()
-            .catch((e) => console.error(e))
-            .then(() => caches.open(CACHE.name + CACHE.version))
-            .then(async (cache) => {
-                // Go to the network first
-                try {
-                    const fetchedResponse = await fetchWrapper(event.request.clone(), { credentials: 'same-origin' });
-                    // Notify clients we're online
-                    broadcastOnline();
-                    cache.put(event.request, fetchedResponse.clone());
-                    saveDefaultDiaryDay(event.request.url, fetchedResponse.clone());
-                    return fetchedResponse;
-                } catch {
-                    console.log('Cound not fetch from server; serving from cache.');
-                    // Notify clients we're offline
-                    broadcastOffline();
-                    // When server unreachable fetch cached response
-                    const cachedResp = await cache.match(event.request, { ignoreVary: true });
-                    if (cachedResp) {
-                        return cachedResp;
-                    }
-                    // If there's no cached response and it's a get for a diary day, generate a blank diary day
-                    if (diaryDayGetUrlR.test(event.request.url)) {
-                        const defaultResp = await cache.match(defaultDiaryDayKey);
-                        cache.put(event.request, defaultResp.clone());
-                        return defaultResp;
-                    }
-                    // If it's a get for incomplete days, just return an empty array
-                    if (incompleteDaysGetUrlR.test(event.request.url)) {
-                        return new Response('[]', { headers: { 'Content-Type': 'application/json' }, });
-                    }
-                }
-            }));
+        event.respondWith(handleGet(event.request));
     } else if (event.request.method === 'PUT' && diaryDayPutUrlR.test(event.request.url)) {
         event.respondWith(Promise.resolve().then(async () => {
             const authHeader = event.request.headers.get('Authorization');
             const reqUrl = event.request.url;
+            const method = event.request.method;
+            const payload = await event.request.clone().text();
             try {
+                // Update local cache
+                await updateDiaryDayCachedGet(reqUrl, authHeader, payload);
                 // Try sending saved puts
-                const x = await sendOfflinePostRequestsToServer().catch((e) => console.error(e));
+                await sendOfflinePostRequestsToServer().catch((e) => console.error(e));
                 // Try sending original put request to the server
-                const fetchedResponse = await fetchWrapper(event.request.clone(), { credentials: 'same-origin' });
+                const fetchedResponse = await fetchWrapper(event.request, { credentials: 'same-origin' }, 10000);
                 // Notify clients we're online
                 broadcastOnline();
-                //Update local cache
-                Promise.resolve(event.request.text()).then((payload) => { updateDiaryDayCachedGet(reqUrl, authHeader, payload); });
                 return fetchedResponse;
             } catch {
                 console.info('Saving %s into DB for later processing', event.request.url);
                 // Notify clients we're offline
                 broadcastOffline();
-                const method = event.request.method;
-                Promise.resolve(event.request.text()).then((payload) => {
-                    //Update local cache
-                    updateDiaryDayCachedGet(reqUrl, authHeader, payload);
-                    //save offline requests to indexed db
-                    saveIntoIndexedDb(reqUrl, authHeader, method, payload)
-                });
+                //save offline requests to indexed db
+                saveIntoIndexedDb(reqUrl, authHeader, method, payload);
                 return new Response('null', { headers: { 'Content-Type': 'application/json' }, });
             }
         }));
     }
 });
+
+async function handleGet(request) {
+    const cache = await caches.open(CACHE.name + CACHE.version);
+    const { racePromise, fetchPromise } = fetchOrTimeout(request, 3000);
+
+    // Wait for whichever happens first: network within 3s, or fallback to cache
+    const raceResult = await racePromise.catch(() => null);
+
+    if (raceResult) {
+        // Fast network response — update cache and serve it
+        cache.put(request, raceResult.clone());
+        // Notify clients we're online
+        broadcastOnline();
+        saveDefaultDiaryDay(request.url, raceResult.clone());
+        return raceResult;
+    }
+
+    console.warn(`[${request.url}] Cound not fetch from server on time. Trying to serve from cache.`);
+    // Notify clients we're offline
+    broadcastOffline();
+
+    // Serve cache as fallback if network is too slow. If not cached, fallback to the original network call.
+    const fallbackResponse = serveFromCache(cache, request).catch(() => {
+        console.info(`[${request.url}] Could not serve from cache. Continuing with the original fetch.`);
+        return fetchPromise
+            .then(async (fetchedResponse) => {
+                console.info(`[${request.url}] Original fetch succeeded.`);
+                // Notify clients we're online
+                broadcastOnline();
+                return fetchedResponse;
+            });
+    });
+
+    return fallbackResponse;
+}
+
+async function serveFromCache(cache, request) {
+    const cachedResp = await cache.match(request, { ignoreVary: true });
+
+    if (cachedResp) {
+        return cachedResp;
+    }
+
+    if (diaryDayGetUrlR.test(request.url)) {
+        const defaultResp = await cache.match(defaultDiaryDayKey);
+        cache.put(request, defaultResp.clone());
+        return defaultResp;
+    }
+
+    if (incompleteDaysGetUrlR.test(request.url)) {
+        return new Response('[]', { headers: { 'Content-Type': 'application/json' } });
+    }
+
+    throw new Error('Not found in cache');
+}
 
 async function clearStaleCache() {
     return caches.open(CACHE.name + CACHE.version).then(cache => {
@@ -163,6 +182,16 @@ function saveIntoIndexedDb(url, authHeader, method, payload) {
     }
 }
 
+function deleteFromIndexedDb(id) {
+    var request = indexedDB.open("SadhanaProPostDB");
+    request.onsuccess = function (event) {
+        var db = event.target.result;
+        var tx = db.transaction('postrequest', 'readwrite');
+        var store = tx.objectStore('postrequest');
+        store.delete(id)
+    }
+}
+
 const sequencePromises = async (promises) => {
     for (const p of promises) {
         await p
@@ -171,7 +200,7 @@ const sequencePromises = async (promises) => {
 
 async function sendOfflinePostRequestsToServer() {
     return new Promise(function (yes, no) {
-        console.info('Posting offline writes to the server');
+        // console.info('Posting offline writes to the server');
         var request = indexedDB.open("SadhanaProPostDB");
         request.onupgradeneeded = function (event) {
             var db = event.target.result;
@@ -203,17 +232,14 @@ async function sendOfflinePostRequestsToServer() {
                                 'Authorization': record.authHeader
                             },
                             body: record.payload
-                        }).catch((e) => {
-                            // Fetch fails only in case of network error. Fetch is successful in case of any response code
-                            console.debug('Exception while sending post request to server' + e);
-                            saveIntoIndexedDb(record.url, record.authHeader, record.method, record.payload)
-                        })
+                        }, 10000)
+                            .then(() => deleteFromIndexedDb(record.id))
                     );
 
-                    for (var i = 0; i < allRecords.result.length; i++)
-                        store.delete(allRecords.result[i].id)
-
-                    sequencePromises(postPromises).then(() => yes());
+                    sequencePromises(postPromises).then(() => yes()).catch(err => {
+                        console.warn('Failed to post offline writes', err);
+                        no();
+                    });
                 } else {
                     yes();
                 }
@@ -249,12 +275,58 @@ async function saveDefaultDiaryDay(url, resp) {
     }
 }
 
-async function fetchWrapper(req, opts) {
-    const resp = await fetch(req, opts);
+async function fetchWrapper(req, opts, timemout) {
+    const resp = timemout
+        ? await fetchWithTimeout(req, opts, timemout)
+        : await fetch(req, opts);
     if (resp.status === 504) {
         throw new Error('Server unavailable');
     }
     return resp;
+}
+
+// Fetch with timeout that resolves null after timeout, but lets original fetch keep running
+function fetchOrTimeout(request, timeoutMs) {
+    const fetchPromise = sendOfflinePostRequestsToServer()
+        .catch((e) => console.error(e))
+        .then(() => fetchWrapper(request.clone(), { credentials: 'same-origin' }, 30000));
+
+    // Return both the fetch promise and a timeout promise that resolves null after timeout
+    const timeoutPromise = new Promise(resolve => {
+        setTimeout(() => {
+            resolve(null);
+        }, timeoutMs);
+    });
+
+    return {
+        racePromise: Promise.race([fetchPromise, timeoutPromise]),
+        fetchPromise
+    };
+}
+
+// Fetch with timeout that aborts the request after timeout
+function fetchWithTimeout(resource, options = {}, timeout) {
+    const controller = new AbortController();
+    const { signal } = controller;
+    const fetchOptions = { ...options, signal };
+
+    let timeoutId;
+
+    const fetchPromise = fetch(resource, fetchOptions)
+        .catch(err => {
+            clearTimeout(timeoutId);
+            throw err;
+        })
+        .then(response => {
+            clearTimeout(timeoutId); // Response arrived — clear the timeout
+            return response;         // let response.body stream continue
+        });
+
+    timeoutId = setTimeout(() => {
+        controller.abort(); // Abort only if response headers didn't arrive in time
+    }, timeout);
+
+    return fetchPromise;
 }
 
 function broadcastOffline() {
