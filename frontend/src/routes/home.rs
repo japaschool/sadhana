@@ -136,9 +136,11 @@ pub fn home() -> Html {
         // Update local state from server data when the later changes
         let local = local_diary_entry.clone();
         use_effect_with(diary_entry.clone(), move |je| {
-            je.data.iter().for_each(|data| {
-                local.set(data.clone());
-            });
+            if !je.loading {
+                je.data.iter().for_each(|data| {
+                    local.set(data.clone());
+                });
+            }
             || ()
         });
     }

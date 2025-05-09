@@ -1,9 +1,9 @@
 use gloo::utils::format::JsValueSerdeExt;
 use serde::Deserialize;
-use wasm_bindgen::{closure::Closure, JsCast, JsValue};
+use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys::{BroadcastChannel, MessageEvent};
 use yew::{html::onclick::Event, prelude::*};
-use yew_hooks::{use_bool_toggle, use_timeout};
+use yew_hooks::{use_bool_toggle, use_mount, use_timeout};
 use yew_router::prelude::*;
 
 use super::{calendar::Calendar, month_calendar::MonthCalendar};
@@ -234,24 +234,32 @@ struct ConnStatusMessage {
 pub fn blank_page(props: &Props) -> Html {
     let nav = use_navigator().unwrap();
     let loading = use_bool_toggle(false);
-    let conn_status_channel = BroadcastChannel::new("ConnectionStatus").ok();
     let online = use_bool_toggle(true);
     let show_month_cal = use_bool_toggle(false);
 
-    if let Some(cc) = conn_status_channel {
+    {
         let online = online.clone();
-        let cl: Closure<dyn Fn(JsValue)> = Closure::new(move |args: JsValue| {
-            if let Some(ConnStatusMessage { connection_status }) = args
-                .dyn_into::<MessageEvent>()
-                .ok()
-                .and_then(|ev| ev.data().into_serde::<ConnStatusMessage>().ok())
-            {
-                online.set(connection_status == "ONLINE");
-            }
+        use_mount(move || {
+            log::debug!("Setting up offline broadcast channel connection");
+
+            let bc = BroadcastChannel::new("ConnectionStatus").unwrap();
+            // Listen for messages
+            let on_message = Closure::wrap(Box::new(move |event: MessageEvent| {
+                log::debug!("Received broadcast message {:?}", event.data());
+
+                if let Ok(ConnStatusMessage { connection_status }) =
+                    event.data().into_serde::<ConnStatusMessage>()
+                {
+                    online.set(connection_status == "ONLINE");
+                }
+            }) as Box<dyn FnMut(_)>);
+
+            bc.set_onmessage(Some(on_message.as_ref().unchecked_ref()));
+
+            // Keep closure alive
+            on_message.forget();
         });
-        cc.set_onmessage(Some(cl.as_ref().unchecked_ref()));
-        cl.forget();
-    };
+    }
 
     let timer = {
         let loading = loading.clone();
