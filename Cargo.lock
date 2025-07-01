@@ -3274,6 +3274,7 @@ dependencies = [
  "lazy_static",
  "lettre",
  "log",
+ "regex",
  "serde",
  "serde_json",
  "thiserror 2.0.11",
