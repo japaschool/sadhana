@@ -23,3 +23,5 @@ dist/
 node_modules/
 package.json
 package-lock.json
+
+frontend/build_info.json

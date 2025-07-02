@@ -40,6 +40,7 @@ WORKDIR /usr/src/sadhana-pro
 COPY . .
 
 RUN touch .env
+RUN ./scripts/build_info.sh
 RUN cd frontend && trunk build --release
 RUN cargo build --release
 

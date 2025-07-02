@@ -2,16 +2,20 @@ SHELL := /bin/bash
 
 db_url := postgres://postgres:postgres@192.168.68.102:5432/sadhana_pro
 
+build-info:
+	./scripts/build_info.sh
+
+frontend-build: build-info
+	cd frontend && trunk build
+
 run_server:
 	DATABASE_URL=$(db_url) \
 		RUST_BACKTRACE=full \
 		cargo run --bin server
 
-run: 
-	cd frontend; trunk build
-	DATABASE_URL=$(db_url) \
-		RUST_BACKTRACE=full \
-		cargo run --bin server
+
+run: frontend-build
+	$(MAKE) run_server
 
 create_migration:
 	DATABASE_URL=$(db_url) diesel migration generate $(name) --migration-dir=migrations
@@ -41,4 +45,4 @@ lint:
 	cargo clippy --all-targets --all-features -- -D warnings
 
 # non-file target for make
-.PHONY: run_server run create_migration migrate redo_migrate reset_db gen_schema test lint
+.PHONY: run_server run frontend-build build-info create_migration migrate redo_migrate reset_db gen_schema test lint

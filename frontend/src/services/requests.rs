@@ -48,7 +48,7 @@ where
     T: DeserializeOwned + 'static + std::fmt::Debug,
     B: Serialize + std::fmt::Debug,
 {
-    let url = format!("{}{}", API_ROOT.as_str(), url);
+    let url = format!("{}{}", *SERVER_ADDRESS, url);
 
     log::debug!("Sending {} request to {}", method, url);
 
@@ -106,12 +106,50 @@ where
     }
 }
 
-/// Delete request
-pub async fn request_delete<T>(url: String) -> Result<T, AppError>
+pub async fn request_api<B, T>(
+    method: reqwest::Method,
+    url: String,
+    body: &B,
+) -> Result<T, AppError>
+where
+    T: DeserializeOwned + 'static + std::fmt::Debug,
+    B: Serialize + std::fmt::Debug,
+{
+    request(method, format!("/api{url}"), body).await
+}
+
+/// Delete api request
+pub async fn request_api_delete<T>(url: String) -> Result<T, AppError>
 where
     T: DeserializeOwned + 'static + std::fmt::Debug,
 {
-    request(reqwest::Method::DELETE, url, &()).await
+    request_api(reqwest::Method::DELETE, url, &()).await
+}
+
+/// Get api request
+pub async fn request_api_get<T>(url: String) -> Result<T, AppError>
+where
+    T: DeserializeOwned + 'static + std::fmt::Debug,
+{
+    request_api(reqwest::Method::GET, url, &()).await
+}
+
+/// Post api request
+pub async fn request_api_post<T, B>(url: String, body: &B) -> Result<T, AppError>
+where
+    T: DeserializeOwned + 'static + std::fmt::Debug,
+    B: Serialize + std::fmt::Debug,
+{
+    request_api(reqwest::Method::POST, url, body).await
+}
+
+/// Put api request with a body
+pub async fn request_api_put<B, T>(url: String, body: &B) -> Result<T, AppError>
+where
+    T: DeserializeOwned + 'static + std::fmt::Debug,
+    B: Serialize + std::fmt::Debug,
+{
+    request_api(reqwest::Method::PUT, url, body).await
 }
 
 /// Get request
@@ -120,22 +158,4 @@ where
     T: DeserializeOwned + 'static + std::fmt::Debug,
 {
     request(reqwest::Method::GET, url, &()).await
-}
-
-/// Get request
-pub async fn request_post<T, B>(url: String, body: &B) -> Result<T, AppError>
-where
-    T: DeserializeOwned + 'static + std::fmt::Debug,
-    B: Serialize + std::fmt::Debug,
-{
-    request(reqwest::Method::POST, url, body).await
-}
-
-/// Put request with a body
-pub async fn request_put<B, T>(url: String, body: &B) -> Result<T, AppError>
-where
-    T: DeserializeOwned + 'static + std::fmt::Debug,
-    B: Serialize + std::fmt::Debug,
-{
-    request(reqwest::Method::PUT, url, body).await
 }

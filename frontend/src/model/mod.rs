@@ -485,3 +485,9 @@ impl SupportMessageForm {
         }
     }
 }
+
+#[derive(Debug, Deserialize, Clone, PartialEq)]
+pub struct BuildInfo {
+    pub git_hash: String,
+    pub build_time: String,
+}
