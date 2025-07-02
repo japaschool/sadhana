@@ -1,66 +1,10 @@
-use std::path::PathBuf;
-
 use actix_files::{Files, NamedFile};
 use actix_web::{
     dev::{ServiceRequest, ServiceResponse},
-    web, HttpRequest, HttpResponse, Result,
+    web,
 };
-use lazy_static::lazy_static;
-use regex::Regex;
 
 use crate::app::{self};
-
-lazy_static! {
-    static ref BOT_REGEX: Regex = Regex::new(
-        r"(?i)(googlebot|yandexbot|bingbot|duckduckbot|baiduspider|slurp|sogou|exabot|facebot|ia_archiver)"
-    ).unwrap();
-}
-
-async fn index(http_req: HttpRequest) -> Result<HttpResponse> {
-    let user_agent = http_req
-        .headers()
-        .get("User-Agent")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or_default();
-    let accept_language = http_req
-        .headers()
-        .get("Accept-Language")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("");
-    let is_bot = BOT_REGEX.is_match(user_agent);
-
-    let host = http_req
-        .headers()
-        .get("Host")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or_default();
-    let is_ua_host = host == "m.sadhana.pro";
-
-    let response_file = if is_bot {
-        // Default language is English
-        let lang = if accept_language.to_lowercase().starts_with("ru") {
-            "ru"
-        } else if accept_language.to_lowercase().starts_with("uk") {
-            "uk"
-        } else if is_ua_host {
-            "en_ua"
-        } else {
-            "en"
-        };
-
-        // Build path to appropriate static snapshot
-        let mut path = PathBuf::from("./dist/static/");
-        path.push(format!("{}.html", lang));
-
-        NamedFile::open(path)?
-    } else {
-        NamedFile::open("./dist/index.html")?
-    };
-
-    log::debug!("Resolved page is {:?}", response_file);
-
-    Ok(response_file.into_response(&http_req))
-}
 
 pub fn routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -196,8 +140,6 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                     ),
             ),
     )
-    .route("/", web::get().to(index))
-    .route("/index.html", web::get().to(index))
     .service(
         Files::new("/", "./dist/")
             .index_file("index.html")
