@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- Root English page with language switcher -->
+  <url>
+    <loc>https://sadhana.pro/</loc>
+    <lastmod>2025-09-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sadhana.pro/en/" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sadhana.pro/ru/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://sadhana.pro/uk/" />
+    <!-- Optional: tell bots this is the generic/default version -->
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sadhana.pro/" />
+  </url>
+
+  <!-- English-only -->
+  <url>
+    <loc>https://sadhana.pro/en/</loc>
+    <lastmod>2025-09-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sadhana.pro/en/" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sadhana.pro/ru/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://sadhana.pro/uk/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sadhana.pro/" />
+  </url>
+
+  <!-- Russian -->
+  <url>
+    <loc>https://sadhana.pro/ru/</loc>
+    <lastmod>2025-09-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sadhana.pro/en/" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sadhana.pro/ru/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://sadhana.pro/uk/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sadhana.pro/" />
+  </url>
+
+  <!-- Ukrainian -->
+  <url>
+    <loc>https://sadhana.pro/uk/</loc>
+    <lastmod>2025-09-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sadhana.pro/en/" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sadhana.pro/ru/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://sadhana.pro/uk/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sadhana.pro/" />
+  </url>
+
+</urlset>
