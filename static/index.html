@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sadhana - Meditation App</title>
+
+  <!-- SEO hreflang -->
+  <link rel="alternate" hreflang="en" href="https://sadhana.pro/en/" />
+  <link rel="alternate" hreflang="ru" href="https://sadhana.pro/ru/" />
+  <link rel="alternate" hreflang="x-default" href="https://sadhana.pro/" />
+</head>
+<body>
+  <!-- Language switch banner -->
+  <div style="background: #f0f0f0; padding: 1em; text-align: center;">
+    <form action="/" method="get">
+      <label for="lang-select">Choose another country or region to see content specific to your location:</label>
+      <select id="lang-select" name="lang">
+        <option value="en">🇬🇧 United Kingdom / English</option>
+        <option value="ru">🇷🇺 Russia / Русский</option>
+        <option value="uk">🇺🇦 Ukraine / Українська</option>
+        <!-- Add more locales as needed -->
+      </select>
+      <button type="submit">Go</button>
+    </form>
+  </div>
+
+  <!-- Main English Content -->
+  <main style="padding: 2em;">
+    <h1>Welcome to Sadhana</h1>
+    <p>Sadhana is a meditation and spiritual tracking app that helps you stay grounded and consistent.</p>
+    <!-- ...more content -->
+  </main>
+
+  <script>
+    // JS enhancement: redirect based on selection
+    document.querySelector("form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const lang = document.querySelector("#lang-select").value;
+      window.location.href = "/" + lang + "/";
+    });
+  </script>
+</body>
+</html>
