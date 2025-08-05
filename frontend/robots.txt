@@ -1,5 +1,2 @@
 User-agent: *
-Allow: /
-Disallow: /api/
-
-Sitemap: https://sadhana.pro/sitemap.xml
+Disallow: /
