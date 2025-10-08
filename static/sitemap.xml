@@ -10,7 +10,7 @@
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://sadhana.pro/en/" />
     <xhtml:link rel="alternate" hreflang="ru" href="https://sadhana.pro/ru/" />
-    <xhtml:link rel="alternate" hreflang="uk" href="https://sadhana.pro/uk/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://m.sadhana.pro/uk/" />
     <!-- Optional: tell bots this is the generic/default version -->
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sadhana.pro/" />
   </url>
@@ -23,7 +23,7 @@
     <priority>0.9</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://sadhana.pro/en/" />
     <xhtml:link rel="alternate" hreflang="ru" href="https://sadhana.pro/ru/" />
-    <xhtml:link rel="alternate" hreflang="uk" href="https://sadhana.pro/uk/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://m.sadhana.pro/uk/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sadhana.pro/" />
   </url>
 
@@ -35,19 +35,19 @@
     <priority>0.9</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://sadhana.pro/en/" />
     <xhtml:link rel="alternate" hreflang="ru" href="https://sadhana.pro/ru/" />
-    <xhtml:link rel="alternate" hreflang="uk" href="https://sadhana.pro/uk/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://m.sadhana.pro/uk/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sadhana.pro/" />
   </url>
 
   <!-- Ukrainian -->
   <url>
-    <loc>https://sadhana.pro/uk/</loc>
+    <loc>https://m.sadhana.pro/uk/</loc>
     <lastmod>2025-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://sadhana.pro/en/" />
     <xhtml:link rel="alternate" hreflang="ru" href="https://sadhana.pro/ru/" />
-    <xhtml:link rel="alternate" hreflang="uk" href="https://sadhana.pro/uk/" />
+    <xhtml:link rel="alternate" hreflang="uk" href="https://m.sadhana.pro/uk/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sadhana.pro/" />
   </url>
 
