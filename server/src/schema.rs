@@ -101,6 +101,8 @@ diesel::table! {
         updated_at -> Timestamptz,
         order_key -> Int4,
         is_required -> Nullable<Bool>,
+        formula -> Nullable<Text>,
+        dropdown_variants -> Nullable<Text>,
     }
 }
 

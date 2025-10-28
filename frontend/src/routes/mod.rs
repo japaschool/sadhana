@@ -31,6 +31,8 @@ pub mod settings;
 pub mod user_practices;
 pub mod yatras;
 
+const DROPDOWN_PRACTICE_TYPES: &[&str] = &["int", "text"];
+
 /// Routes that need not user cntext to be loaded
 #[derive(Clone, Routable, PartialEq)]
 pub enum BaseRoute {

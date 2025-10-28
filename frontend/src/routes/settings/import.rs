@@ -173,6 +173,7 @@ pub fn import() -> Html {
             let entry = DiaryEntry {
                 practice: h.to_owned(),
                 data_type,
+                dropdown_variants: None,
                 value,
             };
             diary_day.push(entry);

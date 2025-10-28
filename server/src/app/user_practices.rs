@@ -26,6 +26,8 @@ pub struct UserPractice {
     pub is_active: bool,
     #[diesel(sql_type = Nullable<Bool>)]
     pub is_required: Option<bool>,
+    #[diesel(sql_type = Nullable<Text>)]
+    pub dropdown_variants: Option<String>,
 }
 
 impl UserPractice {
@@ -37,6 +39,7 @@ impl UserPractice {
                 user_practices::data_type,
                 user_practices::is_active,
                 user_practices::is_required,
+                user_practices::dropdown_variants,
             ))
             .filter(user_practices::id.eq(&practice))
             .first(conn)?;
@@ -55,6 +58,7 @@ impl UserPractice {
                 user_practices::data_type,
                 user_practices::is_active,
                 user_practices::is_required,
+                user_practices::dropdown_variants,
             ))
             .filter(user_practices::user_id.eq(user_id))
             .order(user_practices::order_key)
@@ -70,12 +74,14 @@ impl UserPractice {
         new_name: &str,
         is_active: bool,
         is_required: Option<bool>,
+        dropdown_variants: &Option<String>,
     ) -> Result<(), AppError> {
         diesel::update(user_practices::table)
             .set((
                 user_practices::practice.eq(new_name),
                 user_practices::is_active.eq(is_active),
                 user_practices::is_required.eq(is_required),
+                user_practices::dropdown_variants.eq(dropdown_variants),
             ))
             .filter(
                 user_practices::user_id
@@ -171,6 +177,7 @@ impl UserPractice {
                     data_type.eq(&record.data_type),
                     is_active.eq(record.is_active),
                     is_required.eq(record.is_required),
+                    dropdown_variants.eq(&record.dropdown_variants),
                     order_key.eq(max_order_key.unwrap_or_default() + 1),
                 ))
                 .returning(id)
@@ -283,6 +290,7 @@ pub async fn update_user_practice(
             &form.user_practice.practice,
             form.user_practice.is_active,
             form.user_practice.is_required,
+            &form.user_practice.dropdown_variants,
         )
     })
     .await??;
@@ -321,13 +329,8 @@ pub async fn add_new(
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
-    let record = NewUserPractice {
-        user_id,
-        practice: form.user_practice.practice.clone(),
-        data_type: form.user_practice.data_type.clone(),
-        is_active: form.user_practice.is_active,
-        is_required: form.user_practice.is_required,
-    };
+    let form = form.into_inner();
+    let record = NewUserPractice::from_form(user_id, form.user_practice);
     web::block(move || UserPractice::create(&mut conn, &record)).await??;
     Ok(HttpResponse::Ok().json(()))
 }
@@ -340,6 +343,20 @@ pub struct NewUserPractice {
     data_type: PracticeDataType,
     is_active: bool,
     is_required: Option<bool>,
+    dropdown_variants: Option<String>,
+}
+
+impl NewUserPractice {
+    pub fn from_form(user_id: Uuid, form: NewUserPracticeForm) -> Self {
+        Self {
+            user_id,
+            practice: form.practice,
+            data_type: form.data_type,
+            is_active: form.is_active,
+            is_required: form.is_required,
+            dropdown_variants: form.dropdown_variants,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -348,6 +365,7 @@ pub struct NewUserPracticeForm {
     data_type: PracticeDataType,
     is_active: bool,
     is_required: Option<bool>,
+    dropdown_variants: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

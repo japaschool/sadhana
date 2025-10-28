@@ -126,12 +126,6 @@ pub struct DiaryDay {
     pub diary_day: Vec<DiaryEntry>,
 }
 
-/// Assumes values are sorted by DiaryEntry.practice
-#[derive(Debug, Serialize, Clone)]
-pub struct SaveDiaryDay<'a> {
-    pub diary_day: &'a Vec<DiaryEntry>,
-}
-
 #[derive(Debug, Serialize, Clone)]
 pub struct SaveDiaryDayEntry<'a> {
     pub entry: &'a DiaryEntry,
@@ -141,6 +135,7 @@ pub struct SaveDiaryDayEntry<'a> {
 pub struct DiaryEntry {
     pub practice: String,
     pub data_type: PracticeDataType,
+    pub dropdown_variants: Option<String>,
     pub value: Option<PracticeEntryValue>,
 }
 
@@ -334,6 +329,7 @@ pub struct UserPractice {
     pub data_type: PracticeDataType,
     pub is_active: bool,
     pub is_required: Option<bool>,
+    pub dropdown_variants: Option<String>,
 }
 
 #[derive(Debug, Serialize, Clone, PartialEq, Default)]
@@ -342,6 +338,7 @@ pub struct NewUserPractice {
     pub data_type: PracticeDataType,
     pub is_active: bool,
     pub is_required: Option<bool>,
+    pub dropdown_variants: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

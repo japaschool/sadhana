@@ -431,7 +431,7 @@ pub fn home() -> Html {
             <ListErrors error={save_diary_day_entry.error.clone()} />
             <div class={BODY_DIV_SPACE_10_CSS}>
                 <div class={TWO_COLS_CSS}>
-                    {for local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, value})| {
+                    {for local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, dropdown_variants, value})| {
                         let wrapper_css =
                             (value.is_none() && !diary_entry.loading && session_ctx.selected_date < today)
                                 .then_some(0)
@@ -440,21 +440,59 @@ pub fn home() -> Html {
                                 .map(|_| {"group is-incomplete"})
                                 .unwrap_or_default();
 
+                        let to_options = |variants: &str| {
+                            let is_selected = |v| {
+                                value
+                                    .as_ref()
+                                    .map(|val| val.to_string() == v)
+                                    .unwrap_or(false)
+                            };
+                            let empty = html! {
+                                <option
+                                class={"text-black"}
+                                value=""
+                                selected={value.is_none()} >
+                                {Locale::current().dropdown_empty_variant()}
+                                </option>
+                            };
+
+                            let mut opts = variants
+                            .split(',')
+                            .map(str::trim)
+                            .filter(|s| !s.is_empty())
+                            .map(|v| html! {
+                                <option class={"text-black"} selected={is_selected(v)} value={v.to_string()}>{v}</option>
+                            })
+                            .collect::<Vec<Html>>();
+
+                            opts.insert(0, empty);
+                            opts
+                        };
+
                         let input_html = match data_type {
                             PracticeDataType::Int => html! {
                                 <div class="relative" key={practice.clone()} >
-                                    <input
-                                        onchange={onchange.clone()}
-                                        type="number"
-                                        pattern="[0-9]*"
-                                        id={idx.to_string()}
-                                        value={value.iter().find_map(|v| v.as_int().map(|i| i.to_string())).unwrap_or_default()}
-                                        min="0"
-                                        max="174"
-                                        placeholder={idx.to_string()}
-                                        autocomplete="off"
-                                        class={format!("{INPUT_CSS} text-center")}
-                                        />
+                                    if let Some(variants) = dropdown_variants.as_ref() {
+                                        <select
+                                            onchange={onchange.clone()}
+                                            id={idx.to_string()}
+                                            class={format!("{INPUT_CSS} text-center")} >
+                                            {to_options(variants)}
+                                        </select>
+                                    } else {
+                                        <input
+                                            onchange={onchange.clone()}
+                                            type="number"
+                                            pattern="[0-9]*"
+                                            id={idx.to_string()}
+                                            value={value.iter().find_map(|v| v.as_int().map(|i| i.to_string())).unwrap_or_default()}
+                                            min="0"
+                                            max="174"
+                                            placeholder={idx.to_string()}
+                                            autocomplete="off"
+                                            class={format!("{INPUT_CSS} text-center")}
+                                            />
+                                    }
                                     <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
                                         <i class="icon-rounds"></i>{format!(" {practice}: ")}
                                     </label>
@@ -528,16 +566,25 @@ pub fn home() -> Html {
                                 },
                             PracticeDataType::Text => html! {
                                 <div class="relative" key={practice.clone()} >
-                                    <textarea
-                                        id={idx.to_string()}
-                                        class={TEXTAREA_CSS}
-                                        maxlength="1024"
-                                        rows="4"
-                                        placeholder={idx.to_string()}
-                                        onchange={onchange.clone()}
-                                        value={value.iter().find_map(|v| v.as_text()).unwrap_or_default()}
-                                        >
-                                    </textarea>
+                                    if let Some(variants) = dropdown_variants.as_ref() {
+                                        <select
+                                            onchange={onchange.clone()}
+                                            id={idx.to_string()}
+                                            class={format!("{INPUT_CSS} text-center")} >
+                                            {to_options(variants)}
+                                        </select>
+                                    } else {
+                                        <textarea
+                                            id={idx.to_string()}
+                                            class={TEXTAREA_CSS}
+                                            maxlength="1024"
+                                            rows="4"
+                                            placeholder={idx.to_string()}
+                                            onchange={onchange.clone()}
+                                            value={value.iter().find_map(|v| v.as_text()).unwrap_or_default()}
+                                            >
+                                        </textarea>
+                                    }
                                     <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
                                         <i class="icon-doc"></i>
                                         {format!(" {practice}: ")}
