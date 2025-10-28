@@ -58,10 +58,10 @@ cargo install diesel_cli --no-default-features --features postgres
 ### Docker
 
 To build a container run:
-`docker build -t sadhanapro .`
+`docker build -t sadhana:local .`
 
 To run the container use the following command as an example:
-`docker run -p4242:80 -d --name sadhanapro -t -e 'SERVER_ADDRESS=0.0.0.0:80' -e 'JWT_KEY=xyz' -v "$(pwd)"/env.template:/usr/local/bin/.env sadhanapro`
+`docker run --rm -p 4242:80 -e 'SERVER_ADDRESS=0.0.0.0:80' -e 'JWT_KEY=xyz' -v "$(pwd)"/env.template:/usr/local/bin/.env sadhana:local`
 
 The required environment variables can be either passed down with `-e` flag or in a mapped `.env` file.
 
