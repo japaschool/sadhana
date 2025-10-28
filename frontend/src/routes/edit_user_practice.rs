@@ -1,6 +1,6 @@
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
-use yew_hooks::{use_async, use_mount};
+use yew_hooks::{use_async, use_bool_toggle, use_mount};
 use yew_router::prelude::use_navigator;
 
 use crate::{
@@ -11,6 +11,7 @@ use crate::{
     css::*,
     i18n::*,
     model::UserPractice,
+    routes::DROPDOWN_PRACTICE_TYPES,
     services::{self, get_user_practice},
     AppRoute,
 };
@@ -24,6 +25,7 @@ pub struct Props {
 pub fn edit_user_practice(props: &Props) -> Html {
     let nav = use_navigator().unwrap();
     let practice = use_state(UserPractice::default);
+    let is_dropdown = use_bool_toggle(false);
 
     let current_practice = {
         let p = props.practice.clone();
@@ -49,7 +51,15 @@ pub fn edit_user_practice(props: &Props) -> Html {
 
     {
         let practice = practice.clone();
+        let is_dropdown = is_dropdown.clone();
         use_effect_with(current_practice.clone(), move |current| {
+            is_dropdown.set(
+                current
+                    .data
+                    .as_ref()
+                    .map(|p| p.dropdown_variants.is_some())
+                    .unwrap_or_default(),
+            );
             current.data.iter().for_each(|p| practice.set(p.to_owned()));
             || ()
         });
@@ -108,12 +118,71 @@ pub fn edit_user_practice(props: &Props) -> Html {
                                 <i class="icon-doc"></i>{format!(" {}", Locale::current().name())}
                             </label>
                         </div>
+                        if *is_dropdown{
+                            <div class="relative">
+                                <input
+                                    id="dropdown_variants"
+                                    type="text"
+                                    autocomplete="off"
+                                    placeholder="Dropdown variants"
+                                    class={INPUT_CSS}
+                                    value={practice.dropdown_variants.clone()}
+                                    oninput={
+                                        let practice = practice.clone();
+                                        Callback::from(move |e: InputEvent| {
+                                            let input: HtmlInputElement = e.target_unchecked_into();
+                                            let mut new_practice = (*practice).clone();
+                                            let variants = input.value().trim().to_owned();
+                                            if !variants.is_empty() {
+                                                new_practice.dropdown_variants = Some(variants);
+                                            } else {
+                                                new_practice.dropdown_variants = None;
+                                            }
+                                            practice.set(new_practice);
+                                        })
+                                    }
+                                    />
+                                <label for="practice"
+                                    class={INPUT_LABEL_CSS}>
+                                    <i class="icon-doc"></i>{format!(" {}", Locale::current().dropdown_variants())}
+                                </label>
+                            </div>
+                        }
+                        if DROPDOWN_PRACTICE_TYPES.contains(&practice.data_type.to_string().as_str()) {
+                            <div class="relative">
+                                <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
+                                    <span><i class="icon-tick"></i>{format!(" {}: ", Locale::current().is_dropdown())}</span>
+                                    <div class="flex">
+                                        <input
+                                            id="is_required"
+                                            type="checkbox"
+                                            class={CHECKBOX_INPUT_CSS}
+                                            onclick={
+                                                let is_dropdown = is_dropdown.clone();
+                                                let practice = practice.clone();
+                                                Callback::from(move |ev: MouseEvent| {
+                                                    let input: HtmlInputElement = ev.target_unchecked_into();
+                                                    let checked = input.checked();
+                                                    if !checked {
+                                                        let mut new_practice = (*practice).clone();
+                                                        new_practice.dropdown_variants = None;
+                                                        practice.set(new_practice);
+                                                    }
+                                                    is_dropdown.set(checked);
+                                                })
+                                            }
+                                            checked={*is_dropdown}
+                                            />
+                                    </div>
+                                </label>
+                            </div>
+                        }
                         <div class="relative">
                             <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
                                 <span><i class="icon-tick"></i>{format!(" {}: ", Locale::current().is_required())}</span>
                                 <div class="flex">
                                     <input
-                                        id="checkbox"
+                                        id="mandatory"
                                         type="checkbox"
                                         class={CHECKBOX_INPUT_CSS}
                                         onclick={required_onclick.clone()}

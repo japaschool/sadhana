@@ -3,7 +3,7 @@ use urlencoding::decode;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
-use yew_hooks::{use_async, use_mount};
+use yew_hooks::{use_async, use_bool_toggle, use_mount};
 use yew_router::prelude::use_navigator;
 
 use crate::{
@@ -14,6 +14,7 @@ use crate::{
     css::*,
     i18n::*,
     model::{NewUserPractice, YatraPractice},
+    routes::DROPDOWN_PRACTICE_TYPES,
     services::{create_user_practice, create_yatra_practice},
 };
 
@@ -30,15 +31,16 @@ pub enum NewPracticeTarget {
     YatraPractice { yatra_id: String },
 }
 
+#[derive(Debug, Default, Clone)]
+struct FormData {
+    practice: String,
+    data_type: String,
+    is_required: Option<bool>,
+    dropdown_variants: Option<String>,
+}
+
 #[function_component(NewPractice)]
 pub fn new_practice(props: &Props) -> Html {
-    #[derive(Debug, Default, Clone)]
-    struct FormData {
-        practice: String,
-        data_type: String,
-        is_required: Option<bool>,
-    }
-
     let form_data = use_state(|| FormData {
         practice: props
             .practice
@@ -48,20 +50,24 @@ pub fn new_practice(props: &Props) -> Html {
             .unwrap_or_default(),
         ..FormData::default()
     });
+    let is_dropdown = use_bool_toggle(false);
     let nav = use_navigator().unwrap();
 
     let save = {
         let form = form_data.clone();
         let nav = nav.clone();
         let target = props.target.clone();
+        let is_dropdown = is_dropdown.clone();
         use_async(async move {
             (match target {
                 NewPracticeTarget::UserPractice => {
+                    let variants = form.dropdown_variants.clone().filter(|_| *is_dropdown);
                     let new_practice = NewUserPractice {
                         practice: form.practice.trim().to_owned(),
                         data_type: form.data_type.as_str().try_into().unwrap(),
                         is_active: true,
                         is_required: form.is_required,
+                        dropdown_variants: variants,
                     };
                     create_user_practice(new_practice).await
                 }
@@ -100,8 +106,27 @@ pub fn new_practice(props: &Props) -> Html {
         })
     };
 
+    let dropdown_variants_oninput = {
+        let form_data = form_data.clone();
+        Callback::from(move |e: InputEvent| {
+            // TODO: typecheck the entered variants
+            e.prevent_default();
+
+            let input: HtmlInputElement = e.target_unchecked_into();
+            let mut form = (*form_data).clone();
+            let variants = input.value().trim().to_owned();
+            if !variants.is_empty() {
+                form.dropdown_variants = Some(variants);
+            } else {
+                form.dropdown_variants = None;
+            }
+            form_data.set(form);
+        })
+    };
+
     let data_type_onchange = {
         let form_data = form_data.clone();
+        let is_dropdown = is_dropdown.clone();
         Callback::from(move |e: Event| {
             e.prevent_default();
 
@@ -114,6 +139,7 @@ pub fn new_practice(props: &Props) -> Html {
             let mut form = (*form_data).clone();
             form.data_type = input.value();
             form_data.set(form);
+            is_dropdown.set(false);
         })
     };
 
@@ -141,6 +167,14 @@ pub fn new_practice(props: &Props) -> Html {
         })
     };
 
+    let is_dropdown_onclick = {
+        let is_dropdown = is_dropdown.clone();
+        Callback::from(move |e: MouseEvent| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+            is_dropdown.set(input.checked());
+        })
+    };
+
     let required_onclick = {
         let form = form_data.clone();
         Callback::from(move |e: MouseEvent| {
@@ -165,8 +199,8 @@ pub fn new_practice(props: &Props) -> Html {
                             autocomplete="off"
                             id="practice_name"
                             type="text"
-                            oninput={ practice_oninput.clone() }
-                            class={ INPUT_CSS }
+                            oninput={practice_oninput.clone()}
+                            class={INPUT_CSS}
                             placeholder="practice_name"
                             pattern="[^\\s]+?.*"
                             maxlength="64"
@@ -183,7 +217,7 @@ pub fn new_practice(props: &Props) -> Html {
                         <select
                             class={ INPUT_CSS }
                             id="data_type"
-                            onchange={ data_type_onchange }
+                            onchange={data_type_onchange}
                             required=true >
                             <option class={ "text-black" } value="int">{ Locale::current().integer() }</option>
                             <option class={ "text-black" } value="time">{ Locale::current().time() }</option>
@@ -192,18 +226,52 @@ pub fn new_practice(props: &Props) -> Html {
                             <option class={ "text-black" } value="duration">{ Locale::current().duration_in_mins() }</option>
                             <option class={ "text-black" } value="" selected=true disabled=true style="display:none">{ Locale::current().select_data_type() }</option>
                         </select>
-                        <label for="data_type" class={ INPUT_LABEL_CSS }>
+                        <label for="data_type" class={INPUT_LABEL_CSS}>
                             <i class="fa"></i>
-                            { format!(" {}: ", Locale::current().data_type()) }
+                            {format!(" {}: ", Locale::current().data_type())}
                         </label>
                     </div>
+                    if *is_dropdown {
+                        <div class="relative">
+                            <input
+                                class={INPUT_CSS}
+                                autocomplete="off"
+                                id="dropdown_variants"
+                                type="text"
+                                placeholder="dropdown variants"
+                                maxlength="1024"
+                                oninput={dropdown_variants_oninput.clone()}
+                                value={form_data.dropdown_variants.clone()}
+                                />
+                            <label for="dropdown_variants" class={INPUT_LABEL_CSS}>
+                                <i class="fa"></i>
+                                {format!(" {}: ", Locale::current().dropdown_variants())}
+                            </label>
+                        </div>
+                    }
                     if props.target == NewPracticeTarget::UserPractice {
+                        if DROPDOWN_PRACTICE_TYPES.contains(&form_data.data_type.as_str()) {
+                            <div class="relative">
+                                <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
+                                    <span><i class="icon-tick"></i>{format!(" {}: ", Locale::current().is_dropdown())}</span>
+                                    <div>
+                                        <input
+                                        id="is_dropdown"
+                                        type="checkbox"
+                                        class={CHECKBOX_INPUT_CSS}
+                                        checked={*is_dropdown}
+                                        onclick={is_dropdown_onclick.clone()}
+                                        />
+                                    </div>
+                                </label>
+                            </div>
+                        }
                         <div class="relative">
                             <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
                                 <span><i class="icon-tick"></i>{format!(" {}: ", Locale::current().is_required())}</span>
                                 <div>
                                     <input
-                                    id="checkbox"
+                                    id="mandatory"
                                     type="checkbox"
                                     class={CHECKBOX_INPUT_CSS}
                                     onclick={required_onclick.clone()}

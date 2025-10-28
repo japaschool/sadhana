@@ -15,6 +15,8 @@ pub struct DiaryDayEntry {
     pub practice: String,
     #[diesel(sql_type = PracticeDataTypeEnum)]
     pub data_type: PracticeDataType,
+    #[diesel(sql_type = Nullable<Text>)]
+    pub dropdown_variants: Option<String>,
     #[diesel(sql_type = Nullable<Jsonb>)]
     pub value: Option<JsonValue>,
 }
@@ -27,15 +29,15 @@ impl DiaryDayEntry {
     ) -> Result<Vec<Self>, AppError> {
         let res = sql_query(
             r#"
-        select up.practice, up.data_type, d.value
-        from user_practices up
-        left join diary d
-        on up.user_id = d.user_id 
-        and up.id = d.practice_id
-        and d.cob_date = $1
-        where up.is_active = true
-        and up.user_id = $2
-        order by up.order_key
+        select up.practice, up.data_type, up.dropdown_variants, d.value
+        from   user_practices up
+        left   join diary d
+        on     up.user_id = d.user_id 
+        and    up.id = d.practice_id
+        and    d.cob_date = $1
+        where  up.is_active = true
+        and    up.user_id = $2
+        order  by up.order_key
         "#,
         )
         .bind::<Date, _>(cob_date)

@@ -184,5 +184,9 @@
   "help_add_table_report": "Як додати новий звіт із таблицею",
   "__prompt__": "------------------------------------",
   "prompt_title_add_dur": "Додати до {practice_name}",
-  "prompt_desc_add_dur": "Введіть кількість хвилин, яку потрібно додати до {practice_name}"
+  "prompt_desc_add_dur": "Введіть кількість хвилин, яку потрібно додати до {practice_name}",
+  "__dropdown_practice__": "------------------------------------",
+  "dropdown_empty_variant": "--",
+  "dropdown_variants": "Елементи списку",
+  "is_dropdown": "Выпадаючий список?"
 }
