@@ -4,6 +4,7 @@ use chrono::Local;
 use gloo_events::EventListener;
 use js_sys::RegExp;
 use lazy_static::lazy_static;
+use tw_merge::*;
 use wasm_bindgen::JsCast;
 use web_sys::{HtmlElement, HtmlInputElement, VisibilityState};
 use yew::prelude::*;
@@ -476,7 +477,7 @@ pub fn home() -> Html {
                                         <select
                                             onchange={onchange.clone()}
                                             id={idx.to_string()}
-                                            class={format!("{INPUT_CSS} text-center")} >
+                                            class={tw_merge!("appearance-none", INPUT_CSS, "text-center [text-align-last:center]")} >
                                             {to_options(variants)}
                                         </select>
                                     } else {
@@ -490,7 +491,7 @@ pub fn home() -> Html {
                                             max="174"
                                             placeholder={idx.to_string()}
                                             autocomplete="off"
-                                            class={format!("{INPUT_CSS} text-center")}
+                                            class={tw_merge!(INPUT_CSS, "text-center")}
                                             />
                                     }
                                     <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
@@ -525,7 +526,7 @@ pub fn home() -> Html {
                                         oninput={oninput_duration.clone()}
                                         onkeydown={onkeydown_time_dur.clone()}
                                         value={value.iter().find_map(|v| v.as_duration_str()).unwrap_or_default()}
-                                        class={format!("{INPUT_CSS} text-center")}
+                                        class={tw_merge!(INPUT_CSS, "text-center")}
                                         placeholder={idx.to_string()}
                                         />
                                     if value.is_some() {
@@ -555,7 +556,7 @@ pub fn home() -> Html {
                                         oninput={oninput_time.clone()}
                                         onkeydown={onkeydown_time_dur.clone()}
                                         value={ value.iter().find_map(|v| v.as_time_str()).unwrap_or_default() }
-                                        class={format!("{INPUT_CSS} text-center")}
+                                        class={tw_merge!(INPUT_CSS, "text-center")}
                                         placeholder={idx.to_string()}
                                         />
                                     <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
@@ -570,7 +571,7 @@ pub fn home() -> Html {
                                         <select
                                             onchange={onchange.clone()}
                                             id={idx.to_string()}
-                                            class={format!("{INPUT_CSS} text-center")} >
+                                            class={tw_merge!(INPUT_CSS, "text-center")} >
                                             {to_options(variants)}
                                         </select>
                                     } else {
