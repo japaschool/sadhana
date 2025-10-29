@@ -1,4 +1,4 @@
-FROM rust:1.84.0 as chef
+FROM rust:1.85.0 AS chef
 
 # Installing postgres lib
 RUN apt update && apt install -y libpq5
