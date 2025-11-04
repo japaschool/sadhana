@@ -200,6 +200,7 @@ pub fn chart(props: &Props) -> Html {
         .margin(Margin::new().left(40).right(40).top(10))
         .show_legend(props.traces.iter().any(|t| t.name.is_some()))
         .auto_size(true)
+        .drag_mode(plotly::layout::DragMode::False)
         .legend(legend);
 
     match props.bar_mode {
@@ -334,7 +335,6 @@ pub fn chart(props: &Props) -> Html {
 
     let config = Configuration::default()
         .display_mode_bar(DisplayModeBar::False)
-        .static_plot(true)
         .responsive(true)
         .locale(&Locale::current().to_string());
 
