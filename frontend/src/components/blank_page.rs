@@ -92,7 +92,7 @@ impl HeaderButtonProps {
         icon_css: Option<String>,
         btn_type: ButtonType,
     ) -> Self {
-        HeaderButtonProps {
+        Self {
             label: Some(label.into()).filter(|s| !s.is_empty()),
             icon_css,
             action: Action::Cb(onclick),
@@ -106,7 +106,7 @@ impl HeaderButtonProps {
         icon_css: Option<String>,
         btn_type: ButtonType,
     ) -> Self {
-        HeaderButtonProps {
+        Self {
             label: Some(label.into()),
             icon_css,
             action: Action::Redirect(route),
@@ -119,7 +119,7 @@ impl HeaderButtonProps {
         icon_css: S,
         btn_type: ButtonType,
     ) -> Self {
-        HeaderButtonProps {
+        Self {
             label: None,
             icon_css: Some(icon_css.into()),
             action: Action::Cb(onclick),
@@ -128,7 +128,7 @@ impl HeaderButtonProps {
     }
 
     pub fn new_icon_redirect<S: Into<String>>(route: AppRoute, icon_css: S) -> Self {
-        HeaderButtonProps {
+        Self {
             label: None,
             icon_css: Some(icon_css.into()),
             action: Action::Redirect(route),

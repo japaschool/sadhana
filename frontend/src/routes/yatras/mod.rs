@@ -15,7 +15,7 @@ use crate::{
     css::*,
     hooks::SessionStateContext,
     i18n::Locale,
-    model::{PracticeDataType, Yatra, YatraData},
+    model::{PracticeDataType, Yatra, YatraData, YatraDataRow},
     routes::AppRoute,
     services::{create_yatra, get_user_yatras, get_yatra_data},
 };
@@ -151,11 +151,11 @@ pub fn yatras() -> Html {
                 .data
                 .iter()
                 .flat_map(|d| d.data.iter())
-                .map(|(user_name, values)| {
+                .map(|YatraDataRow{user_id: _, user_name, row}| {
                     let data_columns = data.data
                         .iter()
                         .flat_map(|inner| inner.practices.iter())
-                        .zip(values.iter())
+                        .zip(row.iter())
                         .map(|(practice, value_opt)| {
                             let value_str = match practice.data_type {
                             PracticeDataType::Bool => value_opt

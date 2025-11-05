@@ -418,9 +418,16 @@ pub struct UpdateYatraPracticesOrderKey {
 }
 
 #[derive(Debug, Deserialize, Default, Clone)]
+pub struct YatraDataRow {
+    pub user_id: String,
+    pub user_name: String,
+    pub row: Vec<Option<PracticeEntryValue>>,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
 pub struct YatraData {
     pub practices: Vec<YatraPractice>,
-    pub data: Vec<(String, Vec<Option<PracticeEntryValue>>)>,
+    pub data: Vec<YatraDataRow>,
 }
 
 #[derive(Debug, Serialize)]

@@ -516,6 +516,8 @@ impl YatraUserPractice {
 
 #[derive(Serialize, Debug, QueryableByName)]
 pub struct YatraDataRow {
+    #[diesel(sql_type = DieselUuid)]
+    pub user_id: Uuid,
     #[diesel(sql_type = Text)]
     pub user_name: String,
     #[diesel(sql_type = Nullable<Jsonb>)]
@@ -542,6 +544,7 @@ impl YatraDataRow {
                     d.cob_date = $2
             )
             select
+                u.id as user_id,
                 u."name" as user_name,
                 d.value
             from
@@ -937,9 +940,26 @@ pub struct YatraIsAdminResponse {
 }
 
 #[derive(Serialize, Debug)]
+pub struct YatraDataRowResponse {
+    pub user_id: Uuid,
+    pub user_name: String,
+    pub row: Vec<Option<JsonValue>>,
+}
+
+impl YatraDataRowResponse {
+    fn new(user_id: Uuid, user_name: String, row: Vec<Option<JsonValue>>) -> Self {
+        Self {
+            user_id,
+            user_name,
+            row,
+        }
+    }
+}
+
+#[derive(Serialize, Debug)]
 pub struct YatraDataResponse {
     pub practices: Vec<YatraPractice>,
-    pub data: Vec<(String, Vec<Option<JsonValue>>)>,
+    pub data: Vec<YatraDataRowResponse>,
 }
 
 impl From<(Vec<YatraPractice>, Vec<YatraDataRow>)> for YatraDataResponse {
@@ -951,22 +971,30 @@ impl From<(Vec<YatraPractice>, Vec<YatraDataRow>)> for YatraDataResponse {
         let mut curr_user_data = vec![];
         let mut all_users_data = vec![];
         for row in rows.into_iter() {
-            if let Some(user) = curr_user.take() {
-                if user == row.user_name {
+            if let Some((user_id, user_name)) = curr_user.take() {
+                if user_id == row.user_id {
                     curr_user_data.push(row.value);
                 } else {
-                    all_users_data.push((user, curr_user_data));
+                    all_users_data.push(YatraDataRowResponse::new(
+                        user_id,
+                        user_name,
+                        curr_user_data,
+                    ));
                     curr_user_data = vec![row.value];
                 }
-                curr_user = Some(row.user_name);
+                curr_user = Some((row.user_id, row.user_name));
             } else {
-                curr_user = Some(row.user_name);
+                curr_user = Some((row.user_id, row.user_name));
                 curr_user_data = vec![row.value];
             }
         }
 
-        if let Some(user) = curr_user.take() {
-            all_users_data.push((user, curr_user_data));
+        if let Some((user_id, user_name)) = curr_user.take() {
+            all_users_data.push(YatraDataRowResponse::new(
+                user_id,
+                user_name,
+                curr_user_data,
+            ));
         }
 
         Self {
