@@ -6,8 +6,10 @@ use crate::{
     routes::{AppRoute, BaseRoute},
 };
 use gloo::storage::{LocalStorage, Storage};
+use gloo_dialogs::confirm;
 use inflector::Inflector;
-use web_sys::HtmlInputElement;
+use wasm_bindgen::JsValue;
+use web_sys::{BroadcastChannel, HtmlInputElement};
 use yew::prelude::*;
 use yew_router::prelude::use_navigator;
 
@@ -80,6 +82,17 @@ pub fn settings() -> Html {
             nav.push(&BaseRoute::About);
         })
     };
+    let force_reload = Callback::from(move |_| {
+        if confirm(&Locale::current().force_reload_confirm()) {
+            if let Ok(ch) = BroadcastChannel::new("ForceReload") {
+                ch.post_message(&JsValue::from_str("force_reload"))
+                    .inspect_err(|_| log::error!("Failed to post force reload message"))
+                    .ok();
+            } else {
+                log::error!("Could not create a broadcast channel for forced reloads");
+            }
+        }
+    });
     let import_onclick = {
         let nav = nav.clone();
         Callback::from(move |_: MouseEvent| {
@@ -146,13 +159,18 @@ pub fn settings() -> Html {
                     <li onclick={ help_onclick }>
                         <div class={LI_DIV_CSS}>
                             <label><i class="icon-help flex-shrink-0 w-5"></i>{ Locale::current().help_and_support() }</label>
-                            <i class="icon-chevron-right"></i>
+                            <i class="icon-chevron-right" />
                         </div>
                     </li>
                     <li onclick={ about_onclick } >
                         <div class={LI_DIV_CSS}>
                             <label><i class="icon-info flex-shrink-0 w-5"></i>{ Locale::current().about() }</label>
-                            <i class="icon-chevron-right"></i>
+                            <i class="icon-chevron-right" />
+                        </div>
+                    </li>
+                    <li onclick={force_reload} >
+                        <div class={LI_DIV_CSS}>
+                            <label><i class="icon-reload flex-shrink-0 w-5" />{ Locale::current().force_reload() }</label>
                         </div>
                     </li>
                     <li onclick={ logout_onclick.clone() }>

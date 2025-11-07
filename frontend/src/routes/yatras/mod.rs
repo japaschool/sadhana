@@ -1,6 +1,7 @@
 use common::error::AppError;
 use gloo::storage::{LocalStorage, Storage};
 use gloo_dialogs::prompt;
+use tw_merge::*;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::{use_async, use_mount};
@@ -217,7 +218,7 @@ pub fn yatras() -> Html {
         <div class={BODY_DIV_CSS}>
             <div class="relative pb-5">
                 <select
-                    class={ INPUT_CSS }
+                    class={tw_merge!(INPUT_CSS, "appearance-none")}
                     id="yatra"
                     onchange={ yatra_onchange }
                     required=true

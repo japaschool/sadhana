@@ -65,8 +65,11 @@ pub fn calendar(props: &Props) -> Html {
 
     {
         let incomplete_days = incomplete_days.clone();
+        let should_run = props.highlight_incomplete_dates;
         use_mount(move || {
-            incomplete_days.run();
+            if should_run {
+                incomplete_days.run();
+            }
         });
     }
 
@@ -100,7 +103,7 @@ pub fn calendar(props: &Props) -> Html {
     }
 
     let is_incomplete_day = |day| {
-        if session_state.selected_date.day() == day {
+        if !incomplete_days.loading && session_state.selected_date.day() == day {
             if let Some(selected_date_incomplete) = props.selected_date_incomplete.as_ref() {
                 return *selected_date_incomplete;
             }

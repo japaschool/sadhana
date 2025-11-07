@@ -118,6 +118,13 @@
 
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/service_worker.js");
+
+        navigator.serviceWorker.addEventListener("message", (event) => {
+          if (event.data?.type === "reload") {
+            console.log("Reload requested by SW");
+            window.location.reload(true);
+          }
+        });
       }
     };
   </script>

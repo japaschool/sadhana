@@ -17,6 +17,7 @@ use crate::{
 use chrono::Local;
 use common::ReportDuration;
 use gloo::storage::{LocalStorage, Storage};
+use tw_merge::*;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
@@ -210,7 +211,7 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
             <div class={TWO_COLS_CSS}>
                 <div class="relative">
                     <select
-                        class={INPUT_CSS}
+                        class={tw_merge!(INPUT_CSS, "appearance-none")}
                         id="report"
                         onchange={report_onchange.clone()}
                         >
@@ -228,7 +229,7 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
                     </label>
                 </div>
                 <div class="relative">
-                    <select class={INPUT_CSS} id="duration" onchange={duration_onchange.clone()}>
+                    <select class={tw_merge!(INPUT_CSS, "appearance-none")} id="duration" onchange={duration_onchange.clone()}>
                         { for [
                             (ReportDuration::Week, Locale::current().report_dur_week()),
                             (ReportDuration::Month, Locale::current().report_dur_month()),

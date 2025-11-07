@@ -77,7 +77,7 @@ npx pwa-asset-generator images/logo.png images -m site.webmanifest --padding "ca
 ### Icons
 
 [Free svg icons](https://heroicons.com/)
-[Fix stocks to fills](https://docs.oslllo.com/svg-fixer/master/#/getting-started/cli?id=svgfixer-cli-installation)
+[Fix strokes to fills](https://github.com/oslllo/svg-fixer)
 [Svg to ttl](https://icomoon.io/app/#/select/font)
 Note, you actually need to merge changes to style.css as it includes some important margins.
 

@@ -1,3 +1,4 @@
+use tw_merge::*;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
@@ -37,8 +38,8 @@ pub fn prompt(props: &Props) -> Html {
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity overflow-hidden" />
             <div class="fixed inset-0 w-screen overflow-y-auto">
                 <form class="flex min-h-screen justify-center p-4 text-center items-center sm:p-0">
-                    <div class={format!("relative transform overflow-hidden rounded-lg text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg {}", POPUP_BG_CSS)}>
-                        <div class="px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    <div class={tw_merge!("relative transform overflow-hidden rounded-lg text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg", POPUP_BG_CSS)}>
+                        <div class="px-4 pb-4 pt-5">
                         <div class="sm:flex sm:items-start dark:text-zinc-100 text-zinc-500">
                             <div class="w-full text-center sm:mt-0 sm:text-left">
                             <h3 class="text-base font-semibold leading-6">{props.title.to_string()}</h3>
@@ -58,16 +59,16 @@ pub fn prompt(props: &Props) -> Html {
                             </div>
                         </div>
                         </div>
-                        <div class="px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                        <div class="px-4 py-3 flex flex-col space-y-4 md:space-y-0 md:flex-row-reverse md:space-x-3 md:space-x-reverse">
                             <button
                                 type="reset"
-                                class={format!("inline-flex w-full justify-center px-3 py-2 sm:ml-3 sm:w-auto {}", BTN_CSS_NO_MARGIN)}
+                                class={tw_merge!("inline-flex justify-center py-2 w-auto", BTN_CSS_NO_MARGIN)}
                                 onclick={props.oncancel.clone()}
                                 >
                             <i class=""></i>{Locale::current().cancel()}</button>
                             <button
                                 type="submit"
-                                class={format!("inline-flex w-full justify-center px-3 py-2 sm:mt-0 sm:w-auto {}", SUBMIT_BTN_CSS_NO_MARGIN)}
+                                class={tw_merge!("inline-flex justify-center py-2 w-auto", SUBMIT_BTN_CSS_NO_MARGIN)}
                                 onclick={submit}
                                 >
                             <i class=""></i>{Locale::current().save()}</button>

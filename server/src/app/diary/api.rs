@@ -134,5 +134,3 @@ pub async fn get_incomplete_days(
 }
 
 type CobSlug = NaiveDate;
-
-//TODO: add tests
