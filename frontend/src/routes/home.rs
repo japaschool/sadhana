@@ -12,7 +12,7 @@ use yew_hooks::{use_async, use_list, use_mount};
 
 use crate::{
     components::{
-        blank_page::{BlankPage, ButtonType, CalendarProps, HeaderButtonProps},
+        blank_page::{BlankPage, CalendarProps, HeaderButtonProps},
         list_errors::ListErrors,
         prompt::Prompt,
     },
@@ -370,13 +370,6 @@ pub fn home() -> Html {
         })
     };
 
-    let edit_practices_button = HeaderButtonProps::new_redirect(
-        Locale::current().practices(),
-        AppRoute::UserPractices,
-        None,
-        ButtonType::Button,
-    );
-
     let add_duraction = {
         let idx = add_duration_prompt_idx.clone();
         let local_state = local_diary_entry.clone();
@@ -414,7 +407,7 @@ pub fn home() -> Html {
 
     html! {
         <BlankPage
-            right_button={edit_practices_button}
+            right_button={HeaderButtonProps::new_icon_redirect(AppRoute::UserPractices, "icon-bars")}
             show_footer=true
             loading={diary_entry.loading}
             selected_page={AppRoute::Home}
@@ -452,9 +445,7 @@ pub fn home() -> Html {
                                 <option
                                 class={"text-black"}
                                 value=""
-                                selected={value.is_none()} >
-                                {Locale::current().dropdown_empty_variant()}
-                                </option>
+                                selected={value.is_none()} />
                             };
 
                             let mut opts = variants
@@ -539,7 +530,7 @@ pub fn home() -> Html {
                                         </div>
                                     }
                                     <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
-                                        <i class="icon-clock"></i>
+                                        <i class="icon-timer"></i>
                                         {format!(" {practice}: ")}
                                     </label>
                                 </div>
@@ -571,7 +562,7 @@ pub fn home() -> Html {
                                         <select
                                             onchange={onchange.clone()}
                                             id={idx.to_string()}
-                                            class={tw_merge!(INPUT_CSS, "text-center")} >
+                                            class={tw_merge!("appearance-none", INPUT_CSS)} >
                                             {to_options(variants)}
                                         </select>
                                     } else {

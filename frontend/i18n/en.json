@@ -87,6 +87,8 @@
   "left": "Left",
   "right": "Right",
   "offline_msg": "The server's unreachable. Working offline.",
+  "force_reload": "Clear cache and reload",
+  "force_reload_confirm": "You should avoid reloading the app if you have poor internet bandwidth. Please confirm you are happy to proceed.",
   "__support_form__": "------------------------------------",
   "sf_send_us_message": "Send us a message",
   "sf_subject": "Subject",
@@ -186,7 +188,6 @@
   "prompt_title_add_dur": "Add to {practice_name}",
   "prompt_desc_add_dur": "Enter how many minutes to add to {practice_name}",
   "__dropdown_practice__": "------------------------------------",
-  "dropdown_empty_variant": "--",
   "dropdown_variants": "Dropdown variants",
   "is_dropdown": "Is dropdown?"
 }

@@ -1,8 +1,8 @@
-/* Source: https://github.com/sehgalsakshi/Offline-POST-PWA---Service-Worker/tree/master */
-var CACHE = {
-    name: 'sadhana-pro',
-    version: '-v1'
-};
+// Change this version if you need to force the app to reload on users' mobiles
+// Do it carefully as those who are on poor internet might loose the app
+var version = "v1"
+var CACHE_STATIC = version + "_pwa-static";
+var CACHE_API = version + "_pwa-api";
 
 const diaryDayPutUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}/entry');
 const diaryDayGetUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}$');
@@ -12,7 +12,18 @@ const cacheTtlDays = 10;
 const defaultDiaryDayKey = '/default-diary-day';
 
 const connStatusBroadcast = new BroadcastChannel('ConnectionStatus');
+const forceReloadBroadcast = new BroadcastChannel('ForceReload');
+
 var connOnline = true;
+
+forceReloadBroadcast.onmessage = async (event) => {
+    const msg = event.data;
+    if (msg === "force_reload") {
+        console.log("[SW] Force reload requested");
+
+        forceReload();
+    }
+};
 
 self.addEventListener('install', function (e) {
     console.info('Event: Install');
@@ -26,11 +37,14 @@ self.addEventListener('install', function (e) {
 self.addEventListener('activate', function (e) {
     console.info('Event: Activating');
 
-    if (self.clients && clients.claim) {
-        clients.claim();
-    }
+    // Take control of all clients right away
+    e.waitUntil(clients.claim());
 
-    clearStaleCache();
+    // If cache version changed nuke the stale cache to force reload the app from the server 
+    e.waitUntil(forceReload());
+
+    // Clear cache that has expired TTL
+    clearStaleApiCache();
 });
 
 self.addEventListener('fetch', (event) => {
@@ -64,8 +78,42 @@ self.addEventListener('fetch', (event) => {
     }
 });
 
+async function forceReload() {
+    return caches.keys().then(function (cacheNames) {
+        return Promise.all(
+            cacheNames.filter(function (cacheName) {
+                return cacheName.startsWith(CACHE_STATIC);
+            }).map(function (cacheName) {
+                // completely deregister for ios to get changes too
+                console.log('deregistering Service Worker')
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                        registrations.map(r => {
+                            r.unregister()
+                        })
+                    })
+                    // window.location.reload(true)
+                }
+
+                console.log('Removing old cache.', cacheName);
+                return caches.delete(cacheName);
+            })
+        ).then(async function () {
+            // Trigger reload in clients
+            const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
+            for (const client of clientsList) {
+                client.postMessage({ type: "reload" });
+            }
+        });
+    });
+}
+
 async function handleGet(request) {
-    const cache = await caches.open(CACHE.name + CACHE.version);
+    const url = new URL(request.url);
+    const cacheName = url.pathname.startsWith("/api/") ? CACHE_API : CACHE_STATIC;
+
+    const cache = await caches.open(cacheName);
+
     const { racePromise, fetchPromise } = fetchOrTimeout(request, 3000);
 
     // Wait for whichever happens first: network within 3s, or fallback to cache
@@ -119,8 +167,8 @@ async function serveFromCache(cache, request) {
     throw new Error('Not found in cache');
 }
 
-async function clearStaleCache() {
-    return caches.open(CACHE.name + CACHE.version).then(cache => {
+async function clearStaleApiCache() {
+    return caches.open(CACHE_API).then(cache => {
         var staleCobThreshold = new Date();
         staleCobThreshold.setDate(staleCobThreshold.getDate() - cacheTtlDays);
 
@@ -134,7 +182,7 @@ async function clearStaleCache() {
 }
 
 const fetchResponseFromCache = (request) =>
-    caches.open(CACHE.name + CACHE.version).then(cache =>
+    caches.open(CACHE_API).then(cache =>
         cache.match(request, { ignoreVary: true }).then(response => returnResponseFromCache(request, response, cache))
     );
 
@@ -259,13 +307,13 @@ async function updateDiaryDayCachedGet(reqUrl, authHeader, payloadText) {
         respData.diary_day.forEach((item, i) => {
             if (item.practice === payload.entry.practice) respData.diary_day[i] = payload.entry;
         });
-        caches.open(CACHE.name + CACHE.version).then(cache => cache.put(getReq, new Response(JSON.stringify(respData))));
+        caches.open(CACHE_API).then(cache => cache.put(getReq, new Response(JSON.stringify(respData))));
     }
 }
 
 async function saveDefaultDiaryDay(url, resp) {
     if (diaryDayGetUrlR.test(url)) {
-        return caches.open(CACHE.name + CACHE.version)
+        return caches.open(CACHE_API)
             .then(async (cache) =>
                 resp.json().then(payload => {
                     payload.diary_day.forEach((entry) => entry.value = null);
