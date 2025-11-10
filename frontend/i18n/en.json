@@ -91,6 +91,7 @@
   "force_reload_confirm": "You should avoid reloading the app if you have poor internet bandwidth. Please confirm you are happy to proceed.",
   "__support_form__": "------------------------------------",
   "sf_send_us_message": "Send us a message",
+  "sf_follow_on_telegram": "Follow us on telegram",
   "sf_subject": "Subject",
   "sf_message": "Message",
   "sf_send": "Send",
