@@ -468,7 +468,17 @@ pub fn home() -> Html {
                                         <select
                                             onchange={onchange.clone()}
                                             id={idx.to_string()}
-                                            class={tw_merge!("appearance-none", INPUT_CSS, "text-center [text-align-last:center]")} >
+                                            class={
+                                                tw_merge!(
+                                                    "appearance-none",
+                                                    INPUT_CSS,
+                                                    "text-center [text-align-last:center]",
+                                                    if value.as_ref().is_some_and(|v| !v.to_string().is_empty()) {
+                                                        "has-value"
+                                                    } else {
+                                                        ""
+                                                    })
+                                            } >
                                             {to_options(variants)}
                                         </select>
                                     } else {
@@ -485,7 +495,9 @@ pub fn home() -> Html {
                                             class={tw_merge!(INPUT_CSS, "text-center")}
                                             />
                                     }
-                                    <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
+                                    <label
+                                        for={idx.to_string()}
+                                        class={if dropdown_variants.is_some() {INPUT_SELECT_LABEL_CSS} else {INPUT_LABEL_CSS}}>
                                         <i class="icon-rounds"></i>{format!(" {practice}: ")}
                                     </label>
                                 </div>
@@ -562,7 +574,16 @@ pub fn home() -> Html {
                                         <select
                                             onchange={onchange.clone()}
                                             id={idx.to_string()}
-                                            class={tw_merge!("appearance-none", INPUT_CSS)} >
+                                            class={
+                                                tw_merge!(
+                                                    "appearance-none",
+                                                    INPUT_CSS,
+                                                    if value.as_ref().is_some_and(|v| !v.to_string().is_empty()) {
+                                                        "has-value"
+                                                    } else {
+                                                        ""
+                                                    })
+                                            } >
                                             {to_options(variants)}
                                         </select>
                                     } else {
@@ -577,7 +598,9 @@ pub fn home() -> Html {
                                             >
                                         </textarea>
                                     }
-                                    <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
+                                    <label
+                                        for={idx.to_string()}
+                                        class={if dropdown_variants.is_some() {INPUT_SELECT_LABEL_CSS} else {INPUT_LABEL_CSS}}>
                                         <i class="icon-doc"></i>
                                         {format!(" {practice}: ")}
                                     </label>

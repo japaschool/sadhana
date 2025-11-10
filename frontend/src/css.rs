@@ -13,6 +13,11 @@ pub const INPUT_LABEL_CSS: &str = "
     dark:peer-placeholder-shown:text-white peer-placeholder-shown:top-2 \
     peer-focus:-left-0 peer-focus:-top-7";
 
+pub const INPUT_SELECT_LABEL_CSS: &str = "
+    absolute transition-all left-2 top-2 \
+    peer-focus:-left-0 peer-focus:-top-7 \
+    peer-[.has-value]:-left-0 peer-[.has-value]:-top-7";
+
 pub const LINKS_CSS: &str = "relative flex justify-between sm:text-base links";
 pub const LINK_CSS: &str =
     "no-underline hover:underline text-base dark:text-zinc-100 text-zinc-500";
