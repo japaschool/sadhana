@@ -1,3 +1,4 @@
+use tw_merge::*;
 use yew::prelude::*;
 use yew_router::prelude::use_navigator;
 
@@ -88,10 +89,22 @@ pub fn help() -> Html {
                 </div>
             </div>
             if ctx.is_authenticated() {
-                <div class={BODY_DIV_NO_PADDING_CSS}>
-                    <div class="pt-8">
-                        <button onclick={send_msg_onclick} class={BTN_CSS_NO_MARGIN}>
-                        <i class="icon-mail"></i>{Locale::current().sf_send_us_message()}</button>
+                <div class="pt-8">
+                    <div class={TWO_COLS_CSS}>
+                        <div class="relative">
+                            <button onclick={send_msg_onclick} class={BTN_CSS_NO_MARGIN}>
+                                <i class="icon-mail"></i>{Locale::current().sf_send_us_message()}
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <a target="_blank"
+                                rel="noopener noreferrer"
+                                href="https://t.me/sadhanapro"
+                                class={tw_merge!("flex justify-center", BTN_CSS_NO_MARGIN)}
+                            >
+                                <i class="icon-send"></i>{Locale::current().sf_follow_on_telegram()}
+                            </a>
+                        </div>
                     </div>
                 </div>
             }
