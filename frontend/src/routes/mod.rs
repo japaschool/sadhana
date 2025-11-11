@@ -11,7 +11,7 @@ use self::{
     pwd_reset::PwdReset,
     register_with_id::RegisterWithId,
     settings::{
-        about::About, edit_password::EditPassword, edit_user::EditUser, help::Help, import::Import,
+        edit_password::EditPassword, edit_user::EditUser, help::Help, import::Import,
         language::Language, support_form::SupportForm, Settings,
     },
     user_practices::UserPractices,
@@ -44,8 +44,6 @@ pub enum BaseRoute {
     Register,
     #[at("/shared/:id")]
     SharedCharts { id: String },
-    #[at("/about")]
-    About,
     #[at("/help")]
     Help,
     #[at("/*")]
@@ -146,7 +144,6 @@ pub fn switch(routes: BaseRoute) -> Html {
             html! { <Confirmation confirmation_type={ConfirmationType::Registration} /> }
         }
         BaseRoute::SharedCharts { id } => html! { <SharedCharts share_id={id}/> },
-        BaseRoute::About => html! { <About/> },
         BaseRoute::Help => html! { <Help/> },
         BaseRoute::Home | BaseRoute::AppRoute => {
             html! { <Switch<AppRoute> render={app_switch} /> }

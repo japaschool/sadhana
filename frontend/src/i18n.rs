@@ -101,6 +101,10 @@ impl Locale {
             default()
         }
     }
+
+    pub fn about_url(&self) -> String {
+        format!("https://sadhana.pro/{}", self)
+    }
 }
 
 impl Display for Locale {

@@ -102,7 +102,8 @@ pub fn help() -> Html {
                                 href="https://t.me/sadhanapro"
                                 class={tw_merge!("flex justify-center", BTN_CSS_NO_MARGIN)}
                             >
-                                <i class="icon-send"></i>{Locale::current().sf_follow_on_telegram()}
+                                <i class="icon-send" />
+                                {Locale::current().sf_follow_on_telegram()}
                             </a>
                         </div>
                     </div>

@@ -135,10 +135,13 @@ pub fn login() -> Html {
                         </Link<BaseRoute>>
                     </div>
                     <div class="fixed bottom-0 justify-between w-full left-0 flex px-4 py-4">
-                        <Link<BaseRoute>
-                            classes={ LINK_SMALL_CSS }
-                            to={BaseRoute::About}>{ Locale::current().about() }
-                        </Link<BaseRoute>>
+                        <a  classes={LINK_SMALL_CSS}
+                            href={Locale::current().about_url()}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            {Locale::current().about()}
+                        </a>
                         <Link<BaseRoute>
                             classes={ LINK_SMALL_CSS }
                             to={BaseRoute::Help}>{ Locale::current().help_and_support() }
