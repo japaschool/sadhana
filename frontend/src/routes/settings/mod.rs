@@ -13,7 +13,6 @@ use web_sys::{BroadcastChannel, HtmlInputElement};
 use yew::prelude::*;
 use yew_router::prelude::use_navigator;
 
-pub mod about;
 pub mod edit_password;
 pub mod edit_user;
 pub mod help;
@@ -74,12 +73,6 @@ pub fn settings() -> Html {
         let nav = nav.clone();
         Callback::from(move |_: MouseEvent| {
             nav.push(&BaseRoute::Help);
-        })
-    };
-    let about_onclick = {
-        let nav = nav.clone();
-        Callback::from(move |_: MouseEvent| {
-            nav.push(&BaseRoute::About);
         })
     };
     let force_reload = Callback::from(move |_| {
@@ -158,15 +151,21 @@ pub fn settings() -> Html {
                 <ul class={UL_CSS}>
                     <li onclick={ help_onclick }>
                         <div class={LI_DIV_CSS}>
-                            <label><i class="icon-help flex-shrink-0 w-5"></i>{ Locale::current().help_and_support() }</label>
+                            <label><i class="icon-help flex-shrink-0 w-5" />{ Locale::current().help_and_support() }</label>
                             <i class="icon-chevron-right" />
                         </div>
                     </li>
-                    <li onclick={ about_onclick } >
-                        <div class={LI_DIV_CSS}>
-                            <label><i class="icon-info flex-shrink-0 w-5"></i>{ Locale::current().about() }</label>
-                            <i class="icon-chevron-right" />
-                        </div>
+                    <li>
+                        <a class={LI_DIV_CSS}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            href={Locale::current().about_url()}
+                        >
+                            <label>
+                                <i class="icon-info flex-shrink-0 w-5" />
+                                {Locale::current().about()}
+                            </label>
+                        </a>
                     </li>
                     <li onclick={force_reload} >
                         <div class={LI_DIV_CSS}>
@@ -176,7 +175,7 @@ pub fn settings() -> Html {
                     <li onclick={ logout_onclick.clone() }>
                         <div class={LI_DIV_CSS}>
                             <label href="/login" for="toggle">
-                                <i class="icon-logout flex-shrink-0 w-5"></i>
+                                <i class="icon-logout flex-shrink-0 w-5" />
                                 { Locale::current().logout() }
                             </label>
                         </div>

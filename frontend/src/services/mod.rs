@@ -293,6 +293,7 @@ pub async fn send_support_message(subject: &str, message: &str) -> Result<(), Ap
     .await
 }
 
+//TODO:  This is unused now
 pub async fn get_build_info() -> Result<BuildInfo, AppError> {
     request_get("/build_info.json".to_string()).await
 }
