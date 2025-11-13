@@ -93,11 +93,6 @@ pub fn settings() -> Html {
         })
     };
 
-    const UL_CSS: &str =
-        "pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500";
-    const LI_DIV_CSS: &str =
-        "relative flex justify-between items-center sm:text-base align-baseline";
-
     fn menu_li(icon: &str, label: String) -> Html {
         html! {
             <li>

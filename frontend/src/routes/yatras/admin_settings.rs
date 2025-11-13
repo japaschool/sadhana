@@ -8,9 +8,9 @@ use yew_router::prelude::*;
 use crate::{
     components::{
         blank_page::{BlankPage, HeaderButtonProps},
-        clipboard_copy_button::CopyButton,
         draggable_list::{DraggableList, Item},
         list_errors::ListErrors,
+        share_link::{can_share, emit_signal_callback, set_signal_callback, ShareLink},
         summary_details::SummaryDetails,
     },
     css::*,
@@ -36,6 +36,9 @@ pub fn admin_settings(props: &Props) -> Html {
     let ordered_practices = use_list(vec![]);
     let nav = use_navigator().unwrap();
     let action_user_id = use_mut_ref(|| None::<String>);
+    let share_signal = use_state(|| None::<Callback<_>>);
+
+    let can_share = can_share();
 
     let yatra = {
         let yatra_id = props.yatra_id.clone();
@@ -325,12 +328,14 @@ pub fn admin_settings(props: &Props) -> Html {
                         <i class="icon-plus"></i>
                         { Locale::current().add_new_practice() }
                     </button>
-                    <CopyButton
-                        class={BTN_CSS}
-                        share_button_label={Locale::current().share_yatra_join_link()}
-                        copy_button_label={Locale::current().copy_yatra_join_link()}
+                    <button type="button" onclick={emit_signal_callback(&share_signal)} class={BTN_CSS}>
+                        <i class={if can_share {"icon-share"} else {"icon-doc-dup"}}></i>
+                        {format!(" {}", if can_share {Locale::current().share_yatra_join_link()} else {Locale::current().copy_yatra_join_link()})}
+                    </button>
+                    <ShareLink
                         relative_link={ format!("/yatra/{}/join", props.yatra_id.as_str()) }
-                        />
+                        run_signal={set_signal_callback(&share_signal)}
+                    />
                     <button class={ BTN_CSS } onclick={rename_yatra_onclick}>
                         <i class="icon-edit"></i>
                         { Locale::current().rename_yatra() }

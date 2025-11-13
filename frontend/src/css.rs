@@ -61,6 +61,14 @@ pub const TWO_COLS_NO_GAP_CSS: &str =
     "grid-flow-row grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2";
 pub const TWO_COLS_CSS: &str = concatcp!("gap-9 ", TWO_COLS_NO_GAP_CSS);
 
-pub const POPUP_BG_CSS: &str = "bg-gradient-to-t from-neutral-300 via-neutral-100 to-white dark:from-zinc-900 dark:via-zinc-700 dark:to-zinc-600";
+pub const POPUP_BG_CSS: &str = 
+    "rounded-lg shadow opacity-90 \
+    bg-gradient-to-t from-neutral-300 via-neutral-100 to-white dark:from-zinc-900 dark:via-zinc-700 dark:to-zinc-600 \
+    border border-gray-300 dark:border-zinc-100";
 
 pub const CHECKBOX_INPUT_CSS: &str = "w-5 h-5 my-auto accent-amber-400";
+
+pub const UL_CSS: &str =
+    "pt-4 mt-1 space-y-4 font-medium border-t border-gray-200 dark:border-zinc-500";
+pub const LI_DIV_CSS: &str =
+    "relative flex justify-between items-center sm:text-base align-baseline";

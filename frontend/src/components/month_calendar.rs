@@ -4,6 +4,7 @@ use super::calendar::{
     HOVER_DATE_COLOR_CSS, HOVER_TODAY_DATE_COLOR_CSS, SELECTED_TODAY_DATE_COLOR_CSS,
 };
 use chrono::{Datelike, Local, Months, NaiveDate};
+use tw_merge::*;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yew_hooks::use_async;
@@ -136,11 +137,11 @@ pub fn month_calendar(props: &Props) -> Html {
         <div
             class={"fixed left-0 top-0 flex w-full h-full items-center justify-center z-10 antialiased"}
             >
-            <div class="fixed top-0 bottom-0 left-0 right-0 bg-black bg-opacity-30 border-amber-400" onclick={cancel_onclick} />
+            <div class="fixed top-0 bottom-0 left-0 right-0 bg-black bg-opacity-30" onclick={cancel_onclick} />
             <div class="relative">
                 <div class="container">
                     <div
-                        class={format!("{} rounded-lg shadow p-4 border border-zinc-500 dark:border-zinc-100", POPUP_BG_CSS)}
+                        class={tw_merge!("p-4", POPUP_BG_CSS)}
                         style="width: 19rem"
                         >
                         <div class="flex justify-between items-center mb-2">
