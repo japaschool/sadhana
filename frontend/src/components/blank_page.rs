@@ -1,9 +1,10 @@
 use gloo::utils::format::JsValueSerdeExt;
 use serde::Deserialize;
+use tw_merge::*;
 use wasm_bindgen::{closure::Closure, JsCast};
 use web_sys::{BroadcastChannel, MessageEvent};
 use yew::{html::onclick::Event, prelude::*};
-use yew_hooks::{use_bool_toggle, use_mount, use_timeout};
+use yew_hooks::{use_bool_toggle, use_mount, use_timeout, UseToggleHandle};
 use yew_router::prelude::*;
 
 use super::{calendar::Calendar, month_calendar::MonthCalendar};
@@ -75,6 +76,31 @@ pub enum Action {
     Cb(Callback<Event>),
     Redirect(AppRoute),
     NavBack,
+    CtxMenu(Vec<CtxMenuEntry>),
+}
+
+#[derive(Clone, PartialEq)]
+pub struct CtxMenuEntry {
+    label: String,
+    icon_css: Option<String>,
+    action: Action,
+}
+impl CtxMenuEntry {
+    pub fn action<S: Into<String>>(onclick: Callback<Event>, icon_css: S, label: S) -> Self {
+        Self {
+            label: label.into(),
+            icon_css: Some(icon_css.into()),
+            action: Action::Cb(onclick),
+        }
+    }
+
+    pub fn link<S: Into<String>>(route: AppRoute, icon_css: S, label: S) -> Self {
+        Self {
+            label: label.into(),
+            icon_css: Some(icon_css.into()),
+            action: Action::Redirect(route),
+        }
+    }
 }
 
 #[derive(Clone, PartialEq)]
@@ -182,11 +208,24 @@ impl HeaderButtonProps {
     pub fn month_calendar(onclick: Callback<Event>) -> Self {
         Self::new_icon_cb(onclick, "icon-calendar", ButtonType::Button)
     }
+
+    pub fn ctx_menu<S: Into<String>>(icon_css: S, entries: Vec<CtxMenuEntry>) -> Self {
+        Self {
+            label: None,
+            icon_css: Some(icon_css.into()),
+            action: Action::CtxMenu(entries),
+            btn_type: ButtonType::Button,
+        }
+    }
 }
 
-fn header_button(buttons: &[&HeaderButtonProps], nav: Navigator) -> Html {
-    let css = format!(
-        "{} {HEADER_BUTTON_CSS}",
+fn header_button(
+    buttons: &[&HeaderButtonProps],
+    nav: Navigator,
+    show_menu: UseToggleHandle<bool>,
+) -> Html {
+    let css = tw_merge!(
+        HEADER_BUTTON_CSS,
         if buttons.iter().any(|p| p.label.is_some()) {
             "text-base font-bold"
         } else {
@@ -194,29 +233,80 @@ fn header_button(buttons: &[&HeaderButtonProps], nav: Navigator) -> Html {
         }
     );
 
+    let hide_menu = {
+        let menu_toggle = show_menu.clone();
+        Callback::from(move |_| menu_toggle.set(false))
+    };
+
+    let onclick = |action: &Action| {
+        let nav = nav.clone();
+        let show_menu = show_menu.clone();
+
+        match action {
+            Action::Cb(cb) => cb.clone(),
+            Action::Redirect(to) => {
+                let route = to.clone();
+                Callback::from(move |_| nav.push(&route))
+            }
+            Action::NavBack => Callback::from(move |_| nav.back()),
+            Action::CtxMenu(_) => Callback::from(move |_| show_menu.toggle()),
+        }
+    };
+
+    let onclick_with_hide = |action: &Action| {
+        let hide_menu = hide_menu.clone();
+        let onclick = onclick(action);
+        Callback::from(move |e: MouseEvent| {
+            hide_menu.emit(e.clone());
+            onclick.emit(e)
+        })
+    };
+
+    let ctx_menu_iter_html = |item: &CtxMenuEntry| match &item.action {
+        Action::Cb(_) | Action::Redirect(_) => html! {
+            <li onclick={onclick_with_hide(&item.action)}>
+                <div class="flex px-2 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                    <label>
+                        <i class={tw_merge!(item.icon_css.to_owned().unwrap_or_default(), "flex-shrink-0 w-5")} />
+                        {&item.label}
+                    </label>
+                </div>
+            </li>
+        },
+        _ => panic!("Unsupported feature - nested context menus"),
+    };
+
+    let ctx_menu_items = |action: &Action| match action {
+        Action::CtxMenu(items) => items.iter().map(ctx_menu_iter_html).collect::<Html>(),
+        _ => html! {},
+    };
+
     html! {
         <span>
         {for buttons.iter().map(|props| {
-            let nav = nav.clone();
-
-            let onclick = {
-                match &props.action {
-                    Action::Cb(cb) => cb.clone(),
-                    Action::Redirect(to) => {
-                        let route = to.clone();
-                        Callback::from(move |_| nav.push(&route))
-                    }
-                    Action::NavBack => Callback::from(move |_| nav.back()),
-                }
-            };
-
             html! {
-                <button type={props.btn_type.as_str()} class={css.clone()} onclick={onclick}>
+                <>
+                <button type={props.btn_type.as_str()} class={css.clone()} onclick={onclick(&props.action)}>
                     <i class={props.icon_css.to_owned().unwrap_or_default()}></i>
                     if let Some(l) = props.label.as_ref() {
                         {l}
                     }
                 </button>
+                if *show_menu && matches!(&props.action, Action::CtxMenu(_)) {
+                    <div // Fill on the screen with a div that hides menu on click
+                        class="fixed top-0 bottom-0 left-0 right-0 w-full h-full z-10"
+                        onclick={
+                            let show_menu = show_menu.clone();
+                            Callback::from(move |_| show_menu.toggle())
+                        }
+                    />
+                    <ul
+                        class={tw_merge!("origin-top-right absolute right-0 w-65 text-gray-800 dark:text-white focus:outline-none z-20 mt-2 py-1", POPUP_BG_CSS)}
+                    >
+                        {ctx_menu_items(&props.action)}
+                    </ul>
+                }
+                </>
             }
         })}
         </span>
@@ -236,6 +326,7 @@ pub fn blank_page(props: &Props) -> Html {
     let loading = use_bool_toggle(false);
     let online = use_bool_toggle(true);
     let show_month_cal = use_bool_toggle(false);
+    let show_ctx_menu = use_bool_toggle(false);
 
     {
         let online = online.clone();
@@ -341,8 +432,8 @@ pub fn blank_page(props: &Props) -> Html {
                             <div class="relative">
                                 <div class="relative sm:max-w-md md:max-w-md lg:max-w-lg xl:max-w-lg 2xl:max-w-lg mx-auto">
                                     <div class="relative flex justify-between py-10">
-                                        {header_button(&left_buttons, nav.clone())}
-                                        {header_button(&right_buttons, nav.clone())}
+                                        {header_button(&left_buttons, nav.clone(), show_ctx_menu.clone())}
+                                        {header_button(&right_buttons, nav.clone(), show_ctx_menu.clone())}
                                     </div>
                                 </div>
                             </div>

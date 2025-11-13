@@ -6,11 +6,10 @@ use super::{
 };
 use crate::{
     components::{
-        blank_page::{BlankPage, CalendarProps, HeaderButtonProps},
-        clipboard_copy_button::CopyButton,
+        blank_page::{BlankPage, CalendarProps, CtxMenuEntry, HeaderButtonProps},
         list_errors::ListErrors,
+        share_link::{can_share, emit_signal_callback, set_signal_callback, ShareLink},
     },
-    css::*,
     hooks::{use_user_context, SessionStateContext},
     i18n::Locale,
     model::ReportData,
@@ -34,6 +33,19 @@ pub fn charts() -> Html {
     let duration = use_state(|| ReportDuration::Week);
     let editing = use_bool_toggle(false);
     let active_report = use_state(|| None::<Report>);
+    let share_signal = use_state(|| None::<Callback<_>>);
+
+    let can_share = can_share();
+    let share_icon = if can_share {
+        "icon-share"
+    } else {
+        "icon-doc-dup"
+    };
+    let share_label = if can_share {
+        Locale::current().share_reports_link()
+    } else {
+        Locale::current().copy_reports_link()
+    };
 
     let reports = use_async(async move { get_reports().await.map(|res| res.reports) });
 
@@ -301,26 +313,38 @@ pub fn charts() -> Html {
                         HeaderButtonProps::blank()
                     }
                 }
-                right_button={
-                    if *editing {
-                        HeaderButtonProps::submit(Locale::current().save())
-                    } else if active_report.is_some() {
-                        HeaderButtonProps::edit(edit_onclick)
-                    } else {
-                        HeaderButtonProps::blank()
-                    }
-                }
                 right_button2={
                     if *editing {
+                        HeaderButtonProps::submit(Locale::current().save())
+                    } else {
+                        HeaderButtonProps::ctx_menu(
+                            "icon-ellipsis-vertical",
+                            vec![
+                                CtxMenuEntry::link(AppRoute::NewReport, "icon-plus", &Locale::current().report_add_new()),
+                                CtxMenuEntry::action(download_onclick, "icon-download", &Locale::current().download_csv()),
+                                CtxMenuEntry::action(emit_signal_callback(&share_signal), share_icon, &share_label),
+                            ]
+                        )
+                    }
+                }
+                right_button={
+                    if *editing || active_report.is_none() {
                         HeaderButtonProps::blank()
                     } else {
-                        HeaderButtonProps::new_icon_redirect(AppRoute::NewReport, "icon-plus")
+                        HeaderButtonProps::edit(edit_onclick)
                     }
-                } >
+                }
+            >
                 <ListErrors error={all_practices.error.clone()} />
                 <ListErrors error={report_data.error.clone()} />
                 <ListErrors error={update_report.error.clone()} />
                 <ListErrors error={delete_report.error.clone()} />
+                if !*editing {
+                    <ShareLink
+                        relative_link={format!("/shared/{}", user_ctx.id)}
+                        run_signal={set_signal_callback(&share_signal)}
+                    />
+                }
                 if let Some(report) = active_report.as_ref() {
                     if all_practices.data.is_some() {
                         <ChartsBase
@@ -335,23 +359,6 @@ pub fn charts() -> Html {
                 }
                 if *editing {
                     {editor()}
-                } else {
-                    <div class="pt-8">
-                        <div class={TWO_COLS_CSS}>
-                            <div class="relative">
-                                <CopyButton
-                                    class={BTN_CSS_NO_MARGIN}
-                                    share_button_label={Locale::current().share_reports_link()}
-                                    copy_button_label={Locale::current().copy_reports_link()}
-                                    relative_link={format!("/shared/{}", user_ctx.id)}
-                                    />
-                            </div>
-                            <div class="relative">
-                                <button type="button" onclick={download_onclick} class={BTN_CSS_NO_MARGIN}>
-                                <i class="icon-download"></i>{Locale::current().download_csv()}</button>
-                            </div>
-                        </div>
-                    </div>
                 }
             </BlankPage>
         </form>
