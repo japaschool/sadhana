@@ -1,0 +1,38 @@
+{
+  "hero": {
+    "title": "Sadhana Pro",
+    "subtitle": "Customizable Sadhana & Habit Tracker",
+    "description": "Sadhana Pro is a modern, fully customizable web application designed to track your sadhana practice or everyday habits. It supports creating your own custom metrics with types like numbers, text, boolean, time of day, and duration in minutes — making it suitable for a wide range of spiritual, personal growth, and lifestyle tracking needs."
+  },
+  "keyFeatures": {
+    "title": "Key Features",
+    "customisableTitle": "Fully customizable metrics",
+    "customisableDescription": "Add your own fields with types like numbers, text, boolean, time of day, and duration.",
+    "reportsTitle": "Reports and graphs",
+    "reportsDescription": "Build custom reports and visualize multiple metrics together over time.",
+    "offlineTitle": "Offline support",
+    "offlineDescription": "Enter and track your data even without an internet connection.",
+    "installTitle": "Install as a web app",
+    "installDescription": "Add it to your phone's home screen for a native app-like experience.",
+    "shareTitle": "Share your progress",
+    "shareDescription": "Share interactive graphs with others via generated links.",
+    "groupTitle": "Group tracking",
+    "groupDescription": "Join groups, track together, and see each other's data in table format.",
+    "dataTitle": "Data portability",
+    "dataDescription": "Import and export your data as CSV files for backup and analysis."
+  },
+  "trackAnything": "Track Anything, Anywhere",
+  "trackAnythingText": "Use Sadhana Pro to track your daily sadhana, yoga practices, meditation, journaling, reading, or any personal habits. With full offline mode and phone installation support, your data stays with you wherever you go.",
+  "footer": {
+    "copyright": "© Sadhana Pro 2025. All rights reserved."
+  }
+  ,
+  "meta": {
+    "title": "Sadhana Pro – Daily Sadhana Journal, Chart & Tracker",
+    "description": "Sadhana Pro is your customizable daily sadhana journal, chart, and spiritual practice tracker. Record your progress in meditation, yoga, chanting, or daily habits with reports, offline mode, graph sharing, and CSV export.",
+    "keywords": "sadhana journal, sadhana diary, sadhana tracker, daily sadhana chart, sadhana log, digital sadhana notebook, sadhana chart, spiritual journal, meditation tracker, yoga tracker, mantra diary, spiritual practice tracker, habit tracker, customizable tracker, offline sadhana app, sadhana pro, spiritual growth tracker, group tracking, csv export, installable web app"
+  },
+  "cta": {
+    "openNow": "Open Now"
+  }
+}

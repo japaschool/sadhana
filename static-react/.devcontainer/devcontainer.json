@@ -1,0 +1,24 @@
+{
+  "name": "Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "forwardPorts": [3000],
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  // "remoteUser": "node",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "kahole.magit",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss"
+      ]
+    }
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "workspaceFolder": "/workspace"
+  // "postCreateCommand": "sudo chown node node_modules"
+}
