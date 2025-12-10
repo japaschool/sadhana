@@ -1,0 +1,7 @@
+@import 'tailwindcss';
+
+/* Ensure the page scroll container has a non-static position so
+	 Framer Motion's useScroll can calculate offsets correctly. */
+html, body, #root {
+	position: relative;
+}
