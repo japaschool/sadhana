@@ -1,4 +1,4 @@
-import Hero from './components/LandingView'
+import LandingView from './components/LandingView'
 import ParallaxSection from './components/ParallaxSection'
 import FloatingCTA from './components/FloatingCTA'
 import Footer from './components/Footer'
@@ -15,7 +15,7 @@ export default function App() {
   return (
     <div className="relative font-sans bg-neutral-100 text-gray-900">
       <FloatingHeaderButtons />
-      <Hero />
+      <LandingView />
       <ParallaxSection
         image={mountain}
         title={t('keyFeatures.title')}
@@ -35,8 +35,8 @@ export default function App() {
                   {feature.icon}
                 </div>
                 <div>
-                  <p className="text-lg md:text-xl font-semibold">{feature.title}</p>
-                  <p className="text-base md:text-lg font-light leading-relaxed">{feature.desc}</p>
+                  <p className="text-base md:text-xl font-semibold">{feature.title}</p>
+                  <p className="text-sm md:text-lg font-light leading-relaxed">{feature.desc}</p>
                 </div>
               </li>
             ))}
