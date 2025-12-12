@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import heroBg from '../assets/1.jpg'
 import { useTranslation } from 'react-i18next'
 
-export default function Hero() {
+export default function LandingView() {
   const { t } = useTranslation()
 
   return (
@@ -17,8 +17,7 @@ export default function Hero() {
       />
 
       {/* Overlay */}
-      <div className="absolute inset-0 bg-linear-to-b from-black/40 via-black/20 to-black/40 z-0"></div>
-
+      <div className="absolute inset-0 bg-linear-to-b from-black/80 via-black/40 to-black/80 z-0"></div>
 
       {/* Foreground Content */}
       <motion.div
@@ -34,7 +33,7 @@ export default function Hero() {
           {t('hero.subtitle')}
         </p>
 
-        <p className="text-sm md:text-base lg:text-lg font-light leading-relaxed">
+        <p className="text-lg md:text-xl font-light leading-relaxed">
           {t('hero.description')}
         </p>
       </motion.div>
