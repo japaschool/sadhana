@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import heroBg from '../assets/1.jpg'
+import landingBg from '../assets/1.jpg'
 import { useTranslation } from 'react-i18next'
 
 export default function LandingView() {
@@ -9,7 +9,7 @@ export default function LandingView() {
     <section className="relative h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <motion.div
-        style={{ backgroundImage: `url(${heroBg})` }}
+        style={{ backgroundImage: `url(${landingBg})` }}
         className="absolute inset-0 bg-cover bg-center"
         initial={{ scale: 1.1 }}
         animate={{ scale: 1 }}
@@ -27,14 +27,14 @@ export default function LandingView() {
         transition={{ duration: 1 }}
       >
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif mb-0 leading-tight">
-          {t('hero.title')}
+          {t('landing.title')}
         </h1>
         <p className="text-lg md:text-2xl font-light">
-          {t('hero.subtitle')}
+          {t('landing.subtitle')}
         </p>
 
         <p className="text-lg md:text-xl font-light leading-relaxed">
-          {t('hero.description')}
+          {t('landing.description')}
         </p>
       </motion.div>
 

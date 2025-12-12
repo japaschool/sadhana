@@ -8,8 +8,6 @@ import forest from './assets/4.jpg'
 import { FaSeedling, FaChartBar, FaWifi,  FaMobileAlt, FaShareAlt, FaUsers, FaFileCsv } from "react-icons/fa"
 import { useTranslation } from 'react-i18next'
 
-
-
 export default function App() {
   const { t } = useTranslation()
   return (
