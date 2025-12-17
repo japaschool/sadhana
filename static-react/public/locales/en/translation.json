@@ -21,6 +21,17 @@
     "dataTitle": "Data portability",
     "dataDescription": "Import and export your data as CSV files for backup and analysis."
   },
+  "preview": {
+    "title": "Preview",
+    "slide1": "Log your sadhana on the home screen",
+    "slide2": "Logged data while offline will be synced up when connectivity restored",
+    "slide3": "Add your own practices of various types",
+    "slide4": "Observe your progress on highly customisable visual graphs",
+    "slide5": "Observe your progress on highly customisable visual graphs",
+    "slide6": "The data can also be viewed as a table view",
+    "slide7": "Join into groups to support each other when going gets tough",
+    "slide8": "Support page has FAQ with video guides and ways to contact the developers"
+  },
   "trackAnything": "Track Anything, Anywhere",
   "trackAnythingText": "Use Sadhana Pro to track your daily sadhana, yoga practices, meditation, journaling, reading, or any personal habits. With full offline mode and phone installation support, your data stays with you wherever you go.",
   "footer": {
