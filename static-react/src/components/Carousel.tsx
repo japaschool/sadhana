@@ -44,7 +44,7 @@ export default function Carousel({ slides, className }: CarouselProps) {
         dragConstraints={{ left: -(slides.length - 1) * width, right: 0 }}
         dragElastic={0.15}
         dragDirectionLock
-        onDragEnd={(e, info) => {
+        onDragEnd={(_, info) => {
           if (info.offset.x < -width * 0.2) next()
           if (info.offset.x > width * 0.2) prev()
         }}
