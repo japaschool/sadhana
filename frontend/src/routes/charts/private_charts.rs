@@ -187,11 +187,12 @@ pub fn charts() -> Html {
                 get_report_data(&selected_date, &duration)
                     .await
                     .map(|data| {
-                        let csv = to_csv_str(data).unwrap_or_default();
+                        // To guarantee UTF-8 (especially for Cyrillic), prepending a UTF-8 BOM
+                        let csv = format!("\u{FEFF}{}", to_csv_str(data).unwrap_or_default());
                         let json_jsvalue_array =
                             js_sys::Array::from_iter(std::iter::once(JsValue::from_str(&csv)));
                         let prop = BlobPropertyBag::new();
-                        prop.set_type("text/csv");
+                        prop.set_type("text/csv;charset=utf-8");
 
                         let b = web_sys::Blob::new_with_str_sequence_and_options(
                             &json_jsvalue_array,
@@ -206,8 +207,16 @@ pub fn charts() -> Html {
                             .unwrap();
 
                         a.set_attribute("href", &url).unwrap();
+                        a.set_attribute("download", "data.csv").unwrap();
+                        a.set_attribute("rel", "noopener").unwrap();
+
+                        // Some Safari versions ignore .click() on detached elements hence temporarily attaching it
+                        let document = web_sys::window().unwrap().document().unwrap();
+                        document.body().unwrap().append_child(&a).unwrap();
 
                         a.click();
+
+                        a.remove();
                     })
                     .unwrap();
             });
