@@ -14,7 +14,7 @@ use crate::{
     model::{PracticeDataType, PracticeEntryValue, ReportDataEntry, UserPractice},
     routes::charts::GridReport,
 };
-use chrono::Local;
+use chrono::{Datelike, Local};
 use common::ReportDuration;
 use gloo::storage::{LocalStorage, Storage};
 use tw_merge::*;
@@ -32,7 +32,6 @@ pub struct ChartBaseProps {
 }
 
 const DATE_FORMAT: &str = "%Y-%m-%d";
-const DATE_FORMAT_HR: &str = "%a, %d %b";
 const DURATION_STORAGE_KEY: &str = "charts.selected_duration";
 
 #[function_component(ChartsBase)]
@@ -165,34 +164,38 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
 
     let grid_report = |gr: &GridReport| {
         html! {
-            <Grid>
-                <Ghead>
-                    <Gh>{Locale::current().date()}</Gh>
-                    {for props
+            <Grid
+                header={
+                    let mut data = props
                         .practices
                         .iter()
                         .filter(|p| gr.practices.contains(&p.id))
-                        .map(|p| html! { <Gh>{p.practice.clone()}</Gh> })
-                    }
-                </Ghead>
-                <Gbody>
-                    {for grid_data_by_cob(gr).iter().map(|(cob, data)| {
-                        html! {
-                            <Gr>
-                                <Gd>{cob.format(DATE_FORMAT_HR).to_string()}</Gd>
-                                {for data.iter().map(|entry| html! {
-                                    <Gd>{
-                                        entry.value
-                                            .as_ref()
-                                            .map(|v| v.to_string())
-                                            .unwrap_or_default()
-                                    }</Gd>
-                                })}
-                            </Gr>
-                        }
-                    })}
-                </Gbody>
-            </Grid>
+                        .map(|p| p.practice.clone())
+                        .collect::<Vec<_>>();
+                    data.insert(0, Locale::current().date());
+                    data}
+                data={
+                    grid_data_by_cob(gr)
+                        .iter()
+                        .map(|(cob, data)| {
+                            let mut data = data.iter().map(|entry|
+                                    entry.value
+                                        .as_ref()
+                                        .map(|v| v.to_string())
+                                        .unwrap_or_default())
+                                        .collect::<Vec<_>>();
+                            let date_str = format!(
+                                "{}, {} {}",
+                                Locale::current().day_of_week(cob),
+                                cob.day(),
+                                Locale::current().month_name_short(cob.month())
+                            );
+                            data.insert(0, date_str);
+                            data
+                        })
+                        .collect::<Vec<Vec<_>>>()
+                }
+            />
         }
     };
 
