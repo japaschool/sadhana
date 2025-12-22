@@ -6,7 +6,10 @@ FROM mcr.microsoft.com/devcontainers/rust:1-${VARIANT}
 
 # [Optional] Uncomment this section to install additional packages.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends libpq-dev pkg-config
+    && apt-get -y install --no-install-recommends \
+        libpq-dev \
+        pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 
 USER vscode
 

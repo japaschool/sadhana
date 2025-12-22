@@ -50,7 +50,7 @@ where
 {
     let url = format!("{}{}", *SERVER_ADDRESS, url);
 
-    log::debug!("Sending {} request to {}", method, url);
+    // log::debug!("Sending {} request to {}", method, url);
 
     let with_body = method == reqwest::Method::POST || method == reqwest::Method::PUT;
     let mut builder = reqwest::Client::new()

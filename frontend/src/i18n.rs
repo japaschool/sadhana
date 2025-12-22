@@ -87,6 +87,10 @@ impl Locale {
         }
     }
 
+    pub fn month_name_short(&self, month_num: u32) -> String {
+        self.month_name(month_num).chars().take(3).collect()
+    }
+
     pub fn chrono(&self) -> chrono::Locale {
         let default = || match self {
             Locale::Ua => chrono::Locale::uk_UA,

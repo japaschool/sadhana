@@ -135,68 +135,69 @@ pub fn yatras() -> Html {
         })
     };
 
-    let grid = html! {
-        <Grid>
-            <Ghead>
-                <Gh>{ Locale::current().sadhaka() }</Gh>
-                { data
+    let grid_header = {
+        let mut hd = data
+            .data
+            .iter()
+            .flat_map(|d| d.practices.iter())
+            .map(|p| p.practice.clone())
+            .collect::<Vec<_>>();
+        hd.insert(0, Locale::current().sadhaka());
+        hd
+    };
+
+    let grid_data = data
+        .data
+        .iter()
+        .flat_map(|d| d.data.iter())
+        .map(
+            |YatraDataRow {
+                 user_id: _,
+                 user_name,
+                 row,
+             }| {
+                let mut data_columns = data
                     .data
                     .iter()
-                    .flat_map(|d| d.practices.iter())
-                    .map(|p| html! { <Gh>{ p.practice.clone() }</Gh> })
-                    .collect::<Html>()
-                }
-            </Ghead>
-            <Gbody>
-            { data
-                .data
-                .iter()
-                .flat_map(|d| d.data.iter())
-                .map(|YatraDataRow{user_id: _, user_name, row}| {
-                    let data_columns = data.data
-                        .iter()
-                        .flat_map(|inner| inner.practices.iter())
-                        .zip(row.iter())
-                        .map(|(practice, value_opt)| {
-                            let value_str = match practice.data_type {
-                            PracticeDataType::Bool => value_opt
-                                .as_ref()
-                                .and_then(|b| b.as_bool())
-                                .map(|b| if b { "V".to_string() } else { String::new() })
-                                .unwrap_or_default(),
-                            PracticeDataType::Int => value_opt
-                                .as_ref()
-                                .and_then(|v| v.as_int())
-                                .map(|i| i.to_string())
-                                .unwrap_or_default(),
-                            PracticeDataType::Time => value_opt
-                                .as_ref()
-                                .and_then(|v| v.as_time_str())
-                                .unwrap_or_default(),
-                            PracticeDataType::Text => value_opt
-                                .as_ref()
-                                .and_then(|v| v.as_text())
-                                .unwrap_or_default(),
-                            PracticeDataType::Duration => value_opt
-                                .as_ref()
-                                .and_then(|v| v.as_duration_str())
-                                .unwrap_or_default(),
-                        };
-                        html! { <Gd>{ value_str }</Gd> }
-                    }).collect::<Html>();
+                    .flat_map(|inner| inner.practices.iter())
+                    .zip(row.iter())
+                    .map(|(practice, value_opt)| match practice.data_type {
+                        PracticeDataType::Bool => value_opt
+                            .as_ref()
+                            .and_then(|b| b.as_bool())
+                            .map(|b| {
+                                if b {
+                                    "✔️".to_string()
+                                } else {
+                                    String::new()
+                                }
+                            })
+                            .unwrap_or_default(),
+                        PracticeDataType::Int => value_opt
+                            .as_ref()
+                            .and_then(|v| v.as_int())
+                            .map(|i| i.to_string())
+                            .unwrap_or_default(),
+                        PracticeDataType::Time => value_opt
+                            .as_ref()
+                            .and_then(|v| v.as_time_str())
+                            .unwrap_or_default(),
+                        PracticeDataType::Text => value_opt
+                            .as_ref()
+                            .and_then(|v| v.as_text())
+                            .unwrap_or_default(),
+                        PracticeDataType::Duration => value_opt
+                            .as_ref()
+                            .and_then(|v| v.as_duration_str())
+                            .unwrap_or_default(),
+                    })
+                    .collect::<Vec<_>>();
 
-                    html! {
-                        <Gr>
-                            <Ghd>{ user_name.clone() }</Ghd>
-                            { data_columns }
-                        </Gr>
-                    }
-                })
-                .collect::<Html>()
-            }
-            </Gbody>
-        </Grid>
-    };
+                data_columns.insert(0, user_name.clone());
+                data_columns
+            },
+        )
+        .collect::<Vec<Vec<_>>>();
 
     let empty_body = html! {
         <div class={BODY_DIV_CSS}>
@@ -240,7 +241,10 @@ pub fn yatras() -> Html {
                 </label>
             </div>
         </div>
-        { grid }
+        <Grid
+            header={grid_header}
+            data={grid_data}
+        />
         </>
     };
 
