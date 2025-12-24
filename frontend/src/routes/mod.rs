@@ -4,10 +4,9 @@ use yew_router::prelude::*;
 use self::{
     charts::{create_report::CreateReport, Charts, SharedCharts},
     confirmation::Confirmation,
-    edit_user_practice::EditUserPractice,
     home::Home,
     login::Login,
-    new_practice::{NewPractice, NewPracticeTarget},
+    practices::{edit_user_practice::EditUserPractice, new_practice::NewPractice, Mode},
     pwd_reset::PwdReset,
     register_with_id::RegisterWithId,
     settings::{
@@ -17,14 +16,13 @@ use self::{
     user_practices::UserPractices,
     yatras::{admin_settings::AdminSettings, join::JoinYatra, settings::YatraSettings, Yatras},
 };
-use crate::model::ConfirmationType;
+use crate::{model::ConfirmationType, routes::practices::edit_yatra_practice::EditYatraPractice};
 
 pub mod charts;
 pub mod confirmation;
-pub mod edit_user_practice;
 pub mod home;
 pub mod login;
-pub mod new_practice;
+pub mod practices;
 pub mod pwd_reset;
 pub mod register_with_id;
 pub mod settings;
@@ -77,8 +75,8 @@ pub enum AppRoute {
     UserPractices,
     #[at("/user/practice/new")]
     NewUserPractice,
-    #[at("/user/practice/:practice/edit")]
-    EditUserPractice { practice: String },
+    #[at("/user/practice/:id/edit")]
+    EditUserPractice { id: String },
     #[at("/user/practice/new/:practice")]
     NewUserPracticeWithName { practice: String },
     #[at("/charts")]
@@ -93,6 +91,8 @@ pub enum AppRoute {
     YatraSettings { id: String },
     #[at("/yatra/:id/admin/settings")]
     YatraAdminSettings { id: String },
+    #[at("/yatra/:id/practice/:practice_id/edit")]
+    EditYatraPractice { id: String, practice_id: String },
     #[at("/yatra/:id/practice/new")]
     NewYatraPractice { id: String },
     #[not_found]
@@ -113,13 +113,13 @@ fn app_switch(routes: AppRoute) -> Html {
         AppRoute::Language => html! { <Language/> },
         AppRoute::UserPractices => html! { <UserPractices /> },
         AppRoute::NewUserPractice => {
-            html! { <NewPractice target={ NewPracticeTarget::UserPractice } /> }
+            html! { <NewPractice mode={ Mode::UserPractice } /> }
         }
-        AppRoute::EditUserPractice { practice } => {
-            html! { <EditUserPractice practice={practice}/> }
+        AppRoute::EditUserPractice { id } => {
+            html! { <EditUserPractice {id}/> }
         }
         AppRoute::NewUserPracticeWithName { practice } => {
-            html! { <NewPractice target={NewPracticeTarget::UserPractice} practice={practice} /> }
+            html! { <NewPractice mode={Mode::UserPractice} practice={practice} /> }
         }
         AppRoute::Charts => html! { <Charts/> },
         AppRoute::NewReport => html! { <CreateReport/> },
@@ -127,8 +127,11 @@ fn app_switch(routes: AppRoute) -> Html {
         AppRoute::JoinYatra { id } => html! { <JoinYatra yatra_id={id}/> },
         AppRoute::YatraSettings { id } => html! { <YatraSettings yatra_id={id}/> },
         AppRoute::YatraAdminSettings { id } => html! { <AdminSettings yatra_id={id}/> },
+        AppRoute::EditYatraPractice { id, practice_id } => {
+            html! { <EditYatraPractice yatra_id={id} {practice_id} /> }
+        }
         AppRoute::NewYatraPractice { id } => {
-            html! { <NewPractice target={ NewPracticeTarget::YatraPractice { yatra_id: id } } /> }
+            html! { <NewPractice mode={ Mode::YatraPractice { yatra_id: id } } /> }
         }
         AppRoute::NotFound => html! { <h1>{ "404" }</h1> },
     }

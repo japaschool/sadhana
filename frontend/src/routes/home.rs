@@ -441,21 +441,30 @@ pub fn home() -> Html {
                                     .map(|val| val.to_string() == v)
                                     .unwrap_or(false)
                             };
-                            let empty = html! {
-                                <option
-                                class={"text-black"}
-                                value=""
-                                selected={value.is_none()} />
-                            };
+
+                            let mut found_selected = false;
 
                             let mut opts = variants
                             .split(',')
                             .map(str::trim)
                             .filter(|s| !s.is_empty())
-                            .map(|v| html! {
-                                <option class={"text-black"} selected={is_selected(v)} value={v.to_string()}>{v}</option>
+                            .map(|v| {
+                                let selected = is_selected(v);
+                                if !found_selected {
+                                    found_selected = selected;
+                                }
+                                html! {
+                                    <option class={"text-black"} {selected} value={v.to_string()}>{v}</option>
+                                }
                             })
                             .collect::<Vec<Html>>();
+
+                            let empty = html! {
+                                <option
+                                class={"text-black"}
+                                value=""
+                                selected={value.is_none() || !found_selected} />
+                            };
 
                             opts.insert(0, empty);
                             opts

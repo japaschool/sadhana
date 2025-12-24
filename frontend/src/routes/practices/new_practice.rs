@@ -13,22 +13,16 @@ use crate::{
     },
     css::*,
     i18n::*,
-    model::{NewUserPractice, YatraPractice},
-    routes::DROPDOWN_PRACTICE_TYPES,
+    model::{NewUserPractice, NewYatraPractice},
+    routes::{practices::Mode, DROPDOWN_PRACTICE_TYPES},
     services::{create_user_practice, create_yatra_practice},
 };
 
 #[derive(Properties, PartialEq)]
 pub struct Props {
-    pub target: NewPracticeTarget,
+    pub mode: Mode,
     #[prop_or_default]
     pub practice: Option<String>,
-}
-
-#[derive(PartialEq, Clone)]
-pub enum NewPracticeTarget {
-    UserPractice,
-    YatraPractice { yatra_id: String },
 }
 
 #[derive(Debug, Default, Clone)]
@@ -56,11 +50,11 @@ pub fn new_practice(props: &Props) -> Html {
     let save = {
         let form = form_data.clone();
         let nav = nav.clone();
-        let target = props.target.clone();
+        let target = props.mode.clone();
         let is_dropdown = is_dropdown.clone();
         use_async(async move {
             (match target {
-                NewPracticeTarget::UserPractice => {
+                Mode::UserPractice => {
                     let variants = form.dropdown_variants.clone().filter(|_| *is_dropdown);
                     let new_practice = NewUserPractice {
                         practice: form.practice.trim().to_owned(),
@@ -71,10 +65,11 @@ pub fn new_practice(props: &Props) -> Html {
                     };
                     create_user_practice(new_practice).await
                 }
-                NewPracticeTarget::YatraPractice { yatra_id } => {
+                Mode::YatraPractice { yatra_id } => {
                     create_yatra_practice(
                         &yatra_id,
-                        YatraPractice {
+                        NewYatraPractice {
+                            yatra_id: yatra_id.clone(),
                             practice: form.practice.clone(),
                             data_type: form.data_type.as_str().try_into().unwrap(),
                         },
@@ -249,7 +244,7 @@ pub fn new_practice(props: &Props) -> Html {
                             </label>
                         </div>
                     }
-                    if props.target == NewPracticeTarget::UserPractice {
+                    if props.mode == Mode::UserPractice {
                         if DROPDOWN_PRACTICE_TYPES.contains(&form_data.data_type.as_str()) {
                             <div class="relative">
                                 <label class="flex justify-between whitespace-nowrap pl-2 pr-2">

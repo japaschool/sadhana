@@ -92,7 +92,8 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                             .route("", web::post().to(app::yatras::create_yatra_practice)),
                     )
                     .service(
-                        web::scope("/practice/{practice}")
+                        web::scope("/practice/{practice_id}")
+                            .route("", web::get().to(app::yatras::get_yatra_practice))
                             .route("", web::put().to(app::yatras::update_yatra_practice))
                             .route("", web::delete().to(app::yatras::delete_yatra_practice)),
                     )

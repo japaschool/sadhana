@@ -18,7 +18,6 @@ use crate::{
     services::{
         delete_yatra, delete_yatra_practice, delete_yatra_user, get_yatra, get_yatra_practices,
         get_yatra_users, rename_yatra, reorder_yatra_practices, toggle_is_admin_yatra_user,
-        update_yatra_practice,
     },
 };
 
@@ -161,13 +160,13 @@ pub fn admin_settings(props: &Props) -> Html {
     let delete = {
         let all_practices = all_practices.clone();
         let yatra_id = props.yatra_id.clone();
-        Callback::from(move |practice: String| {
-            log::debug!("Deleting yatra practice {:?}", practice);
+        Callback::from(move |practice_id: String| {
+            log::debug!("Deleting yatra practice {:?}", practice_id);
 
             let all_practices = all_practices.clone();
             let yatra_id = yatra_id.clone();
             spawn_local(async move {
-                delete_yatra_practice(yatra_id.as_str(), &practice)
+                delete_yatra_practice(yatra_id.as_str(), &practice_id)
                     .await
                     .map(|_| all_practices.run())
                     .unwrap()
@@ -176,17 +175,16 @@ pub fn admin_settings(props: &Props) -> Html {
     };
 
     let rename = {
-        let all_practices = all_practices.clone();
-        let yatra_id = props.yatra_id.clone();
-        Callback::from(move |(from, to): (String, String)| {
-            let all_practices = all_practices.clone();
-            let yatra_id = yatra_id.clone();
-
-            spawn_local(async move {
-                update_yatra_practice(yatra_id.as_str(), &from, &to)
-                    .await
-                    .map(|_| all_practices.run())
-                    .unwrap()
+        let nav = nav.clone();
+        let yatra = yatra.clone();
+        Callback::from(move |(id, _): (String, String)| {
+            nav.push(&AppRoute::EditYatraPractice {
+                id: yatra
+                    .data
+                    .as_ref()
+                    .map(|y| y.id.clone())
+                    .unwrap_or_default(),
+                practice_id: id,
             });
         })
     };
@@ -287,12 +285,13 @@ pub fn admin_settings(props: &Props) -> Html {
                                     .as_ref()
                                     .unwrap_or(&vec![])
                                     .iter()
-                                    .map(|p| Item{ id: p.practice.clone(), name: p.practice.clone() })
+                                    .map(|p| Item { id: p.id.clone(), name: p.practice.clone() })
                                     .collect::<Vec<_>>() }
                                 toggle_hidden_enabled=false
                                 toggle_hidden={ Callback::from(|_|{}) }
                                 is_hidden={ Callback::from(|_| false) }
                                 rename={ rename.clone() }
+                                request_new_name=false
                                 rename_popup_label={ Locale::current().enter_new_practice_name() }
                                 delete={ delete.clone() }
                                 delete_popup_label={ Locale::current().delete_yatra_practice_warning() }

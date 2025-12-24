@@ -18,7 +18,7 @@ use crate::{
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
-    pub practice: AttrValue,
+    pub id: AttrValue,
 }
 
 #[function_component(EditUserPractice)]
@@ -28,7 +28,7 @@ pub fn edit_user_practice(props: &Props) -> Html {
     let is_dropdown = use_bool_toggle(false);
 
     let current_practice = {
-        let p = props.practice.clone();
+        let p = props.id.clone();
         use_async(async move { get_user_practice(&p).await.map(|res| res.practice) })
     };
 
@@ -118,7 +118,7 @@ pub fn edit_user_practice(props: &Props) -> Html {
                                 <i class="icon-doc"></i>{format!(" {}", Locale::current().name())}
                             </label>
                         </div>
-                        if *is_dropdown{
+                        if *is_dropdown {
                             <div class="relative">
                                 <input
                                     id="dropdown_variants"
@@ -132,8 +132,8 @@ pub fn edit_user_practice(props: &Props) -> Html {
                                         Callback::from(move |e: InputEvent| {
                                             let input: HtmlInputElement = e.target_unchecked_into();
                                             let mut new_practice = (*practice).clone();
-                                            let variants = input.value().trim().to_owned();
-                                            if !variants.is_empty() {
+                                            let variants = input.value().to_owned();
+                                            if !variants.trim().is_empty() {
                                                 new_practice.dropdown_variants = Some(variants);
                                             } else {
                                                 new_practice.dropdown_variants = None;

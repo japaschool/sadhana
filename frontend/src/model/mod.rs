@@ -195,6 +195,14 @@ lazy_static! {
     static ref DURATION_R_P: String = r"(?:(\d+)[^\d]+)?(\d+)[^\d]+".to_string();
 }
 
+fn adjust_bool_str(s: &str) -> String {
+    if s == "✓" {
+        "true".to_string()
+    } else {
+        s.to_lowercase()
+    }
+}
+
 impl TryFrom<(&PracticeDataType, &str)> for PracticeEntryValue {
     type Error = anyhow::Error;
 
@@ -205,8 +213,7 @@ impl TryFrom<(&PracticeDataType, &str)> for PracticeEntryValue {
                 .parse()
                 .map(PracticeEntryValue::Int)
                 .with_context(|| format!("Failed to parse int from {}", value.1))?,
-            PracticeDataType::Bool => value
-                .1
+            PracticeDataType::Bool => adjust_bool_str(value.1)
                 .parse()
                 .map(PracticeEntryValue::Bool)
                 .with_context(|| format!("Failed to parse bool from {}", value.1))?,
@@ -248,7 +255,7 @@ impl Display for PracticeEntryValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
             PracticeEntryValue::Int(i) => i.to_string(),
-            PracticeEntryValue::Bool(b) => b.to_string(),
+            PracticeEntryValue::Bool(b) => (if *b { "✓" } else { "" }).to_string(),
             PracticeEntryValue::Time { h: _, m: _ } => self.as_time_str().unwrap(),
             PracticeEntryValue::Text(_) => self.as_text().unwrap(),
             PracticeEntryValue::Duration(_) => self.as_duration_str().unwrap(),
@@ -389,8 +396,16 @@ pub struct Yatras {
     pub yatras: Vec<Yatra>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Clone, PartialEq)]
+pub struct NewYatraPractice {
+    pub yatra_id: String,
+    pub practice: String,
+    pub data_type: PracticeDataType,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Default)]
 pub struct YatraPractice {
+    pub id: String,
     pub practice: String,
     pub data_type: PracticeDataType,
 }
@@ -449,19 +464,19 @@ pub struct IsYatraAdminResponse {
     pub is_admin: bool,
 }
 
-#[derive(Debug, Serialize)]
-pub struct CreateYatraPractice {
+#[derive(Debug, Deserialize, Clone)]
+pub struct GetYatraPractice {
     pub practice: YatraPractice,
 }
 
 #[derive(Debug, Serialize)]
-pub struct YatraPracticeUpdate {
-    pub practice: String,
+pub struct CreateYatraPractice {
+    pub practice: NewYatraPractice,
 }
 
 #[derive(Debug, Serialize)]
-pub struct UpdateYatraPractice {
-    pub update: YatraPracticeUpdate,
+pub struct UpdateYatraPractice<'a> {
+    pub practice: &'a YatraPractice,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
