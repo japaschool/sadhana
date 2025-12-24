@@ -178,19 +178,14 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
                     grid_data_by_cob(gr)
                         .iter()
                         .map(|(cob, data)| {
-                            let mut data = data.iter().map(|entry|
-                                    entry.value
-                                        .as_ref()
-                                        .map(|v| v.to_string())
-                                        .unwrap_or_default())
-                                        .collect::<Vec<_>>();
+                            let mut data = data.iter().map(|entry| entry.value.clone()).collect::<Vec<_>>();
                             let date_str = format!(
                                 "{}, {} {}",
                                 Locale::current().day_of_week(cob),
                                 cob.day(),
                                 Locale::current().month_name_short(cob.month())
                             );
-                            data.insert(0, date_str);
+                            data.insert(0, Some(PracticeEntryValue::Text(date_str)));
                             data
                         })
                         .collect::<Vec<Vec<_>>>()

@@ -9,7 +9,6 @@ use diesel::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
-use urlencoding::decode;
 use uuid::Uuid;
 
 use crate::{
@@ -227,7 +226,7 @@ impl Yatra {
     }
 }
 
-#[derive(Debug, Queryable, Serialize)]
+#[derive(Debug, Queryable, Deserialize)]
 #[diesel(table_name = yatra_practices)]
 pub struct NewYatraPractice {
     pub yatra_id: Uuid,
@@ -235,9 +234,10 @@ pub struct NewYatraPractice {
     pub data_type: PracticeDataType,
 }
 
-#[derive(Debug, Queryable, Serialize, Deserialize, Clone)]
+#[derive(Debug, Queryable, Selectable, Serialize, Deserialize, Clone)]
 #[diesel(table_name = yatra_practices)]
 pub struct YatraPractice {
+    pub id: Uuid,
     pub practice: String,
     pub data_type: PracticeDataType,
 }
@@ -274,14 +274,13 @@ impl YatraPractice {
         conn: &mut PgConnection,
         user_id: &Uuid,
         yatra_id: &Uuid,
-        practice: &str,
-        update: &YatraPracticeUpdate,
+        practice: &YatraPractice,
     ) -> Result<(), AppError> {
         Yatra::ensure_admin_user(conn, user_id, yatra_id)?;
 
         diesel::update(yatra_practices::table)
-            .set(yatra_practices::practice.eq(&update.practice))
-            .filter(yatra_practices::practice.eq(practice))
+            .set(yatra_practices::practice.eq(&practice.practice))
+            .filter(yatra_practices::id.eq(practice.id))
             .execute(conn)?;
 
         Ok(())
@@ -290,7 +289,7 @@ impl YatraPractice {
     fn delete_int(
         conn: &mut PgConnection,
         yatra_id: &Uuid,
-        yatra_practice: Option<&str>,
+        yatra_practice_id: Option<&Uuid>,
     ) -> Result<(), diesel::result::Error> {
         let mut yatra_practice_filter = yatra_practices::table
             .select(yatra_practices::id)
@@ -301,10 +300,10 @@ impl YatraPractice {
             .filter(yatra_practices::yatra_id.eq(&yatra_id))
             .into_boxed();
 
-        if let Some(practice) = yatra_practice {
+        if let Some(practice_id) = yatra_practice_id {
             yatra_practice_filter =
-                yatra_practice_filter.filter(yatra_practices::practice.eq(practice));
-            del2 = del2.filter(yatra_practices::practice.eq(practice));
+                yatra_practice_filter.filter(yatra_practices::id.eq(practice_id));
+            del2 = del2.filter(yatra_practices::id.eq(practice_id));
         }
 
         diesel::delete(yatra_user_practices::table)
@@ -320,11 +319,11 @@ impl YatraPractice {
         conn: &mut PgConnection,
         user_id: &Uuid,
         yatra_id: &Uuid,
-        practice: &str,
+        practice_id: &Uuid,
     ) -> Result<(), AppError> {
         Yatra::ensure_admin_user(conn, user_id, yatra_id)?;
 
-        conn.transaction(|conn| Self::delete_int(conn, yatra_id, Some(practice)))?;
+        conn.transaction(|conn| Self::delete_int(conn, yatra_id, Some(practice_id)))?;
 
         Ok(())
     }
@@ -335,7 +334,11 @@ impl YatraPractice {
     ) -> Result<Vec<Self>, AppError> {
         let res = yatra_practices::table
             .filter(yatra_practices::yatra_id.eq(&yatra_id))
-            .select((yatra_practices::practice, yatra_practices::data_type))
+            .select((
+                yatra_practices::id,
+                yatra_practices::practice,
+                yatra_practices::data_type,
+            ))
             .order_by(yatra_practices::order_key)
             .load(conn)?;
 
@@ -357,12 +360,29 @@ impl YatraPractice {
                     .filter(
                         yatra_practices::yatra_id
                             .eq(&yatra_id)
-                            .and(yatra_practices::practice.eq(&row.practice)),
+                            .and(yatra_practices::id.eq(&row.practice_id)),
                     )
                     .execute(conn)?;
             }
             Ok(())
         })
+    }
+
+    pub fn get(
+        conn: &mut PgConnection,
+        yatra_id: &Uuid,
+        practice_id: &Uuid,
+    ) -> Result<Self, AppError> {
+        let res = yatra_practices::table
+            .filter(
+                yatra_practices::yatra_id
+                    .eq(&yatra_id)
+                    .and(yatra_practices::id.eq(&practice_id)),
+            )
+            .select(Self::as_select())
+            .first(conn)?;
+
+        Ok(res)
     }
 }
 
@@ -391,6 +411,8 @@ impl YatraUser {
 
 #[derive(Debug, QueryableByName)]
 struct YatraUserPracticeFlat {
+    #[diesel(sql_type = DieselUuid)]
+    yatra_practice_id: Uuid,
     #[diesel(sql_type = Text)]
     yatra_practice: String,
     #[diesel(sql_type = PracticeDataTypeEnum)]
@@ -479,6 +501,7 @@ impl YatraUserPractice {
                     )
             )
             SELECT
+                yp.id as yatra_practice_id,
                 yp.practice as yatra_practice,
                 yp.data_type,
                 p.user_practice
@@ -499,11 +522,13 @@ impl YatraUserPractice {
             .into_iter()
             .map(
                 |YatraUserPracticeFlat {
+                     yatra_practice_id,
                      yatra_practice,
                      data_type,
                      user_practice,
                  }| YatraUserPractice {
                     yatra_practice: YatraPractice {
+                        id: yatra_practice_id,
                         practice: yatra_practice,
                         data_type,
                     },
@@ -773,21 +798,27 @@ pub async fn create_yatra_practice(
     state: web::Data<AppState>,
     req: HttpRequest,
     form: web::Json<CreateYatraPracticeForm>,
-    path: web::Path<YatraIdSlug>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
-    let yatra_id = path.into_inner();
 
-    let data = NewYatraPractice {
-        yatra_id,
-        practice: form.practice.practice.clone(),
-        data_type: form.practice.data_type.clone(),
-    };
-
-    web::block(move || YatraPractice::create(&mut conn, &user_id, &data)).await??;
+    web::block(move || YatraPractice::create(&mut conn, &user_id, &form.practice)).await??;
 
     Ok(HttpResponse::Ok().json(()))
+}
+
+/// Get yatra practice details
+pub async fn get_yatra_practice(
+    state: web::Data<AppState>,
+    path: web::Path<YatraIdPracticeSlug>,
+) -> Result<HttpResponse, AppError> {
+    let mut conn = state.get_conn()?;
+    let (yatra_id, practice_id) = path.into_inner();
+
+    let practice =
+        web::block(move || YatraPractice::get(&mut conn, &yatra_id, &practice_id)).await??;
+
+    Ok(HttpResponse::Ok().json(GetYatraPracticeResponse { practice }))
 }
 
 /// Delete yatra practice
@@ -798,10 +829,10 @@ pub async fn delete_yatra_practice(
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
-    let (yatra_id, practice) = path.into_inner();
-    let practice = decode(&practice)?.into_owned();
+    let (yatra_id, practice_id) = path.into_inner();
 
-    web::block(move || YatraPractice::delete(&mut conn, &user_id, &yatra_id, &practice)).await??;
+    web::block(move || YatraPractice::delete(&mut conn, &user_id, &yatra_id, &practice_id))
+        .await??;
 
     Ok(HttpResponse::Ok().json(()))
 }
@@ -810,17 +841,15 @@ pub async fn delete_yatra_practice(
 pub async fn update_yatra_practice(
     state: web::Data<AppState>,
     req: HttpRequest,
-    form: web::Json<UpdateYatraPracticeForm>,
+    form: web::Json<UpdateYatraPractice>,
     path: web::Path<YatraIdPracticeSlug>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
-    let (yatra_id, practice) = path.into_inner();
-    let data = form.update.clone();
-    let practice = decode(&practice)?.into_owned();
+    let (yatra_id, _) = path.into_inner();
+    let data = form.practice.clone();
 
-    web::block(move || YatraPractice::update(&mut conn, &user_id, &yatra_id, &practice, &data))
-        .await??;
+    web::block(move || YatraPractice::update(&mut conn, &user_id, &yatra_id, &data)).await??;
 
     Ok(HttpResponse::Ok().json(()))
 }
@@ -836,12 +865,14 @@ pub async fn update_yatra_practice_order_key(
     let user_id = auth::get_current_user(&req)?.id;
     let yatra_id = path.into_inner();
 
+    log::info!("Reorder payload {:?}", form.practices);
+
     let data = form
         .practices
         .iter()
         .enumerate()
         .map(|(idx, practice)| UpdateYatraPracticeOrderKey {
-            practice: practice.clone(),
+            practice_id: practice.clone(),
             order_key: idx as i32,
         })
         .collect();
@@ -890,7 +921,7 @@ pub async fn update_yatra_user_practices(
 }
 
 type YatraIdSlug = Uuid;
-type YatraIdPracticeSlug = (Uuid, String);
+type YatraIdPracticeSlug = (Uuid, Uuid);
 type YatraIdUserIdSlug = (Uuid, Uuid);
 
 #[derive(Deserialize, Debug)]
@@ -910,27 +941,22 @@ pub struct RenameYatraForm {
 
 #[derive(Deserialize, Debug)]
 pub struct CreateYatraPracticeForm {
-    practice: YatraPractice,
-}
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct YatraPracticeUpdate {
-    practice: String,
+    practice: NewYatraPractice,
 }
 
 #[derive(Deserialize, Debug)]
-pub struct UpdateYatraPracticeForm {
-    update: YatraPracticeUpdate,
+pub struct UpdateYatraPractice {
+    practice: YatraPractice,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateYatraPracticeOrderKeyRequest {
-    practices: Vec<String>,
+    practices: Vec<Uuid>,
 }
 
 #[derive(Debug)]
 pub struct UpdateYatraPracticeOrderKey {
-    pub practice: String,
+    pub practice_id: Uuid,
     pub order_key: i32,
 }
 
@@ -1017,6 +1043,11 @@ pub struct YatraResponse {
 #[derive(Serialize, Debug)]
 pub struct YatraPracticesResponse {
     pub practices: Vec<YatraPractice>,
+}
+
+#[derive(Serialize, Debug)]
+pub struct GetYatraPracticeResponse {
+    pub practice: YatraPractice,
 }
 
 #[derive(Serialize, Debug)]

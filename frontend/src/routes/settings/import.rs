@@ -221,6 +221,8 @@ pub fn import() -> Html {
     };
 
     let add_practice = {
+        // TODO: prepopulate type as well
+        // TODO: use <Redirect> or <a> instead of nav.push
         let nav = nav.clone();
         Callback::from(move |e: MouseEvent| {
             let target: HtmlInputElement = e.target_unchecked_into();

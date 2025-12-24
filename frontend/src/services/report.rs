@@ -14,7 +14,7 @@ pub async fn get_report_data(
     cob: &NaiveDate,
     duration: &ReportDuration,
 ) -> Result<ReportData, AppError> {
-    request_api_get(format!("/diary/{cob}/report?duration={duration}").to_string()).await
+    request_api_get(&format!("/diary/{cob}/report?duration={duration}")).await
 }
 
 /// Get shared chart data for a practice
@@ -23,28 +23,34 @@ pub async fn get_shared_report_data(
     end_date: &NaiveDate,
     duration: &ReportDuration,
 ) -> Result<ReportData, AppError> {
-    request_api_get(format!("/share/{user_id}?end_date={end_date}&duration={duration}").to_string())
-        .await
+    request_api_get(&format!(
+        "/share/{user_id}?end_date={end_date}&duration={duration}"
+    ))
+    .await
 }
 
 pub async fn get_reports() -> Result<ReportsResponse, AppError> {
-    request_api_get("/reports".to_string()).await
+    request_api_get("/reports").await
 }
 
 pub async fn create_new_report(report: ReportForm) -> Result<CreateReportResponse, AppError> {
-    request_api_post("/reports".to_string(), &CreateReportForm { report }).await
+    request_api_post("/reports", &CreateReportForm { report }).await
 }
 
 pub async fn update_report(report_id: &str, report: ReportForm) -> Result<(), AppError> {
-    request_api_put(format!("/report/{report_id}"), &UpdateReportForm { report }).await
+    request_api_put(
+        &format!("/report/{report_id}"),
+        &UpdateReportForm { report },
+    )
+    .await
 }
 
 pub async fn delete_report(report_id: &str) -> Result<(), AppError> {
-    request_api_delete(format!("/report/{report_id}")).await
+    request_api_delete(&format!("/report/{report_id}")).await
 }
 
 pub async fn get_shared_reports(user_id: &str) -> Result<ReportsResponse, AppError> {
-    request_api_get(format!("/share/{user_id}/reports").to_string()).await
+    request_api_get(&format!("/share/{user_id}/reports").to_string()).await
 }
 
 #[derive(Debug, Deserialize)]

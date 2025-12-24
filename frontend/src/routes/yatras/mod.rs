@@ -16,7 +16,7 @@ use crate::{
     css::*,
     hooks::SessionStateContext,
     i18n::Locale,
-    model::{PracticeDataType, Yatra, YatraData, YatraDataRow},
+    model::{PracticeEntryValue, Yatra, YatraData, YatraDataRow},
     routes::AppRoute,
     services::{create_yatra, get_user_yatras, get_yatra_data},
 };
@@ -146,6 +146,29 @@ pub fn yatras() -> Html {
         hd
     };
 
+    let grid_cc = grid_header
+        .iter()
+        .enumerate()
+        .map(|(i, _)| {
+            if i == 1 {
+                Some(Callback::from(|v: PracticeEntryValue| {
+                    let v = v.as_int();
+                    if let Some(v) = v {
+                        if v >= 16 {
+                            HeatmapColors::Green
+                        } else {
+                            HeatmapColors::Red
+                        }
+                    } else {
+                        HeatmapColors::NA
+                    }
+                }))
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>();
+
     let grid_data = data
         .data
         .iter()
@@ -156,44 +179,8 @@ pub fn yatras() -> Html {
                  user_name,
                  row,
              }| {
-                let mut data_columns = data
-                    .data
-                    .iter()
-                    .flat_map(|inner| inner.practices.iter())
-                    .zip(row.iter())
-                    .map(|(practice, value_opt)| match practice.data_type {
-                        PracticeDataType::Bool => value_opt
-                            .as_ref()
-                            .and_then(|b| b.as_bool())
-                            .map(|b| {
-                                if b {
-                                    "✔️".to_string()
-                                } else {
-                                    String::new()
-                                }
-                            })
-                            .unwrap_or_default(),
-                        PracticeDataType::Int => value_opt
-                            .as_ref()
-                            .and_then(|v| v.as_int())
-                            .map(|i| i.to_string())
-                            .unwrap_or_default(),
-                        PracticeDataType::Time => value_opt
-                            .as_ref()
-                            .and_then(|v| v.as_time_str())
-                            .unwrap_or_default(),
-                        PracticeDataType::Text => value_opt
-                            .as_ref()
-                            .and_then(|v| v.as_text())
-                            .unwrap_or_default(),
-                        PracticeDataType::Duration => value_opt
-                            .as_ref()
-                            .and_then(|v| v.as_duration_str())
-                            .unwrap_or_default(),
-                    })
-                    .collect::<Vec<_>>();
-
-                data_columns.insert(0, user_name.clone());
+                let mut data_columns = row.clone();
+                data_columns.insert(0, Some(PracticeEntryValue::Text(user_name.clone())));
                 data_columns
             },
         )
@@ -244,6 +231,7 @@ pub fn yatras() -> Html {
         <Grid
             header={grid_header}
             data={grid_data}
+            color_coding={grid_cc}
         />
         </>
     };

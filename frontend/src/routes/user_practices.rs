@@ -114,8 +114,8 @@ pub fn user_practices() -> Html {
 
     let rename = {
         let nav = nav.clone();
-        Callback::from(move |(practice, _): (String, String)| {
-            nav.push(&AppRoute::EditUserPractice { practice });
+        Callback::from(move |(id, _): (String, String)| {
+            nav.push(&AppRoute::EditUserPractice { id });
         })
     };
 
@@ -149,6 +149,7 @@ pub fn user_practices() -> Html {
             <ListErrors error={server_practices.error.clone()} />
             <ListErrors error={reorder_practices.error.clone()} />
             <div class={format!("mx-auto max-w-md {}", BODY_DIV_BASE_CSS)}>
+            // TODO: remove form
                 <form>{
                     if server_practices.loading || local_practices.current().is_empty() {
                         html!{}
