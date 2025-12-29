@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use chrono::{prelude::*, Days};
 use gloo_events::EventListener;
+use tw_merge::*;
 use web_sys::{HtmlInputElement, VisibilityState};
 use yew::prelude::*;
 use yew_hooks::{use_async, use_mount};
@@ -43,10 +44,12 @@ pub fn calendar(props: &Props) -> Html {
         res
     };
 
-    let selected_date_str = session_state
-        .selected_date
-        .format_localized("%A %e %B %Y", Locale::current().chrono())
-        .to_string();
+    let selected_date_str = titlecase(
+        &session_state
+            .selected_date
+            .format_localized("%A, %e %B %Y", Locale::current().chrono())
+            .to_string(),
+    );
 
     let incomplete_days = {
         let start = *week.first().unwrap();
@@ -150,66 +153,105 @@ pub fn calendar(props: &Props) -> Html {
         })
     };
 
-    let ondblclick = {
-        let ss = session_state.clone();
-        let today = today.clone();
-        Callback::from(move |_: MouseEvent| {
-            ss.dispatch(*today);
-        })
-    };
-
     let calendar_day = |for_selected_date: bool, d: &NaiveDate| -> Html {
         let date_css = match (for_selected_date, *d == *today) {
-            (true, true) => format!("{SELECTED_TODAY_DATE_COLOR_CSS} h-9 w-9"),
-            (true, false) => format!("{SELECTED_DATE_COLOR_CSS} h-8 w-8"),
-            (false, true) => format!("{HOVER_TODAY_DATE_COLOR_CSS} h-8 w-8"),
-            (false, false) => format!("{HOVER_DATE_COLOR_CSS} h-8 w-8"),
+            (true, true) => tw_merge!(SELECTED_TODAY_DATE_COLOR_CSS, "h-9 w-9"),
+            (true, false) => tw_merge!(SELECTED_DATE_COLOR_CSS, "h-8 w-8"),
+            (false, true) => tw_merge!(HOVER_TODAY_DATE_COLOR_CSS, "h-8 w-8"),
+            (false, false) => tw_merge!(HOVER_DATE_COLOR_CSS, "h-8 w-8"),
         };
-        let mut weekday_label_css = "text-zinc-500 dark:text-zinc-100 text-xs".into();
-        if for_selected_date {
-            weekday_label_css = format!("{weekday_label_css} font-semibold");
-        }
+
+        let weekday_label_css = if for_selected_date {
+            "text-xs font-semibold text-zinc-600 dark:text-zinc-100".to_string()
+        } else {
+            "text-xs text-zinc-500 dark:text-zinc-400".to_string()
+        };
+
         let date_label_css = if for_selected_date {
             "text-zinc-500 dark:text-zinc-100 my-auto font-bold".into()
         } else {
-            format!("{} dark:can-hover:group-hover:text-white can-hover:group-hover:text-zinc-100 my-auto can-hover:group-hover:font-bold transition-all duration-300", if *d == *today {"text-amber-400"} else {"text-zinc-500 dark:text-zinc-100"})
+            tw_merge!(
+                if *d == *today {
+                    "text-amber-400"
+                } else {
+                    "text-zinc-500 dark:text-zinc-100"
+                },
+                "dark:can-hover:group-hover:text-white can-hover:group-hover:text-zinc-100 my-auto can-hover:group-hover:font-bold transition-all duration-300")
         };
 
         let id = d.format(DATE_FORMAT);
 
         html! {
-            <div id={id.to_string()} class="text-center">
-                <p id={id.to_string()} class={ weekday_label_css }>{ &Locale::current().day_of_week(d).chars().next().unwrap() }</p>
-                <div id={id.to_string()} class={ format!("{DATE_CSS} {date_css}") } onclick={ onclick_date.clone() }>
+            <div class="relative flex flex-col items-center gap-1 text-center">
+                <p class={weekday_label_css}>
+                    { Locale::current().day_of_week(d).chars().next().unwrap() }
+                </p>
+                <div class="relative h-9 w-9 flex items-center justify-center">
+                    <div
+                        id={id.to_string()}
+                        class={tw_merge!(
+                            DATE_CSS,
+                            "aspect-square w-8 flex items-center justify-center relative",
+                            date_css
+                        )}
+                        onclick={ onclick_date.clone() }
+                    >
+                        <p class={tw_merge!(date_label_css, "pointer-events-none")}>
+                            { d.format("%-d").to_string() }
+                        </p>
+                    </div>
+
                     if is_incomplete_day(d.day()) {
-                        <span id={id.to_string()} class="absolute ml-4 w-2 h-2 bg-red-500 rounded-full"></span>
+                        <span
+                            class="pointer-events-none absolute top-2 right-1 h-2 w-2 rounded-full bg-red-500"
+                        />
                     }
-                    <p id={id.to_string()} class={ date_label_css }>{ d.format("%-d").to_string() }</p>
                 </div>
             </div>
         }
     };
 
     html! {
-        <div class="relative" {ondblclick} >
-            <div class="pb-1 flex justify-center overflow-x-scroll mx-auto max-w-sm">
-                <div class="flex text-zinc-500 dark:text-zinc-100 group w-16" onclick={ prev_week_onclick.clone() }>
-                    <div class="flex items-center"><i class="icon-chevron-left"></i></div>
-                </div>
-                {for week.iter().map(|d| html! {
-                    <div class="flex group justify-center w-16">
-                        <div class="flex items-center">
-                        { calendar_day(*d == session_state.selected_date, d) }
-                        </div>
+        <div class="relative">
+            <div class="mx-auto max-w-sm">
+                <div class="grid grid-cols-9 items-center text-zinc-500 dark:text-zinc-100">
+                    <div class="flex justify-center cursor-pointer" onclick={prev_week_onclick.clone()}>
+                        <i class="icon-chevron-left"></i>
                     </div>
-                })}
-                <div class="flex text-zinc-500 dark:text-zinc-100 justify-end group w-16" onclick={ next_week_onclick.clone() }>
-                    <div class="flex items-center"><i class="icon-chevron-right"></i></div>
+
+                    { for week.iter().map(|d| html! {
+                        <div class="flex justify-center pointer-events-none">
+                            <div class="pointer-events-auto">
+                                { calendar_day(*d == session_state.selected_date, d) }
+                            </div>
+                        </div>
+                    }) }
+
+                    <div class="flex justify-center cursor-pointer" onclick={next_week_onclick.clone()}>
+                        <i class="icon-chevron-right"></i>
+                    </div>
                 </div>
             </div>
-            <div class="flex justify-center">
-                <p class="text-sm dark:text-zinc-100 text-zinc-500">{selected_date_str}</p>
+
+            <div class="mt-1 flex justify-center">
+                <p class="text-sm text-zinc-500 dark:text-zinc-100">
+                    { selected_date_str }
+                </p>
             </div>
         </div>
+
     }
+}
+
+fn titlecase(s: &str) -> String {
+    s.split_whitespace()
+        .map(|word| {
+            let mut c = word.chars();
+            match c.next() {
+                None => String::new(),
+                Some(first_char) => first_char.to_uppercase().collect::<String>() + c.as_str(),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
 }
