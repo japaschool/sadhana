@@ -134,71 +134,98 @@ pub fn month_calendar(props: &Props) -> Html {
     };
 
     html! {
-        <div
-            class={"fixed left-0 top-0 flex w-full h-full items-center justify-center z-10 antialiased"}
-            >
-            <div class="fixed top-0 bottom-0 left-0 right-0 bg-black bg-opacity-30" onclick={cancel_onclick} />
+        <div class="fixed inset-0 z-10 flex items-center justify-center antialiased">
+            <div
+                class="fixed inset-0 bg-black bg-opacity-30"
+                onclick={cancel_onclick}
+            />
+
             <div class="relative">
                 <div class="container">
-                    <div
-                        class={tw_merge!("p-4", POPUP_BG_CSS)}
-                        style="width: 19rem"
-                        >
-                        <div class="flex justify-between items-center mb-2">
+                    <div class={tw_merge!("p-4", POPUP_BG_CSS)}>
+
+                        // Header
+                        <div class="mb-2 flex items-center justify-between">
                             <div>
-                                <span class="text-lg font-bold text-gray-800 dark:text-white">{Locale::current().month_name(month_start.month())}</span>
-                                <span class="ml-1 text-lg text-gray-600 dark:text-white font-normal">{month_start.year()}</span>
+                                <span class="text-lg font-bold text-gray-800 dark:text-white">
+                                    { Locale::current().month_name(month_start.month()) }
+                                </span>
+                                <span class="ml-1 text-lg font-normal text-gray-600 dark:text-white">
+                                    { month_start.year() }
+                                </span>
                             </div>
-                            <div>
+
+                            <div class="flex">
                                 <button
                                     type="button"
-                                    class="transition ease-in-out duration-100 inline-flex cursor-pointer can-hover:hover:bg-gray-200 p-1 rounded-full"
+                                    class="inline-flex rounded-full p-1 transition can-hover:hover:bg-gray-200"
                                     onclick={prev_month_onclick}
-                                    >
-                                    <svg class="h-6 w-6 text-gray-500 dark:text-white inline-flex" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                >
+                                    <svg class="h-6 w-6 text-gray-500 dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                                     </svg>
                                 </button>
+
                                 <button
                                     type="button"
-                                    class="transition ease-in-out duration-100 inline-flex cursor-pointer can-hover:hover:bg-gray-200 p-1 rounded-full"
+                                    class="inline-flex rounded-full p-1 transition can-hover:hover:bg-gray-200"
                                     onclick={next_month_onclick}
-                                    >
-                                    <svg class="h-6 w-6 text-gray-500 dark:text-white inline-flex"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                >
+                                    <svg class="h-6 w-6 text-gray-500 dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                     </svg>
                                 </button>
                             </div>
                         </div>
 
-                        <div class="flex flex-wrap mb-3 -mx-1">
-                            { for DAYS
-                                .iter()
-                                .map(|day| html!{
-                                    <div style="width: 14.26%" class="px-1" key={day.to_string()}>
-                                        <div class="text-gray-800 dark:text-white font-medium text-center text-xs">{day}</div>
-                                    </div>
-                                })
-                            }
-                        </div>
-
-                        <div class="flex flex-wrap -mx-1">
-                            {for (1..num_blank_days).map(|_| html! {
-                                <div style="width: 14.28%" class="text-center border p-1 border-transparent text-md"/>
-                            })}
-                            {for (1..=num_days).map(|day| html! {
-                                <div id={day.to_string()} style="width: 14.28%" class="px-1 mb-1" onclick={day_onclick.clone()} >
-                                    if incomplete_days.data.as_ref().iter().any(|data| data.contains(&day)) {
-                                        <span id={day.to_string()} class="absolute ml-5 w-2 h-2 bg-red-500 rounded-full"></span>
-                                    }
-                                    <div id={day.to_string()} class={day_class(day)}>{day}</div>
+                        // Weekday header
+                        <div class="mb-3 grid grid-cols-7 gap-x-1">
+                            { for DAYS.iter().map(|day| html! {
+                                <div class="text-center text-xs font-medium text-gray-800 dark:text-white whitespace-nowrap"
+                                     key={day.to_string()}>
+                                    { day }
                                 </div>
-                            })}
+                            }) }
                         </div>
 
-                        <div class="px-1 mt-2">
-                            <a class={"cursor-pointer text-base font-bold text-amber-400"} onclick={today_onclick}>{"Today"}</a>
+                        // Calendar grid
+                        <div class="grid grid-cols-7 gap-x-1 gap-y-1">
+                            { for (1..num_blank_days).map(|_| html! {
+                                <div class="border border-transparent h-9 p-1 text-center text-md"/>
+                            }) }
+
+                            { for (1..=num_days).map(|day| html! {
+                                <div
+                                    id={day.to_string()}
+                                    class="relative h-9 cursor-pointer"
+                                    onclick={day_onclick.clone()}
+                                >
+                                    if incomplete_days.data.as_ref().iter().any(|data| data.contains(&day)) {
+                                        <span class="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500"></span>
+                                    }
+                                    <div
+                                        id={day.to_string()}
+                                        class={tw_merge!(
+                                            "flex aspect-square w-8 items-center justify-center rounded-full",
+                                            day_class(day)
+                                        )}
+                                    >
+                                        { day }
+                                    </div>
+                                </div>
+                            }) }
                         </div>
+
+                        // Footer
+                        <div class="mt-2">
+                            <a
+                                class="cursor-pointer text-base font-bold text-amber-400"
+                                onclick={today_onclick}
+                            >
+                                { "Today" }
+                            </a>
+                        </div>
+
                     </div>
                 </div>
             </div>
