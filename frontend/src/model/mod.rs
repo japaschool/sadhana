@@ -139,19 +139,14 @@ pub struct DiaryEntry {
     pub value: Option<PracticeEntryValue>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Copy, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Copy, Deserialize, Default)]
 pub enum PracticeDataType {
     Int,
     Bool,
     Time,
+    #[default]
     Text,
     Duration,
-}
-
-impl Default for PracticeDataType {
-    fn default() -> Self {
-        Self::Text
-    }
 }
 
 impl Display for PracticeDataType {
@@ -301,13 +296,21 @@ impl PracticeEntryValue {
                 let hours = mins / 60;
                 let minutes = mins % 60;
                 let res = if hours > 0 {
-                    format!(
-                        "{hours}{hours_label} {minutes}{minutes_label}",
-                        hours = hours,
-                        minutes = minutes,
-                        hours_label = Locale::current().hours_label(),
-                        minutes_label = Locale::current().minutes_label()
-                    )
+                    if minutes > 0 {
+                        format!(
+                            "{hours}{hours_label} {minutes}{minutes_label}",
+                            hours = hours,
+                            minutes = minutes,
+                            hours_label = Locale::current().hours_label(),
+                            minutes_label = Locale::current().minutes_label()
+                        )
+                    } else {
+                        format!(
+                            "{hours}{hours_label}",
+                            hours = hours,
+                            hours_label = Locale::current().hours_label()
+                        )
+                    }
                 } else {
                     format!(
                         "{minutes}{minutes_label}",
@@ -324,6 +327,24 @@ impl PracticeEntryValue {
     pub fn as_text(&self) -> Option<String> {
         match &self {
             &PracticeEntryValue::Text(s) => Some(s.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn as_comparable(&self) -> Option<i64> {
+        match self {
+            PracticeEntryValue::Int(i) => Some(i32::from(*i) as i64),
+            PracticeEntryValue::Duration(mins) => Some(i64::from(*mins) * 60),
+            PracticeEntryValue::Time { h, m } => Some(i64::from(*h) * 3600 + i64::from(*m) * 60),
+            _ => None,
+        }
+    }
+}
+
+impl PartialOrd for PracticeEntryValue {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match (self.as_comparable(), other.as_comparable()) {
+            (Some(a), Some(b)) => Some(a.cmp(&b)),
             _ => None,
         }
     }

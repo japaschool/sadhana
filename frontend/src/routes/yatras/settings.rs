@@ -314,8 +314,8 @@ pub fn yatra_settings(props: &Props) -> Html {
             <ListErrors error={new_yatra.error.clone()} />
             <form {onsubmit}>
                 <div class={BODY_DIV_NO_PADDING_CSS}>
-                    <div class="relative pb-3">
-                        <label>{ Locale::current().yatra_mapping_info() }</label>
+                    <div class="pt-2">
+                        <p class="text-xs text-zinc-500 dark:text-zinc-200">{Locale::current().yatra_mapping_info()}</p>
                     </div>
                     { practices }
                     <div class="relative">

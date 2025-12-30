@@ -174,7 +174,7 @@ pub fn admin_settings(props: &Props) -> Html {
         })
     };
 
-    let rename = {
+    let edit_practice = {
         let nav = nav.clone();
         let yatra = yatra.clone();
         Callback::from(move |(id, _): (String, String)| {
@@ -277,6 +277,8 @@ pub fn admin_settings(props: &Props) -> Html {
             <ListErrors error={rename_yatra.error.clone()} />
             <ListErrors error={delete_yatra.error.clone()} />
             <div class={BODY_DIV_CSS}>
+                // TODO: add setting for renaming yatra and checking the flag
+
                 <form>
                     if !all_practices.loading {
                         <SummaryDetails label={Locale::current().yatra_practices()}>
@@ -290,7 +292,7 @@ pub fn admin_settings(props: &Props) -> Html {
                                 toggle_hidden_enabled=false
                                 toggle_hidden={ Callback::from(|_|{}) }
                                 is_hidden={ Callback::from(|_| false) }
-                                rename={ rename.clone() }
+                                rename={edit_practice}
                                 request_new_name=false
                                 rename_popup_label={ Locale::current().enter_new_practice_name() }
                                 delete={ delete.clone() }

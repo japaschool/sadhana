@@ -20,7 +20,7 @@ use crate::{
     },
 };
 
-#[derive(Serialize, Debug, Queryable)]
+#[derive(Serialize, Debug, Queryable, Selectable)]
 #[diesel(table_name = yatras)]
 pub struct Yatra {
     pub id: Uuid,
@@ -134,7 +134,7 @@ impl Yatra {
 
     pub fn get_yatra(conn: &mut PgConnection, yatra_id: &Uuid) -> Result<Self, AppError> {
         let res = yatras::table
-            .select((yatras::id, yatras::name))
+            .select(Yatra::as_select())
             .filter(yatras::id.eq(&yatra_id))
             .first(conn)?;
         Ok(res)
@@ -218,7 +218,7 @@ impl Yatra {
         let res = yatras::table
             .inner_join(yatra_users::table)
             .filter(yatra_users::user_id.eq(&user_id))
-            .select((yatras::id, yatras::name))
+            .select(Yatra::as_select())
             .order_by(yatras::name)
             .load(conn)?;
 
@@ -605,16 +605,18 @@ pub async fn yatra_data(
     let cob_date = params.cob_date;
     let yatra_id = path.into_inner();
 
-    let data =
-        web::block(move || YatraDataRow::get_yatra_data(&mut conn, &yatra_id, &cob_date)).await??;
+    let res = web::block(move || {
+        match (
+            YatraPractice::get_ordered_yatra_practices(&mut conn, &yatra_id),
+            YatraDataRow::get_yatra_data(&mut conn, &yatra_id, &cob_date),
+        ) {
+            (Ok(data), Ok(practices)) => Ok((data, practices)),
+            (Err(e), _) | (_, Err(e)) => Err(e),
+        }
+    })
+    .await??;
 
-    let mut conn = state.get_conn()?;
-
-    let practices =
-        web::block(move || YatraPractice::get_ordered_yatra_practices(&mut conn, &yatra_id))
-            .await??;
-
-    Ok(HttpResponse::Ok().json(YatraDataResponse::from((practices, data))))
+    Ok(HttpResponse::Ok().json(YatraDataResponse::from(res)))
 }
 
 pub async fn is_admin(
