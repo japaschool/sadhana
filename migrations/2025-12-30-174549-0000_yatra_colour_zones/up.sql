@@ -1,0 +1,1 @@
+alter table yatra_practices add column colour_zones jsonb;

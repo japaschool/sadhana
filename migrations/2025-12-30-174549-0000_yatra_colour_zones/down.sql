@@ -1,0 +1,1 @@
+alter table yatra_practices drop column colour_zones;

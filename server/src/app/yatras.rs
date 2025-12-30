@@ -240,6 +240,7 @@ pub struct YatraPractice {
     pub id: Uuid,
     pub practice: String,
     pub data_type: PracticeDataType,
+    pub colour_zones: Option<JsonValue>,
 }
 
 impl YatraPractice {
@@ -278,9 +279,11 @@ impl YatraPractice {
     ) -> Result<(), AppError> {
         Yatra::ensure_admin_user(conn, user_id, yatra_id)?;
 
-        diesel::update(yatra_practices::table)
-            .set(yatra_practices::practice.eq(&practice.practice))
-            .filter(yatra_practices::id.eq(practice.id))
+        diesel::update(yatra_practices::table.find(practice.id))
+            .set((
+                yatra_practices::practice.eq(&practice.practice),
+                yatra_practices::colour_zones.eq(&practice.colour_zones),
+            ))
             .execute(conn)?;
 
         Ok(())
@@ -334,11 +337,7 @@ impl YatraPractice {
     ) -> Result<Vec<Self>, AppError> {
         let res = yatra_practices::table
             .filter(yatra_practices::yatra_id.eq(&yatra_id))
-            .select((
-                yatra_practices::id,
-                yatra_practices::practice,
-                yatra_practices::data_type,
-            ))
+            .select(YatraPractice::as_select())
             .order_by(yatra_practices::order_key)
             .load(conn)?;
 
@@ -531,6 +530,7 @@ impl YatraUserPractice {
                         id: yatra_practice_id,
                         practice: yatra_practice,
                         data_type,
+                        colour_zones: None,
                     },
                     user_practice,
                 },
