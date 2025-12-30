@@ -20,6 +20,31 @@ details summary::-webkit-details-marker {
     display: none;
 }
 
+@media (prefers-color-scheme: light) {
+
+    /* disabled controls look */
+    select:disabled,
+    input:disabled {
+        color: #9B9BA1;
+        cursor: not-allowed;
+        border: 1px solid #8D8E94 !important;
+        opacity: 1;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+
+    /* disabled controls look */
+    select:disabled,
+    input:disabled {
+        /* color: #6c757d; */
+        color: #C6C3C5 !important;
+        cursor: not-allowed;
+        border: 1px solid #C6C3C5 !important;
+        opacity: 1;
+    }
+}
+
 /* Spinner */
 .loader {
     border-top-color: #380202;

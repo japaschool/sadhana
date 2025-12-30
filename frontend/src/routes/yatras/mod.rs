@@ -146,28 +146,28 @@ pub fn yatras() -> Html {
         hd
     };
 
-    let grid_cc = grid_header
-        .iter()
-        .enumerate()
-        .map(|(i, _)| {
-            if i == 1 {
-                Some(Callback::from(|v: PracticeEntryValue| {
-                    let v = v.as_int();
-                    if let Some(v) = v {
-                        if v >= 16 {
-                            HeatmapColors::Green
-                        } else {
-                            HeatmapColors::Red
-                        }
-                    } else {
-                        HeatmapColors::NA
-                    }
-                }))
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<_>>();
+    // let grid_cc = grid_header
+    //     .iter()
+    //     .enumerate()
+    //     .map(|(i, _)| {
+    //         if i == 1 {
+    //             Some(Callback::from(|v: PracticeEntryValue| {
+    //                 let v = v.as_int();
+    //                 if let Some(v) = v {
+    //                     if v >= 16 {
+    //                         ZoneColour::Green
+    //                     } else {
+    //                         ZoneColour::Red
+    //                     }
+    //                 } else {
+    //                     ZoneColour::Neutral
+    //                 }
+    //             }))
+    //         } else {
+    //             None
+    //         }
+    //     })
+    //     .collect::<Vec<_>>();
 
     let grid_data = data
         .data
@@ -231,7 +231,7 @@ pub fn yatras() -> Html {
         <Grid
             header={grid_header}
             data={grid_data}
-            color_coding={grid_cc}
+            // color_coding={grid_cc}
         />
         </>
     };
@@ -239,7 +239,7 @@ pub fn yatras() -> Html {
     html! {
         <BlankPage
             show_footer=true
-            selected_page={AppRoute::Yatras}
+            selected_page={ AppRoute::Yatras }
             loading={ yatras.loading || data.loading }
             left_button={ HeaderButtonProps::blank() }
             right_button={
