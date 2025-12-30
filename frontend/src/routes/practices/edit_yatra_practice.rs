@@ -1,4 +1,4 @@
-use strum::{Display, EnumString, IntoEnumIterator};
+use strum::IntoEnumIterator;
 use tw_merge::*;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
@@ -8,13 +8,16 @@ use yew_router::prelude::use_navigator;
 use crate::{
     components::{
         blank_page::{BlankPage, HeaderButtonProps},
-        grid::{Grid, ZoneColour},
+        grid::Grid,
         list_errors::ListErrors,
         summary_details::SummaryDetails,
     },
     css::*,
     i18n::*,
-    model::{PracticeDataType, PracticeEntryValue, YatraPractice},
+    model::{
+        BetterDirection, Bound, ColourZonesConfig, PracticeDataType, PracticeEntryValue,
+        YatraPractice, ZoneColour,
+    },
     services::{get_yatra_practice, update_yatra_practice},
     utils::time_dur_input_support::*,
     AppRoute,
@@ -25,65 +28,6 @@ const COLOUR_ZONE_DATA_TYPES: [PracticeDataType; 3] = [
     PracticeDataType::Duration,
     PracticeDataType::Int,
 ];
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct ColourZonesConfig {
-    pub better_direction: BetterDirection,
-    pub bounds: Vec<Bound>,
-    pub no_value_colour: ZoneColour,
-}
-
-impl Default for ColourZonesConfig {
-    fn default() -> Self {
-        Self {
-            better_direction: BetterDirection::Higher,
-            bounds: vec![Bound::default_yellow(), Bound::default_green()],
-            no_value_colour: ZoneColour::Neutral,
-        }
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Display, EnumString)]
-pub enum BetterDirection {
-    Higher,
-    Lower,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct Bound {
-    pub to: Option<PracticeEntryValue>,
-    pub colour: ZoneColour,
-}
-
-impl Default for Bound {
-    fn default() -> Self {
-        Self {
-            to: None,
-            colour: ZoneColour::Neutral,
-        }
-    }
-}
-
-impl Bound {
-    pub fn default_red() -> Self {
-        Self {
-            colour: ZoneColour::Red,
-            ..Default::default()
-        }
-    }
-    pub fn default_green() -> Self {
-        Self {
-            colour: ZoneColour::Green,
-            ..Default::default()
-        }
-    }
-    pub fn default_yellow() -> Self {
-        Self {
-            colour: ZoneColour::Yellow,
-            ..Default::default()
-        }
-    }
-}
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
@@ -114,11 +58,17 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
     };
 
     let update_practice = {
-        let practice = practice.clone();
+        let practice = (*practice).clone();
         let nav = nav.clone();
         let yatra_id = props.yatra_id.clone();
+        let colour_zones =
+            (!colour_zones_config.bounds.is_empty()).then_some((*colour_zones_config).clone());
         use_async(async move {
-            update_yatra_practice(&yatra_id, &practice)
+            let p = YatraPractice {
+                colour_zones,
+                ..practice
+            };
+            update_yatra_practice(&yatra_id, &p)
                 .await
                 .map(|_| nav.back())
         })
@@ -135,10 +85,20 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
 
     {
         let practice = practice.clone();
-        let color_zones_enabled = color_zones_hidden.clone();
+        let color_zones_hidden = color_zones_hidden.clone();
+        let color_zones_enabled = color_zones_enabled.clone();
+        let colour_zones_config = colour_zones_config.clone();
         use_effect_with(current_practice.clone(), move |current| {
             current.data.iter().for_each(|p| {
-                color_zones_enabled.set(!COLOUR_ZONE_DATA_TYPES.contains(&p.data_type));
+                color_zones_hidden.set(!COLOUR_ZONE_DATA_TYPES.contains(&p.data_type));
+                color_zones_enabled.set(
+                    p.colour_zones
+                        .as_ref()
+                        .is_some_and(|zones| !zones.bounds.is_empty()),
+                );
+                p.colour_zones
+                    .iter()
+                    .for_each(|zones| colour_zones_config.set(zones.to_owned()));
                 practice.set(p.to_owned())
             });
             || ()
@@ -419,229 +379,225 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
                             <i class="icon-doc"></i>{format!(" {}", Locale::current().name())}
                         </label>
                     </div>
-                    {if !*color_zones_hidden {
-                        html! {
-                            <SummaryDetails label={"Colour zones"}>
-                                <div class="relative">
-                                    // <label class="text-lg">{"Colour zones"}</label>
-                                    <div class="pt-2">
-                                        <p class="text-xs text-zinc-500 dark:text-zinc-200">{"TODO: [i18n] Colour zones make the yatra table more visual by painting each value cell red, green, or yellow depending on the cell value."}</p>
-                                    </div>
+                    if !*color_zones_hidden {
+                        <SummaryDetails label={"Colour zones"}> // TODO: i18n
+                            <div class="relative">
+                                // <label class="text-lg">{"Colour zones"}</label>
+                                <div class="pt-2">
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-200">{"TODO: [i18n] Colour zones make the yatra table more visual by painting each value cell red, green, or yellow depending on the cell value."}</p>
                                 </div>
-                                <div class={BODY_DIV_CSS}>
-                                <div class="relative">
-                                    <select
-                                        id="num_zones"
-                                        onchange={num_zones_onchange}
-                                        class={
-                                            tw_merge!(
-                                                "appearance-none",
-                                                INPUT_CSS,
-                                                "text-center [text-align-last:center] has-value")
-                                        } >
-                                        <option class={"text-black"} selected={num_zones_selected(0)} value={"0"}>{"Disabled"}</option>
-                                        <option class={"text-black"} selected={num_zones_selected(2)} value={"3"}>{"3 (Red, Yellow, Green)"}</option>
-                                        <option class={"text-black"} selected={num_zones_selected(1)} value={"2"}>{"2 (Red, Green)"}</option>
-                                    </select>
-                                    <label
-                                        for="num_zones"
-                                        class={INPUT_SELECT_LABEL_CSS}>
-                                        <i class="icon-rounds"></i>{" Number of zones:"}
-                                    </label>
-                                </div>
-                                <div class="relative">
-                                    <select
-                                        id="better_direction"
-                                        disabled={!*color_zones_enabled}
-                                        onchange={better_when_onchange}
-                                        class={
-                                            tw_merge!(
-                                                "appearance-none text-center [text-align-last:center] has-value",
-                                                INPUT_CSS)
-                                        } >
-                                        <option
-                                            class={"text-black"}
-                                            selected={colour_zones_config.better_direction == BetterDirection::Higher}
-                                            value={BetterDirection::Higher.to_string()}
-                                        >
-                                            {BetterDirection::Higher.to_string()}
-                                        </option>
-                                        <option
-                                            class={"text-black"}
-                                            selected={colour_zones_config.better_direction == BetterDirection::Lower}
-                                            value={BetterDirection::Lower.to_string()}
-                                        >
-                                            {BetterDirection::Lower.to_string()}
-                                        </option>
-                                    </select>
-                                    <label
-                                        for="better_direction"
-                                        class={INPUT_SELECT_LABEL_CSS}>
-                                        <i class="icon-rounds"></i>{" Better when:"}
-                                    </label>
-                                </div>
-                                {for colour_zones_config.bounds.iter().map(|bound|
-                                    match practice.data_type {
-                                        PracticeDataType::Int => html! {
-                                            <div class="relative">
-                                                <input
-                                                    id={bound.colour.to_string()}
-                                                    type="number"
-                                                    inputmode="numeric"
-                                                    min="0"
-                                                    max="174"
-                                                    autocomplete="off"
-                                                    placeholder={bound.colour.to_string()}
-                                                    class={tw_merge!(INPUT_CSS, "text-center")}
-                                                    value={
-                                                        bound.to
-                                                            .iter()
-                                                            .find_map(|v| v.as_int().map(|i| i.to_string()))
-                                                            .unwrap_or_default()
-                                                    }
-                                                    onchange={
-                                                        let onchange = onchange_bound_value.clone();
-                                                        Callback::from(move |e: Event| {
-                                                            let input: HtmlInputElement = e.target_unchecked_into();
-                                                            onchange(input)
-                                                        })
-                                                    }
-                                                />
-                                                <label
-                                                    for={bound.colour.to_string()}
-                                                    class={INPUT_LABEL_CSS}
-                                                >
-                                                    <i class="icon-rounds"/>
-                                                    {format!("{:?} up to: ", bound.colour)} //TODO: i18n
-                                                </label>
-                                            </div>
-                                        },
-                                        PracticeDataType::Time => html! {
-                                            <div class="relative">
-                                                <input
-                                                    id={bound.colour.to_string()}
-                                                    autocomplete="off"
-                                                    type="text"
-                                                    inputmode="numeric"
-                                                    placeholder={bound.colour.to_string()}
-                                                    class={tw_merge!(INPUT_CSS, "text-center")}
-                                                    onblur={
-                                                        let onchange = onchange_bound_value.clone();
-                                                        Callback::from(move |e: FocusEvent| {
-                                                            let input: HtmlInputElement = e.target_unchecked_into();
-                                                            onchange(input)
-                                                        })
-                                                    }
-                                                    onfocus={
-                                                        Callback::from(move |e: FocusEvent| {
-                                                            let mut input: HtmlInputElement = e.target_unchecked_into();
-                                                            format_time(&mut input, false);
-                                                        })
-                                                    }
-                                                    oninput={
-                                                        let back = backspace_key_pressed.clone();
-                                                        Callback::from(move |e: InputEvent| {
-                                                            let mut input: HtmlInputElement = e.target_unchecked_into();
-                                                            format_time(&mut input, *back.borrow());
-                                                        })
-                                                    }
-                                                    onkeydown={onkeydown_time_dur.clone()}
-                                                    value={
-                                                        bound.to
-                                                            .iter()
-                                                            .find_map(|v| v.as_time_str())
-                                                            .unwrap_or_default()
-                                                        }
-                                                />
-                                                <label
-                                                    for={bound.colour.to_string()}
-                                                    class={INPUT_LABEL_CSS}
-                                                >
-                                                    <i class="icon-clock"/>
-                                                    {format!("{:?} up to: ", bound.colour)}
-                                                </label>
-                                            </div>
-                                        },
-                                        PracticeDataType::Duration => html! {
-                                            <div class="relative">
-                                                <input
-                                                    id={bound.colour.to_string()}
-                                                    autocomplete="off"
-                                                    type="text"
-                                                    inputmode="numeric"
-                                                    placeholder={bound.colour.to_string()}
-                                                    class={tw_merge!(INPUT_CSS, "text-center")}
-                                                    onblur={
-                                                        let onchange = onchange_bound_value.clone();
-                                                        Callback::from(move |e: FocusEvent| {
-                                                            let input: HtmlInputElement = e.target_unchecked_into();
-                                                            onchange(input)
-                                                        })
-                                                    }
-                                                    oninput={oninput_duration(backspace_key_pressed.clone())}
-                                                    onkeydown={onkeydown_time_dur.clone()}
-                                                    value={
-                                                        bound.to
-                                                            .iter()
-                                                            .find_map(|v| v.as_duration_str())
-                                                            .unwrap_or_default()
-                                                        }
-                                                />
-                                                <label
-                                                    for={bound.colour.to_string()}
-                                                    class={INPUT_LABEL_CSS}
-                                                >
-                                                    <i class="icon-timer"/>
-                                                    {format!("{:?} up to: ", bound.colour)}
-                                                </label>
-                                            </div>
-                                        },
-                                        _ => unreachable!()
-                                    }
-                                )}
-                                <div class="relative">
-                                    <select
-                                        id="no_value_colour"
-                                        disabled={!*color_zones_enabled}
-                                        onchange={no_value_onchange}
-                                        class={
-                                            tw_merge!(
-                                                "appearance-none text-center [text-align-last:center] has-value",
-                                                INPUT_CSS)
-                                        }
+                            </div>
+                            <div class={BODY_DIV_CSS}>
+                            <div class="relative">
+                                <select
+                                    id="num_zones"
+                                    onchange={num_zones_onchange}
+                                    class={
+                                        tw_merge!(
+                                            "appearance-none",
+                                            INPUT_CSS,
+                                            "text-center [text-align-last:center] has-value")
+                                    } >
+                                    <option class={"text-black"} selected={num_zones_selected(0)} value={"0"}>{"Disabled"}</option>
+                                    <option class={"text-black"} selected={num_zones_selected(2)} value={"3"}>{"3 (Red, Yellow, Green)"}</option>
+                                    <option class={"text-black"} selected={num_zones_selected(1)} value={"2"}>{"2 (Red, Green)"}</option>
+                                </select>
+                                <label
+                                    for="num_zones"
+                                    class={INPUT_SELECT_LABEL_CSS}>
+                                    <i class="icon-rounds"></i>{" Number of zones:"}
+                                </label>
+                            </div>
+                            <div class="relative">
+                                <select
+                                    id="better_direction"
+                                    disabled={!*color_zones_enabled}
+                                    onchange={better_when_onchange}
+                                    class={
+                                        tw_merge!(
+                                            "appearance-none text-center [text-align-last:center] has-value",
+                                            INPUT_CSS)
+                                    } >
+                                    <option
+                                        class={"text-black"}
+                                        selected={colour_zones_config.better_direction == BetterDirection::Higher}
+                                        value={BetterDirection::Higher.to_string()}
                                     >
-                                        {for ZoneColour::iter().map(|zc| html!{
-                                            <option
-                                                class="text-black"
-                                                selected={colour_zones_config.no_value_colour == zc}
-                                                value={zc.to_string()}>{zc.to_string()}
-                                            </option>
-                                        })}
-                                    </select>
-                                    <label for="no_value_colour" class={INPUT_SELECT_LABEL_CSS}>
-                                        <i class="icon-rounds"/>
-                                        {" No value colour:"}
-                                    </label>
-                                </div>
+                                        {BetterDirection::Higher.to_string()}
+                                    </option>
+                                    <option
+                                        class={"text-black"}
+                                        selected={colour_zones_config.better_direction == BetterDirection::Lower}
+                                        value={BetterDirection::Lower.to_string()}
+                                    >
+                                        {BetterDirection::Lower.to_string()}
+                                    </option>
+                                </select>
+                                <label
+                                    for="better_direction"
+                                    class={INPUT_SELECT_LABEL_CSS}>
+                                    <i class="icon-rounds"></i>{" Better when:"}
+                                </label>
+                            </div>
+                            {for colour_zones_config.bounds.iter().map(|bound|
+                                match practice.data_type {
+                                    PracticeDataType::Int => html! {
+                                        <div class="relative">
+                                            <input
+                                                id={bound.colour.to_string()}
+                                                type="number"
+                                                inputmode="numeric"
+                                                min="0"
+                                                max="174"
+                                                autocomplete="off"
+                                                placeholder={bound.colour.to_string()}
+                                                class={tw_merge!(INPUT_CSS, "text-center")}
+                                                value={
+                                                    bound.to
+                                                        .iter()
+                                                        .find_map(|v| v.as_int().map(|i| i.to_string()))
+                                                        .unwrap_or_default()
+                                                }
+                                                onchange={
+                                                    let onchange = onchange_bound_value.clone();
+                                                    Callback::from(move |e: Event| {
+                                                        let input: HtmlInputElement = e.target_unchecked_into();
+                                                        onchange(input)
+                                                    })
+                                                }
+                                            />
+                                            <label
+                                                for={bound.colour.to_string()}
+                                                class={INPUT_LABEL_CSS}
+                                            >
+                                                <i class="icon-rounds"/>
+                                                {format!("{:?} up to: ", bound.colour)} //TODO: i18n
+                                            </label>
+                                        </div>
+                                    },
+                                    PracticeDataType::Time => html! {
+                                        <div class="relative">
+                                            <input
+                                                id={bound.colour.to_string()}
+                                                autocomplete="off"
+                                                type="text"
+                                                inputmode="numeric"
+                                                placeholder={bound.colour.to_string()}
+                                                class={tw_merge!(INPUT_CSS, "text-center")}
+                                                onblur={
+                                                    let onchange = onchange_bound_value.clone();
+                                                    Callback::from(move |e: FocusEvent| {
+                                                        let input: HtmlInputElement = e.target_unchecked_into();
+                                                        onchange(input)
+                                                    })
+                                                }
+                                                onfocus={
+                                                    Callback::from(move |e: FocusEvent| {
+                                                        let mut input: HtmlInputElement = e.target_unchecked_into();
+                                                        format_time(&mut input, false);
+                                                    })
+                                                }
+                                                oninput={
+                                                    let back = backspace_key_pressed.clone();
+                                                    Callback::from(move |e: InputEvent| {
+                                                        let mut input: HtmlInputElement = e.target_unchecked_into();
+                                                        format_time(&mut input, *back.borrow());
+                                                    })
+                                                }
+                                                onkeydown={onkeydown_time_dur.clone()}
+                                                value={
+                                                    bound.to
+                                                        .iter()
+                                                        .find_map(|v| v.as_time_str())
+                                                        .unwrap_or_default()
+                                                    }
+                                            />
+                                            <label
+                                                for={bound.colour.to_string()}
+                                                class={INPUT_LABEL_CSS}
+                                            >
+                                                <i class="icon-clock"/>
+                                                {format!("{:?} up to: ", bound.colour)}
+                                            </label>
+                                        </div>
+                                    },
+                                    PracticeDataType::Duration => html! {
+                                        <div class="relative">
+                                            <input
+                                                id={bound.colour.to_string()}
+                                                autocomplete="off"
+                                                type="text"
+                                                inputmode="numeric"
+                                                placeholder={bound.colour.to_string()}
+                                                class={tw_merge!(INPUT_CSS, "text-center")}
+                                                onblur={
+                                                    let onchange = onchange_bound_value.clone();
+                                                    Callback::from(move |e: FocusEvent| {
+                                                        let input: HtmlInputElement = e.target_unchecked_into();
+                                                        onchange(input)
+                                                    })
+                                                }
+                                                oninput={oninput_duration(backspace_key_pressed.clone())}
+                                                onkeydown={onkeydown_time_dur.clone()}
+                                                value={
+                                                    bound.to
+                                                        .iter()
+                                                        .find_map(|v| v.as_duration_str())
+                                                        .unwrap_or_default()
+                                                    }
+                                            />
+                                            <label
+                                                for={bound.colour.to_string()}
+                                                class={INPUT_LABEL_CSS}
+                                            >
+                                                <i class="icon-timer"/>
+                                                {format!("{:?} up to: ", bound.colour)}
+                                            </label>
+                                        </div>
+                                    },
+                                    _ => unreachable!()
+                                }
+                            )}
+                            <div class="relative">
+                                <select
+                                    id="no_value_colour"
+                                    disabled={!*color_zones_enabled}
+                                    onchange={no_value_onchange}
+                                    class={
+                                        tw_merge!(
+                                            "appearance-none text-center [text-align-last:center] has-value",
+                                            INPUT_CSS)
+                                    }
+                                >
+                                    {for ZoneColour::iter().map(|zc| html!{
+                                        <option
+                                            class="text-black"
+                                            selected={colour_zones_config.no_value_colour == zc}
+                                            value={zc.to_string()}>{zc.to_string()}
+                                        </option>
+                                    })}
+                                </select>
+                                <label for="no_value_colour" class={INPUT_SELECT_LABEL_CSS}>
+                                    <i class="icon-rounds"/>
+                                    {" No value colour:"}
+                                </label>
+                            </div>
+                            if colour_zones_config.bounds.iter().any(|b| b.to.is_some()) {
                                 <div class="relative">
-                                    // <label>{"Preview:"}</label>
-                                    // <label
-                                    //     // for={idx.to_string()}
-                                    //     class={INPUT_SELECT_LABEL_CSS}>
-                                    //     <i class="icon-rounds"></i>{" Preview:"}
-                                    // </label>
+                                    <label class={"absolute left-2 -top-7 transition-all"}>
+                                        <i class="icon-eye"/>
+                                        {" Preview:"}
+                                    </label>
                                     <Grid
                                         color_coding={preview_heatmap_conf}
                                         data={preview_data}
                                         first_column_highlighted=false
                                     />
                                 </div>
-                                </div>
-                            </SummaryDetails>
-                        }
-                    } else {
-                        html!{}
-                    }}
+                            }
+                            </div>
+                        </SummaryDetails>
+                    }
                     <div class="relative">
                         <button type="submit" class={SUBMIT_BTN_CSS}>{Locale::current().save()}</button>
                     </div>

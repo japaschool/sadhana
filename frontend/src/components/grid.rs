@@ -1,8 +1,7 @@
-use strum::{Display, EnumIter, EnumString};
 use tw_merge::*;
 use yew::prelude::*;
 
-use crate::model::PracticeEntryValue;
+use crate::model::{PracticeEntryValue, ZoneColour};
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct GridProps {
@@ -15,46 +14,26 @@ pub struct GridProps {
     pub first_column_highlighted: bool,
 }
 
-#[derive(Clone, PartialEq, Display, Debug, EnumString, EnumIter)]
-pub enum ZoneColour {
-    Neutral,
-    Red,
-    Yellow,
-    Green,
-}
-
-impl ZoneColour {
-    fn css(&self) -> &'static str {
-        match self {
-            ZoneColour::Red => "bg-red-500/10 dark:bg-red-400/20",
-            ZoneColour::Green => "bg-green-500/10 dark:bg-green-400/20",
-            ZoneColour::Yellow => "bg-amber-500/10 dark:bg-amber-400/20",
-            ZoneColour::Neutral => "",
-        }
-    }
-}
-
 #[function_component(Grid)]
 pub fn grid(props: &GridProps) -> Html {
     html! {
-        <div class="relative scroll-smooth hover:scroll-auto overflow-x-auto shadow-md border dark:border-zinc-200 border-zinc-400 rounded-lg">
+        <div
+            id="grid"
+            class="relative scroll-smooth hover:scroll-auto overflow-x-auto shadow-md border dark:border-zinc-200 border-zinc-400 rounded-lg"
+        >
             <div class="flex items-center justify-between">
                 <table class="w-full text-sm text-left text-zinc-400 dark:text-zinc-200 table-auto bg-white dark:bg-zinc-700 bg-opacity-30 dark:bg-opacity-30">
-                    {if !props.header.is_empty() {
-                        html! {
-                            <thead class="text-xs uppercase dark:bg-zinc-500 dark:text-zinc-200 text-zinc-400 bg-opacity-30 dark:bg-opacity-30">
-                                <tr>
-                                    {for props.header.iter().map(|hd| html! {
-                                        <th scope="col" class="px-3 py-3">
-                                            <div class="text-sm font-normal">{ hd }</div>
-                                        </th>
-                                    })}
-                                </tr>
-                            </thead>
-                        }
-                    } else {
-                        html! {}
-                    }}
+                    if !props.header.is_empty() {
+                        <thead class="text-xs uppercase dark:bg-zinc-500 dark:text-zinc-200 text-zinc-400 bg-opacity-30 dark:bg-opacity-30">
+                            <tr>
+                                {for props.header.iter().map(|hd| html! {
+                                    <th scope="col" class="px-3 py-3">
+                                        <div class="text-sm font-normal">{ hd }</div>
+                                    </th>
+                                })}
+                            </tr>
+                        </thead>
+                    }
                     <tbody>
                         {for props.data.iter().map(|row|
                             html! {
@@ -67,7 +46,7 @@ pub fn grid(props: &GridProps) -> Html {
                                                 </th>
                                             }
                                         } else {
-                                            let cc_css = props.color_coding.as_ref().map(|cb| cell.as_ref().map(|v| cb.emit(v.to_owned()).css()));
+                                            let cc_css = props.color_coding.as_ref().map(|cb| cell.as_ref().map(|v| zone_css(&cb.emit(v.to_owned()))));
                                             html! {
                                                 <td class={tw_merge!("px-3 py-4", cc_css)}>
                                                     { cell.as_ref().map(|v| v.to_string()).unwrap_or_default() }
@@ -82,5 +61,14 @@ pub fn grid(props: &GridProps) -> Html {
                 </table>
             </div>
         </div>
+    }
+}
+
+fn zone_css(zone: &ZoneColour) -> &'static str {
+    match zone {
+        ZoneColour::Red => "bg-red-500/10 dark:bg-red-400/20",
+        ZoneColour::Green => "bg-green-500/10 dark:bg-green-400/20",
+        ZoneColour::Yellow => "bg-amber-500/10 dark:bg-amber-400/20",
+        ZoneColour::Neutral => "",
     }
 }

@@ -5,6 +5,7 @@ use chrono::{naive::NaiveDate, NaiveDateTime};
 use js_sys::RegExp;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
+use strum::{Display, EnumIter, EnumString};
 
 use crate::i18n::Locale;
 
@@ -417,6 +418,52 @@ pub struct Yatras {
     pub yatras: Vec<Yatra>,
 }
 
+#[derive(
+    Clone, PartialEq, Display, Debug, Default, EnumString, EnumIter, Deserialize, Serialize,
+)]
+pub enum ZoneColour {
+    #[default]
+    Neutral,
+    Red,
+    Yellow,
+    Green,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
+pub struct ColourZonesConfig {
+    pub better_direction: BetterDirection,
+    pub bounds: Vec<Bound>,
+    pub no_value_colour: ZoneColour,
+}
+
+#[derive(Clone, Debug, PartialEq, Display, EnumString, Deserialize, Serialize, Default)]
+pub enum BetterDirection {
+    #[default]
+    Higher,
+    Lower,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
+pub struct Bound {
+    pub to: Option<PracticeEntryValue>,
+    pub colour: ZoneColour,
+}
+
+impl Bound {
+    pub fn default_red() -> Self {
+        Self {
+            colour: ZoneColour::Red,
+            ..Default::default()
+        }
+    }
+    pub fn default_yellow() -> Self {
+        Self {
+            colour: ZoneColour::Yellow,
+            ..Default::default()
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Clone, PartialEq)]
 pub struct NewYatraPractice {
     pub yatra_id: String,
@@ -429,6 +476,7 @@ pub struct YatraPractice {
     pub id: String,
     pub practice: String,
     pub data_type: PracticeDataType,
+    pub colour_zones: Option<ColourZonesConfig>,
 }
 
 #[derive(Debug, Deserialize, Clone)]

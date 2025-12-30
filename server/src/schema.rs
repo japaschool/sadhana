@@ -127,6 +127,7 @@ diesel::table! {
         practice -> Text,
         data_type -> PracticeDataTypeEnum,
         order_key -> Int4,
+        colour_zones -> Nullable<Jsonb>,
     }
 }
 
