@@ -18,7 +18,7 @@ use crate::{
     routes::AppRoute,
     services::{
         create_yatra, get_user_practices, get_yatra, get_yatra_user_practices, is_yatra_admin,
-        leave_yatra, update_yatra_user_practices,
+        update_yatra_user_practices, yatra_leave,
     },
 };
 
@@ -58,7 +58,7 @@ pub fn yatra_settings(props: &Props) -> Html {
         let yatra_id = props.yatra_id.clone();
         let nav = nav.clone();
         use_async(async move {
-            leave_yatra(&yatra_id)
+            yatra_leave(&yatra_id)
                 .await
                 .map(|_| nav.push(&AppRoute::Yatras))
         })
@@ -89,8 +89,8 @@ pub fn yatra_settings(props: &Props) -> Html {
     };
 
     let new_yatra = use_async(async move {
-        if let Some(yatra_name) =
-            prompt(&Locale::current().new_yatra_name(), None).filter(|s| !s.trim().is_empty())
+        if let Some(yatra_name) = prompt(&Locale::current().yatra_new_name_prompt(), None)
+            .filter(|s| !s.trim().is_empty())
         {
             create_yatra(yatra_name.trim().to_owned())
                 .await
@@ -146,7 +146,7 @@ pub fn yatra_settings(props: &Props) -> Html {
     let leave_onclick = {
         let leave = leave.clone();
         Callback::from(move |_: MouseEvent| {
-            if confirm(&Locale::current().leave_yatra_practice_warning()) {
+            if confirm(&Locale::current().yatra_leave_warning()) {
                 leave.run();
             }
         })
@@ -269,7 +269,7 @@ pub fn yatra_settings(props: &Props) -> Html {
                     .iter()
                     .any(|s| s.ends_with("Can't delete last yatra admin")) =>
             {
-                Some(Locale::current().last_yatra_admin_cannot_leave())
+                Some(Locale::current().yatra_last_admin_cannot_leave())
             }
             _ => None,
         })
@@ -327,16 +327,16 @@ pub fn yatra_settings(props: &Props) -> Html {
                 <div class="mx-auto max-w-md">
                     <div class="flex space-x-3">
                         <button class={ BTN_CSS } onclick={ leave_onclick }>
-                            <i class="icon-minus"></i>{ Locale::current().leave_yatra() }
+                            <i class="icon-minus"></i>{ Locale::current().yatra_leave() }
                         </button>
                         <button class={ BTN_CSS } onclick={ create_yatra_onclick.clone() }>
-                            <i class="icon-plus"></i>{ Locale::current().create_yatra() }
+                            <i class="icon-plus"></i>{ Locale::current().yatra_create() }
                         </button>
                     </div>
                     if is_admin.data.unwrap_or(false) {
                         <div class="relative">
                             <button class={ BTN_CSS } onclick={ admin_settings_onclick.clone() }>
-                                <i class="icon-edit"></i>{ Locale::current().modify_yatra_admin() }
+                                <i class="icon-edit"></i>{ Locale::current().yatra_modify_admin() }
                             </button>
                         </div>
                     }

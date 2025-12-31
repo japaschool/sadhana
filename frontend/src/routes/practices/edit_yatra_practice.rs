@@ -18,16 +18,12 @@ use crate::{
         BetterDirection, Bound, ColourZonesConfig, PracticeDataType, PracticeEntryValue,
         YatraPractice, ZoneColour,
     },
+    routes::practices::COLOUR_ZONE_DATA_TYPES,
     services::{get_yatra_practice, update_yatra_practice},
+    tr,
     utils::time_dur_input_support::*,
     AppRoute,
 };
-
-const COLOUR_ZONE_DATA_TYPES: [PracticeDataType; 3] = [
-    PracticeDataType::Time,
-    PracticeDataType::Duration,
-    PracticeDataType::Int,
-];
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
@@ -201,8 +197,7 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
             }
 
             if !is_bound_value_valid(&config.bounds, colour) {
-                // TODO: i18n
-                input.set_custom_validity("Must be greater than previous bound");
+                input.set_custom_validity(tr!(colour_zones_must_be_greater).as_str());
             } else {
                 input.set_custom_validity("");
             }
@@ -244,7 +239,7 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
             <BlankPage
                 left_button={HeaderButtonProps::back_to(AppRoute::YatraAdminSettings { id: props.yatra_id.to_string() })}
                 loading={update_practice.loading}
-                header_label={Locale::current().practice()}
+                header_label={tr!(practice)}
                 >
                 <ListErrors error={current_practice.error.clone()} />
                 <ListErrors error={update_practice.error.clone()} />
@@ -259,17 +254,30 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
                             oninput={practice_oninput}
                             required=true
                             />
-                        <label for="practice"
-                            class={INPUT_LABEL_CSS}>
-                            <i class="icon-doc"></i>{format!(" {}", Locale::current().name())}
+                        <label for="practice" class={INPUT_LABEL_CSS}>
+                            <i class="icon-doc"/>
+                            {format!(" {}", tr!(name))}
+                        </label>
+                    </div>
+                    <div class="relative">
+                        <input
+                            id="data_type"
+                            type="text"
+                            placeholder="Practice"
+                            class={INPUT_CSS}
+                            value={practice.data_type.to_localised_string()}
+                            disabled=true
+                            />
+                        <label for="data_type" class={INPUT_LABEL_CSS}>
+                            <i class="icon-doc"/>
+                            {format!(" {}: ", tr!(data_type))}
                         </label>
                     </div>
                     if !*color_zones_hidden {
-                        <SummaryDetails label={"Colour zones"}> // TODO: i18n
+                        <SummaryDetails label={tr!(colour_zones_title)}>
                             <div class="relative">
-                                // <label class="text-lg">{"Colour zones"}</label>
                                 <div class="pt-2">
-                                    <p class="text-xs text-zinc-500 dark:text-zinc-200">{"TODO: [i18n] Colour zones make the yatra table more visual by painting each value cell red, green, or yellow depending on the cell value."}</p>
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-200">{tr!(colour_zones_description)}</p>
                                 </div>
                             </div>
                             <div class={BODY_DIV_CSS}>
@@ -283,14 +291,14 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
                                             INPUT_CSS,
                                             "text-center [text-align-last:center] has-value")
                                     } >
-                                    <option class={"text-black"} selected={num_zones_selected(0)} value={"0"}>{"Disabled"}</option>
-                                    <option class={"text-black"} selected={num_zones_selected(2)} value={"3"}>{"3 (Red, Yellow, Green)"}</option>
-                                    <option class={"text-black"} selected={num_zones_selected(1)} value={"2"}>{"2 (Red, Green)"}</option>
+                                    <option class={"text-black"} selected={num_zones_selected(0)} value={"0"}>{tr!(colour_zones_disabled)}</option>
+                                    <option class={"text-black"} selected={num_zones_selected(2)} value={"3"}>{tr!(colour_zones_3_zones)}</option>
+                                    <option class={"text-black"} selected={num_zones_selected(1)} value={"2"}>{tr!(colour_zones_2_zones)}</option>
                                 </select>
                                 <label
                                     for="num_zones"
                                     class={INPUT_SELECT_LABEL_CSS}>
-                                    <i class="icon-rounds"></i>{" Number of zones:"}
+                                    <i class="icon-rounds"></i>{ format!(" {}", tr!(colour_zones_number_of_zones)) }
                                 </label>
                             </div>
                             <div class="relative">
@@ -303,25 +311,22 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
                                             "appearance-none text-center [text-align-last:center] has-value",
                                             INPUT_CSS)
                                     } >
-                                    <option
-                                        class={"text-black"}
-                                        selected={colour_zones_config.better_direction == BetterDirection::Higher}
-                                        value={BetterDirection::Higher.to_string()}
-                                    >
-                                        {BetterDirection::Higher.to_string()}
-                                    </option>
-                                    <option
-                                        class={"text-black"}
-                                        selected={colour_zones_config.better_direction == BetterDirection::Lower}
-                                        value={BetterDirection::Lower.to_string()}
-                                    >
-                                        {BetterDirection::Lower.to_string()}
-                                    </option>
+                                    {for [BetterDirection::Higher, BetterDirection::Lower].iter().map(|d|
+                                        html! {
+                                            <option
+                                                class={"text-black"}
+                                                selected={colour_zones_config.better_direction == *d}
+                                                value={d.to_string()}
+                                            >
+                                                {d.to_localised_string()}
+                                            </option>
+                                        }
+                                    )}
                                 </select>
                                 <label
                                     for="better_direction"
                                     class={INPUT_SELECT_LABEL_CSS}>
-                                    <i class="icon-rounds"></i>{" Better when:"}
+                                    <i class="icon-rounds"></i>{ format!(" {}", tr!(colour_zones_better_when)) }
                                 </label>
                             </div>
                             {for colour_zones_config.bounds.iter().map(|bound|
@@ -356,7 +361,7 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
                                                 class={INPUT_LABEL_CSS}
                                             >
                                                 <i class="icon-rounds"/>
-                                                {format!("{:?} up to: ", bound.colour)} //TODO: i18n
+                                                { tr!(colour_zones_up_to, Colour(&bound.colour.to_localised_string())) }
                                             </label>
                                         </div>
                                     },
@@ -402,7 +407,7 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
                                                 class={INPUT_LABEL_CSS}
                                             >
                                                 <i class="icon-clock"/>
-                                                {format!("{:?} up to: ", bound.colour)}
+                                                { tr!(colour_zones_up_to, Colour(&bound.colour.to_localised_string())) }
                                             </label>
                                         </div>
                                     },
@@ -436,7 +441,7 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
                                                 class={INPUT_LABEL_CSS}
                                             >
                                                 <i class="icon-timer"/>
-                                                {format!("{:?} up to: ", bound.colour)}
+                                                { tr!(colour_zones_up_to, Colour(&bound.colour.to_localised_string())) }
                                             </label>
                                         </div>
                                     },
@@ -457,22 +462,27 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
                                     {for ZoneColour::iter().map(|zc| html!{
                                         <option
                                             class="text-black"
-                                            selected={colour_zones_config.no_value_colour == zc}
-                                            value={zc.to_string()}>{zc.to_string()}
+                                            selected={ colour_zones_config.no_value_colour == zc }
+                                            value={ zc.to_string() }
+                                        >
+                                            { zc.to_localised_string() }
                                         </option>
                                     })}
                                 </select>
                                 <label for="no_value_colour" class={INPUT_SELECT_LABEL_CSS}>
                                     <i class="icon-rounds"/>
-                                    {" No value colour:"}
+                                    { format!(" {}", tr!(colour_zones_no_value_colour)) }
                                 </label>
                             </div>
                             if colour_zones_config.bounds.iter().any(|b| b.to.is_some()) {
                                 <div class="relative">
                                     <label class={"absolute left-2 -top-7 transition-all"}>
                                         <i class="icon-eye"/>
-                                        {" Preview:"}
+                                        { format!(" {}", tr!(colour_zones_preview)) }
                                     </label>
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-200">
+                                        {tr!(colour_zones_preview_description)}
+                                    </p>
                                     <Grid
                                         color_coding={preview_heatmap_conf}
                                         data={
@@ -489,7 +499,7 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
                         </SummaryDetails>
                     }
                     <div class="relative">
-                        <button type="submit" class={SUBMIT_BTN_CSS}>{Locale::current().save()}</button>
+                        <button type="submit" class={SUBMIT_BTN_CSS}>{tr!(save)}</button>
                     </div>
                 </div>
             </BlankPage>

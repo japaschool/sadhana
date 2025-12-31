@@ -647,7 +647,7 @@ pub async fn join_yatra(
     Ok(HttpResponse::Ok().json(()))
 }
 
-pub async fn leave_yatra(
+pub async fn yatra_leave(
     state: web::Data<AppState>,
     req: HttpRequest,
     path: web::Path<YatraIdSlug>,
@@ -704,7 +704,7 @@ pub async fn delete_yatra(
 }
 
 /// Rename yatra
-pub async fn rename_yatra(
+pub async fn yatra_rename(
     state: web::Data<AppState>,
     req: HttpRequest,
     path: web::Path<YatraIdSlug>,

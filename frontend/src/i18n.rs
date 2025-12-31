@@ -41,6 +41,18 @@ static LANG: Lazy<String> = Lazy::new(|| {
         .unwrap_or("ru".to_string())
 });
 
+#[macro_export]
+macro_rules! tr {
+    // No arguments
+    ($key:ident $(,)?) => {
+        $crate::i18n::Locale::current().$key()
+    };
+    // With arguments
+    ($key:ident, $($args:expr),+ $(,)?) => {
+        $crate::i18n::Locale::current().$key($($args),+)
+    };
+}
+
 impl Locale {
     pub fn current() -> Self {
         match LocalStorage::get::<String>(USER_LANGUAGE_STORAGE_KEY)
