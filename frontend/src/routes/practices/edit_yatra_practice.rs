@@ -109,130 +109,15 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
 
     let num_zones_selected = |zones| colour_zones_config.bounds.len() == zones;
 
-    fn is_bound_value_valid(bounds: &[Bound], colour: ZoneColour) -> bool {
-        if let Some(idx) = bounds.iter().position(|b| b.colour == colour) {
-            if idx == 0 {
-                return true;
-            }
-            let cur_opt = bounds[idx].to.as_ref();
-            let prev_opt = bounds[idx - 1].to.as_ref();
-            if let (Some(cur), Some(prev)) = (cur_opt, prev_opt) {
-                return cur > prev;
-            }
-        }
-        true
-    }
-
-    fn find_zone(value: &PracticeEntryValue, bounds: &[Bound], fallback: ZoneColour) -> ZoneColour {
-        for bound in bounds {
-            let Some(to) = &bound.to else {
-                continue; // ignore None
-            };
-            if value <= to {
-                return bound.colour.clone();
-            }
-        }
-        fallback
-    }
-
-    fn midpoint(a: &PracticeEntryValue, b: &PracticeEntryValue) -> Option<PracticeEntryValue> {
-        match (a, b) {
-            (PracticeEntryValue::Int(x), PracticeEntryValue::Int(y)) => {
-                Some(PracticeEntryValue::Int((x + y) / 2))
-            }
-            (PracticeEntryValue::Duration(x), PracticeEntryValue::Duration(y)) => {
-                Some(PracticeEntryValue::Duration((x + y) / 2))
-            }
-            (
-                PracticeEntryValue::Time { h: h1, m: m1 },
-                PracticeEntryValue::Time { h: h2, m: m2 },
-            ) => {
-                let t1 = (*h1 as u16) * 60 + (*m1 as u16);
-                let t2 = (*h2 as u16) * 60 + (*m2 as u16);
-                let mid = (t1 + t2) / 2;
-
-                Some(PracticeEntryValue::Time {
-                    h: (mid / 60) as u8,
-                    m: (mid % 60) as u8,
-                })
-            }
-            _ => None,
-        }
-    }
-
-    fn just_above(v: &PracticeEntryValue) -> Option<PracticeEntryValue> {
-        match v {
-            PracticeEntryValue::Int(x) => Some(PracticeEntryValue::Int(x + 1)),
-            PracticeEntryValue::Duration(x) => Some(PracticeEntryValue::Duration(x + 1)),
-            PracticeEntryValue::Time { h, m } => {
-                let t = (*h as u16) * 60 + (*m as u16) + 1;
-                Some(PracticeEntryValue::Time {
-                    h: (t / 60) as u8,
-                    m: (t % 60) as u8,
-                })
-            }
-            _ => None,
-        }
-    }
-
-    fn preview_values(bounds: &[Bound]) -> Vec<PracticeEntryValue> {
-        let mut out = Vec::new();
-
-        // Find first concrete value to infer type
-        let mut prev = match bounds.iter().flat_map(|b| b.to.iter()).next() {
-            Some(PracticeEntryValue::Int(_)) => PracticeEntryValue::Int(0),
-            Some(PracticeEntryValue::Duration(_)) => PracticeEntryValue::Duration(0),
-            Some(PracticeEntryValue::Time { .. }) => PracticeEntryValue::Time { h: 0, m: 1 },
-            _ => return vec![],
-        };
-
-        let mut saw_concrete_bound = false;
-
-        for bound in bounds {
-            let Some(to) = &bound.to else {
-                // Ignore zones without `to`
-                continue;
-            };
-
-            saw_concrete_bound = true;
-
-            if let Some(v) = midpoint(&prev, to) {
-                out.push(v);
-            }
-
-            prev = to.clone();
-        }
-
-        // Only add implicit final zone if there was at least one concrete bound
-        if saw_concrete_bound {
-            if let Some(v) = just_above(&prev) {
-                out.push(v);
-            }
-        }
-
-        out
-    }
-
     let preview_heatmap_conf = {
-        let colour_zones_config = colour_zones_config.clone();
-        let cb = Callback::from(move |v| {
-            find_zone(
-                &v,
-                &colour_zones_config.bounds,
-                match colour_zones_config.better_direction {
-                    BetterDirection::Higher => ZoneColour::Green,
-                    BetterDirection::Lower => ZoneColour::Red,
-                },
-            )
-        });
-        Some(cb)
-    };
-
-    let preview_data = {
-        vec![preview_values(&colour_zones_config.bounds)
-            .into_iter()
-            .map(Some)
-            .collect::<Vec<_>>()]
+        let colour_zones_config = (*colour_zones_config).clone();
+        let size = colour_zones_config
+            .bounds
+            .iter()
+            .filter(|b| b.to.is_some())
+            .count()
+            + 1;
+        vec![Some(colour_zones_config); size]
     };
 
     //-------------------------------------------------------------------------
@@ -590,7 +475,12 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
                                     </label>
                                     <Grid
                                         color_coding={preview_heatmap_conf}
-                                        data={preview_data}
+                                        data={
+                                            vec![preview_values(&colour_zones_config.bounds)
+                                                .into_iter()
+                                                .map(Some)
+                                                .collect::<Vec<_>>()]
+                                        }
                                         first_column_highlighted=false
                                     />
                                 </div>
@@ -605,4 +495,93 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
             </BlankPage>
         </form>
     }
+}
+
+fn is_bound_value_valid(bounds: &[Bound], colour: ZoneColour) -> bool {
+    if let Some(idx) = bounds.iter().position(|b| b.colour == colour) {
+        if idx == 0 {
+            return true;
+        }
+        let cur_opt = bounds[idx].to.as_ref();
+        let prev_opt = bounds[idx - 1].to.as_ref();
+        if let (Some(cur), Some(prev)) = (cur_opt, prev_opt) {
+            return cur > prev;
+        }
+    }
+    true
+}
+
+fn midpoint(a: &PracticeEntryValue, b: &PracticeEntryValue) -> Option<PracticeEntryValue> {
+    match (a, b) {
+        (PracticeEntryValue::Int(x), PracticeEntryValue::Int(y)) => {
+            Some(PracticeEntryValue::Int((x + y) / 2))
+        }
+        (PracticeEntryValue::Duration(x), PracticeEntryValue::Duration(y)) => {
+            Some(PracticeEntryValue::Duration((x + y) / 2))
+        }
+        (PracticeEntryValue::Time { h: h1, m: m1 }, PracticeEntryValue::Time { h: h2, m: m2 }) => {
+            let t1 = (*h1 as u16) * 60 + (*m1 as u16);
+            let t2 = (*h2 as u16) * 60 + (*m2 as u16);
+            let mid = (t1 + t2) / 2;
+
+            Some(PracticeEntryValue::Time {
+                h: (mid / 60) as u8,
+                m: (mid % 60) as u8,
+            })
+        }
+        _ => None,
+    }
+}
+
+fn just_above(v: &PracticeEntryValue) -> Option<PracticeEntryValue> {
+    match v {
+        PracticeEntryValue::Int(x) => Some(PracticeEntryValue::Int(x + 1)),
+        PracticeEntryValue::Duration(x) => Some(PracticeEntryValue::Duration(x + 1)),
+        PracticeEntryValue::Time { h, m } => {
+            let t = (*h as u16) * 60 + (*m as u16) + 1;
+            Some(PracticeEntryValue::Time {
+                h: (t / 60) as u8,
+                m: (t % 60) as u8,
+            })
+        }
+        _ => None,
+    }
+}
+
+fn preview_values(bounds: &[Bound]) -> Vec<PracticeEntryValue> {
+    let mut out = Vec::new();
+
+    // Find first concrete value to infer type
+    let mut prev = match bounds.iter().flat_map(|b| b.to.iter()).next() {
+        Some(PracticeEntryValue::Int(_)) => PracticeEntryValue::Int(0),
+        Some(PracticeEntryValue::Duration(_)) => PracticeEntryValue::Duration(0),
+        Some(PracticeEntryValue::Time { .. }) => PracticeEntryValue::Time { h: 0, m: 1 },
+        _ => return vec![],
+    };
+
+    let mut saw_concrete_bound = false;
+
+    for bound in bounds {
+        let Some(to) = &bound.to else {
+            // Ignore zones without `to`
+            continue;
+        };
+
+        saw_concrete_bound = true;
+
+        if let Some(v) = midpoint(&prev, to) {
+            out.push(v);
+        }
+
+        prev = to.clone();
+    }
+
+    // Only add implicit final zone if there was at least one concrete bound
+    if saw_concrete_bound {
+        if let Some(v) = just_above(&prev) {
+            out.push(v);
+        }
+    }
+
+    out
 }

@@ -146,28 +146,16 @@ pub fn yatras() -> Html {
         hd
     };
 
-    // let grid_cc = grid_header
-    //     .iter()
-    //     .enumerate()
-    //     .map(|(i, _)| {
-    //         if i == 1 {
-    //             Some(Callback::from(|v: PracticeEntryValue| {
-    //                 let v = v.as_int();
-    //                 if let Some(v) = v {
-    //                     if v >= 16 {
-    //                         ZoneColour::Green
-    //                     } else {
-    //                         ZoneColour::Red
-    //                     }
-    //                 } else {
-    //                     ZoneColour::Neutral
-    //                 }
-    //             }))
-    //         } else {
-    //             None
-    //         }
-    //     })
-    //     .collect::<Vec<_>>();
+    let grid_colour_coding = {
+        let mut confs = data
+            .data
+            .iter()
+            .flat_map(|d| d.practices.iter())
+            .map(|p| p.colour_zones.clone())
+            .collect::<Vec<_>>();
+        confs.insert(0, None);
+        confs
+    };
 
     let grid_data = data
         .data
@@ -192,7 +180,12 @@ pub fn yatras() -> Html {
             <span>{ Locale::current().no_yatras_msg() }</span>
             <div class="relative">
                 <div class={ LINKS_CSS }>
-                    <a class={ LINK_CSS } onclick={ create_yatra_onclick.clone() }>{ Locale::current().create_yatra() }</a>
+                    <a
+                        class={ LINK_CSS }
+                        onclick={ create_yatra_onclick.clone() }
+                    >
+                        { Locale::current().create_yatra() }
+                    </a>
                 </div>
             </div>
         </div>
@@ -231,7 +224,7 @@ pub fn yatras() -> Html {
         <Grid
             header={grid_header}
             data={grid_data}
-            // color_coding={grid_cc}
+            color_coding={grid_colour_coding}
         />
         </>
     };
@@ -244,7 +237,12 @@ pub fn yatras() -> Html {
             left_button={ HeaderButtonProps::blank() }
             right_button={
                 if let Some(yatra) = selected_yatra.as_ref() {
-                    HeaderButtonProps::new_redirect(Locale::current().settings(), AppRoute::YatraSettings { id: yatra.id.clone() }, None, ButtonType::Button)
+                    HeaderButtonProps::new_redirect(
+                        Locale::current().settings(),
+                        AppRoute::YatraSettings { id: yatra.id.clone() },
+                        None,
+                        ButtonType::Button
+                    )
                 } else {
                     HeaderButtonProps::blank()
                 }
