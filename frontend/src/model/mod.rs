@@ -436,6 +436,28 @@ pub struct ColourZonesConfig {
     pub no_value_colour: ZoneColour,
 }
 
+impl ColourZonesConfig {
+    pub fn find_zone(&self, value: Option<&PracticeEntryValue>) -> ZoneColour {
+        if value.is_none() {
+            return self.no_value_colour.clone();
+        }
+
+        for bound in &self.bounds {
+            let Some(to) = &bound.to else {
+                continue; // ignore None
+            };
+            if value.unwrap() <= to {
+                return bound.colour.clone();
+            }
+        }
+        // fallback
+        match self.better_direction {
+            BetterDirection::Higher => ZoneColour::Green,
+            BetterDirection::Lower => ZoneColour::Red,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Display, EnumString, Deserialize, Serialize, Default)]
 pub enum BetterDirection {
     #[default]

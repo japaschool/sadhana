@@ -1,7 +1,7 @@
 use tw_merge::*;
 use yew::prelude::*;
 
-use crate::model::{PracticeEntryValue, ZoneColour};
+use crate::model::{ColourZonesConfig, PracticeEntryValue, ZoneColour};
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct GridProps {
@@ -9,7 +9,7 @@ pub struct GridProps {
     pub header: Vec<String>,
     pub data: Vec<Vec<Option<PracticeEntryValue>>>,
     #[prop_or_default]
-    pub color_coding: Option<Callback<PracticeEntryValue, ZoneColour>>,
+    pub color_coding: Vec<Option<ColourZonesConfig>>,
     #[prop_or(true)]
     pub first_column_highlighted: bool,
 }
@@ -46,7 +46,10 @@ pub fn grid(props: &GridProps) -> Html {
                                                 </th>
                                             }
                                         } else {
-                                            let cc_css = props.color_coding.as_ref().map(|cb| cell.as_ref().map(|v| zone_css(&cb.emit(v.to_owned()))));
+                                            let cc_css = props.color_coding.get(idx)
+                                                .and_then(|maybe_zone| maybe_zone.as_ref())
+                                                .map(|conf| zone_css(&conf.find_zone(cell.as_ref())))
+                                                .unwrap_or_default();
                                             html! {
                                                 <td class={tw_merge!("px-3 py-4", cc_css)}>
                                                     { cell.as_ref().map(|v| v.to_string()).unwrap_or_default() }

@@ -281,7 +281,7 @@ pub fn admin_settings(props: &Props) -> Html {
 
                 <form>
                     if !all_practices.loading {
-                        <SummaryDetails label={Locale::current().yatra_practices()}>
+                        <SummaryDetails open=true label={Locale::current().yatra_practices()}>
                             <DraggableList
                                 items={ all_practices.data
                                     .as_ref()
