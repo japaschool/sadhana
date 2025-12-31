@@ -14,8 +14,12 @@ use crate::{
     css::*,
     i18n::*,
     model::{NewUserPractice, NewYatraPractice},
-    routes::{practices::Mode, DROPDOWN_PRACTICE_TYPES},
+    routes::{
+        practices::{Mode, COLOUR_ZONE_DATA_TYPES},
+        DROPDOWN_PRACTICE_TYPES,
+    },
     services::{create_user_practice, create_yatra_practice},
+    tr,
 };
 
 #[derive(Properties, PartialEq)]
@@ -204,7 +208,7 @@ pub fn new_practice(props: &Props) -> Html {
                             value={form_data.practice.clone()}
                             />
                         <label for="practice_name" class={ INPUT_LABEL_CSS }>
-                            <i class="fa"></i>
+                            <i class="fa"/>
                             { format!(" {}: ", Locale::current().practice_name()) }
                         </label>
                     </div>
@@ -222,10 +226,18 @@ pub fn new_practice(props: &Props) -> Html {
                             <option class={ "text-black" } value="" selected=true disabled=true style="display:none">{ Locale::current().select_data_type() }</option>
                         </select>
                         <label for="data_type" class={INPUT_LABEL_CSS}>
-                            <i class="fa"></i>
+                            <i class="fa"/>
                             {format!(" {}: ", Locale::current().data_type())}
                         </label>
                     </div>
+                    if matches!(&props.mode, Mode::YatraPractice { yatra_id: _ })
+                        && !COLOUR_ZONE_DATA_TYPES
+                            .map(|dt| dt.to_string())
+                            .contains(&form_data.data_type) {
+                        <p class="text-xs text-zinc-500 dark:text-zinc-200">
+                            {tr!(colour_zones_new_practice_how_to_memo)}
+                        </p>
+                    }
                     if *is_dropdown {
                         <div class="relative">
                             <input
@@ -239,7 +251,7 @@ pub fn new_practice(props: &Props) -> Html {
                                 value={form_data.dropdown_variants.clone()}
                                 />
                             <label for="dropdown_variants" class={INPUT_LABEL_CSS}>
-                                <i class="fa"></i>
+                                <i class="fa"/>
                                 {format!(" {}: ", Locale::current().dropdown_variants())}
                             </label>
                         </div>
@@ -248,7 +260,10 @@ pub fn new_practice(props: &Props) -> Html {
                         if DROPDOWN_PRACTICE_TYPES.contains(&form_data.data_type.as_str()) {
                             <div class="relative">
                                 <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
-                                    <span><i class="icon-tick"></i>{format!(" {}: ", Locale::current().is_dropdown())}</span>
+                                    <span>
+                                        <i class="icon-tick"/>
+                                        {format!(" {}: ", Locale::current().is_dropdown())}
+                                    </span>
                                     <div>
                                         <input
                                         id="is_dropdown"
@@ -263,7 +278,7 @@ pub fn new_practice(props: &Props) -> Html {
                         }
                         <div class="relative">
                             <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
-                                <span><i class="icon-tick"></i>{format!(" {}: ", Locale::current().is_required())}</span>
+                                <span><i class="icon-tick"/>{format!(" {}: ", Locale::current().is_required())}</span>
                                 <div>
                                     <input
                                     id="mandatory"
@@ -279,7 +294,9 @@ pub fn new_practice(props: &Props) -> Html {
                         </div>
                     }
                     <div class="relative">
-                        <button type="submit" class={ SUBMIT_BTN_CSS }>{ Locale::current().save() }</button>
+                        <button type="submit" class={ SUBMIT_BTN_CSS }>
+                            { Locale::current().save() }
+                        </button>
                     </div>
                 </div>
             </form>

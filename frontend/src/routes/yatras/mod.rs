@@ -45,8 +45,8 @@ pub fn yatras() -> Html {
         })
     };
     let new_yatra = use_async(async move {
-        if let Some(yatra_name) =
-            prompt(&Locale::current().new_yatra_name(), None).filter(|s| !s.trim().is_empty())
+        if let Some(yatra_name) = prompt(&Locale::current().yatra_new_name_prompt(), None)
+            .filter(|s| !s.trim().is_empty())
         {
             create_yatra(yatra_name.trim().to_owned())
                 .await
@@ -142,7 +142,7 @@ pub fn yatras() -> Html {
             .flat_map(|d| d.practices.iter())
             .map(|p| p.practice.clone())
             .collect::<Vec<_>>();
-        hd.insert(0, Locale::current().sadhaka());
+        hd.insert(0, Locale::current().yatra_sadhaka_column_value());
         hd
     };
 
@@ -177,14 +177,14 @@ pub fn yatras() -> Html {
     let empty_body = html! {
         <div class={BODY_DIV_CSS}>
             <ListErrors error={yatras.error.clone()} />
-            <span>{ Locale::current().no_yatras_msg() }</span>
+            <span>{ Locale::current().yatra_blank_msg() }</span>
             <div class="relative">
                 <div class={ LINKS_CSS }>
                     <a
                         class={ LINK_CSS }
                         onclick={ create_yatra_onclick.clone() }
                     >
-                        { Locale::current().create_yatra() }
+                        { Locale::current().yatra_create() }
                     </a>
                 </div>
             </div>

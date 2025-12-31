@@ -17,7 +17,7 @@ use crate::{
     i18n::Locale,
     services::{
         delete_yatra, delete_yatra_practice, delete_yatra_user, get_yatra, get_yatra_practices,
-        get_yatra_users, rename_yatra, reorder_yatra_practices, toggle_is_admin_yatra_user,
+        get_yatra_users, reorder_yatra_practices, toggle_is_admin_yatra_user, yatra_rename,
     },
 };
 
@@ -31,7 +31,7 @@ pub struct Props {
 #[function_component(AdminSettings)]
 pub fn admin_settings(props: &Props) -> Html {
     let reload = use_state(|| true);
-    let rename_yatra_name = use_state(String::default);
+    let yatra_rename_name = use_state(String::default);
     let ordered_practices = use_list(vec![]);
     let nav = use_navigator().unwrap();
     let action_user_id = use_mut_ref(|| None::<String>);
@@ -98,10 +98,10 @@ pub fn admin_settings(props: &Props) -> Html {
         })
     };
 
-    let rename_yatra = {
+    let yatra_rename = {
         let yatra_id = props.yatra_id.clone();
-        let new_name = rename_yatra_name.clone();
-        use_async(async move { rename_yatra(yatra_id.as_str(), (*new_name).clone()).await })
+        let new_name = yatra_rename_name.clone();
+        use_async(async move { yatra_rename(yatra_id.as_str(), (*new_name).clone()).await })
     };
 
     let reorder_practices = {
@@ -139,7 +139,7 @@ pub fn admin_settings(props: &Props) -> Html {
 
     {
         let yatra = yatra.clone();
-        use_effect_with(rename_yatra.clone(), move |_| {
+        use_effect_with(yatra_rename.clone(), move |_| {
             yatra.run();
             || ()
         });
@@ -206,7 +206,7 @@ pub fn admin_settings(props: &Props) -> Html {
     let delete_yatra_onclick = {
         let delete_yatra = delete_yatra.clone();
         Callback::from(move |_: MouseEvent| {
-            if confirm(&Locale::current().delete_yatra_warning()) {
+            if confirm(&Locale::current().yatra_delete_warning()) {
                 delete_yatra.run();
             }
         })
@@ -222,10 +222,10 @@ pub fn admin_settings(props: &Props) -> Html {
         })
     };
 
-    let rename_yatra_onclick = {
+    let yatra_rename_onclick = {
         let yatra = yatra.clone();
-        let rename_yatra = rename_yatra.clone();
-        let new_name = rename_yatra_name.clone();
+        let yatra_rename = yatra_rename.clone();
+        let new_name = yatra_rename_name.clone();
         Callback::from(move |_| {
             if let Some(new_value) = prompt(
                 &Locale::current().name(),
@@ -234,7 +234,7 @@ pub fn admin_settings(props: &Props) -> Html {
             .filter(|s| !s.trim().is_empty())
             {
                 new_name.set(new_value.trim().to_owned());
-                rename_yatra.run();
+                yatra_rename.run();
             }
         })
     };
@@ -274,7 +274,7 @@ pub fn admin_settings(props: &Props) -> Html {
             <ListErrors error={toggle_is_admin.error.clone()} />
             <ListErrors error={delete_member.error.clone()} />
             <ListErrors error={reorder_practices.error.clone()} />
-            <ListErrors error={rename_yatra.error.clone()} />
+            <ListErrors error={yatra_rename.error.clone()} />
             <ListErrors error={delete_yatra.error.clone()} />
             <div class={BODY_DIV_CSS}>
                 // TODO: add setting for renaming yatra and checking the flag
@@ -296,7 +296,7 @@ pub fn admin_settings(props: &Props) -> Html {
                                 request_new_name=false
                                 rename_popup_label={ Locale::current().enter_new_practice_name() }
                                 delete={ delete.clone() }
-                                delete_popup_label={ Locale::current().delete_yatra_practice_warning() }
+                                delete_popup_label={ Locale::current().yatra_delete_practice_warning() }
                                 reorder = { reorder.clone() }
                                 />
                         </SummaryDetails>
@@ -331,19 +331,19 @@ pub fn admin_settings(props: &Props) -> Html {
                     </button>
                     <button type="button" onclick={emit_signal_callback(&share_signal)} class={BTN_CSS}>
                         <i class={if can_share {"icon-share"} else {"icon-doc-dup"}}></i>
-                        {format!(" {}", if can_share {Locale::current().share_yatra_join_link()} else {Locale::current().copy_yatra_join_link()})}
+                        {format!(" {}", if can_share {Locale::current().yatra_share_join_link()} else {Locale::current().yatra_copy_join_link()})}
                     </button>
                     <ShareLink
                         relative_link={ format!("/yatra/{}/join", props.yatra_id.as_str()) }
                         run_signal={set_signal_callback(&share_signal)}
                     />
-                    <button class={ BTN_CSS } onclick={rename_yatra_onclick}>
+                    <button class={ BTN_CSS } onclick={yatra_rename_onclick}>
                         <i class="icon-edit"></i>
-                        { Locale::current().rename_yatra() }
+                        { Locale::current().yatra_rename() }
                     </button>
                     <button class={ SUBMIT_BTN_CSS } onclick={ delete_yatra_onclick }>
                         <i class="icon-bin"></i>
-                        { format!(" {}", Locale::current().delete_yatra()) }
+                        { format!(" {}", Locale::current().yatra_delete()) }
                     </button>
                 </div>
             </div>

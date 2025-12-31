@@ -54,7 +54,7 @@ pub fn join_yatra(props: &Props) -> Html {
             AppError::UnprocessableEntity(err)
                 if err.iter().any(|s| s.ends_with("already exists.")) =>
             {
-                Some(Locale::current().already_joined_yatra())
+                Some(Locale::current().yatra_already_joined())
             }
             _ => None,
         })
@@ -65,7 +65,7 @@ pub fn join_yatra(props: &Props) -> Html {
             header_label={
                 format!(
                     "{} {}",
-                    Locale::current().join_yatra(),
+                    Locale::current().yatra_join(),
                     yatra
                         .data
                         .iter()
@@ -82,7 +82,7 @@ pub fn join_yatra(props: &Props) -> Html {
                 <form {onsubmit}>
                     <div class="relative">
                         <button class={ SUBMIT_BTN_CSS }>
-                        <i class="icon-tick"></i>{ format!(" {}", Locale::current().join_yatra()) }</button>
+                        <i class="icon-tick"></i>{ format!(" {}", Locale::current().yatra_join()) }</button>
                     </div>
                 </form>
             </div>

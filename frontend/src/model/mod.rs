@@ -7,7 +7,7 @@ use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter, EnumString};
 
-use crate::i18n::Locale;
+use crate::{i18n::Locale, tr};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct UserInfo {
@@ -148,6 +148,18 @@ pub enum PracticeDataType {
     #[default]
     Text,
     Duration,
+}
+
+impl PracticeDataType {
+    pub fn to_localised_string(&self) -> String {
+        match self {
+            PracticeDataType::Int => tr!(integer),
+            PracticeDataType::Bool => tr!(boolean),
+            PracticeDataType::Time => tr!(time),
+            PracticeDataType::Text => tr!(text),
+            PracticeDataType::Duration => tr!(duration),
+        }
+    }
 }
 
 impl Display for PracticeDataType {
@@ -429,6 +441,17 @@ pub enum ZoneColour {
     Green,
 }
 
+impl ZoneColour {
+    pub fn to_localised_string(&self) -> String {
+        match self {
+            ZoneColour::Neutral => tr!(colour_neutral),
+            ZoneColour::Red => tr!(colour_red),
+            ZoneColour::Yellow => tr!(colour_yellow),
+            ZoneColour::Green => tr!(colour_green),
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
 pub struct ColourZonesConfig {
     pub better_direction: BetterDirection,
@@ -463,6 +486,15 @@ pub enum BetterDirection {
     #[default]
     Higher,
     Lower,
+}
+
+impl BetterDirection {
+    pub fn to_localised_string(&self) -> String {
+        match self {
+            BetterDirection::Higher => tr!(colour_zones_better_when_higher),
+            BetterDirection::Lower => tr!(colour_zones_better_when_lower),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]

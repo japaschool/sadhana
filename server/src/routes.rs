@@ -69,7 +69,7 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                 web::scope("/yatra/{yatra_id}")
                     .route("", web::get().to(app::yatras::get_yatra))
                     .route("", web::delete().to(app::yatras::delete_yatra))
-                    .route("", web::put().to(app::yatras::rename_yatra))
+                    .route("", web::put().to(app::yatras::yatra_rename))
                     .service(
                         web::scope("/users")
                             .route(
@@ -107,7 +107,7 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                         web::put().to(app::yatras::update_yatra_user_practices),
                     )
                     .route("/join", web::put().to(app::yatras::join_yatra))
-                    .route("/leave", web::put().to(app::yatras::leave_yatra))
+                    .route("/leave", web::put().to(app::yatras::yatra_leave))
                     .route("/is_admin", web::get().to(app::yatras::is_admin)),
             )
             .service(

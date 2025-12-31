@@ -165,7 +165,7 @@ pub async fn join_yatra(yatra_id: &str) -> Result<(), AppError> {
 }
 
 /// Leave yatra
-pub async fn leave_yatra(yatra_id: &str) -> Result<(), AppError> {
+pub async fn yatra_leave(yatra_id: &str) -> Result<(), AppError> {
     request_api_put(&format!("/yatra/{yatra_id}/leave"), &()).await
 }
 
@@ -180,7 +180,7 @@ pub async fn delete_yatra(yatra_id: &str) -> Result<(), AppError> {
 }
 
 /// Rename yatra
-pub async fn rename_yatra(yatra_id: &str, name: String) -> Result<(), AppError> {
+pub async fn yatra_rename(yatra_id: &str, name: String) -> Result<(), AppError> {
     request_api_put(&format!("/yatra/{yatra_id}"), &RenameYatra { name }).await
 }
 
