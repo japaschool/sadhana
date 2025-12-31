@@ -29,6 +29,8 @@ pub const HOVER_DATE_COLOR_CSS: &str =
 pub const SELECTED_TODAY_DATE_COLOR_CSS: &str = "bg-amber-400";
 pub const SELECTED_DATE_COLOR_CSS: &str = "border-2 border-amber-400";
 
+const OUT_OF_WEEK_DAY_CSS: &str = "opacity-30 scale-80 hover:opacity-70";
+
 #[function_component(Calendar)]
 pub fn calendar(props: &Props) -> Html {
     let today = use_state(|| Local::now().date_naive());
@@ -44,6 +46,9 @@ pub fn calendar(props: &Props) -> Html {
         res
     };
 
+    let prev_week_day = week.first().unwrap().pred_opt().unwrap();
+    let next_week_day = week.last().unwrap().succ_opt().unwrap();
+
     let selected_date_str = titlecase(
         &session_state
             .selected_date
@@ -52,12 +57,10 @@ pub fn calendar(props: &Props) -> Html {
     );
 
     let incomplete_days = {
-        let start = *week.first().unwrap();
-        let end = *week.last().unwrap();
         let enabled = props.highlight_incomplete_dates;
         use_async(async move {
             if enabled {
-                get_incomplete_days(&start, &end)
+                get_incomplete_days(&prev_week_day, &next_week_day)
                     .await
                     .map(|res| res.days.iter().map(|d| d.day()).collect::<HashSet<_>>())
             } else {
@@ -153,7 +156,7 @@ pub fn calendar(props: &Props) -> Html {
         })
     };
 
-    let calendar_day = |for_selected_date: bool, d: &NaiveDate| -> Html {
+    let calendar_day = |for_selected_date: bool, is_outside_week: bool, d: &NaiveDate| -> Html {
         let date_css = match (for_selected_date, *d == *today) {
             (true, true) => tw_merge!(SELECTED_TODAY_DATE_COLOR_CSS, "h-9 w-9"),
             (true, false) => tw_merge!(SELECTED_DATE_COLOR_CSS, "h-8 w-8"),
@@ -192,9 +195,20 @@ pub fn calendar(props: &Props) -> Html {
                         class={tw_merge!(
                             DATE_CSS,
                             "aspect-square w-8 flex items-center justify-center relative",
-                            date_css
+                            date_css,
+                            if is_outside_week { OUT_OF_WEEK_DAY_CSS } else { "" }
                         )}
-                        onclick={ onclick_date.clone() }
+                        onclick={
+                            if is_outside_week {
+                                if *d < *week.first().unwrap() {
+                                    prev_week_onclick.clone()
+                                } else {
+                                    next_week_onclick.clone()
+                                }
+                            } else {
+                                onclick_date.clone()
+                            }
+                        }
                     >
                         <p class={tw_merge!(date_label_css, "pointer-events-none")}>
                             { d.format("%-d").to_string() }
@@ -215,20 +229,21 @@ pub fn calendar(props: &Props) -> Html {
         <div class="relative">
             <div class="mx-auto max-w-sm">
                 <div class="grid grid-cols-9 items-center text-zinc-500 dark:text-zinc-100">
-                    <div class="flex justify-center cursor-pointer" onclick={prev_week_onclick.clone()}>
-                        <i class="icon-chevron-left"></i>
+                    // Last day of previous week
+                    <div class="flex justify-center">
+                        { calendar_day(false, true, &prev_week_day) }
                     </div>
-
+                    // Current week
                     { for week.iter().map(|d| html! {
                         <div class="flex justify-center pointer-events-none">
                             <div class="pointer-events-auto">
-                                { calendar_day(*d == session_state.selected_date, d) }
+                                { calendar_day(*d == session_state.selected_date, false, d) }
                             </div>
                         </div>
                     }) }
-
-                    <div class="flex justify-center cursor-pointer" onclick={next_week_onclick.clone()}>
-                        <i class="icon-chevron-right"></i>
+                    // First day of next week
+                    <div class="flex justify-center">
+                        { calendar_day(false, true, &next_week_day) }
                     </div>
                 </div>
             </div>
