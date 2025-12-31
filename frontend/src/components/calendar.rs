@@ -36,6 +36,9 @@ pub fn calendar(props: &Props) -> Html {
     let today = use_state(|| Local::now().date_naive());
     let session_state =
         use_context::<SessionStateContext>().expect("No session state context found");
+    let touch_start = use_mut_ref(|| None::<(i32, i32)>);
+    let translate_x = use_state(|| 0);
+    let is_animating = use_state(|| false);
 
     let week = {
         let d = session_state.selected_date.week(Weekday::Mon).first_day();
@@ -156,6 +159,70 @@ pub fn calendar(props: &Props) -> Html {
         })
     };
 
+    let ontouchstart = {
+        let touch_start = touch_start.clone();
+        let is_animating = is_animating.clone();
+        Callback::from(move |e: TouchEvent| {
+            if let Some(touch) = e.touches().get(0) {
+                *touch_start.borrow_mut() = Some((touch.client_x(), touch.client_y()));
+                is_animating.set(false);
+            }
+        })
+    };
+
+    let ontouchmove = {
+        let touch_start = touch_start.clone();
+        let translate_x = translate_x.clone();
+
+        Callback::from(move |e: TouchEvent| {
+            let Some((start_x, start_y)) = *touch_start.borrow() else {
+                return;
+            };
+            let Some(touch) = e.touches().get(0) else {
+                return;
+            };
+
+            let dx = touch.client_x() - start_x;
+            let dy = touch.client_y() - start_y;
+
+            // Ignore vertical scroll
+            if dx.abs() < dy.abs() {
+                return;
+            }
+
+            let clamped_dx = dx.clamp(-120, 120);
+
+            translate_x.set(clamped_dx);
+        })
+    };
+
+    let ontouchend = {
+        let touch_start = touch_start.clone();
+        let translate_x = translate_x.clone();
+        let is_animating = is_animating.clone();
+
+        let prev = prev_week_onclick.clone();
+        let next = next_week_onclick.clone();
+
+        Callback::from(move |_| {
+            let dx = *translate_x;
+            *touch_start.borrow_mut() = None;
+
+            is_animating.set(true);
+
+            if dx > 60 {
+                translate_x.set(0);
+                prev.emit(MouseEvent::new("click").unwrap());
+            } else if dx < -60 {
+                translate_x.set(0);
+                next.emit(MouseEvent::new("click").unwrap());
+            } else {
+                // Snap back
+                translate_x.set(0);
+            }
+        })
+    };
+
     let calendar_day = |for_selected_date: bool, is_outside_week: bool, d: &NaiveDate| -> Html {
         let date_css = match (for_selected_date, *d == *today) {
             (true, true) => tw_merge!(SELECTED_TODAY_DATE_COLOR_CSS, "h-9 w-9"),
@@ -226,9 +293,24 @@ pub fn calendar(props: &Props) -> Html {
     };
 
     html! {
-        <div class="relative">
+        <div
+            class={tw_merge!(
+                "overflow-hidden select-none touch-pan-y",
+                if *is_animating {
+                    "transition-transform duration-300 ease-out"
+                } else {
+                    ""
+                }
+            )}
+            ontouchstart={ontouchstart}
+            ontouchmove={ontouchmove}
+            ontouchend={ontouchend}
+        >
             <div class="mx-auto max-w-sm">
-                <div class="grid grid-cols-9 items-center text-zinc-500 dark:text-zinc-100">
+                <div
+                    class="grid grid-cols-9 items-center text-zinc-500 dark:text-zinc-100"
+                    style={format!("transform: translateX({}px);", *translate_x)}
+                >
                     // Last day of previous week
                     <div class="flex justify-center">
                         { calendar_day(false, true, &prev_week_day) }
