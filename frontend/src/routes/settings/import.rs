@@ -240,10 +240,14 @@ pub fn import() -> Html {
         html! {
             <>
                 <div>
-                    <h5 class="text-center mb-4 text-xl font-medium leading-tight">{Locale::current().import_discovered_columns()}</h5>
-                    <p class="text-zinc-500 dark:text-zinc-200">{Locale::current().import_discovered_columns_memo()}</p>
+                    <h5 class="text-center mb-4 text-xl font-medium leading-tight">
+                        { Locale::current().import_discovered_columns() }
+                    </h5>
+                    <p class="text-zinc-500 dark:text-zinc-200">
+                        { Locale::current().import_discovered_columns_memo() }
+                    </p>
                 </div>
-                {for headers.current().iter().skip(1).filter(|(_, dt)| dt.is_some()).map(|(h, dt)| html! {
+                { for headers.current().iter().skip(1).filter(|(_, dt)| dt.is_some()).map(|(h, dt)| html! {
                     <div class="relative">
                         <select class={INPUT_CSS} id={(*h).to_owned() }>
                             <option class={"text-black"} disabled=true selected={dt == &Some(PracticeDataType::Int)}>{Locale::current().integer()}</option>
@@ -254,13 +258,17 @@ pub fn import() -> Html {
                         </select>
                         <label for={(*h).to_owned()} class={INPUT_LABEL_CSS}>{h}</label>
                     </div>
-                })}
+                }) }
                 <div>
-                    <h5 class="text-center mb-4 text-xl font-medium leading-tight">{Locale::current().import_unmatched_columns()}</h5>
-                    <p class="text-zinc-500 dark:text-zinc-200">{Locale::current().import_unmatched_columns_memo()}</p>
+                    <h5 class="text-center mb-4 text-xl font-medium leading-tight">
+                        { Locale::current().import_unmatched_columns() }
+                    </h5>
+                    <p class="text-zinc-500 dark:text-zinc-200">
+                        { Locale::current().import_unmatched_columns_memo() }
+                    </p>
                 </div>
                 <div class="space-y-0">
-                    {for headers.current().iter().skip(1).filter(|(_, dt)| dt.is_none()).map(|(h, _)| html! {
+                    { for headers.current().iter().skip(1).filter(|(_, dt)| dt.is_none()).map(|(h, _)| html! {
                         <div
                             class="flex w-full justify-center align-baseline"
                             id={(*h).to_owned()}
@@ -272,10 +280,12 @@ pub fn import() -> Html {
                                 <i onclick={add_practice.clone()} id={(*h).to_owned()} class="icon-plus"/>
                             </label>
                         </div>
-                    })}
+                    }) }
                 </div>
                 <div class="relative">
-                    <button type="submit" class={ SUBMIT_BTN_CSS }>{ Locale::current().import_csv() }</button>
+                    <button type="submit" class={SUBMIT_BTN_CSS}>
+                        { Locale::current().import_csv() }
+                    </button>
                 </div>
             </>
         }
@@ -288,11 +298,11 @@ pub fn import() -> Html {
                 type="file"
                 accept="text/csv"
                 onchange={upload_onclick}
-                multiple={false}
-                class={ format!("{} text-center", INPUT_CSS) }
-                />
-            <label for="file-upload" class={ INPUT_LABEL_CSS }>
-                <i class="icon-doc"></i>
+                multiple=false
+                class={format!("{} text-center", INPUT_CSS)}
+            />
+            <label for="file-upload" class={INPUT_LABEL_CSS}>
+                <i class="icon-doc" />
                 { format!(" {}: ", Locale::current().import_file_select()) }
             </label>
         </div>
@@ -305,14 +315,14 @@ pub fn import() -> Html {
             .map(|(line, msg)| {
                 let line = line.iter().map(|l| (l + 1).to_string()).next().unwrap_or_default();
                 html! {
-                    <span class="text-zinc-500 dark:text-zinc-200">{
-                        format!(
+                    <span class="text-zinc-500 dark:text-zinc-200">
+                        { format!(
                             "{}{msg}",
                             (!line.is_empty())
                                 .then(|| format!("{}: ", Locale::current().import_failure_line_num_msg(LineNum(&line))))
                                 .unwrap_or_default()
-                        )
-                    }</span>
+                        ) }
+                    </span>
                 }
             })
             .collect::<Html>()
@@ -325,24 +335,26 @@ pub fn import() -> Html {
             selected_page={AppRoute::Settings}
             loading={*saving || save.loading || all_practices.loading}
             left_button={HeaderButtonProps::back_to(AppRoute::Settings)}
-            >
+        >
             <ListErrors error={save.error.clone()} />
             <form {onsubmit}>
-                <div class={ BODY_DIV_CSS }>
+                <div class={BODY_DIV_CSS}>
                     <div>
-                        <h5 class="text-center mb-4 text-xl font-medium leading-tight">{Locale::current().import_instructions_header()}</h5>
-                        {for Locale::current()
+                        <h5 class="text-center mb-4 text-xl font-medium leading-tight">
+                            { Locale::current().import_instructions_header() }
+                        </h5>
+                        { for Locale::current()
                             .import_instructions_body()
                             .lines()
-                            .map(|l| html! {<p class="text-zinc-500 dark:text-zinc-200">{l}</p>})}
+                            .map(|l| html! {<p class="text-zinc-500 dark:text-zinc-200">{l}</p>}) }
                     </div>
-                    {if csv_data.is_none() {
+                    { if csv_data.is_none() {
                         file_picker
                     } else if !failures.current().is_empty() {
                         list_failures
                     } else {
                         columns_view
-                    }}
+                    } }
                 </div>
             </form>
         </BlankPage>

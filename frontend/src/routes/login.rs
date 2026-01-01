@@ -83,10 +83,10 @@ pub fn login() -> Html {
     };
 
     html! {
-        <BlankPage header_label={ Locale::current().login() } loading={ user_login.loading }>
-            <ListErrors error={ user_login.error.clone() } error_formatter={ error_formatter } />
+        <BlankPage header_label={Locale::current().login()} loading={user_login.loading}>
+            <ListErrors error={user_login.error.clone()} error_formatter={error_formatter} />
             <form {onsubmit}>
-                <div class={ BODY_DIV_CSS }>
+                <div class={BODY_DIV_CSS}>
                     <div class="relative">
                         <input
                             type="email"
@@ -94,11 +94,12 @@ pub fn login() -> Html {
                             placeholder="Email"
                             value={login_info.email.clone()}
                             oninput={oninput_email}
-                            class={ INPUT_CSS }
-                            required = true
-                            />
-                        <label for="email" class={ INPUT_LABEL_CSS }>
-                            <i class="icon-mail"></i>{ format!(" {}", Locale::current().email_address()) }
+                            class={INPUT_CSS}
+                            required=true
+                        />
+                        <label for="email" class={INPUT_LABEL_CSS}>
+                            <i class="icon-mail" />
+                            { format!(" {}", Locale::current().email_address()) }
                         </label>
                     </div>
                     <div class="relative">
@@ -107,44 +108,49 @@ pub fn login() -> Html {
                             id="password"
                             type={if *show_pwd {"text"} else {"password"}}
                             placeholder="Password"
-                            class={ INPUT_CSS }
+                            class={INPUT_CSS}
                             value={login_info.password.clone()}
                             oninput={oninput_password}
-                            required = true
+                            required=true
+                        />
+                        <div
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
+                        >
+                            <i
+                                class={if *show_pwd {"icon-eye-cross"} else {"icon-eye"}}
+                                onclick={toggle_show_pwd_onclick}
                             />
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
-                            <i class={if *show_pwd {"icon-eye-cross"} else {"icon-eye"}} onclick={toggle_show_pwd_onclick} />
                         </div>
-                        <label for="password"
-                            class={ INPUT_LABEL_CSS }>
-                            <i class="icon-key"></i>{ format!(" {}", Locale::current().password()) }
+                        <label for="password" class={INPUT_LABEL_CSS}>
+                            <i class="icon-key" />
+                            { format!(" {}", Locale::current().password()) }
                         </label>
                     </div>
                     <div class="relative">
-                        <button class={ SUBMIT_BTN_CSS }>
-                        <i class="icon-login"></i>{ format!(" {}", Locale::current().sign_in()) }</button>
+                        <button class={SUBMIT_BTN_CSS}>
+                            <i class="icon-login" />
+                            { format!(" {}", Locale::current().sign_in()) }
+                        </button>
                     </div>
-                    <div class={ LINKS_CSS }>
-                        <Link<BaseRoute>
-                            classes={ LINK_CSS }
-                            to={BaseRoute::PasswordReset}>{ Locale::current().forgot_password() }
+                    <div class={LINKS_CSS}>
+                        <Link<BaseRoute> classes={LINK_CSS} to={BaseRoute::PasswordReset}>
+                            { Locale::current().forgot_password() }
                         </Link<BaseRoute>>
-                        <Link<BaseRoute>
-                            classes={ LINK_CSS_NEW_ACC }
-                            to={BaseRoute::Register}>{ Locale::current().need_an_account() }
+                        <Link<BaseRoute> classes={LINK_CSS_NEW_ACC} to={BaseRoute::Register}>
+                            { Locale::current().need_an_account() }
                         </Link<BaseRoute>>
                     </div>
                     <div class="fixed bottom-0 justify-between w-full left-0 flex px-4 py-4">
-                        <a  classes={LINK_SMALL_CSS}
+                        <a
+                            classes={LINK_SMALL_CSS}
                             href={Locale::current().about_url()}
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            {Locale::current().about()}
+                            { Locale::current().about() }
                         </a>
-                        <Link<BaseRoute>
-                            classes={ LINK_SMALL_CSS }
-                            to={BaseRoute::Help}>{ Locale::current().help_and_support() }
+                        <Link<BaseRoute> classes={LINK_SMALL_CSS} to={BaseRoute::Help}>
+                            { Locale::current().help_and_support() }
                         </Link<BaseRoute>>
                     </div>
                 </div>

@@ -59,9 +59,12 @@ pub fn grid_editor(props: &Props) -> Html {
 
     let practices = props.all_practices.iter().map(|p| {
         html! {
-            <div class="relative" key={p.id.clone()} >
+            <div class="relative" key={p.id.clone()}>
                 <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
-                    <span class=""><i class="icon-tick"></i>{format!(" {}: ", p.practice)}</span>
+                    <span class="">
+                        <i class="icon-tick" />
+                        { format!(" {}: ", p.practice) }
+                    </span>
                     <div>
                         <input
                             type="checkbox"
@@ -69,7 +72,7 @@ pub fn grid_editor(props: &Props) -> Html {
                             onclick={checkbox_onclick.clone()}
                             id={p.id.clone()}
                             checked={report.practices.contains(&p.id)}
-                            />
+                        />
                     </div>
                 </label>
             </div>
@@ -89,11 +92,11 @@ pub fn grid_editor(props: &Props) -> Html {
                                 value={(*report_name).clone()}
                                 oninput={report_name_oninput}
                                 class={INPUT_CSS}
-                                required = true
+                                required=true
                                 autocomplete="off"
-                                />
+                            />
                             <label for="name" class={INPUT_LABEL_CSS}>
-                                { format!(" {}", Locale::current().report_name())}
+                                { format!(" {}", Locale::current().report_name()) }
                             </label>
                         </div>
                     </div>
@@ -101,15 +104,12 @@ pub fn grid_editor(props: &Props) -> Html {
             </SummaryDetails>
             <SummaryDetails label={Locale::current().practices()}>
                 <div class="pt-8">
-                    <div class={TWO_COLS_CSS}>{for practices}</div>
+                    <div class={TWO_COLS_CSS}>{ for practices }</div>
                 </div>
             </SummaryDetails>
             <div class="relative">
-                <button
-                    type="button"
-                    class={BTN_CSS}
-                    onclick={delete_report_onclick.clone()}>
-                    {Locale::current().report_delete()}
+                <button type="button" class={BTN_CSS} onclick={delete_report_onclick.clone()}>
+                    { Locale::current().report_delete() }
                 </button>
             </div>
         </div>

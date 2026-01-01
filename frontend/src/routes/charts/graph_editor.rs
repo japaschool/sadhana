@@ -242,36 +242,39 @@ pub fn graph_editor(props: &Props) -> Html {
                             value={(*report_name).clone()}
                             oninput={report_name_oninput}
                             class={INPUT_CSS}
-                            required = true
+                            required=true
                             autocomplete="off"
-                            />
+                        />
                         <label for="name" class={INPUT_LABEL_CSS}>
-                            { format!(" {}", Locale::current().report_name())}
+                            { format!(" {}", Locale::current().report_name()) }
                         </label>
                     </div>
                     <div class="relative">
                         <select class={INPUT_CSS} id="bar-layout" onchange={bar_layout_onchange}>
-                                <option
-                                    selected={report.bar_layout == BarGraphLayout::Grouped}
-                                    value={BarGraphLayout::Grouped.to_string()}
-                                    class={"text-black"}>
-                                    {Locale::current().report_bar_layout_grouped()}
-                                </option>
-                                <option
-                                    selected={report.bar_layout == BarGraphLayout::Stacked}
-                                    value={BarGraphLayout::Stacked.to_string()}
-                                    class={"text-black"}>
-                                    {Locale::current().report_bar_layout_stacked()}
-                                </option>
-                                <option
-                                    selected={report.bar_layout == BarGraphLayout::Overlaid}
-                                    value={BarGraphLayout::Overlaid.to_string()}
-                                    class={"text-black"}>
-                                    {Locale::current().report_bar_layout_overlaid()}
-                                </option>
+                            <option
+                                selected={report.bar_layout == BarGraphLayout::Grouped}
+                                value={BarGraphLayout::Grouped.to_string()}
+                                class="text-black"
+                            >
+                                { Locale::current().report_bar_layout_grouped() }
+                            </option>
+                            <option
+                                selected={report.bar_layout == BarGraphLayout::Stacked}
+                                value={BarGraphLayout::Stacked.to_string()}
+                                class="text-black"
+                            >
+                                { Locale::current().report_bar_layout_stacked() }
+                            </option>
+                            <option
+                                selected={report.bar_layout == BarGraphLayout::Overlaid}
+                                value={BarGraphLayout::Overlaid.to_string()}
+                                class="text-black"
+                            >
+                                { Locale::current().report_bar_layout_overlaid() }
+                            </option>
                         </select>
                         <label for="bar-layout" class={INPUT_LABEL_CSS}>
-                            {format!(" {}: ", Locale::current().report_bar_layout())}
+                            { format!(" {}: ", Locale::current().report_bar_layout()) }
                         </label>
                     </div>
                 </div>
@@ -284,68 +287,86 @@ pub fn graph_editor(props: &Props) -> Html {
             <div class="pt-8">
                 <div class={TWO_COLS_CSS}>
                     <div class="relative">
-                        <select class={INPUT_CSS} id={idx.to_string()} onchange={practice_onchange.clone()} required=true>
-                            <option 
-                                class={"text-black"} 
-                                value="" 
-                                selected={practice.is_none()} 
-                                disabled=true 
-                                style="display:none">
-                                {Locale::current().choose_practice()}
+                        <select
+                            class={INPUT_CSS}
+                            id={idx.to_string()}
+                            onchange={practice_onchange.clone()}
+                            required=true
+                        >
+                            <option
+                                class="text-black"
+                                value=""
+                                selected={practice.is_none()}
+                                disabled=true
+                                style="display: none"
+                            >
+                                { Locale::current().choose_practice() }
                             </option>
-                            {for practices_for_trace(idx, y_axis, practice).iter().flat_map(|inner| inner.iter()).map(|p| html! {
+                            { for practices_for_trace(idx, y_axis, practice).iter().flat_map(|inner| inner.iter()).map(|p| html! {
                                 <option selected={practice.iter().any(|inner| *inner == p.id)} value={p.id.clone()} class={"text-black"}>
                                     {p.practice.clone()}
                                 </option>
-                            })}
+                            }) }
                         </select>
                         <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
-                            {format!(" {}: ", Locale::current().practice())} 
+                            { format!(" {}: ", Locale::current().practice()) }
                         </label>
                     </div>
                     <div class="relative">
-                        <select class={INPUT_CSS} id={idx.to_string()} onchange={axis_onchange.clone()}>
-                            <option 
-                                class={"text-black"} 
-                                value="" 
-                                selected={y_axis.is_none()} 
+                        <select
+                            class={INPUT_CSS}
+                            id={idx.to_string()}
+                            onchange={axis_onchange.clone()}
+                        >
+                            <option
+                                class="text-black"
+                                value=""
+                                selected={y_axis.is_none()}
                                 disabled=true
-                                style="display:none">
-                                {Locale::current().report_choose_axis()}
+                                style="display: none"
+                            >
+                                { Locale::current().report_choose_axis() }
                             </option>
-                            {for axises_for_trace(practice).iter().map(|(axis, label)| html! {
+                            { for axises_for_trace(practice).iter().map(|(axis, label)| html! {
                                 <option selected={y_axis.iter().any(|a| a == axis)} value={axis.to_string()} class={"text-black"}>
                                     {label}
                                 </option>
-                            })}
+                            }) }
                         </select>
                         <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
-                            {format!(" {}: ", Locale::current().report_axis())}
+                            { format!(" {}: ", Locale::current().report_axis()) }
                         </label>
                     </div>
                     <div class="relative">
-                        <select class={INPUT_CSS} id={idx.to_string()} onchange={graph_type_onchange.clone()}>
-                            <option 
-                                class={"text-black"} 
-                                value={"bar"} 
-                                selected={*type_ == GraphType::Bar}>
-                                {Locale::current().report_graph_type_bar()}
-                            </option> 
-                            <option 
-                                class={"text-black"} 
-                                value={"line"} 
-                                selected={matches!(*type_, GraphType::Line(_))}>
-                                {Locale::current().report_graph_type_line()}
-                            </option> 
-                            <option 
-                                class={"text-black"} 
-                                value={"dot"} 
-                                selected={*type_ == GraphType::Dot}>
-                                {Locale::current().report_graph_type_dot()}
-                            </option> 
+                        <select
+                            class={INPUT_CSS}
+                            id={idx.to_string()}
+                            onchange={graph_type_onchange.clone()}
+                        >
+                            <option
+                                class="text-black"
+                                value="bar"
+                                selected={*type_ == GraphType::Bar}
+                            >
+                                { Locale::current().report_graph_type_bar() }
+                            </option>
+                            <option
+                                class="text-black"
+                                value="line"
+                                selected={matches!(*type_, GraphType::Line(_))}
+                            >
+                                { Locale::current().report_graph_type_line() }
+                            </option>
+                            <option
+                                class="text-black"
+                                value="dot"
+                                selected={*type_ == GraphType::Dot}
+                            >
+                                { Locale::current().report_graph_type_dot() }
+                            </option>
                         </select>
                         <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
-                            {format!(" {}: ",  Locale::current().report_graph_type())} 
+                            { format!(" {}: ",  Locale::current().report_graph_type()) }
                         </label>
                     </div>
                     <div class="relative">
@@ -357,14 +378,14 @@ pub fn graph_editor(props: &Props) -> Html {
                             value={label.to_owned().unwrap_or_default()}
                             oninput={trace_name_oninput.clone()}
                             class={INPUT_CSS}
-                            />
+                        />
                         <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
-                            {Locale::current().report_trace_label()}
+                            { Locale::current().report_trace_label() }
                         </label>
                     </div>
                     <div class="relative">
                         <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
-                            <span>{Locale::current().report_show_average()}</span> 
+                            <span>{ Locale::current().report_show_average() }</span>
                             <div>
                                 <input
                                     id="checkbox"
@@ -373,18 +394,19 @@ pub fn graph_editor(props: &Props) -> Html {
                                     onclick={show_avg_onclick.clone()}
                                     id={idx.to_string()}
                                     checked={*show_average}
-                                    />
+                                />
                             </div>
                         </label>
                     </div>
                     <div class="relative">
-                        <button 
+                        <button
                             type="button"
-                            id={idx.to_string()} 
-                            class={BTN_CSS} 
-                            onclick={delete_trace_onclick.clone()}>
-                            {Locale::current().report_trace_delete()}
-                        </button> 
+                            id={idx.to_string()}
+                            class={BTN_CSS}
+                            onclick={delete_trace_onclick.clone()}
+                        >
+                            { Locale::current().report_trace_delete() }
+                        </button>
                     </div>
                 </div>
             </div>
@@ -393,25 +415,27 @@ pub fn graph_editor(props: &Props) -> Html {
 
     html! {
         <div class="pt-8 text-zinc-500 dark:text-zinc-100">
-            {graph_settings}
-            {graph_trace_editors}
+            { graph_settings }
+            { graph_trace_editors }
             <div class="pt-8">
                 <div class={TWO_COLS_CSS}>
                     <div class="relative">
-                        <button 
-                            type="button" 
-                            class={BTN_CSS_NO_MARGIN} 
-                            onclick={add_trace_onclick.clone()}>
-                            {Locale::current().report_trace_add()}
-                        </button> 
+                        <button
+                            type="button"
+                            class={BTN_CSS_NO_MARGIN}
+                            onclick={add_trace_onclick.clone()}
+                        >
+                            { Locale::current().report_trace_add() }
+                        </button>
                     </div>
                     <div class="relative">
-                        <button 
-                            type="button" 
-                            class={BTN_CSS_NO_MARGIN} 
-                            onclick={delete_report_onclick.clone()}>
-                            {Locale::current().report_delete()}
-                        </button> 
+                        <button
+                            type="button"
+                            class={BTN_CSS_NO_MARGIN}
+                            onclick={delete_report_onclick.clone()}
+                        >
+                            { Locale::current().report_delete() }
+                        </button>
                     </div>
                 </div>
             </div>

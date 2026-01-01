@@ -289,7 +289,7 @@ pub fn charts() -> Html {
                 report_name={active_report.as_ref().map(|r| r.name.clone()).unwrap_or_default()}
                 report_onchange={graph_report_onchange}
                 report_ondelete={report_ondelete.clone()}
-                />
+            />
         },
         Some(ReportDefinition::Grid(rep)) => html! {
             <GridEditor
@@ -298,7 +298,7 @@ pub fn charts() -> Html {
                 report_name={active_report.as_ref().map(|r| r.name.clone()).unwrap_or_default()}
                 report_onchange={grid_report_onchange}
                 report_ondelete={report_ondelete.clone()}
-                />
+            />
         },
         _ => html! {},
     };
@@ -309,21 +309,16 @@ pub fn charts() -> Html {
                 show_footer={!*editing}
                 selected_page={AppRoute::Charts}
                 calendar={CalendarProps::no_override_selected_date()}
-                loading={
-                    all_practices.loading
+                loading={all_practices.loading
                     || report_data.loading
                     || update_report.loading
-                    || delete_report.loading
-                }
-                left_button={
-                    if *editing {
+                    || delete_report.loading}
+                left_button={if *editing {
                         HeaderButtonProps::reset(Locale::current().cancel())
                     } else {
                         HeaderButtonProps::blank()
-                    }
-                }
-                right_button2={
-                    if *editing {
+                    }}
+                right_button2={if *editing {
                         HeaderButtonProps::submit(Locale::current().save())
                     } else {
                         HeaderButtonProps::ctx_menu(
@@ -334,15 +329,12 @@ pub fn charts() -> Html {
                                 CtxMenuEntry::action(emit_signal_callback(&share_signal), share_icon, &share_label),
                             ]
                         )
-                    }
-                }
-                right_button={
-                    if *editing || active_report.is_none() {
+                    }}
+                right_button={if *editing || active_report.is_none() {
                         HeaderButtonProps::blank()
                     } else {
                         HeaderButtonProps::edit(edit_onclick)
-                    }
-                }
+                    }}
             >
                 <ListErrors error={all_practices.error.clone()} />
                 <ListErrors error={report_data.error.clone()} />
@@ -363,11 +355,11 @@ pub fn charts() -> Html {
                             report={(*report).clone()}
                             {report_onchange}
                             {dates_onchange}
-                            />
+                        />
                     }
                 }
                 if *editing {
-                    {editor()}
+                    { editor() }
                 }
             </BlankPage>
         </form>

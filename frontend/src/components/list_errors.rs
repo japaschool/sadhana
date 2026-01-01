@@ -35,17 +35,17 @@ pub fn list_errors(props: &Props) -> Html {
 
     if let Some(error) = &props.error {
         html! {
-            <div class="relative rounded-md border py-2 px-2 bg-red-900 bg-opacity-30 border-red-900">
-                {
-                    match &props.error_formatter {
+            <div
+                class="relative rounded-md border py-2 px-2 bg-red-900 bg-opacity-30 border-red-900"
+            >
+                { match &props.error_formatter {
                         Some(f) => {
                             match f.emit(error.clone()) {
                                 Some(msg) => p(msg),
                                 None => default(error, nav)
                             } }
                         None => default(error, nav)
-                    }
-                }
+                    } }
             </div>
         }
     } else {

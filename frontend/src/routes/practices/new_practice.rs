@@ -186,13 +186,13 @@ pub fn new_practice(props: &Props) -> Html {
 
     html! {
         <BlankPage
-            header_label={ Locale::current().add_new_practice() }
-            left_button={ HeaderButtonProps::back() }
-            loading={ save.loading }
-            >
+            header_label={Locale::current().add_new_practice()}
+            left_button={HeaderButtonProps::back()}
+            loading={save.loading}
+        >
             <ListErrors error={save.error.clone()} {error_formatter} />
             <form {onsubmit}>
-                <div class={ BODY_DIV_CSS }>
+                <div class={BODY_DIV_CSS}>
                     <div class="relative">
                         <input
                             autocomplete="off"
@@ -206,28 +206,47 @@ pub fn new_practice(props: &Props) -> Html {
                             required=true
                             disabled={props.practice.is_some()}
                             value={form_data.practice.clone()}
-                            />
-                        <label for="practice_name" class={ INPUT_LABEL_CSS }>
-                            <i class="fa"/>
+                        />
+                        <label for="practice_name" class={INPUT_LABEL_CSS}>
+                            <i class="fa" />
                             { format!(" {}: ", Locale::current().practice_name()) }
                         </label>
                     </div>
                     <div class="relative">
                         <select
-                            class={ INPUT_CSS }
+                            class={INPUT_CSS}
                             id="data_type"
                             onchange={data_type_onchange}
-                            required=true >
-                            <option class={ "text-black" } value="int">{ Locale::current().integer() }</option>
-                            <option class={ "text-black" } value="time">{ Locale::current().time() }</option>
-                            <option class={ "text-black" } value="bool">{ Locale::current().boolean() }</option>
-                            <option class={ "text-black" } value="text">{ Locale::current().text() }</option>
-                            <option class={ "text-black" } value="duration">{ Locale::current().duration_in_mins() }</option>
-                            <option class={ "text-black" } value="" selected=true disabled=true style="display:none">{ Locale::current().select_data_type() }</option>
+                            required=true
+                        >
+                            <option class="text-black" value="int">
+                                { Locale::current().integer() }
+                            </option>
+                            <option class="text-black" value="time">
+                                { Locale::current().time() }
+                            </option>
+                            <option class="text-black" value="bool">
+                                { Locale::current().boolean() }
+                            </option>
+                            <option class="text-black" value="text">
+                                { Locale::current().text() }
+                            </option>
+                            <option class="text-black" value="duration">
+                                { Locale::current().duration_in_mins() }
+                            </option>
+                            <option
+                                class="text-black"
+                                value=""
+                                selected=true
+                                disabled=true
+                                style="display: none"
+                            >
+                                { Locale::current().select_data_type() }
+                            </option>
                         </select>
                         <label for="data_type" class={INPUT_LABEL_CSS}>
-                            <i class="fa"/>
-                            {format!(" {}: ", Locale::current().data_type())}
+                            <i class="fa" />
+                            { format!(" {}: ", Locale::current().data_type()) }
                         </label>
                     </div>
                     if matches!(&props.mode, Mode::YatraPractice { yatra_id: _ })
@@ -235,7 +254,7 @@ pub fn new_practice(props: &Props) -> Html {
                             .map(|dt| dt.to_string())
                             .contains(&form_data.data_type) {
                         <p class="text-xs text-zinc-500 dark:text-zinc-200">
-                            {tr!(colour_zones_new_practice_how_to_memo)}
+                            { tr!(colour_zones_new_practice_how_to_memo) }
                         </p>
                     }
                     if *is_dropdown {
@@ -249,10 +268,10 @@ pub fn new_practice(props: &Props) -> Html {
                                 maxlength="1024"
                                 oninput={dropdown_variants_oninput.clone()}
                                 value={form_data.dropdown_variants.clone()}
-                                />
+                            />
                             <label for="dropdown_variants" class={INPUT_LABEL_CSS}>
-                                <i class="fa"/>
-                                {format!(" {}: ", Locale::current().dropdown_variants())}
+                                <i class="fa" />
+                                { format!(" {}: ", Locale::current().dropdown_variants()) }
                             </label>
                         </div>
                     }
@@ -261,40 +280,49 @@ pub fn new_practice(props: &Props) -> Html {
                             <div class="relative">
                                 <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
                                     <span>
-                                        <i class="icon-tick"/>
-                                        {format!(" {}: ", Locale::current().is_dropdown())}
+                                        <i class="icon-tick" />
+                                        { format!(" {}: ", Locale::current().is_dropdown()) }
                                     </span>
                                     <div>
                                         <input
-                                        id="is_dropdown"
-                                        type="checkbox"
-                                        class={CHECKBOX_INPUT_CSS}
-                                        checked={*is_dropdown}
-                                        onclick={is_dropdown_onclick.clone()}
+                                            id="is_dropdown"
+                                            type="checkbox"
+                                            class={CHECKBOX_INPUT_CSS}
+                                            checked={*is_dropdown}
+                                            onclick={is_dropdown_onclick.clone()}
                                         />
                                     </div>
                                 </label>
                             </div>
                         }
-                        <div class="relative">
+                        <div
+                            class="relative"
+                        >
                             <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
-                                <span><i class="icon-tick"/>{format!(" {}: ", Locale::current().is_required())}</span>
+                                <span>
+                                    <i class="icon-tick" />
+                                    { format!(" {}: ", Locale::current().is_required()) }
+                                </span>
                                 <div>
                                     <input
-                                    id="mandatory"
-                                    type="checkbox"
-                                    class={CHECKBOX_INPUT_CSS}
-                                    onclick={required_onclick.clone()}
+                                        id="mandatory"
+                                        type="checkbox"
+                                        class={CHECKBOX_INPUT_CSS}
+                                        onclick={required_onclick.clone()}
                                     />
                                 </div>
                             </label>
                             <div class="pt-2">
-                                <p class="text-xs text-zinc-500 dark:text-zinc-200">{Locale::current().is_required_memo()}</p>
+                                <p class="text-xs text-zinc-500 dark:text-zinc-200">
+                                    { Locale::current().is_required_memo() }
+                                </p>
                             </div>
                         </div>
                     }
-                    <div class="relative">
-                        <button type="submit" class={ SUBMIT_BTN_CSS }>
+                    <div
+                        class="relative"
+                    >
+                        <button type="submit" class={SUBMIT_BTN_CSS}>
                             { Locale::current().save() }
                         </button>
                     </div>

@@ -99,8 +99,10 @@ pub fn share_link(props: &Props) -> Html {
     html! {
         if *show_tooltip {
             <div class="fixed inset-0 flex items-center justify-center z-50">
-                <span class="bg-slate-600 bg-opacity-70 rounded-2xl border p-4 text-white text-2xl">
-                    {Locale::current().copied()}
+                <span
+                    class="bg-slate-600 bg-opacity-70 rounded-2xl border p-4 text-white text-2xl"
+                >
+                    { Locale::current().copied() }
                 </span>
             </div>
         }

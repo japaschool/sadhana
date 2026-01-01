@@ -63,42 +63,46 @@ pub fn edit_password() -> Html {
     };
 
     html! {
-        <form {onsubmit} >
+        <form {onsubmit}>
             <BlankPage
-                header_label={ Locale::current().change_password() }
+                header_label={Locale::current().change_password()}
                 left_button={HeaderButtonProps::back_to(AppRoute::Settings)}
-                loading={ update_password.loading }
-                >
+                loading={update_password.loading}
+            >
                 <ListErrors error={update_password.error.clone()} />
-                <div class={ BODY_DIV_CSS }>
+                <div class={BODY_DIV_CSS}>
                     <div class="relative">
                         <input
                             id="current_pwd"
                             type={if *show_pwd {"text"} else {"password"}}
                             placeholder="Current Password"
-                            class={ INPUT_CSS }
-                            value={ (*current_pwd).clone() }
-                            { oninput }
+                            class={INPUT_CSS}
+                            value={(*current_pwd).clone()}
+                            {oninput}
                             required=true
                             autocomplete="off"
                             minlength="5"
                             maxlength="256"
+                        />
+                        <div
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
+                        >
+                            <i
+                                class={if *show_pwd {"icon-eye-cross"} else {"icon-eye"}}
+                                onclick={toggle_show_pwd_onclick}
                             />
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
-                            <i class={if *show_pwd {"icon-eye-cross"} else {"icon-eye"}} onclick={toggle_show_pwd_onclick} />
                         </div>
-                        <label for="current_pwd"
-                            class={ INPUT_LABEL_CSS }>
-                            <i class="icon-key"></i>{ format!(" {}", Locale::current().current_password()) }
+                        <label for="current_pwd" class={INPUT_LABEL_CSS}>
+                            <i class="icon-key" />
+                            { format!(" {}", Locale::current().current_password()) }
                         </label>
                     </div>
-                    <Pwd
-                        onchange={ pwd_onchange.clone() }
-                        required=true
-                        />
+                    <Pwd onchange={pwd_onchange.clone()} required=true />
                     <div class="relative">
-                        <button class={ SUBMIT_BTN_CSS }>
-                        <i class="icon-login"></i>{ format!(" {}", Locale::current().save()) }</button>
+                        <button class={SUBMIT_BTN_CSS}>
+                            <i class="icon-login" />
+                            { format!(" {}", Locale::current().save()) }
+                        </button>
                     </div>
                 </div>
             </BlankPage>

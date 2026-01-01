@@ -179,11 +179,8 @@ pub fn yatras() -> Html {
             <ListErrors error={yatras.error.clone()} />
             <span>{ Locale::current().yatra_blank_msg() }</span>
             <div class="relative">
-                <div class={ LINKS_CSS }>
-                    <a
-                        class={ LINK_CSS }
-                        onclick={ create_yatra_onclick.clone() }
-                    >
+                <div class={LINKS_CSS}>
+                    <a class={LINK_CSS} onclick={create_yatra_onclick.clone()}>
                         { Locale::current().yatra_create() }
                     </a>
                 </div>
@@ -193,50 +190,43 @@ pub fn yatras() -> Html {
 
     let grid_body = html! {
         <>
-        <ListErrors error={yatras.error.clone()} />
-        <ListErrors error={data.error.clone()} />
-        <ListErrors error={new_yatra.error.clone()} />
-        <div class={BODY_DIV_CSS}>
-            <div class="relative pb-5">
-                <select
-                    class={tw_merge!(INPUT_CSS, "appearance-none")}
-                    id="yatra"
-                    onchange={ yatra_onchange }
-                    required=true
+            <ListErrors error={yatras.error.clone()} />
+            <ListErrors error={data.error.clone()} />
+            <ListErrors error={new_yatra.error.clone()} />
+            <div class={BODY_DIV_CSS}>
+                <div class="relative pb-5">
+                    <select
+                        class={tw_merge!(INPUT_CSS, "appearance-none")}
+                        id="yatra"
+                        onchange={yatra_onchange}
+                        required=true
                     >
-                    {
-                        yatras.data
+                        { yatras.data
                             .iter()
                             .flat_map(|inner| inner.iter())
                             .map(|y| {
                                 let selected = selected_yatra.iter().any(|y2| y2 == y);
                                 html! { <option class="text-black" { selected } >{ y.name.clone() }</option> }
                             })
-                            .collect::<Html>()
-                    }
-                </select>
-                <label for="yatra" class={ INPUT_LABEL_CSS }>
-                    <i class="icon-user-group"></i>
-                    { format!(" {}: ", Locale::current().yatra()) }
-                </label>
+                            .collect::<Html>() }
+                    </select>
+                    <label for="yatra" class={INPUT_LABEL_CSS}>
+                        <i class="icon-user-group" />
+                        { format!(" {}: ", Locale::current().yatra()) }
+                    </label>
+                </div>
             </div>
-        </div>
-        <Grid
-            header={grid_header}
-            data={grid_data}
-            color_coding={grid_colour_coding}
-        />
+            <Grid header={grid_header} data={grid_data} color_coding={grid_colour_coding} />
         </>
     };
 
     html! {
         <BlankPage
             show_footer=true
-            selected_page={ AppRoute::Yatras }
-            loading={ yatras.loading || data.loading }
-            left_button={ HeaderButtonProps::blank() }
-            right_button={
-                if let Some(yatra) = selected_yatra.as_ref() {
+            selected_page={AppRoute::Yatras}
+            loading={yatras.loading || data.loading}
+            left_button={HeaderButtonProps::blank()}
+            right_button={if let Some(yatra) = selected_yatra.as_ref() {
                     HeaderButtonProps::new_redirect(
                         Locale::current().settings(),
                         AppRoute::YatraSettings { id: yatra.id.clone() },
@@ -245,12 +235,10 @@ pub fn yatras() -> Html {
                     )
                 } else {
                     HeaderButtonProps::blank()
-                }
-            }
+                }}
             calendar={CalendarProps::no_override_selected_date()}
-            >
-            {
-                if !yatras.loading
+        >
+            { if !yatras.loading
                     && yatras
                         .data
                         .iter()
@@ -261,8 +249,7 @@ pub fn yatras() -> Html {
                     empty_body
                 } else {
                     grid_body
-                }
-            }
+                } }
         </BlankPage>
     }
 }

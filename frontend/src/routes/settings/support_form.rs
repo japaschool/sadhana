@@ -52,43 +52,45 @@ pub fn support_form() -> Html {
         <BlankPage
             header_label={Locale::current().sf_send_us_message()}
             left_button={HeaderButtonProps::back()}
-            >
+        >
             <ListErrors error={submit.error.clone()} />
             <form {onsubmit}>
-                <div class={ BODY_DIV_CSS }>
+                <div class={BODY_DIV_CSS}>
                     <div class="relative">
                         <input
                             autocomplete="off"
                             id="subject"
                             type="text"
                             oninput={oninput_subject}
-                            class={ INPUT_CSS }
+                            class={INPUT_CSS}
                             placeholder="subject"
                             maxlength="128"
                             required=true
-                            />
-                        <label for="subject" class={ INPUT_LABEL_CSS }>
-                            <i class="fa"></i>
+                        />
+                        <label for="subject" class={INPUT_LABEL_CSS}>
+                            <i class="fa" />
                             { format!(" {}: ", Locale::current().sf_subject()) }
                         </label>
                     </div>
                     <div class="relative">
                         <textarea
-                            class={ TEXTAREA_CSS }
+                            class={TEXTAREA_CSS}
                             maxlength="4000"
                             rows="12"
                             required=true
                             placeholder="message"
                             oninput={oninput_message}
-                            />
-                        <label for="message" class={ INPUT_LABEL_CSS }>
-                            <i class="icon-doc"></i>
+                        />
+                        <label for="message" class={INPUT_LABEL_CSS}>
+                            <i class="icon-doc" />
                             { format!(" {}: ", Locale::current().sf_message()) }
                         </label>
                     </div>
                     <div class="relative">
-                        <button class={ SUBMIT_BTN_CSS }>
-                        <i class="icon-send"></i>{ format!(" {}", Locale::current().sf_send()) }</button>
+                        <button class={SUBMIT_BTN_CSS}>
+                            <i class="icon-send" />
+                            { format!(" {}", Locale::current().sf_send()) }
+                        </button>
                     </div>
                 </div>
             </form>

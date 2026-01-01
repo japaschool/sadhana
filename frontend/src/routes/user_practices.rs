@@ -145,13 +145,14 @@ pub fn user_practices() -> Html {
             right_button={HeaderButtonProps::new_icon_redirect(AppRoute::NewUserPractice, "icon-plus")}
             show_footer=true
             selected_page={AppRoute::Home}
-            loading={server_practices.loading}>
+            loading={server_practices.loading}
+        >
             <ListErrors error={server_practices.error.clone()} />
             <ListErrors error={reorder_practices.error.clone()} />
             <div class={format!("mx-auto max-w-md {}", BODY_DIV_BASE_CSS)}>
-            // TODO: remove form
-                <form>{
-                    if server_practices.loading || local_practices.current().is_empty() {
+                // TODO: remove form
+                <form>
+                    { if server_practices.loading || local_practices.current().is_empty() {
                         html!{}
                     } else {html! {
                         <DraggableList
@@ -177,9 +178,11 @@ pub fn user_practices() -> Html {
                             delete_popup_label={Locale::current().delete_practice_warning()}
                             reorder={reorder.clone()}
                             />
-                    }}}
+                    }} }
                 </form>
-                <p class="text-xs text-zinc-500 dark:text-zinc-200">{Locale::current().asterisk_is_required_memo()}</p>
+                <p class="text-xs text-zinc-500 dark:text-zinc-200">
+                    { Locale::current().asterisk_is_required_memo() }
+                </p>
             </div>
         </BlankPage>
     }

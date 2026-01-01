@@ -341,7 +341,7 @@ pub fn chart(props: &Props) -> Html {
     plot.set_layout(layout);
     plot.set_configuration(config);
 
-    html! { <Plotly plot={plot}/> }
+    html! { <Plotly plot={plot} /> }
 }
 
 #[derive(Properties, Clone, PartialEq)]
@@ -366,9 +366,7 @@ impl Component for Plotly {
     }
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
-        html! {
-            <div ref={ self.node_ref.clone() } />
-        }
+        html! { <div ref={self.node_ref.clone()} /> }
     }
 
     fn destroy(&mut self, _ctx: &Context<Self>) {

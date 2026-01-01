@@ -135,49 +135,63 @@ pub fn month_calendar(props: &Props) -> Html {
 
     html! {
         <div class="fixed inset-0 z-10 flex items-center justify-center antialiased">
-            <div
-                class="fixed inset-0 bg-black bg-opacity-30"
-                onclick={cancel_onclick}
-            />
-
+            <div class="fixed inset-0 bg-black bg-opacity-30" onclick={cancel_onclick} />
             <div class="relative">
                 <div class="container">
                     <div class={tw_merge!("p-4", POPUP_BG_CSS)}>
-
                         // Header
                         <div class="mb-2 flex items-center justify-between">
                             <div>
                                 <span class="text-lg font-bold text-gray-800 dark:text-white">
                                     { Locale::current().month_name(month_start.month()) }
                                 </span>
-                                <span class="ml-1 text-lg font-normal text-gray-600 dark:text-white">
+                                <span
+                                    class="ml-1 text-lg font-normal text-gray-600 dark:text-white"
+                                >
                                     { month_start.year() }
                                 </span>
                             </div>
-
                             <div class="flex">
                                 <button
                                     type="button"
                                     class="inline-flex rounded-full p-1 transition can-hover:hover:bg-gray-200"
                                     onclick={prev_month_onclick}
                                 >
-                                    <svg class="h-6 w-6 text-gray-500 dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                    <svg
+                                        class="h-6 w-6 text-gray-500 dark:text-white"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M15 19l-7-7 7-7"
+                                        />
                                     </svg>
                                 </button>
-
                                 <button
                                     type="button"
                                     class="inline-flex rounded-full p-1 transition can-hover:hover:bg-gray-200"
                                     onclick={next_month_onclick}
                                 >
-                                    <svg class="h-6 w-6 text-gray-500 dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                    <svg
+                                        class="h-6 w-6 text-gray-500 dark:text-white"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M9 5l7 7-7 7"
+                                        />
                                     </svg>
                                 </button>
                             </div>
                         </div>
-
                         // Weekday header
                         <div class="mb-3 grid grid-cols-7 gap-x-1">
                             { for DAYS.iter().map(|day| html! {
@@ -187,13 +201,11 @@ pub fn month_calendar(props: &Props) -> Html {
                                 </div>
                             }) }
                         </div>
-
                         // Calendar grid
                         <div class="grid grid-cols-7 gap-x-1 gap-y-1">
                             { for (1..num_blank_days).map(|_| html! {
                                 <div class="border border-transparent h-9 p-1 text-center text-md"/>
                             }) }
-
                             { for (1..=num_days).map(|day| html! {
                                 <div
                                     id={day.to_string()}
@@ -215,7 +227,6 @@ pub fn month_calendar(props: &Props) -> Html {
                                 </div>
                             }) }
                         </div>
-
                         // Footer
                         <div class="mt-2">
                             <a
@@ -225,7 +236,6 @@ pub fn month_calendar(props: &Props) -> Html {
                                 { "Today" }
                             </a>
                         </div>
-
                     </div>
                 </div>
             </div>
