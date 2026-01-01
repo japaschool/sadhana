@@ -116,25 +116,31 @@ pub fn register_with_id(props: &Props) -> Html {
     };
 
     html! {
-        <BlankPage header_label={ Locale::current().register() } loading={ user_register.loading }>
-            <ListErrors error={signup_confirmation.error.clone()} error_formatter={ error_formatter.clone() } />
-            <ListErrors error={user_register.error.clone()} error_formatter={ error_formatter.clone() } />
+        <BlankPage header_label={Locale::current().register()} loading={user_register.loading}>
+            <ListErrors
+                error={signup_confirmation.error.clone()}
+                error_formatter={error_formatter.clone()}
+            />
+            <ListErrors
+                error={user_register.error.clone()}
+                error_formatter={error_formatter.clone()}
+            />
             if signup_confirmation.error.is_none() {
                 <form {onsubmit}>
-                    <div class={ BODY_DIV_CSS }>
+                    <div class={BODY_DIV_CSS}>
                         <div class="relative">
                             <input
                                 id="email"
                                 type="email"
                                 placeholder="Email"
-                                class={ INPUT_CSS }
-                                value={ register_info.email.clone() }
+                                class={INPUT_CSS}
+                                value={register_info.email.clone()}
                                 disabled=true
-                                required = true
-                                />
-                            <label for="email"
-                                class={ INPUT_LABEL_CSS }>
-                                <i class="icon-mail"></i>{ format!(" {}", Locale::current().email_address()) }
+                                required=true
+                            />
+                            <label for="email" class={INPUT_LABEL_CSS}>
+                                <i class="icon-mail" />
+                                { format!(" {}", Locale::current().email_address()) }
                             </label>
                         </div>
                         <div class="relative">
@@ -143,28 +149,27 @@ pub fn register_with_id(props: &Props) -> Html {
                                 type="text"
                                 placeholder="Name"
                                 pattern="[\\S\\s]+[\\S]+"
-                                class={ INPUT_CSS }
-                                value={ register_info.name.clone() }
+                                class={INPUT_CSS}
+                                value={register_info.name.clone()}
                                 oninput={oninput_name}
                                 onblur={onblur_name}
-                                required = true
+                                required=true
                                 minlength="3"
                                 maxlength="256"
-                                />
-                            <label for="name"
-                                class={ INPUT_LABEL_CSS }>
-                                <i class="icon-user"></i>{ format!(" {}", Locale::current().name()) }
+                            />
+                            <label for="name" class={INPUT_LABEL_CSS}>
+                                <i class="icon-user" />
+                                { format!(" {}", Locale::current().name()) }
                             </label>
                         </div>
-                        <Pwd onchange={ oninput_password }/>
+                        <Pwd onchange={oninput_password} />
                         <div class="relative flex justify-between sm:text-base">
-                            <Link<AppRoute>
-                                classes={ LINK_CSS }
-                                to={AppRoute::Login}>{ Locale::current().have_an_account() }
+                            <Link<AppRoute> classes={LINK_CSS} to={AppRoute::Login}>
+                                { Locale::current().have_an_account() }
                             </Link<AppRoute>>
                         </div>
                         <div class="relative">
-                            <button class={ SUBMIT_BTN_CSS }>{ Locale::current().sign_up() }</button>
+                            <button class={SUBMIT_BTN_CSS}>{ Locale::current().sign_up() }</button>
                         </div>
                     </div>
                 </form>

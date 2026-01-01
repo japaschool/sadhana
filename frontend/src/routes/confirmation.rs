@@ -85,12 +85,10 @@ pub fn confirmation(props: &Props) -> Html {
     };
 
     html! {
-        <BlankPage {header_label}
-            left_button={HeaderButtonProps::back()}
-            >
+        <BlankPage {header_label} left_button={HeaderButtonProps::back()}>
             <ListErrors error={send_signup_email.error.clone()} {error_formatter} />
             <form onsubmit={onsubmit_signup}>
-                <div class={ BODY_DIV_CSS }>
+                <div class={BODY_DIV_CSS}>
                     if *email_sent && send_signup_email.error.is_none() {
                         <div class="relative">
                             <label>{ email_sent_label }</label>
@@ -101,26 +99,27 @@ pub fn confirmation(props: &Props) -> Html {
                                 id="email"
                                 type="email"
                                 placeholder="Email"
-                                class={ INPUT_CSS }
-                                value={ (*signup_email).clone() }
-                                oninput={ oninput_signup_email }
-                                required = true
-                                />
-                            <label for="email"
-                                class={ INPUT_LABEL_CSS }>
-                                <i class="icon-mail"></i>{ format!(" {}", Locale::current().email_address()) }
+                                class={INPUT_CSS}
+                                value={(*signup_email).clone()}
+                                oninput={oninput_signup_email}
+                                required=true
+                            />
+                            <label for="email" class={INPUT_LABEL_CSS}>
+                                <i class="icon-mail" />
+                                { format!(" {}", Locale::current().email_address()) }
                             </label>
                         </div>
                         if props.confirmation_type == ConfirmationType::Registration {
                             <div class="relative flex justify-between sm:text-base">
-                                <Link<AppRoute>
-                                    classes={ LINK_CSS }
-                                    to={AppRoute::Login}>{ Locale::current().have_an_account() }
+                                <Link<AppRoute> classes={LINK_CSS} to={AppRoute::Login}>
+                                    { Locale::current().have_an_account() }
                                 </Link<AppRoute>>
                             </div>
                         }
-                        <div class="relative">
-                            <button class={ SUBMIT_BTN_CSS }>{ submit_label }</button>
+                        <div
+                            class="relative"
+                        >
+                            <button class={SUBMIT_BTN_CSS}>{ submit_label }</button>
                         </div>
                     }
                 </div>

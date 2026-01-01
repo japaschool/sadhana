@@ -116,28 +116,27 @@ pub fn shared_charts(props: &SharedChartsProps) -> Html {
 
     html! {
         <BlankPage
-            loading={
-                reports.loading
+            loading={reports.loading
                 || user_info.loading
                 || practices.loading
-                || report_data.loading
-            }
+                || report_data.loading}
             calendar={CalendarProps::no_override_selected_date()}
             header_label={user_info.data.as_ref().map(|u| u.name.to_owned()).unwrap_or_default()}
-            >
+        >
             <ListErrors error={reports.error.clone()} />
             <ListErrors error={practices.error.clone()} />
             <ListErrors error={report_data.error.clone()} />
             <ListErrors error={user_info.error.clone()} />
             if let Some(report) = active_report.as_ref() {
-                if reports.data.is_some(){
+                if reports.data.is_some() {
                     <ChartsBase
                         reports={reports.data.clone().unwrap_or_default()}
                         practices={practices.data.clone().unwrap_or_default()}
                         report_data={report_data.data.clone().unwrap_or_default()}
                         report={(*report).clone()}
                         {report_onchange}
-                        {dates_onchange}/>
+                        {dates_onchange}
+                    />
                 }
             }
         </BlankPage>

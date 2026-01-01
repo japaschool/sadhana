@@ -265,10 +265,10 @@ pub fn admin_settings(props: &Props) -> Html {
 
     html! {
         <BlankPage
-            header_label={ yatra.data.iter().map(|y| y.name.clone()).next().unwrap_or_default() }
+            header_label={yatra.data.iter().map(|y| y.name.clone()).next().unwrap_or_default()}
             left_button={HeaderButtonProps::done(AppRoute::YatraSettings { id: props.yatra_id.to_string(), })}
-            loading={ all_practices.loading || members.loading }
-            >
+            loading={all_practices.loading || members.loading}
+        >
             <ListErrors error={all_practices.error.clone()} />
             <ListErrors error={members.error.clone()} />
             <ListErrors error={toggle_is_admin.error.clone()} />
@@ -278,30 +278,29 @@ pub fn admin_settings(props: &Props) -> Html {
             <ListErrors error={delete_yatra.error.clone()} />
             <div class={BODY_DIV_CSS}>
                 // TODO: add setting for renaming yatra and checking the flag
-
                 <form>
                     if !all_practices.loading {
                         <SummaryDetails open=true label={Locale::current().yatra_practices()}>
                             <DraggableList
-                                items={ all_practices.data
+                                items={all_practices.data
                                     .as_ref()
                                     .unwrap_or(&vec![])
                                     .iter()
                                     .map(|p| Item { id: p.id.clone(), name: p.practice.clone() })
-                                    .collect::<Vec<_>>() }
+                                    .collect::<Vec<_>>()}
                                 toggle_hidden_enabled=false
-                                toggle_hidden={ Callback::from(|_|{}) }
-                                is_hidden={ Callback::from(|_| false) }
+                                toggle_hidden={Callback::from(|_|{})}
+                                is_hidden={Callback::from(|_| false)}
                                 rename={edit_practice}
                                 request_new_name=false
-                                rename_popup_label={ Locale::current().enter_new_practice_name() }
-                                delete={ delete.clone() }
-                                delete_popup_label={ Locale::current().yatra_delete_practice_warning() }
-                                reorder = { reorder.clone() }
-                                />
+                                rename_popup_label={Locale::current().enter_new_practice_name()}
+                                delete={delete.clone()}
+                                delete_popup_label={Locale::current().yatra_delete_practice_warning()}
+                                reorder={reorder.clone()}
+                            />
                         </SummaryDetails>
                         <SummaryDetails label={Locale::current().yatra_members()}>
-                            {for members.data.as_ref().unwrap_or(&vec![]).iter().enumerate().map( |(idx, user)| html! {
+                            { for members.data.as_ref().unwrap_or(&vec![]).iter().enumerate().map( |(idx, user)| html! {
                             <div class="flex w-full justify-center align-baseline">
                                 <label
                                     class="flex w-full justify-between whitespace-nowrap mb-6"
@@ -320,29 +319,33 @@ pub fn admin_settings(props: &Props) -> Html {
                                     <i onclick={delete_member_onclick.clone()} id={user.user_id.clone()} class="cursor-pointer icon-bin"/>
                                 </label>
                             </div>
-                            })}
+                            }) }
                         </SummaryDetails>
                     }
                 </form>
                 <div class="relative">
-                    <button class={ BTN_CSS } onclick={new_yatra_practice_onclick}>
-                        <i class="icon-plus"></i>
+                    <button class={BTN_CSS} onclick={new_yatra_practice_onclick}>
+                        <i class="icon-plus" />
                         { Locale::current().add_new_practice() }
                     </button>
-                    <button type="button" onclick={emit_signal_callback(&share_signal)} class={BTN_CSS}>
-                        <i class={if can_share {"icon-share"} else {"icon-doc-dup"}}></i>
-                        {format!(" {}", if can_share {Locale::current().yatra_share_join_link()} else {Locale::current().yatra_copy_join_link()})}
+                    <button
+                        type="button"
+                        onclick={emit_signal_callback(&share_signal)}
+                        class={BTN_CSS}
+                    >
+                        <i class={if can_share {"icon-share"} else {"icon-doc-dup"}} />
+                        { format!(" {}", if can_share {Locale::current().yatra_share_join_link()} else {Locale::current().yatra_copy_join_link()}) }
                     </button>
                     <ShareLink
-                        relative_link={ format!("/yatra/{}/join", props.yatra_id.as_str()) }
+                        relative_link={format!("/yatra/{}/join", props.yatra_id.as_str())}
                         run_signal={set_signal_callback(&share_signal)}
                     />
-                    <button class={ BTN_CSS } onclick={yatra_rename_onclick}>
-                        <i class="icon-edit"></i>
+                    <button class={BTN_CSS} onclick={yatra_rename_onclick}>
+                        <i class="icon-edit" />
                         { Locale::current().yatra_rename() }
                     </button>
-                    <button class={ SUBMIT_BTN_CSS } onclick={ delete_yatra_onclick }>
-                        <i class="icon-bin"></i>
+                    <button class={SUBMIT_BTN_CSS} onclick={delete_yatra_onclick}>
+                        <i class="icon-bin" />
                         { format!(" {}", Locale::current().yatra_delete()) }
                     </button>
                 </div>

@@ -68,11 +68,13 @@ pub fn help() -> Html {
             show_footer={ctx.is_authenticated()}
             selected_page={AppRoute::Settings}
             left_button={HeaderButtonProps::back()}
-            >
+        >
             <div class={BODY_DIV_SPACE_10_CSS}>
                 <div class="text-center">
-                    <h5 class="mb-4 text-xl font-medium leading-tight">{Locale::current().help_faq()}</h5>
-                    {for yt_links.iter().map(|(title, link)| html!{
+                    <h5 class="mb-4 text-xl font-medium leading-tight">
+                        { Locale::current().help_faq() }
+                    </h5>
+                    { for yt_links.iter().map(|(title, link)| html!{
                         <SummaryDetails label={title.to_string()}>
                             <div class="aspect-video">
                                 <iframe
@@ -85,7 +87,7 @@ pub fn help() -> Html {
                                     />
                             </div>
                         </SummaryDetails>
-                    })}
+                    }) }
                 </div>
             </div>
             if ctx.is_authenticated() {
@@ -93,17 +95,19 @@ pub fn help() -> Html {
                     <div class={TWO_COLS_CSS}>
                         <div class="relative">
                             <button onclick={send_msg_onclick} class={BTN_CSS_NO_MARGIN}>
-                                <i class="icon-mail"></i>{Locale::current().sf_send_us_message()}
+                                <i class="icon-mail" />
+                                { Locale::current().sf_send_us_message() }
                             </button>
                         </div>
                         <div class="relative">
-                            <a target="_blank"
+                            <a
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 href="https://t.me/sadhanapro"
                                 class={tw_merge!("flex justify-center", BTN_CSS_NO_MARGIN)}
                             >
                                 <i class="icon-send" />
-                                {Locale::current().sf_follow_on_telegram()}
+                                { Locale::current().sf_follow_on_telegram() }
                             </a>
                         </div>
                     </div>

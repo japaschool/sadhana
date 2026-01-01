@@ -265,8 +265,7 @@ pub fn calendar(props: &Props) -> Html {
                             date_css,
                             if is_outside_week { OUT_OF_WEEK_DAY_CSS } else { "" }
                         )}
-                        onclick={
-                            if is_outside_week {
+                        onclick={if is_outside_week {
                                 if *d < *week.first().unwrap() {
                                     prev_week_onclick.clone()
                                 } else {
@@ -274,14 +273,12 @@ pub fn calendar(props: &Props) -> Html {
                                 }
                             } else {
                                 onclick_date.clone()
-                            }
-                        }
+                            }}
                     >
                         <p class={tw_merge!(date_label_css, "pointer-events-none")}>
                             { d.format("%-d").to_string() }
                         </p>
                     </div>
-
                     if is_incomplete_day(d.day()) {
                         <span
                             class="pointer-events-none absolute top-2 right-1 h-2 w-2 rounded-full bg-red-500"
@@ -329,14 +326,10 @@ pub fn calendar(props: &Props) -> Html {
                     </div>
                 </div>
             </div>
-
             <div class="mt-1 flex justify-center">
-                <p class="text-sm text-zinc-500 dark:text-zinc-100">
-                    { selected_date_str }
-                </p>
+                <p class="text-sm text-zinc-500 dark:text-zinc-100">{ selected_date_str }</p>
             </div>
         </div>
-
     }
 }
 

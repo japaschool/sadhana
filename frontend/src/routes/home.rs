@@ -269,20 +269,22 @@ pub fn home() -> Html {
             loading={diary_entry.loading}
             selected_page={AppRoute::Home}
             calendar={CalendarProps::new(date_is_incomplete)}
-            >
+        >
             if let Some(idx) = *add_duration_prompt_idx {
-            <Prompt
-                title={Locale::current().prompt_title_add_dur(PracticeName(&local_diary_entry.current()[idx].practice))}
-                description={Locale::current().prompt_desc_add_dur(PracticeName(&local_diary_entry.current()[idx].practice))}
-                onsuccess={add_duraction.clone()}
-                oncancel={add_duration_onclick.clone()}
+                <Prompt
+                    title={Locale::current().prompt_title_add_dur(PracticeName(&local_diary_entry.current()[idx].practice))}
+                    description={Locale::current().prompt_desc_add_dur(PracticeName(&local_diary_entry.current()[idx].practice))}
+                    onsuccess={add_duraction.clone()}
+                    oncancel={add_duration_onclick.clone()}
                 />
             }
-            <ListErrors error={diary_entry.error.clone()} />
+            <ListErrors
+                error={diary_entry.error.clone()}
+            />
             <ListErrors error={save_diary_day_entry.error.clone()} />
             <div class={BODY_DIV_SPACE_10_CSS}>
                 <div class={TWO_COLS_CSS}>
-                    {for local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, dropdown_variants, value})| {
+                    { for local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, dropdown_variants, value})| {
                         let wrapper_css =
                             (value.is_none() && !diary_entry.loading && session_ctx.selected_date < today)
                                 .then_some(0)
@@ -490,7 +492,7 @@ pub fn home() -> Html {
                         html! {
                             <div class={wrapper_css}>{input_html}</div>
                         }
-                    })}
+                    }) }
                 </div>
             </div>
         </BlankPage>

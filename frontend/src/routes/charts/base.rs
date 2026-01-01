@@ -165,8 +165,7 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
     let grid_report = |gr: &GridReport| {
         html! {
             <Grid
-                header={
-                    let mut data = props
+                header={let mut data = props
                         .practices
                         .iter()
                         .filter(|p| gr.practices.contains(&p.id))
@@ -174,8 +173,7 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
                         .collect::<Vec<_>>();
                     data.insert(0, Locale::current().date());
                     data}
-                data={
-                    grid_data_by_cob(gr)
+                data={grid_data_by_cob(gr)
                         .iter()
                         .map(|(cob, data)| {
                             let mut data = data.iter().map(|entry| entry.value.clone()).collect::<Vec<_>>();
@@ -188,19 +186,15 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
                             data.insert(0, Some(PracticeEntryValue::Text(date_str)));
                             data
                         })
-                        .collect::<Vec<Vec<_>>>()
-                }
+                        .collect::<Vec<Vec<_>>>()}
             />
         }
     };
 
     let data_body = match &props.report.definition {
-        ReportDefinition::Grid(grid_rep) => html! {grid_report(grid_rep)},
+        ReportDefinition::Grid(grid_rep) => html! { grid_report(grid_rep) },
         ReportDefinition::Graph(GraphReport { bar_layout, traces }) => html! {
-        <Chart
-            traces={graph_traces(traces)}
-            bar_mode={bar_layout.clone()}
-            />
+            <Chart traces={graph_traces(traces)} bar_mode={bar_layout.clone()} />
         },
     };
 
@@ -212,22 +206,26 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
                         class={tw_merge!(INPUT_CSS, "appearance-none")}
                         id="report"
                         onchange={report_onchange.clone()}
-                        >
-                        {for props.reports.iter().map(|r| html!{
+                    >
+                        { for props.reports.iter().map(|r| html!{
                             <option class={"text-black"}
                                 selected={props.report.id == r.id}
                                 value={r.id.clone()}
                                 >
                                 {r.name.clone()}
                             </option>
-                    })}
+                    }) }
                     </select>
                     <label for="report" class={INPUT_LABEL_CSS}>
-                        {format!(" {}: ", Locale::current().report())}
+                        { format!(" {}: ", Locale::current().report()) }
                     </label>
                 </div>
                 <div class="relative">
-                    <select class={tw_merge!(INPUT_CSS, "appearance-none")} id="duration" onchange={duration_onchange.clone()}>
+                    <select
+                        class={tw_merge!(INPUT_CSS, "appearance-none")}
+                        id="duration"
+                        onchange={duration_onchange.clone()}
+                    >
                         { for [
                             (ReportDuration::Week, Locale::current().report_dur_week()),
                             (ReportDuration::Month, Locale::current().report_dur_month()),
@@ -243,17 +241,14 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
                                     >
                                     {label}
                                     </option>
-                            })
-                        }
+                            }) }
                     </select>
                     <label for="duration" class={INPUT_LABEL_CSS}>
-                        {format!(" {}: ", Locale::current().duration())}
+                        { format!(" {}: ", Locale::current().duration()) }
                     </label>
                 </div>
             </div>
-            <div class="relative">
-                {data_body}
-            </div>
+            <div class="relative">{ data_body }</div>
         </div>
     }
 }

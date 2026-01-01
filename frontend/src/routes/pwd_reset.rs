@@ -80,25 +80,23 @@ pub fn pwd_reset(props: &Props) -> Html {
 
     if *finished {
         alert(&Locale::current().reset_success_alert());
-        return html! {
-            <Redirect<AppRoute> to={AppRoute::Login}/>
-        };
+        return html! { <Redirect<AppRoute> to={AppRoute::Login} /> };
     }
 
     html! {
         <BlankPage
             header_label={Locale::current().password_reset()}
-            loading={ email.loading || reset_pwd.loading }
+            loading={email.loading || reset_pwd.loading}
             left_button={HeaderButtonProps::back()}
-            >
-            <ListErrors error={ email.error.clone() } error_formatter = { error_formatter.clone() } />
-            <ListErrors error={ reset_pwd.error.clone() } error_formatter = { error_formatter.clone() } />
+        >
+            <ListErrors error={email.error.clone()} error_formatter={error_formatter.clone()} />
+            <ListErrors error={reset_pwd.error.clone()} error_formatter={error_formatter.clone()} />
             if email.error.is_none() {
                 <form {onsubmit}>
-                    <div class={ BODY_DIV_CSS }>
-                        <Pwd onchange={ pwd_onchange }/>
+                    <div class={BODY_DIV_CSS}>
+                        <Pwd onchange={pwd_onchange} />
                         <div class="relative">
-                            <button class={ SUBMIT_BTN_CSS }>{ Locale::current().save() }</button>
+                            <button class={SUBMIT_BTN_CSS}>{ Locale::current().save() }</button>
                         </div>
                     </div>
                 </form>

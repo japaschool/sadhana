@@ -106,32 +106,32 @@ fn app_switch(routes: AppRoute) -> Html {
         AppRoute::RegisterWithConfirmationId { id } => html! { <RegisterWithId id={id} /> },
         AppRoute::Login => html! { <Login /> },
         AppRoute::Settings => html! { <Settings /> },
-        AppRoute::EditUser => html! { <EditUser/> },
-        AppRoute::EditPassword => html! { <EditPassword/> },
-        AppRoute::SupportForm => html! { <SupportForm/> },
-        AppRoute::Import => html! { <Import/> },
-        AppRoute::Language => html! { <Language/> },
+        AppRoute::EditUser => html! { <EditUser /> },
+        AppRoute::EditPassword => html! { <EditPassword /> },
+        AppRoute::SupportForm => html! { <SupportForm /> },
+        AppRoute::Import => html! { <Import /> },
+        AppRoute::Language => html! { <Language /> },
         AppRoute::UserPractices => html! { <UserPractices /> },
         AppRoute::NewUserPractice => {
-            html! { <NewPractice mode={ Mode::UserPractice } /> }
+            html! { <NewPractice mode={Mode::UserPractice} /> }
         }
         AppRoute::EditUserPractice { id } => {
-            html! { <EditUserPractice {id}/> }
+            html! { <EditUserPractice {id} /> }
         }
         AppRoute::NewUserPracticeWithName { practice } => {
             html! { <NewPractice mode={Mode::UserPractice} practice={practice} /> }
         }
-        AppRoute::Charts => html! { <Charts/> },
-        AppRoute::NewReport => html! { <CreateReport/> },
-        AppRoute::Yatras => html! { <Yatras/> },
-        AppRoute::JoinYatra { id } => html! { <JoinYatra yatra_id={id}/> },
-        AppRoute::YatraSettings { id } => html! { <YatraSettings yatra_id={id}/> },
-        AppRoute::YatraAdminSettings { id } => html! { <AdminSettings yatra_id={id}/> },
+        AppRoute::Charts => html! { <Charts /> },
+        AppRoute::NewReport => html! { <CreateReport /> },
+        AppRoute::Yatras => html! { <Yatras /> },
+        AppRoute::JoinYatra { id } => html! { <JoinYatra yatra_id={id} /> },
+        AppRoute::YatraSettings { id } => html! { <YatraSettings yatra_id={id} /> },
+        AppRoute::YatraAdminSettings { id } => html! { <AdminSettings yatra_id={id} /> },
         AppRoute::EditYatraPractice { id, practice_id } => {
             html! { <EditYatraPractice yatra_id={id} {practice_id} /> }
         }
         AppRoute::NewYatraPractice { id } => {
-            html! { <NewPractice mode={ Mode::YatraPractice { yatra_id: id } } /> }
+            html! { <NewPractice mode={Mode::YatraPractice { yatra_id: id }} /> }
         }
         AppRoute::NotFound => html! { <h1>{ "404" }</h1> },
     }
@@ -146,8 +146,8 @@ pub fn switch(routes: BaseRoute) -> Html {
         BaseRoute::Register => {
             html! { <Confirmation confirmation_type={ConfirmationType::Registration} /> }
         }
-        BaseRoute::SharedCharts { id } => html! { <SharedCharts share_id={id}/> },
-        BaseRoute::Help => html! { <Help/> },
+        BaseRoute::SharedCharts { id } => html! { <SharedCharts share_id={id} /> },
+        BaseRoute::Help => html! { <Help /> },
         BaseRoute::Home | BaseRoute::AppRoute => {
             html! { <Switch<AppRoute> render={app_switch} /> }
         }

@@ -40,10 +40,10 @@ pub const BTN_CSS_NO_MARGIN: &str =
 pub const BTN_CSS: &str = concatcp!("mb-8 ", BTN_CSS_NO_MARGIN);
 
 pub const BODY_DIV_BASE_CSS: &str = "
-    text-balance accent-amber-500 text-base leading-6 
-    text-zinc-500 dark:text-zinc-100 sm:leading-7 
-    overflow-x-hidden overflow-y-auto scrolling-touch 
-    lg:max-h-sm scrollbar-w-2 scrollbar-track-gray-lighter 
+    text-balance accent-amber-500 text-base leading-6
+    text-zinc-500 dark:text-zinc-100 sm:leading-7
+    overflow-x-hidden overflow-y-auto scrolling-touch
+    lg:max-h-sm scrollbar-w-2 scrollbar-track-gray-lighter
     scrollbar-thumb-rounded scrollbar-thumb-gray";
 
 pub const BODY_DIV_SPACE_10_CSS: &str = concatcp!("pt-8 space-y-10 ", BODY_DIV_BASE_CSS);
@@ -61,7 +61,7 @@ pub const TWO_COLS_NO_GAP_CSS: &str =
     "grid-flow-row grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2";
 pub const TWO_COLS_CSS: &str = concatcp!("gap-9 ", TWO_COLS_NO_GAP_CSS);
 
-pub const POPUP_BG_CSS: &str = 
+pub const POPUP_BG_CSS: &str =
     "rounded-lg shadow opacity-90 \
     bg-gradient-to-t from-neutral-300 via-neutral-100 to-white dark:from-zinc-900 dark:via-zinc-700 dark:to-zinc-600 \
     border border-gray-300 dark:border-zinc-100";

@@ -87,30 +87,30 @@ pub fn edit_user() -> Html {
     };
 
     html! {
-        <form {onsubmit} {onreset} >
+        <form {onsubmit} {onreset}>
             <BlankPage
-                show_footer={ !*editing }
+                show_footer={!*editing}
                 selected_page={AppRoute::Settings}
-                left_button={ if *editing { HeaderButtonProps::reset(Locale::current().cancel()) } else { HeaderButtonProps::back() }}
-                right_button={ if *editing { HeaderButtonProps::submit(Locale::current().save()) } else { HeaderButtonProps::edit(edit_onclick) }}
-                loading={ update_user.loading }
-                header_label={ Locale::current().user_details() }
-                >
+                left_button={if *editing { HeaderButtonProps::reset(Locale::current().cancel()) } else { HeaderButtonProps::back() }}
+                right_button={if *editing { HeaderButtonProps::submit(Locale::current().save()) } else { HeaderButtonProps::edit(edit_onclick) }}
+                loading={update_user.loading}
+                header_label={Locale::current().user_details()}
+            >
                 <ListErrors error={update_user.error.clone()} />
-                <div class={ BODY_DIV_CSS }>
+                <div class={BODY_DIV_CSS}>
                     <div class="relative">
                         <input
                             id="email"
                             type="email"
                             placeholder="Email"
-                            class={ INPUT_CSS }
-                            value={ user_ctx.email.clone() }
+                            class={INPUT_CSS}
+                            value={user_ctx.email.clone()}
                             disabled=true
                             required=true
-                            />
-                        <label for="email"
-                            class={ INPUT_LABEL_CSS }>
-                            <i class="icon-mail"></i>{ format!(" {}", Locale::current().email_address()) }
+                        />
+                        <label for="email" class={INPUT_LABEL_CSS}>
+                            <i class="icon-mail" />
+                            { format!(" {}", Locale::current().email_address()) }
                         </label>
                     </div>
                     <div class="relative">
@@ -118,17 +118,17 @@ pub fn edit_user() -> Html {
                             id="name"
                             type="text"
                             placeholder="Name"
-                            class={ INPUT_CSS }
-                            value={ user_info.name.clone() }
-                            oninput={ name_oninput }
-                            onblur={ name_onblur }
-                            readonly={ !*editing }
+                            class={INPUT_CSS}
+                            value={user_info.name.clone()}
+                            oninput={name_oninput}
+                            onblur={name_onblur}
+                            readonly={!*editing}
                             minlength="3"
                             pattern="[\\S\\s]+[\\S]+"
-                            />
-                        <label for="name"
-                            class={ INPUT_LABEL_CSS }>
-                            <i class="icon-user"></i>{ format!(" {}", Locale::current().name()) }
+                        />
+                        <label for="name" class={INPUT_LABEL_CSS}>
+                            <i class="icon-user" />
+                            { format!(" {}", Locale::current().name()) }
                         </label>
                     </div>
                 </div>

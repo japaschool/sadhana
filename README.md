@@ -83,3 +83,14 @@ Note, you actually need to merge changes to style.css as it includes some import
 
 ### iOS PWA Compatibility
 https://firt.dev/notes/pwa-ios/
+
+### VSCode navigation
+
+* Go to Definition F12 - Go to the source code of the type definition.
+* Peek Definition ⌥F12 - Bring up a Peek window with the type definition.
+* Go to References ⇧F12 - Show all references for the type.
+* **Show Call Hierarchy** ⇧⌥H - Show all calls from or to a function.
+
+You can navigate via symbol search using the Go to Symbol commands from the Command Palette (⇧⌘P).
+* Go to Symbol in File - ⇧⌘O
+* Go to Symbol in Workspace - ⌘T

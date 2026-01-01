@@ -72,21 +72,24 @@ pub fn pwd(props: &Props) -> Html {
                     id="new_pwd"
                     type={if *show_pwd {"text"} else {"password"}}
                     placeholder="New Password"
-                    class={ INPUT_CSS }
-                    value={ (*new_pwd).clone() }
-                    oninput={ new_pwd_oninput }
-                    required={ props.required }
+                    class={INPUT_CSS}
+                    value={(*new_pwd).clone()}
+                    oninput={new_pwd_oninput}
+                    required={props.required}
                     autocomplete="off"
                     minlength="5"
                     maxlength="256"
-                    readonly={ props.readonly }
-                    />
+                    readonly={props.readonly}
+                />
                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
-                    <i class={if *show_pwd {"icon-eye-cross"} else {"icon-eye"}} onclick={toggle_show_pwd_onclick.clone()} />
+                    <i
+                        class={if *show_pwd {"icon-eye-cross"} else {"icon-eye"}}
+                        onclick={toggle_show_pwd_onclick.clone()}
+                    />
                 </div>
-                <label for="new_pwd"
-                    class={ INPUT_LABEL_CSS }>
-                    <i class="icon-key"></i>{ format!(" {}", Locale::current().new_password()) }
+                <label for="new_pwd" class={INPUT_LABEL_CSS}>
+                    <i class="icon-key" />
+                    { format!(" {}", Locale::current().new_password()) }
                 </label>
             </div>
             <div class="relative">
@@ -94,22 +97,25 @@ pub fn pwd(props: &Props) -> Html {
                     id="confirm_pwd"
                     type={if *show_pwd {"text"} else {"password"}}
                     placeholder="Confirm Password"
-                    class={ INPUT_CSS }
-                    oninput={ confirm_pwd_oninput }
-                    { onfocus }
-                    value={ (*confirm_pwd).clone() }
-                    required={ props.required }
+                    class={INPUT_CSS}
+                    oninput={confirm_pwd_oninput}
+                    {onfocus}
+                    value={(*confirm_pwd).clone()}
+                    required={props.required}
                     autocomplete="off"
                     minlength="5"
                     maxlength="256"
-                    readonly={ props.readonly }
-                    />
+                    readonly={props.readonly}
+                />
                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5">
-                    <i class={if *show_pwd {"icon-eye-cross"} else {"icon-eye"}} onclick={toggle_show_pwd_onclick.clone()} />
+                    <i
+                        class={if *show_pwd {"icon-eye-cross"} else {"icon-eye"}}
+                        onclick={toggle_show_pwd_onclick.clone()}
+                    />
                 </div>
-                <label for="confirm_pwd"
-                    class={ INPUT_LABEL_CSS }>
-                    <i class="icon-key"></i>{ format!(" {}", Locale::current().confirm_password()) }
+                <label for="confirm_pwd" class={INPUT_LABEL_CSS}>
+                    <i class="icon-key" />
+                    { format!(" {}", Locale::current().confirm_password()) }
                 </label>
             </div>
         </>

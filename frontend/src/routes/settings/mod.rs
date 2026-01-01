@@ -98,76 +98,92 @@ pub fn settings() -> Html {
             <li>
                 <div class={LI_DIV_CSS}>
                     <label>
-                        <i class={format!("{icon} flex-shrink-0 w-5")}></i>
+                        <i class={format!("{icon} flex-shrink-0 w-5")} />
                         { label }
                     </label>
-                    <i class="icon-chevron-right"></i>
+                    <i class="icon-chevron-right" />
                 </div>
             </li>
         }
     }
 
     html! {
-        <BlankPage show_footer=true selected_page={AppRoute::Settings} header_label={user_ctx.name.clone()}>
-            <div class={ format!("space-y-4 pt-14 mx-auto max-w-md {}", BODY_DIV_BASE_CSS) }>
-                <ul onclick={ edit_user_onclick } class={UL_CSS}>
+        <BlankPage
+            show_footer=true
+            selected_page={AppRoute::Settings}
+            header_label={user_ctx.name.clone()}
+        >
+            <div class={format!("space-y-4 pt-14 mx-auto max-w-md {}", BODY_DIV_BASE_CSS)}>
+                <ul onclick={edit_user_onclick} class={UL_CSS}>
                     { menu_li("icon-user", Locale::current().user_details().to_sentence_case()) }
                 </ul>
-                <ul onclick={ edit_password_onclick } class={UL_CSS}>
+                <ul onclick={edit_password_onclick} class={UL_CSS}>
                     { menu_li("icon-edit", Locale::current().change_password()) }
                 </ul>
-                <ul onclick={ language_onclick } class={UL_CSS}>
+                <ul onclick={language_onclick} class={UL_CSS}>
                     { menu_li("icon-lang", Locale::current().language()) }
                 </ul>
                 <ul class={UL_CSS}>
                     <li>
                         <div class={LI_DIV_CSS}>
-                            <label for="toggle"><i class="icon-moon flex-shrink-0 w-5"></i>{ Locale::current().dark_mode() }</label>
-                            <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in ml-7">
+                            <label for="toggle">
+                                <i class="icon-moon flex-shrink-0 w-5" />
+                                { Locale::current().dark_mode() }
+                            </label>
+                            <div
+                                class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in ml-7"
+                            >
                                 <input
                                     type="checkbox"
                                     name="dark_toggle"
                                     id="dark_toggle"
-                                    onclick={ dark_mode_onclick.clone() }
-                                    checked={ LocalStorage::get("color-theme").map(|v: String| v == "dark").unwrap_or(false) }
+                                    onclick={dark_mode_onclick.clone()}
+                                    checked={LocalStorage::get("color-theme").map(|v: String| v == "dark").unwrap_or(false)}
                                     class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
-                                    />
+                                />
                                 <label
                                     for="dark_toggle"
-                                    class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-400 dark:bg-zinc-300 cursor-pointer">
-                                </label>
+                                    class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-400 dark:bg-zinc-300 cursor-pointer"
+                                />
                             </div>
                         </div>
                     </li>
                 </ul>
-                <ul onclick={ import_onclick } class={UL_CSS}>
+                <ul onclick={import_onclick} class={UL_CSS}>
                     { menu_li("icon-import", Locale::current().import_csv() ) }
                 </ul>
                 <ul class={UL_CSS}>
-                    <li onclick={ help_onclick }>
+                    <li onclick={help_onclick}>
                         <div class={LI_DIV_CSS}>
-                            <label><i class="icon-help flex-shrink-0 w-5" />{ Locale::current().help_and_support() }</label>
+                            <label>
+                                <i class="icon-help flex-shrink-0 w-5" />
+                                { Locale::current().help_and_support() }
+                            </label>
                             <i class="icon-chevron-right" />
                         </div>
                     </li>
                     <li>
-                        <a class={LI_DIV_CSS}
+                        <a
+                            class={LI_DIV_CSS}
                             target="_blank"
                             rel="noopener noreferrer"
                             href={Locale::current().about_url()}
                         >
                             <label>
                                 <i class="icon-info flex-shrink-0 w-5" />
-                                {Locale::current().about()}
+                                { Locale::current().about() }
                             </label>
                         </a>
                     </li>
-                    <li onclick={force_reload} >
+                    <li onclick={force_reload}>
                         <div class={LI_DIV_CSS}>
-                            <label><i class="icon-reload flex-shrink-0 w-5" />{ Locale::current().force_reload() }</label>
+                            <label>
+                                <i class="icon-reload flex-shrink-0 w-5" />
+                                { Locale::current().force_reload() }
+                            </label>
                         </div>
                     </li>
-                    <li onclick={ logout_onclick.clone() }>
+                    <li onclick={logout_onclick.clone()}>
                         <div class={LI_DIV_CSS}>
                             <label href="/login" for="toggle">
                                 <i class="icon-logout flex-shrink-0 w-5" />

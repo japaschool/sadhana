@@ -62,8 +62,7 @@ pub fn join_yatra(props: &Props) -> Html {
 
     html! {
         <BlankPage
-            header_label={
-                format!(
+            header_label={format!(
                     "{} {}",
                     Locale::current().yatra_join(),
                     yatra
@@ -72,17 +71,18 @@ pub fn join_yatra(props: &Props) -> Html {
                         .map(|y| y.name.clone())
                         .next()
                         .unwrap_or_default()
-                )
-            }
-            loading={ yatra.loading || join.loading }
-            >
+                )}
+            loading={yatra.loading || join.loading}
+        >
             <ListErrors error={yatra.error.clone()} />
             <ListErrors error={join.error.clone()} {error_formatter} />
-            <div class={ BODY_DIV_CSS }>
+            <div class={BODY_DIV_CSS}>
                 <form {onsubmit}>
                     <div class="relative">
-                        <button class={ SUBMIT_BTN_CSS }>
-                        <i class="icon-tick"></i>{ format!(" {}", Locale::current().yatra_join()) }</button>
+                        <button class={SUBMIT_BTN_CSS}>
+                            <i class="icon-tick" />
+                            { format!(" {}", Locale::current().yatra_join()) }
+                        </button>
                     </div>
                 </form>
             </div>

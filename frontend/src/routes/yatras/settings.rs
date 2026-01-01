@@ -221,13 +221,14 @@ pub fn yatra_settings(props: &Props) -> Html {
                 html! {
                     <div class="relative">
                         <select
-                            class={ INPUT_CSS }
-                            id={ yp.yatra_practice.practice.clone() }
-                            onchange={ practice_onchange.clone() }
-                            >
-                            <option class="text-black" selected={ yp.user_practice.is_none() } >{ "" }</option>
-                            {
-                                user_practices
+                            class={INPUT_CSS}
+                            id={yp.yatra_practice.practice.clone()}
+                            onchange={practice_onchange.clone()}
+                        >
+                            <option class="text-black" selected={yp.user_practice.is_none()}>
+                                { "" }
+                            </option>
+                            { user_practices
                                     .data
                                     .iter()
                                     .flat_map(|inner| inner.iter())
@@ -249,11 +250,13 @@ pub fn yatra_settings(props: &Props) -> Html {
                                             </option>
                                         }
                                     })
-                                    .collect::<Html>()
-                            }
+                                    .collect::<Html>() }
                         </select>
-                        <label for={ { yp.yatra_practice.practice.clone() } } class={ INPUT_LABEL_CSS }>
-                            <i class={ practice_icon(&yp.yatra_practice.data_type) }></i>
+                        <label
+                            for={{ yp.yatra_practice.practice.clone() }}
+                            class={INPUT_LABEL_CSS}
+                        >
+                            <i class={practice_icon(&yp.yatra_practice.data_type)} />
                             { format!(" {}: ", yp.yatra_practice.practice) }
                         </label>
                     </div>
@@ -294,49 +297,53 @@ pub fn yatra_settings(props: &Props) -> Html {
 
     html! {
         <BlankPage
-            header_label={ yatra.data.iter().map(|y| y.name.clone()).next().unwrap_or_default() }
-            loading={
-                leave.loading
+            header_label={yatra.data.iter().map(|y| y.name.clone()).next().unwrap_or_default()}
+            loading={leave.loading
                 || yatra.loading
                 || is_admin.loading
                 || yatra_user_practices.loading
                 || user_practices.loading
-                || save.loading
-            }
+                || save.loading}
             left_button={HeaderButtonProps::back_to(AppRoute::Yatras)}
-            >
-            <ListErrors error={ yatra_user_practices.error.clone() } />
-            <ListErrors error={ user_practices.error.clone() } />
-            <ListErrors error={ is_admin.error.clone() } />
-            <ListErrors error={ save.error.clone() } />
-            <ListErrors error={ leave.error.clone() } error_formatter = {leave_error_formatter}/>
-            <ListErrors error={ yatra.error.clone() } />
+        >
+            <ListErrors error={yatra_user_practices.error.clone()} />
+            <ListErrors error={user_practices.error.clone()} />
+            <ListErrors error={is_admin.error.clone()} />
+            <ListErrors error={save.error.clone()} />
+            <ListErrors error={leave.error.clone()} error_formatter={leave_error_formatter} />
+            <ListErrors error={yatra.error.clone()} />
             <ListErrors error={new_yatra.error.clone()} />
             <form {onsubmit}>
                 <div class={BODY_DIV_NO_PADDING_CSS}>
                     <div class="pt-2">
-                        <p class="text-xs text-zinc-500 dark:text-zinc-200">{Locale::current().yatra_mapping_info()}</p>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-200">
+                            { Locale::current().yatra_mapping_info() }
+                        </p>
                     </div>
                     { practices }
                     <div class="relative">
-                        <button class={ SUBMIT_BTN_CSS }>
-                            <i class="icon-tick"></i>{ format!(" {}", Locale::current().save()) }
+                        <button class={SUBMIT_BTN_CSS}>
+                            <i class="icon-tick" />
+                            { format!(" {}", Locale::current().save()) }
                         </button>
                     </div>
                 </div>
                 <div class="mx-auto max-w-md">
                     <div class="flex space-x-3">
-                        <button class={ BTN_CSS } onclick={ leave_onclick }>
-                            <i class="icon-minus"></i>{ Locale::current().yatra_leave() }
+                        <button class={BTN_CSS} onclick={leave_onclick}>
+                            <i class="icon-minus" />
+                            { Locale::current().yatra_leave() }
                         </button>
-                        <button class={ BTN_CSS } onclick={ create_yatra_onclick.clone() }>
-                            <i class="icon-plus"></i>{ Locale::current().yatra_create() }
+                        <button class={BTN_CSS} onclick={create_yatra_onclick.clone()}>
+                            <i class="icon-plus" />
+                            { Locale::current().yatra_create() }
                         </button>
                     </div>
                     if is_admin.data.unwrap_or(false) {
                         <div class="relative">
-                            <button class={ BTN_CSS } onclick={ admin_settings_onclick.clone() }>
-                                <i class="icon-edit"></i>{ Locale::current().yatra_modify_admin() }
+                            <button class={BTN_CSS} onclick={admin_settings_onclick.clone()}>
+                                <i class="icon-edit" />
+                                { Locale::current().yatra_modify_admin() }
                             </button>
                         </div>
                     }

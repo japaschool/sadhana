@@ -179,31 +179,34 @@ pub fn draggable_list(props: &Props) -> Html {
 
     ordered_items.clone().current().iter().enumerate().map ( |(idx, item)| html! {
         <div
-            ondragstart={ ondragstart.clone() }
-            ondrop={ ondrop.clone() }
-            ondragover={ ondragover.clone() }
-            ondragleave={ ondragleave.clone() }
+            ondragstart={ondragstart.clone()}
+            ondrop={ondrop.clone()}
+            ondragover={ondragover.clone()}
+            ondragleave={ondragleave.clone()}
             class="flex w-full justify-center align-baseline"
-            id={ idx.to_string() }
-            >
+            id={idx.to_string()}
+        >
             <label class="flex w-full justify-between whitespace-nowrap mb-6">
                 <span>{ item.name.clone() }</span>
             </label>
             if props.toggle_hidden_enabled {
                 <label>
-                    <i onclick={ toggle_hidden.clone() }
-                        id={ item.id.clone() }
+                    <i
+                        onclick={toggle_hidden.clone()}
+                        id={item.id.clone()}
                         class={format!("cursor-pointer {}", if !props.is_hidden.emit(item.id.to_owned()) {"icon-eye"} else {"icon-eye-cross"})}
-                        />
+                    />
                 </label>
             }
             <label>
-                <i onclick={ rename.clone() } id={ item.id.clone() } class="cursor-pointer icon-edit"/>
+                <i onclick={rename.clone()} id={item.id.clone()} class="cursor-pointer icon-edit" />
             </label>
             <label>
-                <i onclick={ delete.clone() } id={ item.id.clone() } class="cursor-pointer icon-bin"/>
+                <i onclick={delete.clone()} id={item.id.clone()} class="cursor-pointer icon-bin" />
             </label>
-            <label draggable="true" class="touch-none"><i class="cursor-pointer icon-bars"></i></label>
+            <label draggable="true" class="touch-none">
+                <i class="cursor-pointer icon-bars" />
+            </label>
         </div>
     }).collect()
 }

@@ -87,7 +87,7 @@ pub fn create_report() -> Html {
                 header_label={Locale::current().report_add_new()}
                 left_button={HeaderButtonProps::back()}
                 right_button={HeaderButtonProps::submit(Locale::current().save())}
-                >
+            >
                 <ListErrors error={create.error.clone()} />
                 <div class={BODY_DIV_CSS}>
                     <div class="relative">
@@ -95,23 +95,27 @@ pub fn create_report() -> Html {
                             type="text"
                             placeholder="Name"
                             value={(*report_name).clone()}
-                            id={"report_name"}
+                            id="report_name"
                             oninput={report_name_oninput}
                             class={INPUT_CSS}
                             required=true
                             autocomplete="off"
-                            />
-                        <label for={"report_name"} class={INPUT_LABEL_CSS}>
-                            {Locale::current().report_name()}
+                        />
+                        <label for="report_name" class={INPUT_LABEL_CSS}>
+                            { Locale::current().report_name() }
                         </label>
                     </div>
                     <div class="relative">
-                        <select class={INPUT_CSS} id={"report_type"} onchange={report_type_onchange}>
-                            <option class={"text-black"} value={"graph"} selected=true>{Locale::current().report_type_graph()}</option>
-                            <option class={"text-black"} value={"grid"}>{Locale::current().report_type_grid()}</option>
+                        <select class={INPUT_CSS} id="report_type" onchange={report_type_onchange}>
+                            <option class="text-black" value="graph" selected=true>
+                                { Locale::current().report_type_graph() }
+                            </option>
+                            <option class="text-black" value="grid">
+                                { Locale::current().report_type_grid() }
+                            </option>
                         </select>
-                        <label for={"report_type"} class={INPUT_LABEL_CSS}>
-                            {format!(" {}: ",Locale::current().report_type())}
+                        <label for="report_type" class={INPUT_LABEL_CSS}>
+                            { format!(" {}: ",Locale::current().report_type()) }
                         </label>
                     </div>
                 </div>

@@ -34,7 +34,7 @@ pub fn SessionStateProvider(props: &SessionStateProviderProps) -> Html {
 
     html! {
         <ContextProvider<SessionStateContext> context={state}>
-            {props.children.clone()}
+            { props.children.clone() }
         </ContextProvider<SessionStateContext>>
     }
 }

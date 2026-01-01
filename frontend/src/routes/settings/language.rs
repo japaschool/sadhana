@@ -39,34 +39,32 @@ pub fn language() -> Html {
             show_footer=true
             selected_page={AppRoute::Settings}
             left_button={HeaderButtonProps::back_to(AppRoute::Settings)}
-            header_label={ Locale::current().language() }
-            >
-            <div class={ BODY_DIV_CSS }>
+            header_label={Locale::current().language()}
+        >
+            <div class={BODY_DIV_CSS}>
                 <div class="relative">
                     <select
-                        class={ INPUT_CSS }
+                        class={INPUT_CSS}
                         id="language"
-                        onchange={ language_onchange }
+                        onchange={language_onchange}
                         required=true
-                        >
+                    >
                         <option
-                            class={ "text-black" }
-                            value={ DEFAULT_LANGUAGE_KEY }
-                            selected={ is_checked_lang(DEFAULT_LANGUAGE_KEY) }
-                            >
+                            class="text-black"
+                            value={DEFAULT_LANGUAGE_KEY}
+                            selected={is_checked_lang(DEFAULT_LANGUAGE_KEY)}
+                        >
                             { Locale::current().default_language().as_str() }
                         </option>
-                        {
-                            LANGUAGE_DATA
+                        { LANGUAGE_DATA
                                 .iter()
                                 .map(|(s, s_full)| html! {
                                     <option class={ "text-black" } value={ s.to_owned() } selected={ is_checked_lang(s) }>{ s_full }</option>
                                 })
-                                .collect::<Html>()
-                        }
+                                .collect::<Html>() }
                     </select>
-                    <label for="language" class={ INPUT_LABEL_CSS }>
-                        <i class="icon-lang"></i>
+                    <label for="language" class={INPUT_LABEL_CSS}>
+                        <i class="icon-lang" />
                         { format!(" {}: ", Locale::current().language()) }
                     </label>
                 </div>
