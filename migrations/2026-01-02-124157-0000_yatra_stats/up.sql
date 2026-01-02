@@ -1,0 +1,1 @@
+alter table yatras add column statistics jsonb;

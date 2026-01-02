@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
-use anyhow::{anyhow, Context};
-use chrono::{naive::NaiveDate, NaiveDateTime};
+use anyhow::{Context, anyhow};
+use chrono::{NaiveDateTime, naive::NaiveDate};
 use js_sys::RegExp;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
@@ -419,10 +419,79 @@ pub struct ReportDataEntry {
     pub value: Option<PracticeEntryValue>,
 }
 
-#[derive(Debug, Deserialize, Clone, PartialEq)]
+#[derive(
+    Debug, Serialize, Deserialize, Clone, PartialEq, Default, Display, EnumIter, EnumString,
+)]
+pub enum Aggregation {
+    Sum,
+    Avg,
+    Min,
+    Max,
+    #[default]
+    Count,
+}
+
+impl Aggregation {
+    pub fn to_localised_string(&self) -> String {
+        match self {
+            Aggregation::Sum => tr!(yatra_stats_agg_sum),
+            Aggregation::Avg => tr!(yatra_stats_agg_avg),
+            Aggregation::Min => tr!(yatra_stats_agg_min),
+            Aggregation::Max => tr!(yatra_stats_agg_max),
+            Aggregation::Count => tr!(yatra_stats_agg_cnt),
+        }
+    }
+}
+
+#[derive(
+    Debug, Serialize, Deserialize, Clone, PartialEq, Default, Display, EnumIter, EnumString,
+)]
+pub enum TimeRange {
+    Last7Days,
+    Last30Days,
+    Last90Days,
+    Last365Days,
+    ThisWeek,
+    #[default]
+    ThisMonth,
+    ThisQuarter,
+    ThisYear,
+}
+
+impl TimeRange {
+    pub fn to_localised_string(&self) -> String {
+        match self {
+            TimeRange::Last7Days => tr!(yatra_stats_time_range_last_7_days),
+            TimeRange::Last30Days => tr!(yatra_stats_time_range_last_30_days),
+            TimeRange::Last90Days => tr!(yatra_stats_time_range_last_90_days),
+            TimeRange::Last365Days => tr!(yatra_stats_time_range_last_365_days),
+            TimeRange::ThisWeek => tr!(yatra_stats_time_range_this_week),
+            TimeRange::ThisMonth => tr!(yatra_stats_time_range_this_month),
+            TimeRange::ThisQuarter => tr!(yatra_stats_time_range_this_quarter),
+            TimeRange::ThisYear => tr!(yatra_stats_time_range_this_year),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Default)]
+pub struct YatraStatistic {
+    pub label: String,
+    pub practice_id: String,
+    pub aggregation: Aggregation,
+    pub time_range: TimeRange,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Default)]
+pub struct YatraStatistics {
+    pub visible_to_all: bool,
+    pub statistics: Vec<YatraStatistic>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Default)]
 pub struct Yatra {
     pub id: String,
     pub name: String,
+    pub statistics: Option<YatraStatistics>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -574,8 +643,8 @@ pub struct CreateYatra {
 }
 
 #[derive(Debug, Serialize)]
-pub struct RenameYatra {
-    pub name: String,
+pub struct UpdateYatra {
+    pub yatra: Yatra,
 }
 
 #[derive(Debug, Deserialize, Clone)]

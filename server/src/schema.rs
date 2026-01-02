@@ -152,6 +152,7 @@ diesel::table! {
         name -> Text,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+        statistics -> Nullable<Jsonb>,
     }
 }
 

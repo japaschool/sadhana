@@ -80,9 +80,13 @@ details summary::-webkit-details-marker {
     color: #02455a;
 }
 
-.group:focus .group-focus\:-rotate-90 {
-    --tw-rotate: 90deg;
+details[open]>summary .icon-chevron-left {
+    transform: rotate(90deg);
 }
+
+/* .group:focus .group-focus\:-rotate-90 {
+    --tw-rotate: 90deg;
+} */
 
 .focus-within\:max-h-screen:focus-within {
     max-height: 100vh;

@@ -15,8 +15,8 @@ use crate::{
     i18n::*,
     model::{NewUserPractice, NewYatraPractice},
     routes::{
-        practices::{Mode, COLOUR_ZONE_DATA_TYPES},
         DROPDOWN_PRACTICE_TYPES,
+        practices::{COLOUR_ZONE_DATA_TYPES, Mode},
     },
     services::{create_user_practice, create_yatra_practice},
     tr,
@@ -250,7 +250,7 @@ pub fn new_practice(props: &Props) -> Html {
                         </label>
                     </div>
                     if matches!(&props.mode, Mode::YatraPractice { yatra_id: _ })
-                        && !COLOUR_ZONE_DATA_TYPES
+                        && COLOUR_ZONE_DATA_TYPES
                             .map(|dt| dt.to_string())
                             .contains(&form_data.data_type) {
                         <p class="text-xs text-zinc-500 dark:text-zinc-200">

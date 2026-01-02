@@ -1,6 +1,8 @@
-use gloo_dialogs::{confirm, prompt};
+use gloo_dialogs::confirm;
+use strum::IntoEnumIterator;
+use tw_merge::*;
 use wasm_bindgen_futures::spawn_local;
-use web_sys::HtmlElement;
+use web_sys::{HtmlElement, HtmlInputElement};
 use yew::prelude::*;
 use yew_hooks::{use_async, use_list, use_mount};
 use yew_router::prelude::*;
@@ -10,15 +12,17 @@ use crate::{
         blank_page::{BlankPage, HeaderButtonProps},
         draggable_list::{DraggableList, Item},
         list_errors::ListErrors,
-        share_link::{can_share, emit_signal_callback, set_signal_callback, ShareLink},
+        share_link::{ShareLink, can_share, emit_signal_callback, set_signal_callback},
         summary_details::SummaryDetails,
     },
     css::*,
-    i18n::Locale,
+    i18n::*,
+    model::{Aggregation, PracticeDataType, TimeRange, Yatra, YatraStatistic, YatraStatistics},
     services::{
         delete_yatra, delete_yatra_practice, delete_yatra_user, get_yatra, get_yatra_practices,
-        get_yatra_users, reorder_yatra_practices, toggle_is_admin_yatra_user, yatra_rename,
+        get_yatra_users, reorder_yatra_practices, toggle_is_admin_yatra_user, update_yatra,
     },
+    tr,
 };
 
 use super::AppRoute;
@@ -31,13 +35,16 @@ pub struct Props {
 #[function_component(AdminSettings)]
 pub fn admin_settings(props: &Props) -> Html {
     let reload = use_state(|| true);
-    let yatra_rename_name = use_state(String::default);
+    let yatra_state = use_state(Yatra::default);
+    let stats_config = use_state(YatraStatistics::default);
     let ordered_practices = use_list(vec![]);
     let nav = use_navigator().unwrap();
     let action_user_id = use_mut_ref(|| None::<String>);
     let share_signal = use_state(|| None::<Callback<_>>);
 
     let can_share = can_share();
+
+    //-------------------------------------------------------------------------
 
     let yatra = {
         let yatra_id = props.yatra_id.clone();
@@ -98,10 +105,11 @@ pub fn admin_settings(props: &Props) -> Html {
         })
     };
 
-    let yatra_rename = {
+    let update_yatra = {
         let yatra_id = props.yatra_id.clone();
-        let new_name = yatra_rename_name.clone();
-        use_async(async move { yatra_rename(yatra_id.as_str(), (*new_name).clone()).await })
+        let mut yatra = (*yatra_state).clone();
+        yatra.statistics = (!stats_config.statistics.is_empty()).then_some((*stats_config).clone());
+        use_async(async move { update_yatra(yatra_id.as_str(), yatra).await })
     };
 
     let reorder_practices = {
@@ -112,6 +120,8 @@ pub fn admin_settings(props: &Props) -> Html {
             reorder_yatra_practices(yatra_id.as_str(), op).await
         })
     };
+
+    //-------------------------------------------------------------------------
 
     {
         // This is a hack that forces the state to reload from backend when we redirect
@@ -138,9 +148,14 @@ pub fn admin_settings(props: &Props) -> Html {
     }
 
     {
-        let yatra = yatra.clone();
-        use_effect_with(yatra_rename.clone(), move |_| {
-            yatra.run();
+        let nav = nav.clone();
+        let route = AppRoute::YatraSettings {
+            id: props.yatra_id.to_string(),
+        };
+        use_effect_with(update_yatra.clone(), move |res| {
+            if res.data.is_some() {
+                nav.push(&route);
+            }
             || ()
         });
     }
@@ -157,6 +172,42 @@ pub fn admin_settings(props: &Props) -> Html {
         });
     }
 
+    {
+        let stats_config = stats_config.clone();
+        let yatra_state = yatra_state.clone();
+        use_effect_with(yatra.clone(), move |yatra| {
+            if let Some(yatra) = yatra.data.as_ref() {
+                yatra_state.set(yatra.clone());
+                if let Some(conf) = &yatra.statistics {
+                    stats_config.set(conf.clone());
+                }
+            }
+            || ()
+        });
+    }
+
+    //-------------------------------------------------------------------------
+
+    let is_good_for_practice = |agg: &Aggregation, practice_id: &str| {
+        all_practices
+            .data
+            .as_ref()
+            .and_then(|practices| {
+                practices
+                    .iter()
+                    .find(|p| p.id == practice_id)
+                    .map(|p| p.data_type.to_owned())
+            })
+            .map(|dt| match dt {
+                PracticeDataType::Int | PracticeDataType::Duration => true,
+                PracticeDataType::Time => *agg != Aggregation::Sum,
+                _ => *agg == Aggregation::Count,
+            })
+            .unwrap_or(*agg == Aggregation::Count)
+    };
+
+    //-------------------------------------------------------------------------
+
     let delete = {
         let all_practices = all_practices.clone();
         let yatra_id = props.yatra_id.clone();
@@ -171,6 +222,16 @@ pub fn admin_settings(props: &Props) -> Html {
                     .map(|_| all_practices.run())
                     .unwrap()
             });
+        })
+    };
+
+    let yatra_name_onchange = {
+        let yatra_state = yatra_state.clone();
+        Callback::from(move |e: Event| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+            let mut new_yatra = (*yatra_state).clone();
+            new_yatra.name = input.value();
+            yatra_state.set(new_yatra);
         })
     };
 
@@ -206,7 +267,7 @@ pub fn admin_settings(props: &Props) -> Html {
     let delete_yatra_onclick = {
         let delete_yatra = delete_yatra.clone();
         Callback::from(move |_: MouseEvent| {
-            if confirm(&Locale::current().yatra_delete_warning()) {
+            if confirm(&tr!(yatra_delete_warning)) {
                 delete_yatra.run();
             }
         })
@@ -222,20 +283,10 @@ pub fn admin_settings(props: &Props) -> Html {
         })
     };
 
-    let yatra_rename_onclick = {
-        let yatra = yatra.clone();
-        let yatra_rename = yatra_rename.clone();
-        let new_name = yatra_rename_name.clone();
-        Callback::from(move |_| {
-            if let Some(new_value) = prompt(
-                &Locale::current().name(),
-                yatra.data.as_ref().map(|y| y.name.as_str()),
-            )
-            .filter(|s| !s.trim().is_empty())
-            {
-                new_name.set(new_value.trim().to_owned());
-                yatra_rename.run();
-            }
+    let save_onclick = {
+        let update_yatra = update_yatra.clone();
+        Callback::from(move |_: MouseEvent| {
+            update_yatra.run();
         })
     };
 
@@ -244,7 +295,7 @@ pub fn admin_settings(props: &Props) -> Html {
         let delete_member = delete_member.clone();
         Callback::from(move |e: MouseEvent| {
             e.prevent_default();
-            if confirm(&Locale::current().yatra_delete_member_confirmation()) {
+            if confirm(&tr!(yatra_delete_member_confirmation)) {
                 let input: HtmlElement = e.target_unchecked_into();
                 user_id.replace(Some(input.id()));
                 delete_member.run();
@@ -263,9 +314,87 @@ pub fn admin_settings(props: &Props) -> Html {
         })
     };
 
+    let update_stats_state = |f: fn(&mut YatraStatistic, String)| {
+        let stats_config = stats_config.clone();
+        Callback::from(move |e: Event| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+            let v = input.value();
+            let idx: usize = input
+                .id()
+                .parse()
+                .unwrap_or_else(|_| panic!("Failed to parse index from id {}", input.id()));
+            let mut new_config = (*stats_config).clone();
+            if let Some(stat) = new_config.statistics.get_mut(idx) {
+                f(stat, v);
+            }
+            stats_config.set(new_config);
+        })
+    };
+
+    let stats_visibility_onchange = {
+        let stats_config = stats_config.clone();
+        Callback::from(move |e: Event| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+            let mut new_config = (*stats_config).clone();
+            new_config.visible_to_all = input.value() == "Everyone";
+            stats_config.set(new_config);
+        })
+    };
+
+    let stats_label_onchange = update_stats_state(|stat, v| stat.label = v);
+
+    let stats_practice_onchange = update_stats_state(|stat, v| {
+        stat.practice_id = v;
+        stat.aggregation = Default::default();
+    });
+
+    let aggregation_onchange = update_stats_state(|stat, v| {
+        if let Ok(agg) = v.parse() {
+            stat.aggregation = agg;
+        }
+    });
+
+    let stats_time_range_onchange = update_stats_state(|stat, v| {
+        if let Ok(tr) = v.parse() {
+            stat.time_range = tr;
+        }
+    });
+
+    let stats_delete_onclick = {
+        let stats_config = stats_config.clone();
+        Callback::from(move |e: MouseEvent| {
+            e.prevent_default();
+            let input: HtmlElement = e.target_unchecked_into();
+            let idx: usize = input
+                .id()
+                .parse()
+                .unwrap_or_else(|_| panic!("Failed to parse index from id {}", input.id()));
+            let mut new_config = (*stats_config).clone();
+            if idx < new_config.statistics.len() {
+                new_config.statistics.remove(idx);
+            }
+            stats_config.set(new_config);
+        })
+    };
+
+    let add_stat_onclick = {
+        let stats_config = stats_config.clone();
+        Callback::from(move |_: MouseEvent| {
+            let mut new_config = (*stats_config).clone();
+            new_config.statistics.push(Default::default());
+            stats_config.set(new_config);
+        })
+    };
+
+    //-------------------------------------------------------------------------
+
+    let visibility_options = [
+        tr!(yatra_stats_visibility_admins),
+        tr!(yatra_stats_visibility_everyone),
+    ];
+
     html! {
         <BlankPage
-            header_label={yatra.data.iter().map(|y| y.name.clone()).next().unwrap_or_default()}
             left_button={HeaderButtonProps::done(AppRoute::YatraSettings { id: props.yatra_id.to_string(), })}
             loading={all_practices.loading || members.loading}
         >
@@ -274,13 +403,32 @@ pub fn admin_settings(props: &Props) -> Html {
             <ListErrors error={toggle_is_admin.error.clone()} />
             <ListErrors error={delete_member.error.clone()} />
             <ListErrors error={reorder_practices.error.clone()} />
-            <ListErrors error={yatra_rename.error.clone()} />
+            <ListErrors error={update_yatra.error.clone()} />
             <ListErrors error={delete_yatra.error.clone()} />
-            <div class={BODY_DIV_CSS}>
-                // TODO: add setting for renaming yatra and checking the flag
+            <div class={BODY_DIV_NO_PADDING_CSS}>
                 <form>
+                    <SummaryDetails open=true label={tr!(yatra_general)}>
+                        <div class={BODY_DIV_CSS}>
+                            <div class="relative">
+                                <input
+                                    onchange={yatra_name_onchange}
+                                    type="text"
+                                    id="yatra_name"
+                                    value={yatra_state.name.clone()}
+                                    placeholder="yatra_name"
+                                    autocomplete="off"
+                                    required=true
+                                    class={tw_merge!(INPUT_CSS, "text-center")}
+                                />
+                                <label for="yatra_name" class={INPUT_LABEL_CSS}>
+                                    <i class="icon-doc" />
+                                    { tr!(yatra_name_label) }
+                                </label>
+                            </div>
+                        </div>
+                    </SummaryDetails>
                     if !all_practices.loading {
-                        <SummaryDetails open=true label={Locale::current().yatra_practices()}>
+                        <SummaryDetails open=true label={tr!(yatra_practices)}>
                             <DraggableList
                                 items={all_practices.data
                                     .as_ref()
@@ -293,14 +441,25 @@ pub fn admin_settings(props: &Props) -> Html {
                                 is_hidden={Callback::from(|_| false)}
                                 rename={edit_practice}
                                 request_new_name=false
-                                rename_popup_label={Locale::current().enter_new_practice_name()}
+                                rename_popup_label={tr!(enter_new_practice_name)}
                                 delete={delete.clone()}
-                                delete_popup_label={Locale::current().yatra_delete_practice_warning()}
+                                delete_popup_label={tr!(yatra_delete_practice_warning)}
                                 reorder={reorder.clone()}
                             />
+                            <div>
+                                <button class={BTN_CSS} onclick={new_yatra_practice_onclick}>
+                                    <i class="icon-plus" />
+                                    { tr!(add_new_practice) }
+                                </button>
+                            </div>
                         </SummaryDetails>
-                        <SummaryDetails label={Locale::current().yatra_members()}>
-                            { for members.data.as_ref().unwrap_or(&vec![]).iter().enumerate().map( |(idx, user)| html! {
+                        <SummaryDetails label={tr!(yatra_members)}>
+                            { for members
+                                    .data.as_ref()
+                                    .unwrap_or(&vec![])
+                                    .iter()
+                                    .enumerate()
+                                    .map( |(idx, user)| html! {
                             <div class="flex w-full justify-center align-baseline">
                                 <label
                                     class="flex w-full justify-between whitespace-nowrap mb-6"
@@ -313,7 +472,7 @@ pub fn admin_settings(props: &Props) -> Html {
                                     onclick={toggle_is_admin_onclick.clone()}
                                     id={user.user_id.clone()}
                                     >
-                                    {Locale::current().yatra_admin_label()}
+                                    {tr!(yatra_admin_label)}
                                 </div>
                                 <label>
                                     <i onclick={delete_member_onclick.clone()} id={user.user_id.clone()} class="cursor-pointer icon-bin"/>
@@ -321,32 +480,169 @@ pub fn admin_settings(props: &Props) -> Html {
                             </div>
                             }) }
                         </SummaryDetails>
+                        <SummaryDetails label={tr!(yatra_stats_section_label)}>
+                            <div
+                                class={tw_merge!(if stats_config.statistics.is_empty() { BODY_DIV_CSS } else { BODY_DIV_BASE_CSS }, "pt-8")}
+                            >
+                                <div class="relative">
+                                    <select
+                                        onchange={stats_visibility_onchange}
+                                        id="visibility"
+                                        class={tw_merge!(
+                                                INPUT_CSS,
+                                                "appearance-none text-center [text-align-last:center] has-value",
+                                            )}
+                                    >
+                                        { for visibility_options.iter().enumerate().map(|(i, option)| html! {
+                                            <option value={ option.clone() } selected={ stats_config.visible_to_all && i == 1 } >{ option.clone() }</option>
+                                        }) }
+                                    </select>
+                                    <label for="visibility" class={INPUT_SELECT_LABEL_CSS}>
+                                        <i class="icon-rounds" />
+                                        { tr!(yatra_stats_visible_to) }
+                                    </label>
+                                </div>
+                                { for stats_config.statistics.iter().enumerate().map(|(idx, stat)| html! {
+                                    <SummaryDetails
+                                        label={
+                                            if stat.label.is_empty() {
+                                                tr!(yatra_stats_stat_heading, Index(&(idx + 1).to_string()))
+                                            } else {
+                                                stat.label.clone()
+                                            }}
+                                    >
+                                        <div id={idx.to_string()} class={BODY_DIV_CSS}>
+                                            <div class="relative">
+                                                <input
+                                                    onchange={stats_label_onchange.clone()}
+                                                    type="text"
+                                                    id={idx.to_string()}
+                                                    value={stat.label.to_owned()}
+                                                    placeholder="label"
+                                                    autocomplete="off"
+                                                    required=true
+                                                    class={tw_merge!(INPUT_CSS, "text-center")}
+                                                />
+                                                <label for={idx.to_string()} class={INPUT_LABEL_CSS}>
+                                                    <i class="icon-rounds"/>
+                                                    { tr!(yatra_stats_stat_label) }
+                                                </label>
+                                            </div>
+                                            <div class="relative">
+                                                <select
+                                                    onchange={stats_practice_onchange.clone()}
+                                                    id={idx.to_string()}
+                                                    class={
+                                                        tw_merge!(
+                                                            INPUT_CSS,
+                                                            "appearance-none text-center [text-align-last:center]",
+                                                            if !stat.practice_id.is_empty() { "has-value" } else { "" }
+                                                        )
+                                                    }
+                                                >
+                                                    <option value="" selected={ stat.practice_id.is_empty() } />
+                                                    { for all_practices.data.iter().flat_map(|inner| inner.iter()).map(|p| {
+                                                        html! {
+                                                            <option value={ p.id.to_owned() } selected={ p.id == stat.practice_id }>{ p.practice.as_str() }</option>
+                                                        }
+                                                    }) }
+                                                </select>
+                                                <label for={idx.to_string()} class={INPUT_SELECT_LABEL_CSS}>
+                                                    <i class="icon-rounds"/>
+                                                    { tr!(yatra_stats_practice_label) }
+                                                </label>
+                                            </div>
+                                            <div class="relative">
+                                                <select
+                                                    onchange={aggregation_onchange.clone()}
+                                                    id={idx.to_string()}
+                                                    required=true
+                                                    class={
+                                                        tw_merge!(
+                                                            INPUT_CSS,
+                                                            "appearance-none text-center [text-align-last:center] has-value",
+                                                        )
+                                                    }
+                                                >
+                                                    { for Aggregation::iter().filter(|agg| is_good_for_practice(agg, &stat.practice_id)).map(|agg| {
+                                                        html! {
+                                                            <option value={ agg.to_string() } selected={ agg == stat.aggregation }>{ agg.to_localised_string() }</option>
+                                                        }
+                                                    }) }
+                                                </select>
+                                                <label for={idx.to_string()} class={INPUT_SELECT_LABEL_CSS}>
+                                                    <i class="icon-rounds"/>
+                                                    { tr!(yatra_stats_agg_label) }
+                                                </label>
+                                            </div>
+                                            <div class="relative">
+                                                <select
+                                                    onchange={stats_time_range_onchange.clone()}
+                                                    id={ idx.to_string() }
+                                                    required=true
+                                                    class={
+                                                        tw_merge!(
+                                                            INPUT_CSS,
+                                                            "appearance-none text-center [text-align-last:center] has-value",
+                                                        )
+                                                    }
+                                                >
+                                                    { for TimeRange::iter().map(|tr| {
+                                                        html! {
+                                                            <option value={ tr.to_string() } selected={ tr == stat.time_range }>{ tr.to_localised_string() }</option>
+                                                        }
+                                                    }) }
+                                                </select>
+                                                <label for={ idx.to_string() } class={ INPUT_SELECT_LABEL_CSS }>
+                                                    <i class="icon-rounds"/>
+                                                    { tr!(yatra_stats_time_range_label) }
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <button type="button" id={ idx.to_string() } class={ BTN_CSS } onclick={ stats_delete_onclick.clone() }>
+                                                    <i class="icon-bin" />
+                                                    { tr!(yatra_stats_delete_stat) }
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </SummaryDetails>
+                                }) }
+                                <div>
+                                    <button
+                                        type="button"
+                                        class={BTN_CSS}
+                                        onclick={add_stat_onclick}
+                                    >
+                                        <i class="icon-plus" />
+                                        { tr!(yatra_stats_add_stat) }
+                                    </button>
+                                </div>
+                            </div>
+                        </SummaryDetails>
                     }
                 </form>
                 <div class="relative">
-                    <button class={BTN_CSS} onclick={new_yatra_practice_onclick}>
-                        <i class="icon-plus" />
-                        { Locale::current().add_new_practice() }
-                    </button>
                     <button
                         type="button"
                         onclick={emit_signal_callback(&share_signal)}
-                        class={BTN_CSS}
+                        class={tw_merge!(BTN_CSS, "mb-0")}
                     >
                         <i class={if can_share {"icon-share"} else {"icon-doc-dup"}} />
-                        { format!(" {}", if can_share {Locale::current().yatra_share_join_link()} else {Locale::current().yatra_copy_join_link()}) }
+                        { if can_share {tr!(yatra_share_join_link)} else {tr!(yatra_copy_join_link)} }
                     </button>
                     <ShareLink
                         relative_link={format!("/yatra/{}/join", props.yatra_id.as_str())}
                         run_signal={set_signal_callback(&share_signal)}
                     />
-                    <button class={BTN_CSS} onclick={yatra_rename_onclick}>
-                        <i class="icon-edit" />
-                        { Locale::current().yatra_rename() }
-                    </button>
-                    <button class={SUBMIT_BTN_CSS} onclick={delete_yatra_onclick}>
+                </div>
+                <div class={TWO_COLS_CSS}>
+                    <button class={BTN_CSS} onclick={delete_yatra_onclick}>
                         <i class="icon-bin" />
-                        { format!(" {}", Locale::current().yatra_delete()) }
+                        { tr!(yatra_delete) }
+                    </button>
+                    <button class={SUBMIT_BTN_CSS} onclick={save_onclick}>
+                        <i class="icon-save" />
+                        { tr!(save) }
                     </button>
                 </div>
             </div>
