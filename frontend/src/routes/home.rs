@@ -58,7 +58,7 @@ pub fn home() -> Html {
         let session = session_ctx.clone();
         let entry = current_entry.clone();
         use_async(async move {
-            if let Some(e) = entry.as_ref() {
+            if let Some(e) = &*entry {
                 save_diary_entry(&session.selected_date, e).await.map(|_| {
                     entry.set(None);
                 })

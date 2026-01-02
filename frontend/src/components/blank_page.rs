@@ -1,10 +1,10 @@
 use gloo::utils::format::JsValueSerdeExt;
 use serde::Deserialize;
 use tw_merge::*;
-use wasm_bindgen::{closure::Closure, JsCast};
+use wasm_bindgen::{JsCast, closure::Closure};
 use web_sys::{BroadcastChannel, MessageEvent};
 use yew::{html::onclick::Event, prelude::*};
-use yew_hooks::{use_bool_toggle, use_mount, use_timeout, UseToggleHandle};
+use yew_hooks::{UseToggleHandle, use_bool_toggle, use_mount, use_timeout};
 use yew_router::prelude::*;
 
 use super::{calendar::Calendar, month_calendar::MonthCalendar};
@@ -292,7 +292,7 @@ fn header_button(
                 <>
                 <button type={props.btn_type.as_str()} class={css.clone()} onclick={onclick(&props.action)}>
                     <i class={props.icon_css.to_owned().unwrap_or_default()}></i>
-                    if let Some(l) = props.label.as_ref() {
+                    if let Some(l) = &props.label {
                         {l}
                     }
                 </button>
@@ -479,7 +479,7 @@ pub fn blank_page(props: &Props) -> Html {
                                     highlight_incomplete_dates={props.calendar.as_ref().map(|cal| cal.highlight_incomplete_dates).unwrap_or(false)}
                                 />
                             }
-                            if let Some(cal) = props.calendar.as_ref() {
+                            if let Some(cal) = &props.calendar {
                                 <Calendar
                                     highlight_incomplete_dates={cal.highlight_incomplete_dates}
                                     selected_date_incomplete={cal.selected_date_incomplete}

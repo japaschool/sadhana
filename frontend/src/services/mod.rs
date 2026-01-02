@@ -179,9 +179,9 @@ pub async fn delete_yatra(yatra_id: &str) -> Result<(), AppError> {
     request_api_delete(&format!("/yatra/{yatra_id}")).await
 }
 
-/// Rename yatra
-pub async fn yatra_rename(yatra_id: &str, name: String) -> Result<(), AppError> {
-    request_api_put(&format!("/yatra/{yatra_id}"), &RenameYatra { name }).await
+/// Update yatra
+pub async fn update_yatra(yatra_id: &str, yatra: Yatra) -> Result<(), AppError> {
+    request_api_put(&format!("/yatra/{yatra_id}"), &UpdateYatra { yatra }).await
 }
 
 /// Check is_admin flag

@@ -1,4 +1,4 @@
-use actix_web::{web, HttpRequest, HttpResponse};
+use actix_web::{HttpRequest, HttpResponse, web};
 use chrono::NaiveDate;
 use common::error::AppError;
 use diesel::{
@@ -20,11 +20,12 @@ use crate::{
     },
 };
 
-#[derive(Serialize, Debug, Queryable, Selectable)]
+#[derive(Serialize, Deserialize, Debug, Queryable, Selectable)]
 #[diesel(table_name = yatras)]
 pub struct Yatra {
     pub id: Uuid,
     pub name: String,
+    pub statistics: Option<JsonValue>,
 }
 
 impl Yatra {
@@ -175,7 +176,11 @@ impl Yatra {
             Ok::<_, diesel::result::Error>(id)
         })?;
 
-        Ok(Yatra { id, name })
+        Ok(Yatra {
+            id,
+            name,
+            statistics: None,
+        })
     }
 
     pub fn delete(
@@ -198,17 +203,14 @@ impl Yatra {
         Ok(())
     }
 
-    pub fn rename(
-        conn: &mut PgConnection,
-        user_id: &Uuid,
-        yatra_id: &Uuid,
-        new_name: &str,
-    ) -> Result<(), AppError> {
-        Yatra::ensure_admin_user(conn, user_id, yatra_id)?;
+    pub fn update(&self, conn: &mut PgConnection, user_id: &Uuid) -> Result<(), AppError> {
+        Yatra::ensure_admin_user(conn, user_id, &self.id)?;
 
-        diesel::update(yatras::table)
-            .set(yatras::name.eq(&new_name))
-            .filter(yatras::id.eq(&yatra_id))
+        diesel::update(yatras::table.find(&self.id))
+            .set((
+                yatras::name.eq(&self.name),
+                yatras::statistics.eq(&self.statistics),
+            ))
             .execute(conn)?;
 
         Ok(())
@@ -704,17 +706,16 @@ pub async fn delete_yatra(
 }
 
 /// Rename yatra
-pub async fn yatra_rename(
+pub async fn update_yatra(
     state: web::Data<AppState>,
     req: HttpRequest,
-    path: web::Path<YatraIdSlug>,
-    form: web::Json<RenameYatraForm>,
+    form: web::Json<UpdateYatraForm>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
-    let yatra_id = path.into_inner();
+    let yatra = form.into_inner().yatra;
 
-    web::block(move || Yatra::rename(&mut conn, &user_id, &yatra_id, &form.name)).await??;
+    web::block(move || yatra.update(&mut conn, &user_id)).await??;
 
     Ok(HttpResponse::Ok().json(()))
 }
@@ -874,7 +875,7 @@ pub async fn update_yatra_practice_order_key(
         .iter()
         .enumerate()
         .map(|(idx, practice)| UpdateYatraPracticeOrderKey {
-            practice_id: practice.clone(),
+            practice_id: *practice,
             order_key: idx as i32,
         })
         .collect();
@@ -937,8 +938,8 @@ pub struct CreateYatraForm {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct RenameYatraForm {
-    name: String,
+pub struct UpdateYatraForm {
+    yatra: Yatra,
 }
 
 #[derive(Deserialize, Debug)]

@@ -1,16 +1,16 @@
 use std::error::Error;
 
 use super::{
-    base::ChartsBase, graph_editor::GraphEditor, grid_editor::GridEditor, Report, ReportDefinition,
-    SelectedReportId, SELECTED_REPORT_ID_KEY,
+    Report, ReportDefinition, SELECTED_REPORT_ID_KEY, SelectedReportId, base::ChartsBase,
+    graph_editor::GraphEditor, grid_editor::GridEditor,
 };
 use crate::{
     components::{
         blank_page::{BlankPage, CalendarProps, CtxMenuEntry, HeaderButtonProps},
         list_errors::ListErrors,
-        share_link::{can_share, emit_signal_callback, set_signal_callback, ShareLink},
+        share_link::{ShareLink, can_share, emit_signal_callback, set_signal_callback},
     },
-    hooks::{use_user_context, SessionStateContext},
+    hooks::{SessionStateContext, use_user_context},
     i18n::Locale,
     model::ReportData,
     routes::AppRoute,
@@ -54,7 +54,7 @@ pub fn charts() -> Html {
         let editing = editing.clone();
         let active_report = active_report.clone();
         use_async(async move {
-            if let Some(rep) = active_report.as_ref() {
+            if let Some(rep) = &*active_report {
                 delete_report(&rep.id).await.map(|_| {
                     reports.run();
                     editing.toggle();
@@ -70,7 +70,7 @@ pub fn charts() -> Html {
         let reports = reports.clone();
         let editing = editing.clone();
         use_async(async move {
-            if let Some(rep) = active_report.as_ref() {
+            if let Some(rep) = &*active_report {
                 update_report(&rep.id, rep.into()).await.map(|_| {
                     editing.toggle();
                     reports.run();
@@ -123,7 +123,7 @@ pub fn charts() -> Html {
         let reports = reports.clone();
         move || {
             log::debug!("Resetting active");
-            if let Some(reports) = reports.data.as_ref() {
+            if let Some(reports) = &reports.data {
                 log::debug!("Resetting active:: found some reports");
                 let new_report = LocalStorage::get::<SelectedReportId>(SELECTED_REPORT_ID_KEY)
                     .ok()
@@ -170,7 +170,7 @@ pub fn charts() -> Html {
         let active = active_report.clone();
         let reports = reports.clone();
         Callback::from(move |id: SelectedReportId| {
-            if let Some(reports) = reports.data.as_ref() {
+            if let Some(reports) = &reports.data {
                 active.set(reports.iter().find(|r| r.id == id.report_id).cloned());
                 LocalStorage::set(SELECTED_REPORT_ID_KEY, id).unwrap();
             }
@@ -251,7 +251,7 @@ pub fn charts() -> Html {
     let graph_report_onchange = {
         let report = active_report.clone();
         Callback::from(move |(new_name, new_graph)| {
-            if let Some(rep) = report.as_ref() {
+            if let Some(rep) = &*report {
                 let mut new_report = rep.clone();
                 new_report.definition = ReportDefinition::Graph(new_graph);
                 new_report.name = new_name;
@@ -263,7 +263,7 @@ pub fn charts() -> Html {
     let grid_report_onchange = {
         let report = active_report.clone();
         Callback::from(move |(new_name, new_grid)| {
-            if let Some(rep) = report.as_ref() {
+            if let Some(rep) = &*report {
                 let mut new_report = rep.clone();
                 new_report.definition = ReportDefinition::Grid(new_grid);
                 new_report.name = new_name;
