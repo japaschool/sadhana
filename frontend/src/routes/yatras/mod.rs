@@ -12,6 +12,7 @@ use crate::{
         blank_page::{BlankPage, ButtonType, CalendarProps, HeaderButtonProps},
         grid::*,
         list_errors::ListErrors,
+        summary_details::*,
     },
     css::*,
     hooks::SessionStateContext,
@@ -19,6 +20,7 @@ use crate::{
     model::{PracticeEntryValue, Yatra, YatraData, YatraDataRow},
     routes::AppRoute,
     services::{create_yatra, get_user_yatras, get_yatra_data},
+    tr,
 };
 
 pub mod admin_settings;
@@ -217,6 +219,26 @@ pub fn yatras() -> Html {
                 </div>
             </div>
             <Grid header={grid_header} data={grid_data} color_coding={grid_colour_coding} />
+            if data.data.iter().any(|inner| !inner.statistics.is_empty()) {
+                <div class={BODY_DIV_BASE_CSS}>
+                    <SummaryDetails label={tr!(yatra_stats_label)} open=true>
+                        <div class={tw_merge!(TWO_COLS_CSS, "gap-x-4 gap-y-2")}>
+                            { for data.data.iter().flat_map(|inner| inner.statistics.iter()).map(|stat| html! {
+                                <div class="relative flex justify-between">
+                                    <label>{ format!("{}: ", stat.label) }</label>
+                                    <label class="font-extrabold">
+                                        { stat.value
+                                            .as_ref()
+                                            .map(|v|v.to_string())
+                                            .unwrap_or(tr!(yatra_stats_empty_value))
+                                        }
+                                    </label>
+                                </div>
+                            }) }
+                        </div>
+                    </SummaryDetails>
+                </div>
+            }
         </>
     };
 

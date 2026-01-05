@@ -624,17 +624,24 @@ pub struct UpdateYatraPracticesOrderKey {
     pub practices: Vec<String>,
 }
 
-#[derive(Debug, Deserialize, Default, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct YatraDataRow {
     pub user_id: String,
     pub user_name: String,
     pub row: Vec<Option<PracticeEntryValue>>,
 }
 
+#[derive(Debug, Deserialize, Clone)]
+pub struct YatraStatisticRow {
+    pub label: String,
+    pub value: Option<PracticeEntryValue>,
+}
+
 #[derive(Debug, Deserialize, Default, Clone)]
 pub struct YatraData {
     pub practices: Vec<YatraPractice>,
     pub data: Vec<YatraDataRow>,
+    pub statistics: Vec<YatraStatisticRow>,
 }
 
 #[derive(Debug, Serialize)]

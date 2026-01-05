@@ -283,13 +283,6 @@ pub fn admin_settings(props: &Props) -> Html {
         })
     };
 
-    let save_onclick = {
-        let update_yatra = update_yatra.clone();
-        Callback::from(move |_: MouseEvent| {
-            update_yatra.run();
-        })
-    };
-
     let delete_member_onclick = {
         let user_id = action_user_id.clone();
         let delete_member = delete_member.clone();
@@ -405,8 +398,13 @@ pub fn admin_settings(props: &Props) -> Html {
             <ListErrors error={reorder_practices.error.clone()} />
             <ListErrors error={update_yatra.error.clone()} />
             <ListErrors error={delete_yatra.error.clone()} />
-            <div class={BODY_DIV_NO_PADDING_CSS}>
-                <form>
+            <form
+                onsubmit={let update_yatra = update_yatra.clone();
+                    Callback::from(move |_: SubmitEvent| {
+                        update_yatra.run();
+                    })}
+            >
+                <div class={tw_merge!(BODY_DIV_BASE_CSS, "mx-auto max-w-md")}>
                     <SummaryDetails open=true label={tr!(yatra_general)}>
                         <div class={BODY_DIV_CSS}>
                             <div class="relative">
@@ -510,6 +508,7 @@ pub fn admin_settings(props: &Props) -> Html {
                                             } else {
                                                 stat.label.clone()
                                             }}
+                                        open={ stat.label.is_empty() || stat.practice_id.is_empty() }
                                     >
                                         <div id={idx.to_string()} class={BODY_DIV_CSS}>
                                             <div class="relative">
@@ -532,6 +531,7 @@ pub fn admin_settings(props: &Props) -> Html {
                                                 <select
                                                     onchange={stats_practice_onchange.clone()}
                                                     id={idx.to_string()}
+                                                    required=true
                                                     class={
                                                         tw_merge!(
                                                             INPUT_CSS,
@@ -540,7 +540,12 @@ pub fn admin_settings(props: &Props) -> Html {
                                                         )
                                                     }
                                                 >
-                                                    <option value="" selected={ stat.practice_id.is_empty() } />
+                                                    <option class="text-black"
+                                                        value=""
+                                                        disabled=true
+                                                        style="display: none"
+                                                        selected={ stat.practice_id.is_empty() }
+                                                    />
                                                     { for all_practices.data.iter().flat_map(|inner| inner.iter()).map(|p| {
                                                         html! {
                                                             <option value={ p.id.to_owned() } selected={ p.id == stat.practice_id }>{ p.practice.as_str() }</option>
@@ -620,32 +625,34 @@ pub fn admin_settings(props: &Props) -> Html {
                             </div>
                         </SummaryDetails>
                     }
-                </form>
-                <div class="relative">
-                    <button
-                        type="button"
-                        onclick={emit_signal_callback(&share_signal)}
-                        class={tw_merge!(BTN_CSS, "mb-0")}
+                    <div
+                        class="relative"
                     >
-                        <i class={if can_share {"icon-share"} else {"icon-doc-dup"}} />
-                        { if can_share {tr!(yatra_share_join_link)} else {tr!(yatra_copy_join_link)} }
-                    </button>
-                    <ShareLink
-                        relative_link={format!("/yatra/{}/join", props.yatra_id.as_str())}
-                        run_signal={set_signal_callback(&share_signal)}
-                    />
+                        <button
+                            type="button"
+                            onclick={emit_signal_callback(&share_signal)}
+                            class={BTN_CSS}
+                        >
+                            <i class={if can_share {"icon-share"} else {"icon-doc-dup"}} />
+                            { if can_share {tr!(yatra_share_join_link)} else {tr!(yatra_copy_join_link)} }
+                        </button>
+                        <ShareLink
+                            relative_link={format!("/yatra/{}/join", props.yatra_id.as_str())}
+                            run_signal={set_signal_callback(&share_signal)}
+                        />
+                    </div>
+                    <div class={tw_merge!(TWO_COLS_NO_GAP_CSS, "gap-x-8")}>
+                        <button class={BTN_CSS} onclick={delete_yatra_onclick}>
+                            <i class="icon-bin" />
+                            { tr!(yatra_delete) }
+                        </button>
+                        <button class={SUBMIT_BTN_CSS}>
+                            <i class="icon-save" />
+                            { tr!(save) }
+                        </button>
+                    </div>
                 </div>
-                <div class={TWO_COLS_CSS}>
-                    <button class={BTN_CSS} onclick={delete_yatra_onclick}>
-                        <i class="icon-bin" />
-                        { tr!(yatra_delete) }
-                    </button>
-                    <button class={SUBMIT_BTN_CSS} onclick={save_onclick}>
-                        <i class="icon-save" />
-                        { tr!(save) }
-                    </button>
-                </div>
-            </div>
+            </form>
         </BlankPage>
     }
 }

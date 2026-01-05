@@ -1,7 +1,7 @@
 use std::string::FromUtf8Error;
 
 #[cfg(feature = "backend")]
-use actix_web::{error::BlockingError, http::StatusCode, HttpResponse, ResponseError};
+use actix_web::{HttpResponse, ResponseError, error::BlockingError, http::StatusCode};
 #[cfg(feature = "backend")]
 use bcrypt::BcryptError;
 #[cfg(feature = "backend")]
@@ -14,6 +14,8 @@ use jsonwebtoken::errors::{Error as JwtError, ErrorKind as JwtErrorKind};
 use lettre::{
     address::AddressError, error::Error as LettreError, transport::smtp::Error as LettreSmtpError,
 };
+#[cfg(feature = "backend")]
+use serde_json::Error as SerdeError;
 #[cfg(feature = "backend")]
 use uuid::Error as UuidError;
 #[cfg(feature = "backend")]
@@ -61,7 +63,7 @@ impl ResponseError for AppError {
             AppError::NotFound => HttpResponse::NotFound().finish(),
             AppError::UnprocessableEntity(ref msg) => HttpResponse::UnprocessableEntity().json(msg),
             AppError::InternalServerError => HttpResponse::InternalServerError().finish(),
-            AppError::DeserializeError => unreachable!(),
+            AppError::DeserializeError => HttpResponse::BadRequest().finish(),
             AppError::RequestError => unreachable!(),
         }
     }
@@ -72,7 +74,7 @@ impl ResponseError for AppError {
             AppError::NotFound => StatusCode::NOT_FOUND,
             AppError::UnprocessableEntity(_) => StatusCode::UNPROCESSABLE_ENTITY,
             AppError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
-            AppError::DeserializeError => unreachable!(),
+            AppError::DeserializeError => StatusCode::BAD_REQUEST,
             AppError::RequestError => unreachable!(),
         }
     }
@@ -197,6 +199,17 @@ impl From<LettreError> for AppError {
 impl From<FromUtf8Error> for AppError {
     fn from(err: FromUtf8Error) -> Self {
         log::error!("Failed to url decode a parameter: {:?}", err.to_string());
+        AppError::DeserializeError
+    }
+}
+
+#[cfg(feature = "backend")]
+impl From<SerdeError> for AppError {
+    fn from(err: SerdeError) -> Self {
+        log::error!(
+            "Failed to serialize/deserialize data: {:?}",
+            err.to_string()
+        );
         AppError::DeserializeError
     }
 }
