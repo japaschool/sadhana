@@ -15,8 +15,8 @@ use crate::{
     i18n::*,
     model::{NewUserPractice, NewYatraPractice},
     routes::{
+        practices::{Mode, COLOUR_ZONE_DATA_TYPES},
         DROPDOWN_PRACTICE_TYPES,
-        practices::{COLOUR_ZONE_DATA_TYPES, Mode},
     },
     services::{create_user_practice, create_yatra_practice},
     tr,

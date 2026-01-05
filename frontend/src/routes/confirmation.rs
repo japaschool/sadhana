@@ -6,10 +6,11 @@ use yew_hooks::prelude::*;
 use yew_router::prelude::*;
 
 use crate::{
+    AppRoute,
     components::{blank_page::BlankPage, list_errors::ListErrors},
     i18n::*,
     model::SendConfirmationLink,
-    services, AppRoute,
+    services,
 };
 
 #[derive(Properties, PartialEq)]

@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
 use actix_web::{HttpRequest, HttpResponse, web};
-use chrono::NaiveDate;
+use chrono::{Days, NaiveDate};
 use common::error::AppError;
 use diesel::{
     dsl::{self, sql},
@@ -18,6 +20,7 @@ use crate::{
         sql_types::PracticeDataTypeEnum, user_practices, users, yatra_practices,
         yatra_user_practices, yatra_users, yatras,
     },
+    utils::date::*,
 };
 
 #[derive(Serialize, Deserialize, Debug, Queryable, Selectable)]
@@ -29,7 +32,7 @@ pub struct Yatra {
 }
 
 impl Yatra {
-    pub fn join(conn: &mut PgConnection, user_id: &Uuid, yatra_id: &Uuid) -> Result<(), AppError> {
+    fn join(conn: &mut PgConnection, user_id: &Uuid, yatra_id: &Uuid) -> Result<(), AppError> {
         diesel::insert_into(yatra_users::table)
             .values((
                 yatra_users::yatra_id.eq(&yatra_id),
@@ -64,7 +67,7 @@ impl Yatra {
         Ok(())
     }
 
-    pub fn leave(conn: &mut PgConnection, user_id: &Uuid, yatra_id: &Uuid) -> Result<(), AppError> {
+    fn leave(conn: &mut PgConnection, user_id: &Uuid, yatra_id: &Uuid) -> Result<(), AppError> {
         Self::ensure_has_other_admins(conn, user_id, yatra_id)?;
 
         conn.transaction(|conn| {
@@ -95,7 +98,7 @@ impl Yatra {
         Ok(())
     }
 
-    pub fn is_admin(
+    fn is_admin(
         conn: &mut PgConnection,
         user_id: &Uuid,
         yatra_id: &Uuid,
@@ -113,7 +116,7 @@ impl Yatra {
         Ok(cnt > 0)
     }
 
-    pub fn toggle_is_admin(
+    fn toggle_is_admin(
         conn: &mut PgConnection,
         current_user_id: &Uuid,
         user_id: &Uuid,
@@ -133,11 +136,26 @@ impl Yatra {
         Ok(())
     }
 
-    pub fn get_yatra(conn: &mut PgConnection, yatra_id: &Uuid) -> Result<Self, AppError> {
+    fn get_yatra(conn: &mut PgConnection, yatra_id: &Uuid) -> Result<Self, AppError> {
         let res = yatras::table
             .select(Yatra::as_select())
             .filter(yatras::id.eq(&yatra_id))
             .first(conn)?;
+        Ok(res)
+    }
+
+    fn get_yatra_stats(
+        conn: &mut PgConnection,
+        yatra_id: &Uuid,
+    ) -> Result<Option<YatraStatistics>, AppError> {
+        let yatra = Self::get_yatra(conn, yatra_id)?;
+        let res = match yatra.statistics {
+            Some(stats_json) => {
+                let stats: YatraStatistics = serde_json::from_value(stats_json)?;
+                Some(stats)
+            }
+            None => None,
+        };
         Ok(res)
     }
 
@@ -158,7 +176,7 @@ impl Yatra {
         }
     }
 
-    pub fn create(conn: &mut PgConnection, name: String, user_id: &Uuid) -> Result<Self, AppError> {
+    fn create(conn: &mut PgConnection, name: String, user_id: &Uuid) -> Result<Self, AppError> {
         let id = conn.transaction(|conn| {
             let id = diesel::insert_into(yatras::table)
                 .values(yatras::name.eq(&name))
@@ -183,11 +201,7 @@ impl Yatra {
         })
     }
 
-    pub fn delete(
-        conn: &mut PgConnection,
-        user_id: &Uuid,
-        yatra_id: &Uuid,
-    ) -> Result<(), AppError> {
+    fn delete(conn: &mut PgConnection, user_id: &Uuid, yatra_id: &Uuid) -> Result<(), AppError> {
         Yatra::ensure_admin_user(conn, user_id, yatra_id)?;
 
         conn.transaction(|conn| {
@@ -203,7 +217,7 @@ impl Yatra {
         Ok(())
     }
 
-    pub fn update(&self, conn: &mut PgConnection, user_id: &Uuid) -> Result<(), AppError> {
+    fn update(&self, conn: &mut PgConnection, user_id: &Uuid) -> Result<(), AppError> {
         Yatra::ensure_admin_user(conn, user_id, &self.id)?;
 
         diesel::update(yatras::table.find(&self.id))
@@ -216,7 +230,7 @@ impl Yatra {
         Ok(())
     }
 
-    pub fn get_user_yatras(conn: &mut PgConnection, user_id: &Uuid) -> Result<Vec<Self>, AppError> {
+    fn get_user_yatras(conn: &mut PgConnection, user_id: &Uuid) -> Result<Vec<Self>, AppError> {
         let res = yatras::table
             .inner_join(yatra_users::table)
             .filter(yatra_users::user_id.eq(&user_id))
@@ -597,13 +611,178 @@ impl YatraDataRow {
     }
 }
 
+#[derive(Deserialize, Debug)]
+enum Aggregation {
+    Sum,
+    Avg,
+    Min,
+    Max,
+    Count,
+}
+
+#[derive(Deserialize, Debug)]
+enum TimeRange {
+    Last7Days,
+    Last30Days,
+    Last90Days,
+    Last365Days,
+    ThisWeek,
+    ThisMonth,
+    ThisQuarter,
+    ThisYear,
+}
+
+impl TimeRange {
+    fn to_naive_date(&self, relative_to: &NaiveDate) -> NaiveDate {
+        match self {
+            Self::Last7Days => relative_to.checked_sub_days(Days::new(7)).unwrap(),
+            Self::Last30Days => relative_to.checked_sub_days(Days::new(30)).unwrap(),
+            Self::Last90Days => relative_to.checked_sub_days(Days::new(90)).unwrap(),
+            Self::Last365Days => relative_to.checked_sub_days(Days::new(365)).unwrap(),
+            Self::ThisWeek => relative_to.start_of_week(),
+            Self::ThisMonth => relative_to.start_of_month(),
+            Self::ThisQuarter => relative_to.start_of_quarter(),
+            Self::ThisYear => relative_to.start_of_year(),
+        }
+    }
+}
+
+#[derive(Deserialize, Debug)]
+struct YatraStatistic {
+    label: String,
+    practice_id: Uuid,
+    aggregation: Aggregation,
+    time_range: TimeRange,
+}
+
+#[derive(Deserialize, Debug)]
+struct YatraStatistics {
+    visible_to_all: bool,
+    statistics: Vec<YatraStatistic>,
+}
+
+#[derive(Serialize, Debug, QueryableByName)]
+pub struct YatraStatisticResult {
+    #[diesel(sql_type = Text)]
+    pub label: String,
+    #[diesel(sql_type = Nullable<Jsonb>)]
+    pub value: Option<JsonValue>,
+}
+
+impl YatraStatisticResult {
+    pub fn get_stats(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        yatra_id: &Uuid,
+        cob_date: &NaiveDate,
+    ) -> Result<Vec<Self>, AppError> {
+        let is_admin = Yatra::is_admin(conn, user_id, yatra_id)?;
+        let stats_conf = Yatra::get_yatra_stats(conn, yatra_id)?;
+
+        if stats_conf
+            .as_ref()
+            .is_none_or(|conf| !(conf.visible_to_all || is_admin))
+        {
+            return Ok(vec![]);
+        }
+
+        let practice_types: HashMap<_, _> =
+            YatraPractice::get_ordered_yatra_practices(conn, yatra_id)?
+                .iter()
+                .map(|p| (p.id, p.data_type.to_owned()))
+                .collect();
+
+        stats_conf
+            .unwrap()
+            .statistics
+            .into_iter()
+            .map(|stat| {
+                let from_cob = stat.time_range.to_naive_date(cob_date);
+                let data_type = practice_types.get(&stat.practice_id).unwrap();
+                let sql = Self::stat_sql(data_type, &stat.aggregation);
+
+                log::debug!(
+                    "Yatra statistic SQL from {} to {} for practice {}:\n{}",
+                    from_cob,
+                    cob_date,
+                    stat.practice_id,
+                    sql
+                );
+
+                let res = sql_query(&sql)
+                    .bind::<Text, _>(stat.label)
+                    .bind::<DieselUuid, _>(stat.practice_id)
+                    .bind::<Date, _>(from_cob)
+                    .bind::<Date, _>(cob_date)
+                    .get_result::<Self>(conn)?;
+
+                Ok(res)
+            })
+            .collect()
+    }
+
+    fn stat_sql(data_type: &PracticeDataType, agg: &Aggregation) -> String {
+        let value_exp = match data_type {
+            PracticeDataType::Int => "(value->>'Int')::int",
+            PracticeDataType::Time => {
+                "(value->'Time'->>'h')::int * 60 + (value->'Time'->>'m')::int"
+            }
+            PracticeDataType::Duration => "(value->>'Duration')::int",
+            _ => "",
+        };
+
+        let aggregated_value_exp = match agg {
+            Aggregation::Sum => format!("sum({value_exp})"),
+            Aggregation::Avg => format!("avg({value_exp})"),
+            Aggregation::Min => format!("min({value_exp})"),
+            Aggregation::Max => format!("max({value_exp})"),
+            Aggregation::Count => "count(*)".to_string(),
+        };
+
+        let aggregated_json_value_exp = match data_type {
+            PracticeDataType::Time => format!(
+                "jsonb_build_object('Time', jsonb_build_object('h', ({}) / 60, 'm', ({}) % 60))",
+                aggregated_value_exp, aggregated_value_exp
+            ),
+            PracticeDataType::Duration => {
+                format!("jsonb_build_object('Duration', ({aggregated_value_exp}))")
+            }
+            _ => format!("jsonb_build_object('Int', ({aggregated_value_exp}))"),
+        };
+
+        format!(
+            r#"
+                select
+                    $1 as label,
+                    case
+                        when {} is null
+                        then null
+                        else {}
+                    end as value
+                from   diary d
+                where  d.practice_id in (
+                    select p.user_practice_id
+                    from   yatra_user_practices p
+                    where  p.yatra_practice_id = $2
+                )
+                and    d.cob_date >= $3
+                and    d.cob_date <= $4
+                and    d.value is not null
+                "#,
+            aggregated_value_exp, aggregated_json_value_exp
+        )
+    }
+}
+
 /// Gets yatra data for a cob date
 pub async fn yatra_data(
     state: web::Data<AppState>,
+    req: HttpRequest,
     params: web::Query<YatraDataQueryParams>,
     path: web::Path<YatraIdSlug>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
     let cob_date = params.cob_date;
     let yatra_id = path.into_inner();
 
@@ -611,12 +790,18 @@ pub async fn yatra_data(
         match (
             YatraPractice::get_ordered_yatra_practices(&mut conn, &yatra_id),
             YatraDataRow::get_yatra_data(&mut conn, &yatra_id, &cob_date),
+            YatraStatisticResult::get_stats(&mut conn, &user_id, &yatra_id, &cob_date),
         ) {
-            (Ok(data), Ok(practices)) => Ok((data, practices)),
-            (Err(e), _) | (_, Err(e)) => Err(e),
+            (Ok(data), Ok(practices), Ok(stats)) => Ok((data, practices, stats)),
+            (Err(e), _, _) | (_, Err(e), _) | (_, _, Err(e)) => {
+                log::warn!("Failed to retrieve yatra data: {e}");
+                Err(e)
+            }
         }
     })
     .await??;
+
+    log::debug!("Yatra data: {:?}", res);
 
     Ok(HttpResponse::Ok().json(YatraDataResponse::from(res)))
 }
@@ -989,11 +1174,24 @@ impl YatraDataRowResponse {
 pub struct YatraDataResponse {
     pub practices: Vec<YatraPractice>,
     pub data: Vec<YatraDataRowResponse>,
+    pub statistics: Vec<YatraStatisticResult>,
 }
 
-impl From<(Vec<YatraPractice>, Vec<YatraDataRow>)> for YatraDataResponse {
-    fn from(value: (Vec<YatraPractice>, Vec<YatraDataRow>)) -> Self {
-        let (ps, rows) = value;
+impl
+    From<(
+        Vec<YatraPractice>,
+        Vec<YatraDataRow>,
+        Vec<YatraStatisticResult>,
+    )> for YatraDataResponse
+{
+    fn from(
+        value: (
+            Vec<YatraPractice>,
+            Vec<YatraDataRow>,
+            Vec<YatraStatisticResult>,
+        ),
+    ) -> Self {
+        let (practices, rows, statistics) = value;
 
         // Note, assumes data comes in sorted by user and then practice order key
         let mut curr_user = None;
@@ -1027,8 +1225,9 @@ impl From<(Vec<YatraPractice>, Vec<YatraDataRow>)> for YatraDataResponse {
         }
 
         Self {
-            practices: ps,
+            practices,
             data: all_users_data,
+            statistics,
         }
     }
 }

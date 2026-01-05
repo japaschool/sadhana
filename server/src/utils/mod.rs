@@ -1,3 +1,4 @@
+pub mod date;
 pub mod db;
 pub mod email;
 #[cfg(test)]
