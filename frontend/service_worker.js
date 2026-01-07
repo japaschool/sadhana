@@ -1,8 +1,21 @@
-// Change this version if you need to force the app to reload on users' mobiles
-// Do it carefully as those who are on poor internet might loose the app
-var version = "v1"
-var CACHE_STATIC = version + "_pwa-static";
-var CACHE_API = version + "_pwa-api";
+// @ts-check
+/// <reference lib="webworker" />
+
+/** @type {ServiceWorkerGlobalScope} */
+const sw = /** @type {any} */ (self);
+
+importScripts('/precache-manifest.js');
+
+/** @type {readonly string[]} */
+const PRECACHE_MANIFEST = /** @type {any} */ (self).__PRECACHE_MANIFEST__;
+
+// Bump on every frontend release
+const STATIC_VERSION = 'static-v2';
+const CACHE_STATIC = STATIC_VERSION;
+
+// Bump only when API schema / semantics change
+const API_VERSION = 'api-v1';
+const CACHE_API = API_VERSION;
 
 const diaryDayPutUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}/entry');
 const diaryDayGetUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}$');
@@ -11,142 +24,212 @@ const dateR = /(\d{4}-\d{2}-\d{2})/;
 const cacheTtlDays = 10;
 const defaultDiaryDayKey = '/default-diary-day';
 
-const connStatusBroadcast = new BroadcastChannel('ConnectionStatus');
-const forceReloadBroadcast = new BroadcastChannel('ForceReload');
-
 var connOnline = true;
 
-forceReloadBroadcast.onmessage = async (event) => {
-    const msg = event.data;
-    if (msg === "force_reload") {
-        console.log("[SW] Force reload requested");
+sw.addEventListener('install',
+    /** @param {ExtendableEvent} event */
+    event => {
+        event.waitUntil(
+            (async () => {
+                const cache = await caches.open(CACHE_STATIC);
 
-        forceReload();
-    }
-};
+                await Promise.all(PRECACHE_MANIFEST.map(async url => {
+                    const resp = await fetch(url, { cache: 'no-store' });
 
-self.addEventListener('install', function (e) {
-    console.info('Event: Install');
+                    // Force body download
+                    const body = await resp.clone().arrayBuffer();
 
-    // Skip over the "waiting" lifecycle state, to ensure that our
-    // new service worker is activated immediately, even if there's
-    // another tab open controlled by our older service worker code.
-    self.skipWaiting();
-});
-
-self.addEventListener('activate', function (e) {
-    console.info('Event: Activating');
-
-    // Take control of all clients right away
-    e.waitUntil(clients.claim());
-
-    // If cache version changed nuke the stale cache to force reload the app from the server 
-    e.waitUntil(forceReload());
-
-    // Clear cache that has expired TTL
-    clearStaleApiCache();
-});
-
-self.addEventListener('fetch', (event) => {
-    if (event.request.method === 'GET') {
-        event.respondWith(handleGet(event.request));
-    } else if (event.request.method === 'PUT' && diaryDayPutUrlR.test(event.request.url)) {
-        event.respondWith(Promise.resolve().then(async () => {
-            const authHeader = event.request.headers.get('Authorization');
-            const reqUrl = event.request.url;
-            const method = event.request.method;
-            const payload = await event.request.clone().text();
-            try {
-                // Update local cache
-                await updateDiaryDayCachedGet(reqUrl, authHeader, payload);
-                // Try sending saved puts
-                await sendOfflinePostRequestsToServer().catch((e) => console.error(e));
-                // Try sending original put request to the server
-                const fetchedResponse = await fetchWrapper(event.request, { credentials: 'same-origin' }, 10000);
-                // Notify clients we're online
-                broadcastOnline();
-                return fetchedResponse;
-            } catch {
-                console.info('Saving %s into DB for later processing', event.request.url);
-                // Notify clients we're offline
-                broadcastOffline();
-                //save offline requests to indexed db
-                saveIntoIndexedDb(reqUrl, authHeader, method, payload);
-                return new Response('null', { headers: { 'Content-Type': 'application/json' }, });
-            }
-        }));
-    }
-});
-
-async function forceReload() {
-    return caches.keys().then(function (cacheNames) {
-        return Promise.all(
-            cacheNames.filter(function (cacheName) {
-                return cacheName.startsWith(CACHE_STATIC);
-            }).map(function (cacheName) {
-                // completely deregister for ios to get changes too
-                console.log('deregistering Service Worker')
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.getRegistrations().then(function (registrations) {
-                        registrations.map(r => {
-                            r.unregister()
+                    await cache.put(
+                        url,
+                        new Response(body, {
+                            status: resp.status,
+                            statusText: resp.statusText,
+                            headers: resp.headers
                         })
-                    })
-                    // window.location.reload(true)
-                }
+                    );
+                }));
 
-                console.log('Removing old cache.', cacheName);
-                return caches.delete(cacheName);
-            })
-        ).then(async function () {
-            // Trigger reload in clients
-            const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
-            for (const client of clientsList) {
-                client.postMessage({ type: "reload" });
-            }
-        });
+                sw.skipWaiting();
+            })()
+        );
     });
+
+sw.addEventListener('activate',
+    /** @param {ExtendableEvent} event */
+    event => {
+        event.waitUntil(
+            (async () => {
+                const keys = await caches.keys();
+                await Promise.all(
+                    keys
+                        .filter(k => !k.startsWith(CACHE_STATIC))
+                        .map(k => caches.delete(k))
+                );
+
+                // Clear cache that has expired TTL
+                await clearStaleApiCache();
+
+                // Take control of all clients right away
+                await sw.clients.claim();
+
+                // Notify UI an update is applied
+                sw.clients.matchAll({ type: 'window' }).then(clients => {
+                    for (const client of clients) {
+                        client.postMessage("UPDATE_READY");
+                    }
+                })
+            })()
+        );
+    });
+
+sw.addEventListener('fetch',
+    /** @param {FetchEvent} event */
+    event => {
+        const req = event.request;
+        const url = new URL(req.url);
+
+        // CDN assets → network only
+        if (url.origin !== location.origin) {
+            return;
+        }
+
+        // Static precached assets
+        if (PRECACHE_MANIFEST.includes(url.pathname)) {
+            event.respondWith(
+                caches.match(req).then(r => r || fetch(req))
+            );
+            return;
+        }
+
+        // API calls
+        if (url.pathname.startsWith('/api/')) {
+            if (event.request.method === 'GET') {
+                event.respondWith(sendOfflinePostRequestsToServer().catch(console.warn).then(async () => handleApiGet(event.request)));
+            } else if (event.request.method === 'PUT' && diaryDayPutUrlR.test(event.request.url)) {
+                event.respondWith(handleApiPut(event));
+            }
+            return;
+        }
+    });
+
+sw.addEventListener('message', event => {
+    if (event.data === 'SKIP_WAITING') {
+        sw.skipWaiting();
+    }
+});
+
+/**
+ * @param {FetchEvent} event
+ * @returns {Promise<Response>}
+ */
+async function handleApiPut(event) {
+    const authHeader = event.request.headers.get('Authorization');
+    const reqUrl = event.request.url;
+    const method = event.request.method;
+    const payload = await event.request.clone().text();
+
+    try {
+        await updateDiaryDayCachedGet(reqUrl, authHeader, payload);
+        await sendOfflinePostRequestsToServer().catch(console.warn);
+
+        const fetchedResponse = await fetchWrapper(
+            event.request,
+            { credentials: 'same-origin' },
+            10000
+        );
+
+        broadcastOnline();
+        return fetchedResponse;
+    } catch {
+        broadcastOffline();
+        saveIntoIndexedDb(reqUrl, authHeader, method, payload);
+        return new Response('null', {
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
 }
 
-async function handleGet(request) {
-    const url = new URL(request.url);
-    const cacheName = url.pathname.startsWith("/api/") ? CACHE_API : CACHE_STATIC;
+/**
+ * @param {Request} request
+ * @returns {Promise<Response>}
+ */
+async function handleApiGet(request) {
+    const cache = await caches.open(CACHE_API);
 
-    const cache = await caches.open(cacheName);
+    // We run 2 timeouts here. After 3s we deem network's unavailable and resolve from cache. If cache is not available
+    const timeout = new Promise(resolve => {
+        setTimeout(() => {
+            resolve(null);
+        }, 5000);
+    });
 
-    const { racePromise, fetchPromise } = fetchOrTimeout(request, 3000);
+    const network = (async () => {
+        try {
+            const resp = await fetchWrapper(
+                request.clone(),
+                { credentials: 'same-origin' },
+                30000
+            );
+            return resp;
+        } catch {
+            return null;
+        }
+    })();
 
-    // Wait for whichever happens first: network within 3s, or fallback to cache
-    const raceResult = await racePromise.catch(() => null);
+    const winner = await Promise.race([network, timeout]);
 
-    if (raceResult) {
+    // Fast network wins
+    if (winner) {
+        const body = await winner.clone().arrayBuffer();
+
         // Fast network response — update cache and serve it
-        cache.put(request, raceResult.clone());
+        await cache.put(
+            request,
+            new Response(body, {
+                status: winner.status,
+                statusText: winner.statusText,
+                headers: winner.headers
+            })
+        );
+
         // Notify clients we're online
         broadcastOnline();
-        saveDefaultDiaryDay(request.url, raceResult.clone());
-        return raceResult;
+
+        saveDefaultDiaryDay(request.url, winner.clone());
+
+        return winner;
     }
 
-    console.warn(`[${request.url}] Cound not fetch from server on time. Trying to serve from cache.`);
-    // Notify clients we're offline
+    // Slow network → fallback immediately
     broadcastOffline();
 
-    // Serve cache as fallback if network is too slow. If not cached, fallback to the original network call.
-    const fallbackResponse = serveFromCache(cache, request).catch(() => {
-        console.info(`[${request.url}] Could not serve from cache. Continuing with the original fetch.`);
-        return fetchPromise
-            .then(async (fetchedResponse) => {
-                console.info(`[${request.url}] Original fetch succeeded.`);
-                // Notify clients we're online
-                broadcastOnline();
-                return fetchedResponse;
-            });
-    });
+    const cached = await serveFromCache(cache, request).catch(() => null);
+    if (cached) return cached;
 
-    return fallbackResponse;
+    // No cache → wait for network *once*
+    const finalResp = await network;
+    if (finalResp) {
+        broadcastOnline();
+        const body = await finalResp.clone().arrayBuffer();
+        await cache.put(
+            request,
+            new Response(body, {
+                status: finalResp.status,
+                statusText: finalResp.statusText,
+                headers: finalResp.headers
+            })
+        );
+        return finalResp;
+    }
+
+    throw new Error('Network failed and no cache available');
 }
 
+/**
+ * @param {Cache} cache
+ * @param {Request} request
+ * @returns {Promise<Response>}
+ */
 async function serveFromCache(cache, request) {
     const cachedResp = await cache.match(request, { ignoreVary: true });
 
@@ -156,7 +239,13 @@ async function serveFromCache(cache, request) {
 
     if (diaryDayGetUrlR.test(request.url)) {
         const defaultResp = await cache.match(defaultDiaryDayKey);
+
+        if (!defaultResp) {
+            throw new Error('Default diary day not found in cache');
+        }
+
         cache.put(request, defaultResp.clone());
+
         return defaultResp;
     }
 
@@ -174,36 +263,54 @@ async function clearStaleApiCache() {
 
         cache.keys().then(reqs => reqs.forEach(req => {
             const dateStr = req.url.match(dateR);
-            if (dateStr && Date.parse(dateStr[1]) < staleCobThreshold) {
+            if (dateStr && Date.parse(dateStr[1]) < staleCobThreshold.getTime()) {
                 cache.delete(req);
             }
         }))
     });
 }
 
-const fetchResponseFromCache = (request) =>
+const fetchResponseFromCache = /** @param {Request} request */ request =>
     caches.open(CACHE_API).then(cache =>
-        cache.match(request, { ignoreVary: true }).then(response => returnResponseFromCache(request, response, cache))
+        cache.match(request, { ignoreVary: true })
+            .then(response => returnResponseFromCache(request, response, cache))
     );
 
+
+/**
+ * @param {Cache} cache
+ * @param {Request} request
+ * @param {Response} response
+ * @returns {Promise<Response>}
+ */
 async function cacheResponse(cache, request, response) {
     var responseToCache;
     try {
         responseToCache = response.clone();
-        cache.put(request, responseToCache);
+        await cache.put(request, responseToCache);
     } catch (err) {
     }
     return response;
 }
 
+/**
+ * @param {Request} request
+ * @param {Response | undefined} response
+ * @param {Cache} cache
+ * @returns {Promise<Response>}
+ */
 async function returnResponseFromCache(request, response, cache) {
-    if (!!response) {
+    if (response) {
         return response;
     } else {
-        return fetchWrapper(request, { credentials: 'same-origin' }).then(response => cacheResponse(cache, request, response))
+        return fetchWrapper(request, { credentials: 'same-origin' })
+            .then(response => cacheResponse(cache, request, response))
     }
 }
 
+/**
+ * @param {Promise<any>} data
+ */
 async function getResponseData(data) {
     let promise = Promise.resolve(data).then((text) => {
         return text
@@ -212,9 +319,15 @@ async function getResponseData(data) {
     return result
 }
 
+/**
+ * @param {string} url
+ * @param {string | null} authHeader
+ * @param {string} method
+ * @param {string} payload
+ */
 function saveIntoIndexedDb(url, authHeader, method, payload) {
     var myRequest = {};
-    jsonPayLoad = JSON.parse(payload)
+    const jsonPayLoad = JSON.parse(payload)
     //add payload if required. If not skip parsing json and stringifying it again
     //jsonPayLoad['eventTime'] = getCurrentTimeString(eventTime)
     myRequest.url = url;
@@ -230,6 +343,9 @@ function saveIntoIndexedDb(url, authHeader, method, payload) {
     }
 }
 
+/**
+ * @param {any} id
+ */
 function deleteFromIndexedDb(id) {
     var request = indexedDB.open("SadhanaProPostDB");
     request.onsuccess = function (event) {
@@ -240,19 +356,23 @@ function deleteFromIndexedDb(id) {
     }
 }
 
-const sequencePromises = async (promises) => {
+/**
+ * @param {Promise<any>[]} promises
+ */
+const sequencePromises = async promises => {
     for (const p of promises) {
         await p
     }
 };
-
+/**
+ * @returns {Promise<void>}
+ */
 async function sendOfflinePostRequestsToServer() {
-    return new Promise(function (yes, no) {
-        // console.info('Posting offline writes to the server');
+    return new Promise((yes, no) => {
         var request = indexedDB.open("SadhanaProPostDB");
-        request.onupgradeneeded = function (event) {
+        request.onupgradeneeded = event => {
             var db = event.target.result;
-            db.onerror = function (event) {
+            db.onerror = event => {
                 console.log("Why didn't you allow my web app to use IndexedDB?!");
             };
 
@@ -269,25 +389,32 @@ async function sendOfflinePostRequestsToServer() {
             var tx = db.transaction('postrequest', 'readwrite');
             var store = tx.objectStore('postrequest');
             var allRecords = store.getAll();
-            allRecords.onsuccess = function () {
+
+            allRecords.onsuccess = () => {
                 if (allRecords.result && allRecords.result.length > 0) {
-                    const postPromises = allRecords.result.map((record) =>
-                        fetchWrapper(record.url, {
-                            method: record.method,
-                            headers: {
-                                'Accept': 'application/json',
-                                'Content-Type': 'application/json',
-                                'Authorization': record.authHeader
+                    const postPromises = allRecords.result.map(async record =>
+                        fetchWrapper(
+                            record.url,
+                            {
+                                method: record.method,
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json',
+                                    'Authorization': record.authHeader
+                                },
+                                body: record.payload
                             },
-                            body: record.payload
-                        }, 10000)
+                            10000
+                        )
                             .then(() => deleteFromIndexedDb(record.id))
                     );
 
-                    sequencePromises(postPromises).then(() => yes()).catch(err => {
-                        console.warn('Failed to post offline writes', err);
-                        no();
-                    });
+                    sequencePromises(postPromises)
+                        .then(() => yes())
+                        .catch(err => {
+                            console.warn('Failed to post offline writes', err);
+                            no();
+                        });
                 } else {
                     yes();
                 }
@@ -296,12 +423,31 @@ async function sendOfflinePostRequestsToServer() {
     });
 }
 
+/**
+ * @typedef {Object} DiaryEntry
+ * @property {string} practice
+ * @property {any} value
+ */
+
+/**
+ * @typedef {Object} DiaryDayResponse
+ * @property {DiaryEntry[]} diary_day
+ */
+
+/**
+ * @param {string} reqUrl
+ * @param {string | null} authHeader
+ * @param {string} payloadText
+ */
 async function updateDiaryDayCachedGet(reqUrl, authHeader, payloadText) {
-    var getReq = new Request(reqUrl.replace('/entry', ''));
-    getReq.mode = 'cors'
-    getReq.headers = { 'Authorization': authHeader }
+    const getReq = new Request(reqUrl.replace('/entry', ''), {
+        headers: authHeader ? { Authorization: authHeader } : undefined,
+        mode: 'cors'
+    });
+
     var resp = await fetchResponseFromCache(getReq)
     if (resp) {
+        /** @type {DiaryDayResponse} */
         var respData = await getResponseData(resp.json());
         var payload = JSON.parse(payloadText);
         respData.diary_day.forEach((item, i) => {
@@ -311,21 +457,34 @@ async function updateDiaryDayCachedGet(reqUrl, authHeader, payloadText) {
     }
 }
 
+/**
+ * @param {string} url
+ * @param {Response} resp
+ */
 async function saveDefaultDiaryDay(url, resp) {
     if (diaryDayGetUrlR.test(url)) {
         return caches.open(CACHE_API)
             .then(async (cache) =>
                 resp.json().then(payload => {
-                    payload.diary_day.forEach((entry) => entry.value = null);
+                    /** @type {DiaryDayResponse} */
+                    const typedPayload = payload;
+
+                    typedPayload.diary_day.forEach(entry => entry.value = null);
                     cache.put(defaultDiaryDayKey, new Response(JSON.stringify(payload)))
                 })
             );
     }
 }
 
-async function fetchWrapper(req, opts, timemout) {
-    const resp = timemout
-        ? await fetchWithTimeout(req, opts, timemout)
+/**
+ * @param {Request} req
+ * @param {RequestInit} [opts]
+ * @param {number} [timeout] Timeout in ms, optional
+ * @returns {Promise<Response>}
+ */
+async function fetchWrapper(req, opts, timeout) {
+    const resp = timeout
+        ? await fetchWithTimeout(req, opts, timeout)
         : await fetch(req, opts);
     if (resp.status === 504) {
         throw new Error('Server unavailable');
@@ -333,32 +492,24 @@ async function fetchWrapper(req, opts, timemout) {
     return resp;
 }
 
-// Fetch with timeout that resolves null after timeout, but lets original fetch keep running
-function fetchOrTimeout(request, timeoutMs) {
-    const fetchPromise = sendOfflinePostRequestsToServer()
-        .catch((e) => console.error(e))
-        .then(() => fetchWrapper(request.clone(), { credentials: 'same-origin' }, 30000));
-
-    // Return both the fetch promise and a timeout promise that resolves null after timeout
-    const timeoutPromise = new Promise(resolve => {
-        setTimeout(() => {
-            resolve(null);
-        }, timeoutMs);
-    });
-
-    return {
-        racePromise: Promise.race([fetchPromise, timeoutPromise]),
-        fetchPromise
-    };
-}
-
-// Fetch with timeout that aborts the request after timeout
+/**
+ * Fetch with timeout that aborts the request after timeout
+ *
+ * @param {Request} resource
+ * @param {RequestInit} options
+ * @param {number} timeout
+ * @returns {Promise<Response>}
+ */
 function fetchWithTimeout(resource, options = {}, timeout) {
     const controller = new AbortController();
     const { signal } = controller;
     const fetchOptions = { ...options, signal };
 
     let timeoutId;
+
+    timeoutId = setTimeout(() => {
+        controller.abort(); // Abort only if response headers didn't arrive in time
+    }, timeout);
 
     const fetchPromise = fetch(resource, fetchOptions)
         .catch(err => {
@@ -370,26 +521,27 @@ function fetchWithTimeout(resource, options = {}, timeout) {
             return response;         // let response.body stream continue
         });
 
-    timeoutId = setTimeout(() => {
-        controller.abort(); // Abort only if response headers didn't arrive in time
-    }, timeout);
-
     return fetchPromise;
-}
-
-function broadcastOffline() {
-    if (connOnline) {
-        console.log("We're now offline");
-        connOnline = false;
-    }
-    // Posting offline message to clients every time
-    connStatusBroadcast.postMessage({ connection_status: "OFFLINE" });
 }
 
 function broadcastOnline() {
     if (!connOnline) {
-        console.log("We're now online");
-        connStatusBroadcast.postMessage({ connection_status: "ONLINE" });
+        sw.clients.matchAll({ includeUncontrolled: true }).then(clientsList => {
+            for (const client of clientsList) {
+                client.postMessage("ONLINE");
+            }
+        });
         connOnline = true;
+    }
+}
+
+function broadcastOffline() {
+    if (connOnline) {
+        sw.clients.matchAll({ includeUncontrolled: true }).then(clientsList => {
+            for (const client of clientsList) {
+                client.postMessage("OFFLINE");
+            }
+        });
+        connOnline = false;
     }
 }

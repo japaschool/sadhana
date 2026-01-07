@@ -59,6 +59,7 @@ features = [
   "Blob",
   "Url",
   "VisibilityState",
-  "BroadcastChannel",
-  "MessageEvent",
+  "ServiceWorker",
+  "ServiceWorkerContainer",
+  "ServiceWorkerRegistration",
 ]
