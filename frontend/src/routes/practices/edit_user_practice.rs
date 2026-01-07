@@ -4,6 +4,7 @@ use yew_hooks::{use_async, use_bool_toggle, use_mount};
 use yew_router::prelude::use_navigator;
 
 use crate::{
+    AppRoute,
     components::{
         blank_page::{BlankPage, HeaderButtonProps},
         list_errors::ListErrors,
@@ -13,7 +14,6 @@ use crate::{
     model::UserPractice,
     routes::DROPDOWN_PRACTICE_TYPES,
     services::{self, get_user_practice},
-    AppRoute,
 };
 
 #[derive(Properties, Clone, PartialEq)]
@@ -155,7 +155,7 @@ pub fn edit_user_practice(props: &Props) -> Html {
                                 </span>
                                 <div class="flex">
                                     <input
-                                        id="is_required"
+                                        id="is_dropdown"
                                         type="checkbox"
                                         class={CHECKBOX_INPUT_CSS}
                                         onclick={let is_dropdown = is_dropdown.clone();
