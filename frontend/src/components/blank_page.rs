@@ -1,14 +1,19 @@
-use gloo::utils::format::JsValueSerdeExt;
-use serde::Deserialize;
+use gloo::utils::window;
 use tw_merge::*;
-use wasm_bindgen::{closure::Closure, JsCast};
-use web_sys::{BroadcastChannel, MessageEvent};
-use yew::{html::onclick::Event, prelude::*};
-use yew_hooks::{use_bool_toggle, use_mount, use_timeout, UseToggleHandle};
+use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::JsFuture;
+use web_sys::ServiceWorkerRegistration;
+use yew::{html::onclick::Event, platform::spawn_local, prelude::*};
+use yew_hooks::{UseToggleHandle, use_bool_toggle, use_timeout};
 use yew_router::prelude::*;
 
 use super::{calendar::Calendar, month_calendar::MonthCalendar};
-use crate::{css::*, i18n::Locale, routes::AppRoute};
+use crate::{
+    css::*,
+    hooks::{NetworkStatusContext, use_on_wake},
+    i18n::Locale,
+    routes::AppRoute,
+};
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
@@ -319,41 +324,29 @@ fn header_button(
 
 pub const HEADER_BUTTON_CSS: &str = "no-underline text-amber-400";
 
-#[derive(Debug, Deserialize)]
-struct ConnStatusMessage {
-    connection_status: String,
-}
-
 #[function_component(BlankPage)]
 pub fn blank_page(props: &Props) -> Html {
     let nav = use_navigator().unwrap();
     let loading = use_bool_toggle(false);
-    let online = use_bool_toggle(true);
     let show_month_cal = use_bool_toggle(false);
     let show_ctx_menu = use_bool_toggle(false);
+    let network_status_ctx =
+        use_context::<NetworkStatusContext>().expect("NetworkStatusContext not found");
 
     {
-        let online = online.clone();
-        use_mount(move || {
-            log::debug!("Setting up offline broadcast channel connection");
+        // On wake of the app check for the app update
+        use_on_wake(Callback::from(move |_| {
+            let sw = window().navigator().service_worker();
 
-            let bc = BroadcastChannel::new("ConnectionStatus").unwrap();
-            // Listen for messages
-            let on_message = Closure::wrap(Box::new(move |event: MessageEvent| {
-                log::debug!("Received broadcast message {:?}", event.data());
-
-                if let Ok(ConnStatusMessage { connection_status }) =
-                    event.data().into_serde::<ConnStatusMessage>()
+            spawn_local(async move {
+                if let Ok(Some(reg)) = JsFuture::from(sw.get_registration())
+                    .await
+                    .map(|v| v.dyn_into::<ServiceWorkerRegistration>().ok())
                 {
-                    online.set(connection_status == "ONLINE");
+                    reg.update().ok();
                 }
-            }) as Box<dyn FnMut(_)>);
-
-            bc.set_onmessage(Some(on_message.as_ref().unchecked_ref()));
-
-            // Keep closure alive
-            on_message.forget();
-        });
+            });
+        }));
     }
 
     let timer = {
@@ -412,7 +405,7 @@ pub fn blank_page(props: &Props) -> Html {
             <div
                 class="bg-hero dark:bg-herod bg-no-repeat bg-cover bg-center h-screen w-full fixed -z-10"
             />
-            if !*online {
+            if !network_status_ctx.online {
                 <div
                     class="absolute bg-red-500 w-full h-4 top-[env(safe-area-inset-top)] z-10 overscroll-none"
                 >
@@ -426,7 +419,7 @@ pub fn blank_page(props: &Props) -> Html {
                 class={format!(
                         "fixed pt-safe-top top-0 {} left-0 right-0 overflow-y-auto {}",
                         if props.show_footer {"bottom-16"} else {"bottom-0"},
-                        if !*online {"top-4"} else {""})}
+                        if !network_status_ctx.online {"top-4"} else {""})}
             >
                 // 100vh-4rem means screen minus bottom-16; env(...) - the height of iPhone notch
                 <div

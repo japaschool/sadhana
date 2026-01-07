@@ -1,10 +1,52 @@
+use crate::app::{self};
 use actix_files::{Files, NamedFile};
 use actix_web::{
+    HttpResponse,
     dev::{HttpServiceFactory, ServiceRequest, ServiceResponse},
-    web,
+    get, web,
 };
+use std::fs;
+use std::path::Path;
 
-use crate::app::{self};
+pub fn routes(cfg: &mut web::ServiceConfig) {
+    cfg.service(precache_manifest)
+        .service(api_scope())
+        .service(dist_files());
+}
+// TODO: unify this to use a single approach & break out code for manifest gen into a separate file
+
+#[get("/precache-manifest.js")]
+async fn precache_manifest() -> HttpResponse {
+    let dist = std::path::Path::new("./dist");
+    let mut assets = Vec::new();
+
+    collect_precache_assets(dist, dist, &mut assets);
+
+    let body = format!(
+        "self.__PRECACHE_MANIFEST__ = {};",
+        serde_json::to_string(&assets).unwrap()
+    );
+
+    HttpResponse::Ok()
+        .content_type("application/javascript")
+        .body(body)
+}
+
+fn collect_precache_assets(dir: &Path, base: &Path, out: &mut Vec<String>) {
+    for entry in fs::read_dir(dir).unwrap() {
+        let entry = entry.unwrap();
+        let path = entry.path();
+
+        if path.is_dir() {
+            collect_precache_assets(&path, base, out);
+        } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+            if matches!(ext, "html" | "js" | "css" | "wasm") {
+                let rel = path.strip_prefix(base).unwrap();
+                out.push(format!("/{}", rel.to_string_lossy()));
+            }
+        }
+    }
+}
 
 fn api_scope() -> impl HttpServiceFactory {
     web::scope("/api")
@@ -150,8 +192,4 @@ fn dist_files() -> actix_files::Files {
                 Ok(ServiceResponse::new(http_req, response))
             }
         })
-}
-
-pub fn routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(api_scope()).service(dist_files());
 }

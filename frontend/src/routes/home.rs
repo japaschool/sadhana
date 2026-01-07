@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 
 use chrono::Local;
-use gloo_events::EventListener;
+use gloo::utils::window;
 use tw_merge::*;
 use wasm_bindgen::JsCast;
-use web_sys::{HtmlElement, HtmlInputElement, VisibilityState};
+use web_sys::{HtmlElement, HtmlInputElement};
 use yew::prelude::*;
 use yew_hooks::{use_async, use_list, use_mount};
 
@@ -15,7 +15,7 @@ use crate::{
         prompt::Prompt,
     },
     css::*,
-    hooks::SessionStateContext,
+    hooks::{SessionStateContext, use_visibility},
     i18n::{Locale, PracticeName},
     model::{DiaryEntry, PracticeDataType, PracticeEntryValue},
     services::{get_diary_day, get_user_practices, save_diary_entry},
@@ -81,32 +81,22 @@ pub fn home() -> Html {
         // pick up any concurrent changes
         let diary_entry = diary_entry.clone();
         let required_practices = required_practices.clone();
-        use_effect(move || {
-            let onwakeup = Callback::from(move |_: Event| {
-                if let Some(doc) = web_sys::window().and_then(|w| w.document()) {
-                    if doc.visibility_state() == VisibilityState::Visible {
-                        diary_entry.run();
-                        required_practices.run();
-                    } else {
-                        // Blur active element when app minimised so its data is saved
-                        if let Some(e) = doc
-                            .active_element()
-                            .and_then(|e| e.dyn_into::<HtmlElement>().ok())
-                        {
-                            e.blur().unwrap();
-                        }
-                    }
+        use_visibility(
+            Callback::from(move |_| {
+                diary_entry.run();
+                required_practices.run();
+            }),
+            Callback::from(move |_| {
+                if let Some(e) = window()
+                    .document()
+                    .unwrap()
+                    .active_element()
+                    .and_then(|e| e.dyn_into::<HtmlElement>().ok())
+                {
+                    e.blur().unwrap();
                 }
-            });
-
-            // Create a Closure from a Box<dyn   Fn> - this has to be 'static
-            let listener =
-                EventListener::new(&web_sys::window().unwrap(), "visibilitychange", move |e| {
-                    onwakeup.emit(e.clone());
-                });
-
-            move || drop(listener)
-        });
+            }),
+        );
     }
 
     {
