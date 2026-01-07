@@ -15,8 +15,8 @@ use crate::{
     i18n::*,
     model::{NewUserPractice, NewYatraPractice},
     routes::{
-        practices::{Mode, COLOUR_ZONE_DATA_TYPES},
         DROPDOWN_PRACTICE_TYPES,
+        practices::{COLOUR_ZONE_DATA_TYPES, Mode},
     },
     services::{create_user_practice, create_yatra_practice},
     tr,
@@ -113,8 +113,8 @@ pub fn new_practice(props: &Props) -> Html {
 
             let input: HtmlInputElement = e.target_unchecked_into();
             let mut form = (*form_data).clone();
-            let variants = input.value().trim().to_owned();
-            if !variants.is_empty() {
+            let variants = input.value().to_owned();
+            if !variants.trim().is_empty() {
                 form.dropdown_variants = Some(variants);
             } else {
                 form.dropdown_variants = None;
