@@ -119,14 +119,41 @@
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/service_worker.js");
 
-        navigator.serviceWorker.addEventListener("message", (event) => {
-          if (event.data?.type === "reload") {
-            console.log("Reload requested by SW");
-            window.location.reload(true);
+        // TODO: remove this in a few weeks
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          for (const reg of regs) {
+            reg.update();
           }
         });
       }
     };
+
+    // When things go seriously bad call app.sadhana.pro/#reset to nuke the caches
+    (function () {
+      if (location.hash !== "#reset") return;
+
+      console.warn("Emergency reset triggered");
+
+      // Unregister all service workers
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          regs.forEach(reg => reg.unregister());
+        });
+      }
+
+      // Clear all caches
+      if ("caches" in window) {
+        caches.keys().then(keys => {
+          keys.forEach(k => caches.delete(k));
+        });
+      }
+
+      // Remove the hash and reload clean
+      setTimeout(() => {
+        location.hash = "";
+        location.reload(true);
+      }, 300);
+    })();
   </script>
   <title>Sadhana Pro</title>
 </head>
