@@ -3,6 +3,11 @@ FROM rust:1.85.0 AS chef
 # Installing postgres lib
 RUN apt update && apt install -y libpq5
 
+RUN apt-get update && apt-get -y install --no-install-recommends \
+        libpq5 \
+        brotli \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN rustup target add wasm32-unknown-unknown
 
 # Installing cargo-chef that helps to cache rust dependencies
@@ -43,6 +48,11 @@ RUN touch .env
 RUN ./scripts/build_info.sh
 RUN cd frontend && trunk build --release
 RUN cargo build --release
+
+RUN cd dist && \
+    find . -type f \( -name "*.wasm" -o -name "*.js" -o -name "*.css" \) -exec gzip -k -9 {} \; && \
+    find . -type f \( -name "*.wasm" -o -name "*.js" -o -name "*.css" \) -exec brotli -k -q 11 {} \;
+
 
 FROM gcr.io/distroless/cc-debian12
 

@@ -1,5 +1,6 @@
 use crate::app::{self};
 use actix_files::{Files, NamedFile};
+use actix_http::header;
 use actix_web::{
     HttpResponse,
     dev::{HttpServiceFactory, ServiceRequest, ServiceResponse},
@@ -183,6 +184,8 @@ fn api_scope() -> impl HttpServiceFactory {
 fn dist_files() -> actix_files::Files {
     Files::new("/", "./dist/")
         .index_file("index.html")
+        .use_etag(true) // caching
+        .use_last_modified(true) // caching
         // Redirect back to index.html for paths not found on disk. See https://github.com/actix/actix-web/issues/2115
         .default_handler(|req: ServiceRequest| {
             let (http_req, _payload) = req.into_parts();
