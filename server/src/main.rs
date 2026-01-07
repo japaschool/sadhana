@@ -1,8 +1,4 @@
-use actix_web::{
-    middleware::{Compress, Logger},
-    web::Data,
-    App, HttpServer,
-};
+use actix_web::{App, HttpServer, middleware::Logger, web::Data};
 use diesel_migrations::*;
 use dotenvy::dotenv;
 #[cfg(not(target_env = "msvc"))]
@@ -48,7 +44,6 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .app_data(Data::new(app_state))
             .wrap(middleware::cors::cors())
-            .wrap(Compress::default())
             .wrap(middleware::auth::Authentication)
             .configure(routes::routes)
     })
