@@ -1,10 +1,14 @@
 // @ts-check
 /// <reference lib="webworker" />
 
+importScripts('/precache-manifest.js');
+importScripts('/idb.js');
+
 /** @type {ServiceWorkerGlobalScope} */
 const sw = /** @type {any} */ (self);
 
-importScripts('/precache-manifest.js');
+// @ts-ignore
+const idb = self.idb;
 
 /** @type {readonly string[]} */
 const PRECACHE_MANIFEST = /** @type {any} */ (self).__PRECACHE_MANIFEST__;
@@ -16,6 +20,10 @@ const CACHE_STATIC = STATIC_VERSION;
 // Bump only when API schema / semantics change
 const API_VERSION = 'api-v1';
 const CACHE_API = API_VERSION;
+
+const DB_NAME = 'SadhanaProPostDB';
+const DB_VERSION = 1;
+const STORE_POST_REQUEST = 'postrequest';
 
 const diaryDayPutUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}/entry');
 const diaryDayGetUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}$');
@@ -320,43 +328,6 @@ async function getResponseData(data) {
 }
 
 /**
- * @param {string} url
- * @param {string | null} authHeader
- * @param {string} method
- * @param {string} payload
- */
-function saveIntoIndexedDb(url, authHeader, method, payload) {
-    var myRequest = {};
-    const jsonPayLoad = JSON.parse(payload)
-    //add payload if required. If not skip parsing json and stringifying it again
-    //jsonPayLoad['eventTime'] = getCurrentTimeString(eventTime)
-    myRequest.url = url;
-    myRequest.method = method;
-    myRequest.authHeader = authHeader;
-    myRequest.payload = JSON.stringify(jsonPayLoad);
-    var request = indexedDB.open("SadhanaProPostDB");
-    request.onsuccess = function (event) {
-        var db = event.target.result;
-        var tx = db.transaction('postrequest', 'readwrite');
-        var store = tx.objectStore('postrequest');
-        store.add(myRequest)
-    }
-}
-
-/**
- * @param {any} id
- */
-function deleteFromIndexedDb(id) {
-    var request = indexedDB.open("SadhanaProPostDB");
-    request.onsuccess = function (event) {
-        var db = event.target.result;
-        var tx = db.transaction('postrequest', 'readwrite');
-        var store = tx.objectStore('postrequest');
-        store.delete(id)
-    }
-}
-
-/**
  * @param {Promise<any>[]} promises
  */
 const sequencePromises = async promises => {
@@ -364,63 +335,78 @@ const sequencePromises = async promises => {
         await p
     }
 };
+
+/**
+ * @returns {Promise<any>}
+ */
+function getDb() {
+    return idb.openDB(DB_NAME, DB_VERSION, {
+        /** @param {any} db */
+        upgrade(db) {
+            if (!db.objectStoreNames.contains(STORE_POST_REQUEST)) {
+                db.createObjectStore(STORE_POST_REQUEST, {
+                    keyPath: 'id',
+                    autoIncrement: true
+                });
+            }
+        }
+    });
+}
+
+/**
+ * @param {string} url
+ * @param {string | null} authHeader
+ * @param {string} method
+ * @param {string} payload
+ */
+async function saveIntoIndexedDb(url, authHeader, method, payload) {
+    const db = await getDb();
+
+    const jsonPayload = JSON.parse(payload);
+
+    const record = {
+        url,
+        method,
+        authHeader,
+        payload: JSON.stringify(jsonPayload),
+    };
+
+    await db.add(STORE_POST_REQUEST, record);
+}
+
 /**
  * @returns {Promise<void>}
  */
 async function sendOfflinePostRequestsToServer() {
-    return new Promise((yes, no) => {
-        var request = indexedDB.open("SadhanaProPostDB");
-        request.onupgradeneeded = event => {
-            var db = event.target.result;
-            db.onerror = event => {
-                console.log("Why didn't you allow my web app to use IndexedDB?!");
-            };
+    const db = await getDb();
+    const records = await db.getAll(STORE_POST_REQUEST);
 
-            var objectStore;
-            if (!db.objectStoreNames.contains('postrequest')) {
-                objectStore = db.createObjectStore("postrequest", { keyPath: 'id', autoIncrement: true });
-            }
-            else {
-                objectStore = db.objectStoreNames.get('postrequest');
-            }
+    if (!records || records.length === 0) {
+        return;
+    }
+
+    for (const record of records) {
+        try {
+            await fetchWrapper(
+                record.url,
+                {
+                    method: record.method,
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        ...(record.authHeader ? { Authorization: record.authHeader } : {})
+                    },
+                    body: record.payload
+                },
+                10000
+            );
+
+            await db.delete(STORE_POST_REQUEST, record.id);
+        } catch (err) {
+            console.warn('Failed to post offline write', err);
+            throw err; // stop replay on first failure (same semantics as before)
         }
-        request.onsuccess = function (event) {
-            var db = event.target.result;
-            var tx = db.transaction('postrequest', 'readwrite');
-            var store = tx.objectStore('postrequest');
-            var allRecords = store.getAll();
-
-            allRecords.onsuccess = () => {
-                if (allRecords.result && allRecords.result.length > 0) {
-                    const postPromises = allRecords.result.map(async record =>
-                        fetchWrapper(
-                            record.url,
-                            {
-                                method: record.method,
-                                headers: {
-                                    'Accept': 'application/json',
-                                    'Content-Type': 'application/json',
-                                    'Authorization': record.authHeader
-                                },
-                                body: record.payload
-                            },
-                            10000
-                        )
-                            .then(() => deleteFromIndexedDb(record.id))
-                    );
-
-                    sequencePromises(postPromises)
-                        .then(() => yes())
-                        .catch(err => {
-                            console.warn('Failed to post offline writes', err);
-                            no();
-                        });
-                } else {
-                    yes();
-                }
-            };
-        }
-    });
+    }
 }
 
 /**
