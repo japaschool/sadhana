@@ -318,9 +318,11 @@ pub fn import() -> Html {
                     <span class="text-zinc-500 dark:text-zinc-200">
                         { format!(
                             "{}{msg}",
-                            (!line.is_empty())
-                                .then(|| format!("{}: ", Locale::current().import_failure_line_num_msg(LineNum(&line))))
-                                .unwrap_or_default()
+                            if !line.is_empty() {
+                                format!("{}: ", Locale::current().import_failure_line_num_msg(LineNum(&line)))
+                            } else {
+                                Default::default()
+                            }
                         ) }
                     </span>
                 }

@@ -61,7 +61,6 @@
   "report_dur_half_year": "Half a year",
   "report_dur_year": "A year",
   "report_dur_all_data": "All the data",
-  "no_data_to_show": "No data to display",
   "hours_label": "h",
   "minutes_label": "m",
   "login_not_found": "Could not find user with email {email}",
