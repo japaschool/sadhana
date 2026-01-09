@@ -359,11 +359,7 @@ fn overflow_time(report_data: &[&ReportDataEntry]) -> i8 {
         }
     }
 
-    if morning_cnt > evening_cnt {
-        -1
-    } else {
-        1
-    }
+    if morning_cnt > evening_cnt { -1 } else { 1 }
 }
 
 fn y_value(data_type: &PracticeDataType, entry: &ReportDataEntry, adjust_time: i8) -> String {

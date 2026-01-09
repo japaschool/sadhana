@@ -34,6 +34,7 @@ pub fn charts() -> Html {
     let editing = use_bool_toggle(false);
     let active_report = use_state(|| None::<Report>);
     let share_signal = use_state(|| None::<Callback<_>>);
+    let initialised = use_mut_ref(|| false);
 
     let can_share = can_share();
     let share_icon = if can_share {
@@ -69,7 +70,11 @@ pub fn charts() -> Html {
         use_cache_aware_async(
             url::get_report_data(&session.selected_date, &duration),
             move |cache_only| {
-                log::debug!("Getting report data for {:?}", session.selected_date);
+                log::debug!(
+                    "Getting report data for {:?} for duration {:?}",
+                    session.selected_date,
+                    duration
+                );
                 let session = session.clone();
                 let duration = duration.clone();
                 async move {
@@ -124,8 +129,12 @@ pub fn charts() -> Html {
     {
         // Fetch data from server on date change
         let report_data = report_data.clone();
+        let initialised = initialised.clone();
         use_effect_with(session_ctx.clone(), move |_| {
-            report_data.run();
+            if *initialised.borrow() {
+                log::debug!("Date has changed. Re-fetching report data.");
+                report_data.run();
+            }
             || ()
         });
     }
@@ -134,9 +143,8 @@ pub fn charts() -> Html {
         let active_report = active_report.clone();
         let reports = reports.clone();
         move || {
-            log::debug!("Resetting active");
             if let Some(reports) = &reports.data {
-                log::debug!("Resetting active:: found some reports");
+                log::debug!("Resetting active report");
                 let new_report = LocalStorage::get::<SelectedReportId>(SELECTED_REPORT_ID_KEY)
                     .ok()
                     .and_then(|current_report_id| {
@@ -169,12 +177,15 @@ pub fn charts() -> Html {
         });
     }
 
+    // This callback starts initialisation process from within BaseChart
     let dates_onchange = {
         let report_data = report_data.clone();
         let duration = duration.clone();
+        let initialised = initialised.clone();
         Callback::from(move |dur| {
             duration.set(dur);
             report_data.run();
+            *initialised.borrow_mut() = true;
         })
     };
 
@@ -359,7 +370,7 @@ pub fn charts() -> Html {
                     />
                 }
                 if let Some(report) = active_report.as_ref() {
-                    if all_practices.data.is_some() && report_data.data.is_some() {
+                    if all_practices.data.is_some() {
                         <ChartsBase
                             practices={all_practices.data.clone().unwrap_or_default()}
                             reports={reports.data.clone().unwrap_or_default()}
@@ -368,8 +379,6 @@ pub fn charts() -> Html {
                             {report_onchange}
                             {dates_onchange}
                         />
-                    } else {
-                        <h3>{ Locale::current().no_data_to_show() }</h3>
                     }
                 }
                 if *editing {
