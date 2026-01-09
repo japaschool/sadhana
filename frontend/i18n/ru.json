@@ -61,6 +61,7 @@
   "report_dur_half_year": "Полгода",
   "report_dur_year": "Год",
   "report_dur_all_data": "Все данные",
+  "no_data_to_show": "Данные для отображения отсутствуют",
   "hours_label": "ч",
   "minutes_label": "м",
   "login_not_found": "Пользотель с адресом {email} не найден",

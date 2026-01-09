@@ -7,6 +7,7 @@ use self::requests::*;
 
 pub mod report;
 pub mod requests;
+pub mod url;
 
 /// Login a user
 pub async fn login(login_info: &LoginInfoWrapper) -> Result<UserInfoWrapper, AppError> {
@@ -59,9 +60,22 @@ pub async fn update_user_password(
 }
 
 /// Get diary data for a date
-pub async fn get_diary_day(date: &NaiveDate) -> Result<DiaryDay, AppError> {
-    log::debug!("Fetching journal entry for {}", date);
-    request_api_get(&format!("/diary/{}", date.format("%F"))).await
+pub async fn get_diary_day(date: &NaiveDate, cache_only: bool) -> Result<DiaryDay, AppError> {
+    log::debug!(
+        "Fetching journal entry for {} {}",
+        date,
+        if cache_only {
+            "from cache"
+        } else {
+            Default::default()
+        }
+    );
+    let url = url::get_diary_day(date);
+    if cache_only {
+        request_api_get_cache_only(&url).await
+    } else {
+        request_api_get(&url).await
+    }
 }
 
 /// Save a diary entry for a date
@@ -99,8 +113,12 @@ pub async fn get_user_practice(id: &str) -> Result<GetUserPractice, AppError> {
 }
 
 /// Get user practices
-pub async fn get_user_practices() -> Result<AllUserPractices, AppError> {
-    request_api_get("/user/practices").await
+pub async fn get_user_practices(from_cache: bool) -> Result<AllUserPractices, AppError> {
+    if from_cache {
+        request_api_get_cache_only(url::GET_USER_PRACTICES).await
+    } else {
+        request_api_get(url::GET_USER_PRACTICES).await
+    }
 }
 
 /// Updates a user practice
@@ -278,9 +296,4 @@ pub async fn update_yatra_user_practices(
 
 pub async fn send_support_message(subject: &str, message: &str) -> Result<(), AppError> {
     request_api_post("/support-form", &SupportMessageForm::new(subject, message)).await
-}
-
-//TODO:  This is unused now
-pub async fn get_build_info() -> Result<BuildInfo, AppError> {
-    request_get("/build_info.json").await
 }

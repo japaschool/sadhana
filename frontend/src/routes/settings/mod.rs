@@ -1,7 +1,7 @@
 use crate::{
     components::blank_page::BlankPage,
     css::*,
-    hooks::{UpdateContext, use_user_context},
+    hooks::{AppUpdate, use_user_context},
     routes::{AppRoute, BaseRoute},
     tr,
 };
@@ -22,8 +22,7 @@ pub mod support_form;
 pub fn settings() -> Html {
     let user_ctx = use_user_context();
     let nav = use_navigator().unwrap();
-    let app_update_ctx =
-        use_context::<UpdateContext>().expect("Could not obtain AppUpdate context");
+    let app_update = use_context::<AppUpdate>().expect("AppUpdate context not found");
 
     let logout_onclick = {
         let user_ctx = user_ctx.clone();
@@ -168,9 +167,9 @@ pub fn settings() -> Html {
                             </label>
                         </a>
                     </li>
-                    if app_update_ctx.update_available {
+                    if app_update.update_available {
                         <li
-                            onclick={let update = app_update_ctx.apply_update.clone();
+                            onclick={let update = app_update.apply_update.clone();
                             Callback::from(move |_| update.emit(()))}
                         >
                             <div class={LI_DIV_CSS}>

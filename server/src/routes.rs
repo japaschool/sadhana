@@ -1,6 +1,5 @@
 use crate::app::{self};
 use actix_files::{Files, NamedFile};
-use actix_http::header;
 use actix_web::{
     HttpResponse,
     dev::{HttpServiceFactory, ServiceRequest, ServiceResponse},

@@ -1,20 +1,20 @@
 use std::error::Error;
 
 use super::{
-    base::ChartsBase, graph_editor::GraphEditor, grid_editor::GridEditor, Report, ReportDefinition,
-    SelectedReportId, SELECTED_REPORT_ID_KEY,
+    Report, ReportDefinition, SELECTED_REPORT_ID_KEY, SelectedReportId, base::ChartsBase,
+    graph_editor::GraphEditor, grid_editor::GridEditor,
 };
 use crate::{
     components::{
         blank_page::{BlankPage, CalendarProps, CtxMenuEntry, HeaderButtonProps},
         list_errors::ListErrors,
-        share_link::{can_share, emit_signal_callback, set_signal_callback, ShareLink},
+        share_link::{ShareLink, can_share, emit_signal_callback, set_signal_callback},
     },
-    hooks::{use_user_context, SessionStateContext},
+    hooks::{SessionStateContext, use_cache_aware_async, use_user_context},
     i18n::Locale,
     model::ReportData,
     routes::AppRoute,
-    services::{get_user_practices, report::*},
+    services::{get_user_practices, report::*, url},
 };
 use common::ReportDuration;
 use csv::Writer;
@@ -47,7 +47,39 @@ pub fn charts() -> Html {
         Locale::current().copy_reports_link()
     };
 
-    let reports = use_async(async move { get_reports().await.map(|res| res.reports) });
+    let reports = use_cache_aware_async(url::GET_REPORTS.to_string(), |cache_only| async move {
+        get_reports(cache_only).await.map(|res| res.reports)
+    });
+
+    let all_practices = use_cache_aware_async(
+        url::GET_USER_PRACTICES.to_string(),
+        |cache_only| async move {
+            get_user_practices(cache_only).await.map(|res| {
+                res.user_practices
+                    .into_iter()
+                    .filter(|p| p.is_active)
+                    .collect::<Vec<_>>()
+            })
+        },
+    );
+
+    let report_data = {
+        let duration = duration.clone();
+        let session = session_ctx.clone();
+        use_cache_aware_async(
+            url::get_report_data(&session.selected_date, &duration),
+            move |cache_only| {
+                log::debug!("Getting report data for {:?}", session.selected_date);
+                let session = session.clone();
+                let duration = duration.clone();
+                async move {
+                    get_report_data(&session.selected_date, &duration, cache_only)
+                        .await
+                        .map(|res| res.values)
+                }
+            },
+        )
+    };
 
     let delete_report = {
         let reports = reports.clone();
@@ -78,26 +110,6 @@ pub fn charts() -> Html {
             } else {
                 Ok(())
             }
-        })
-    };
-
-    let all_practices = use_async(async move {
-        get_user_practices().await.map(|res| {
-            res.user_practices
-                .into_iter()
-                .filter(|p| p.is_active)
-                .collect::<Vec<_>>()
-        })
-    });
-
-    let report_data = {
-        let duration = duration.clone();
-        let session = session_ctx.clone();
-        use_async(async move {
-            log::debug!("Getting report data for {:?}", session.selected_date);
-            get_report_data(&session.selected_date, &duration)
-                .await
-                .map(|res| res.values)
         })
     };
 
@@ -184,7 +196,7 @@ pub fn charts() -> Html {
             let duration = duration.clone();
             let selected_date = session.selected_date;
             spawn_local(async move {
-                get_report_data(&selected_date, &duration)
+                get_report_data(&selected_date, &duration, false)
                     .await
                     .map(|data| {
                         // To guarantee UTF-8 (especially for Cyrillic), prepending a UTF-8 BOM
@@ -347,7 +359,7 @@ pub fn charts() -> Html {
                     />
                 }
                 if let Some(report) = active_report.as_ref() {
-                    if all_practices.data.is_some() {
+                    if all_practices.data.is_some() && report_data.data.is_some() {
                         <ChartsBase
                             practices={all_practices.data.clone().unwrap_or_default()}
                             reports={reports.data.clone().unwrap_or_default()}
@@ -356,6 +368,8 @@ pub fn charts() -> Html {
                             {report_onchange}
                             {dates_onchange}
                         />
+                    } else {
+                        <h3>{ Locale::current().no_data_to_show() }</h3>
                     }
                 }
                 if *editing {

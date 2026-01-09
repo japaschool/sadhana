@@ -1,12 +1,11 @@
 use gloo::utils::window;
-use gloo_events::EventListener;
-use wasm_bindgen::JsCast;
+use wasm_bindgen::{JsCast, prelude::Closure};
 use web_sys::MessageEvent;
 use yew::{html::ChildrenProps, prelude::*};
 use yew_hooks::use_bool_toggle;
 
 #[derive(Clone, PartialEq)]
-pub struct NetworkStatusContext {
+pub struct NetworkStatus {
     pub online: bool,
 }
 
@@ -23,14 +22,9 @@ pub fn network_status_provider(props: &ChildrenProps) -> Html {
 
         // Using effect with deps to avoid running on ever render
         use_effect_with((), move |_| {
-            let sw = window().navigator().service_worker();
-
-            let listener = EventListener::new(sw.as_ref(), "message", move |e| {
-                let e = e
-                    .dyn_ref::<MessageEvent>()
-                    .expect("event should be a MessageEvent");
-
+            let listener = Closure::<dyn FnMut(MessageEvent)>::new(move |e: MessageEvent| {
                 if let Some(msg) = e.data().as_string() {
+                    // msg could be something else
                     if msg == "ONLINE" {
                         online.set(true);
                     } else if msg == "OFFLINE" {
@@ -39,15 +33,26 @@ pub fn network_status_provider(props: &ChildrenProps) -> Html {
                 }
             });
 
-            || drop(listener)
+            let sw = window().navigator().service_worker();
+            sw.add_event_listener_with_callback("message", listener.as_ref().unchecked_ref())
+                .unwrap();
+
+            move || {
+                sw.remove_event_listener_with_callback(
+                    "message",
+                    listener.as_ref().unchecked_ref(),
+                )
+                .ok();
+                drop(listener);
+            }
         });
     }
 
-    let ctx = NetworkStatusContext { online: *online };
+    let ctx = NetworkStatus { online: *online };
 
     html! {
-        <ContextProvider<NetworkStatusContext> context={ctx}>
+        <ContextProvider<NetworkStatus> context={ctx}>
             { props.children.clone() }
-        </ContextProvider<NetworkStatusContext>>
+        </ContextProvider<NetworkStatus>>
     }
 }

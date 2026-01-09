@@ -5,7 +5,7 @@ use yew::{html::ChildrenProps, prelude::*};
 use yew_hooks::use_bool_toggle;
 
 #[derive(Clone, PartialEq)]
-pub struct UpdateContext {
+pub struct AppUpdate {
     pub update_available: bool,
     pub apply_update: Callback<()>,
 }
@@ -13,14 +13,16 @@ pub struct UpdateContext {
 /// Context that listens on UPDATE_READY message from Service Worker.
 /// Service Worker in turn is poked to check for updates every time user opens the app.
 /// Once SW notices an update, it loads the assets in background and sends UPDATE_READY.
-#[function_component(AppUpdateProvider)]
+#[function_component(AppUpdateContextProvider)]
 pub fn app_update_provider(props: &ChildrenProps) -> Html {
     let update_available = use_bool_toggle(false);
 
-    // Listen for SW messages
     {
+        // Some subtleties. It has to be a context as we receive update message once
+        // and need to reset it only on reload. For this reason we do use_effect_with((), ...)
+        // so that it wouldn't respond to re-renders.
         let update_available = update_available.clone();
-        use_effect(move || {
+        use_effect_with((), move |_| {
             let listener = Closure::<dyn FnMut(_)>::new(move |e: MessageEvent| {
                 if e.data().as_string() == Some("UPDATE_READY".into()) {
                     update_available.set(true);
@@ -44,14 +46,14 @@ pub fn app_update_provider(props: &ChildrenProps) -> Html {
         window().location().reload().ok();
     });
 
-    let ctx = UpdateContext {
+    let ctx = AppUpdate {
         update_available: *update_available,
         apply_update,
     };
 
     html! {
-        <ContextProvider<UpdateContext> context={ctx}>
+        <ContextProvider<AppUpdate> context={ctx}>
             { props.children.clone() }
-        </ContextProvider<UpdateContext>>
+        </ContextProvider<AppUpdate>>
     }
 }

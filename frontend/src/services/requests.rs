@@ -2,7 +2,11 @@ use common::error::*;
 use gloo::storage::{LocalStorage, Storage};
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
-use serde::{de::DeserializeOwned, Serialize};
+use reqwest::{
+    Method,
+    header::{HeaderMap, HeaderValue},
+};
+use serde::{Serialize, de::DeserializeOwned};
 
 const TOKEN_KEY: &str = "yew.token";
 
@@ -43,7 +47,12 @@ pub fn get_token() -> Option<String> {
 }
 
 /// build all kinds of http request: post/get/delete etc.
-pub async fn request<B, T>(method: reqwest::Method, url: &str, body: &B) -> Result<T, AppError>
+pub async fn request<B, T>(
+    method: Method,
+    url: &str,
+    body: &B,
+    extra_headers: Option<HeaderMap>,
+) -> Result<T, AppError>
 where
     T: DeserializeOwned + 'static + std::fmt::Debug,
     B: Serialize + std::fmt::Debug,
@@ -52,10 +61,14 @@ where
 
     // log::debug!("Sending {} request to {}", method, url);
 
-    let with_body = method == reqwest::Method::POST || method == reqwest::Method::PUT;
+    let with_body = method == Method::POST || method == Method::PUT;
     let mut builder = reqwest::Client::new()
         .request(method, url)
         .header("Content-Type", "application/json");
+
+    if let Some(headers) = extra_headers {
+        builder = builder.headers(headers);
+    }
 
     if let Some(token) = get_token() {
         builder = builder.bearer_auth(token);
@@ -106,12 +119,17 @@ where
     }
 }
 
-pub async fn request_api<B, T>(method: reqwest::Method, url: &str, body: &B) -> Result<T, AppError>
+pub async fn request_api<B, T>(
+    method: Method,
+    url: &str,
+    body: &B,
+    extra_headers: Option<HeaderMap>,
+) -> Result<T, AppError>
 where
     T: DeserializeOwned + 'static + std::fmt::Debug,
     B: Serialize + std::fmt::Debug,
 {
-    request(method, format!("/api{url}").as_str(), body).await
+    request(method, format!("/api{url}").as_str(), body, extra_headers).await
 }
 
 /// Delete api request
@@ -119,7 +137,7 @@ pub async fn request_api_delete<T>(url: &str) -> Result<T, AppError>
 where
     T: DeserializeOwned + 'static + std::fmt::Debug,
 {
-    request_api(reqwest::Method::DELETE, url, &()).await
+    request_api(Method::DELETE, url, &(), None).await
 }
 
 /// Get api request
@@ -127,7 +145,17 @@ pub async fn request_api_get<T>(url: &str) -> Result<T, AppError>
 where
     T: DeserializeOwned + 'static + std::fmt::Debug,
 {
-    request_api(reqwest::Method::GET, url, &()).await
+    request_api(Method::GET, url, &(), None).await
+}
+
+/// Get api request from cache only
+pub async fn request_api_get_cache_only<T>(url: &str) -> Result<T, AppError>
+where
+    T: DeserializeOwned + 'static + std::fmt::Debug,
+{
+    let mut headers = HeaderMap::new();
+    headers.insert("X-Cache-Only", HeaderValue::from_static("1"));
+    request_api(Method::GET, url, &(), Some(headers)).await
 }
 
 /// Post api request
@@ -136,7 +164,7 @@ where
     T: DeserializeOwned + 'static + std::fmt::Debug,
     B: Serialize + std::fmt::Debug,
 {
-    request_api(reqwest::Method::POST, url, body).await
+    request_api(Method::POST, url, body, None).await
 }
 
 /// Put api request with a body
@@ -145,14 +173,5 @@ where
     T: DeserializeOwned + 'static + std::fmt::Debug,
     B: Serialize + std::fmt::Debug,
 {
-    request_api(reqwest::Method::PUT, url, body).await
-}
-
-/// Get request
-#[allow(dead_code)]
-pub async fn request_get<T>(url: &str) -> Result<T, AppError>
-where
-    T: DeserializeOwned + 'static + std::fmt::Debug,
-{
-    request(reqwest::Method::GET, url, &()).await
+    request_api(Method::PUT, url, body, None).await
 }

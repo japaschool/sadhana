@@ -1,10 +1,11 @@
 use chrono::NaiveDate;
-use common::{error::AppError, ReportDuration};
+use common::{ReportDuration, error::AppError};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     model::ReportData,
     routes::charts::{Report, ReportForm},
+    services::url,
 };
 
 use super::requests::*;
@@ -13,8 +14,12 @@ use super::requests::*;
 pub async fn get_report_data(
     cob: &NaiveDate,
     duration: &ReportDuration,
+    cache_only: bool,
 ) -> Result<ReportData, AppError> {
-    request_api_get(&format!("/diary/{cob}/report?duration={duration}")).await
+    if cache_only {
+        return request_api_get_cache_only(&url::get_report_data(cob, duration)).await;
+    }
+    request_api_get(&url::get_report_data(cob, duration)).await
 }
 
 /// Get shared chart data for a practice
@@ -29,8 +34,11 @@ pub async fn get_shared_report_data(
     .await
 }
 
-pub async fn get_reports() -> Result<ReportsResponse, AppError> {
-    request_api_get("/reports").await
+pub async fn get_reports(cache_only: bool) -> Result<ReportsResponse, AppError> {
+    if cache_only {
+        return request_api_get_cache_only(url::GET_REPORTS).await;
+    }
+    request_api_get(url::GET_REPORTS).await
 }
 
 pub async fn create_new_report(report: ReportForm) -> Result<CreateReportResponse, AppError> {

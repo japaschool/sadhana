@@ -15,10 +15,10 @@ use crate::{
         prompt::Prompt,
     },
     css::*,
-    hooks::{SessionStateContext, use_visibility},
+    hooks::{SessionStateContext, use_cache_aware_async, use_visibility},
     i18n::{Locale, PracticeName},
     model::{DiaryEntry, PracticeDataType, PracticeEntryValue},
-    services::{get_diary_day, get_user_practices, save_diary_entry},
+    services::{get_diary_day, get_user_practices, save_diary_entry, url},
     utils::time_dur_input_support::*,
 };
 
@@ -35,23 +35,33 @@ pub fn home() -> Html {
     let add_duration_prompt_idx = use_state(|| None::<usize>);
     // use_mut_ref is to avoid re-rendering on every key press
     let backspace_key_pressed = use_mut_ref(|| false);
+    let visibility = use_visibility();
 
-    let required_practices = use_async(async move {
-        get_user_practices().await.map(|res| {
-            res.user_practices
-                .into_iter()
-                .filter_map(|p| p.is_required.and_then(|req| req.then_some(p.practice)))
-                .collect::<HashSet<_>>()
-        })
-    });
+    let required_practices = use_cache_aware_async(
+        url::GET_USER_PRACTICES.to_string(),
+        |cache_only| async move {
+            get_user_practices(cache_only).await.map(|res| {
+                res.user_practices
+                    .into_iter()
+                    .filter_map(|p| p.is_required.and_then(|req| req.then_some(p.practice)))
+                    .collect::<HashSet<_>>()
+            })
+        },
+    );
 
     let diary_entry = {
         let session = session_ctx.clone();
-        use_async(async move {
-            get_diary_day(&session.selected_date)
-                .await
-                .map(|je| je.diary_day)
-        })
+        use_cache_aware_async(
+            url::get_diary_day(&session.selected_date),
+            move |from_cache| {
+                let session = session.clone();
+                async move {
+                    get_diary_day(&session.selected_date, from_cache)
+                        .await
+                        .map(|je| je.diary_day)
+                }
+            },
+        )
     };
 
     let save_diary_day_entry = {
@@ -81,22 +91,19 @@ pub fn home() -> Html {
         // pick up any concurrent changes
         let diary_entry = diary_entry.clone();
         let required_practices = required_practices.clone();
-        use_visibility(
-            Callback::from(move |_| {
+        use_effect_with(visibility.clone(), move |v| {
+            if v.visible {
                 diary_entry.run();
                 required_practices.run();
-            }),
-            Callback::from(move |_| {
-                if let Some(e) = window()
-                    .document()
-                    .unwrap()
-                    .active_element()
-                    .and_then(|e| e.dyn_into::<HtmlElement>().ok())
-                {
-                    e.blur().unwrap();
-                }
-            }),
-        );
+            } else if let Some(e) = window()
+                .document()
+                .unwrap()
+                .active_element()
+                .and_then(|e| e.dyn_into::<HtmlElement>().ok())
+            {
+                e.blur().unwrap();
+            }
+        });
     }
 
     {
