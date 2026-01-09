@@ -14,7 +14,7 @@ const idb = self.idb;
 const PRECACHE_MANIFEST = /** @type {any} */ (self).__PRECACHE_MANIFEST__;
 
 // Bump on every frontend release
-const STATIC_VERSION = 'static-v2';
+const STATIC_VERSION = 'static-v__GIT_SHA__';
 const CACHE_STATIC = STATIC_VERSION;
 
 // Bump only when API schema / semantics change

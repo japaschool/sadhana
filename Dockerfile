@@ -1,4 +1,5 @@
 FROM rust:1.85.0 AS chef
+ARG GIT_SHA
 
 # Installing postgres lib
 RUN apt update && apt install -y libpq5
@@ -30,6 +31,7 @@ RUN cp wasm-bindgen-0.2.100-x86_64-unknown-linux-musl/wasm2es6js /usr/local/carg
 WORKDIR /usr/src/sadhana-pro
 
 FROM chef AS planner
+ARG GIT_SHA
 COPY . .
 # Compiling the dependencies list
 RUN cargo chef prepare --recipe-path recipe.json
@@ -48,6 +50,9 @@ RUN touch .env
 RUN ./scripts/build_info.sh
 RUN cd frontend && trunk build --release
 RUN cargo build --release
+
+RUN SHORT_SHA=$(echo "$GIT_SHA" | cut -c1-8) && \
+    sed -i "s/__GIT_SHA__/$SHORT_SHA/g" dist/service_worker.js
 
 RUN cd dist && \
     find . -type f \( -name "*.wasm" -o -name "*.js" -o -name "*.css" \) -exec gzip -k -9 {} \; && \
