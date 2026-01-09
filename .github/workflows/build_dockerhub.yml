@@ -1,6 +1,6 @@
 name: Build and Upload to Docker Hub
 
-on: 
+on:
    workflow_dispatch:
 
 jobs:
@@ -15,7 +15,7 @@ jobs:
         run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
       - name: Build Docker image
-        run: docker build -t japaschool/sadhana:latest .
+        run: docker build --build-arg GIT_SHA=${{ github.sha }} -t japaschool/sadhana:latest .
 
       - name: Push Docker image
         run: docker push japaschool/sadhana:latest
@@ -36,6 +36,6 @@ jobs:
               SSH_USER: sadhana
               SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
               SSH_HOST: ${{ secrets.SSH_HOST }}
-              
+
       - name: Executing update script
         run: ssh sadhana 'bash -s < /home/sadhana/scripts/sadhana_reload.sh'
