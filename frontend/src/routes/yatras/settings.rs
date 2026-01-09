@@ -44,7 +44,7 @@ pub fn yatra_settings(props: &Props) -> Html {
 
     let user_practices = {
         use_async(async move {
-            get_user_practices().await.map(|res| {
+            get_user_practices(false).await.map(|res| {
                 res.user_practices
                     .into_iter()
                     .filter(|p| p.is_active)

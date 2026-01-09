@@ -6,7 +6,7 @@ use yew_router::prelude::*;
 
 use crate::routes::*;
 use components::user_context_provider::UserContextProvider;
-use hooks::{AppUpdateProvider, NetworkStatusProvider, SessionStateProvider};
+use hooks::{AppUpdateContextProvider, NetworkStatusProvider, SessionStateProvider};
 
 mod components;
 mod css;
@@ -22,15 +22,15 @@ mod web_sys_ext;
 fn app() -> Html {
     html! {
         <BrowserRouter>
-            <UserContextProvider>
-                <NetworkStatusProvider>
-                    <AppUpdateProvider>
+            <NetworkStatusProvider>
+                <AppUpdateContextProvider>
+                    <UserContextProvider>
                         <SessionStateProvider>
                             <Switch<BaseRoute> render={switch} />
                         </SessionStateProvider>
-                    </AppUpdateProvider>
-                </NetworkStatusProvider>
-            </UserContextProvider>
+                    </UserContextProvider>
+                </AppUpdateContextProvider>
+            </NetworkStatusProvider>
         </BrowserRouter>
     }
 }

@@ -1057,6 +1057,7 @@ dependencies = [
  "gloo 0.11.0",
  "gloo-dialogs 0.2.0",
  "gloo-events 0.2.0",
+ "gloo-utils 0.2.0",
  "i18n_codegen",
  "js-sys",
  "lazy_static",

@@ -25,6 +25,9 @@ const DB_NAME = 'SadhanaProPostDB';
 const DB_VERSION = 1;
 const STORE_POST_REQUEST = 'postrequest';
 
+// In flight api get fetches
+const refreshing = new Map(); // url -> Promise
+
 const diaryDayPutUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}/entry');
 const diaryDayGetUrlR = new RegExp('.*/api/diary/\\d{4}-\\d{2}-\\d{2}$');
 const incompleteDaysGetUrlR = new RegExp('.*/api/diary/incomplete-days/.*');
@@ -67,27 +70,23 @@ sw.addEventListener('activate',
     event => {
         event.waitUntil(
             (async () => {
-                const keys = await caches.keys();
-                await Promise.all(
-                    keys
-                        .filter(k => !k.startsWith(CACHE_STATIC))
-                        .map(k => caches.delete(k))
-                );
-
-                // Clear cache that has expired TTL
-                await clearStaleApiCache();
-
                 // Take control of all clients right away
                 await sw.clients.claim();
 
                 // Notify UI an update is applied
                 sw.clients.matchAll({ type: 'window' }).then(clients => {
                     for (const client of clients) {
+                        console.debug(`Sending UPDATE_READY to ${client}`);
                         client.postMessage("UPDATE_READY");
                     }
                 })
             })()
         );
+
+        // Start cleanup in background
+        setTimeout(() => {
+            clearStaleCaches();
+        }, 0);
     });
 
 sw.addEventListener('fetch',
@@ -112,7 +111,10 @@ sw.addEventListener('fetch',
         // API calls
         if (url.pathname.startsWith('/api/')) {
             if (event.request.method === 'GET') {
-                event.respondWith(sendOfflinePostRequestsToServer().catch(console.warn).then(async () => handleApiGet(event.request)));
+                event.respondWith(
+                    sendOfflinePostRequestsToServer()
+                        .catch(console.warn)
+                        .then(async () => handleApiGet(event.request)));
             } else if (event.request.method === 'PUT' && diaryDayPutUrlR.test(event.request.url)) {
                 event.respondWith(handleApiPut(event));
             }
@@ -125,6 +127,24 @@ sw.addEventListener('message', event => {
         sw.skipWaiting();
     }
 });
+
+async function clearStaleCaches() {
+    try {
+        const keys = await caches.keys();
+        await Promise.all(
+            keys
+                .filter(k => !k.startsWith(CACHE_STATIC))
+                .map(k => caches.delete(k))
+        );
+
+        // Clear API cache that has expired TTL
+        await clearStaleApiCache();
+    } catch (err) {
+        // swallow errors — never let cleanup crash the SW
+        console.warn('Cache cleanup failed', err);
+    }
+}
+
 
 /**
  * @param {FetchEvent} event
@@ -164,73 +184,94 @@ async function handleApiPut(event) {
 async function handleApiGet(request) {
     const cache = await caches.open(CACHE_API);
 
-    // We run 2 timeouts here. After 3s we deem network's unavailable and resolve from cache. If cache is not available
-    const timeout = new Promise(resolve => {
-        setTimeout(() => {
-            resolve(null);
-        }, 5000);
-    });
-
-    const network = (async () => {
-        try {
-            const resp = await fetchWrapper(
-                request.clone(),
-                { credentials: 'same-origin' },
-                30000
-            );
-            return resp;
-        } catch {
-            return null;
-        }
-    })();
-
-    const winner = await Promise.race([network, timeout]);
-
-    // Fast network wins
-    if (winner) {
-        const body = await winner.clone().arrayBuffer();
-
-        // Fast network response — update cache and serve it
-        await cache.put(
-            request,
-            new Response(body, {
-                status: winner.status,
-                statusText: winner.statusText,
-                headers: winner.headers
-            })
-        );
-
-        // Notify clients we're online
-        broadcastOnline();
-
-        saveDefaultDiaryDay(request.url, winner.clone());
-
-        return winner;
+    // Cache-only re-read from UI
+    if (request.headers.get("X-Cache-Only")) {
+        const cached = await cache.match(request, { ignoreVary: true });
+        if (cached) return cached;
+        throw new Error("Cache-only miss");
     }
 
-    // Slow network → fallback immediately
-    broadcastOffline();
-
+    // Serve cache immediately
     const cached = await serveFromCache(cache, request).catch(() => null);
-    if (cached) return cached;
-
-    // No cache → wait for network *once*
-    const finalResp = await network;
-    if (finalResp) {
-        broadcastOnline();
-        const body = await finalResp.clone().arrayBuffer();
-        await cache.put(
-            request,
-            new Response(body, {
-                status: finalResp.status,
-                statusText: finalResp.statusText,
-                headers: finalResp.headers
-            })
-        );
-        return finalResp;
+    if (cached) {
+        backgroundRefreshOnce(request, cache, cached.clone());
+        return cached;
     }
 
-    throw new Error('Network failed and no cache available');
+    console.debug(`Trying to get from server not cached ${request.url}`);
+    // Cold start
+    const net = await fetchWrapper(request, {}, 30000);
+    const body = await net.clone().arrayBuffer();
+    await cache.put(request, new Response(body, {
+        status: net.status,
+        statusText: net.statusText,
+        headers: net.headers
+    }));
+    saveDefaultDiaryDay(request.url, net.clone());
+    return net;
+}
+
+/**
+ * @param {ArrayBuffer} buffer
+ * @returns string
+ */
+async function sha256(buffer) {
+    const hash = await crypto.subtle.digest("SHA-256", buffer);
+    return Array.from(new Uint8Array(hash))
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
+}
+
+/**
+ * @param {Request} request
+ * @param {Cache} cache
+ * @param {Response} cached
+ */
+function backgroundRefreshOnce(request, cache, cached) {
+    const key = request.url;
+
+    if (refreshing.has(key)) return;
+
+    const p = fetchWrapper(request, {}, 5000)
+        .then(async resp => {
+            if (!resp.ok) return;
+
+            const body = await resp.clone().arrayBuffer();
+
+            await cache.put(request, new Response(body, {
+                status: resp.status,
+                statusText: resp.statusText,
+                headers: resp.headers
+            }));
+
+            let oldHash = null;
+            if (cached) {
+                const cachedBody = await cached.arrayBuffer();
+                oldHash = await sha256(cachedBody);
+            }
+
+            const newHash = await sha256(body);
+            if (oldHash !== newHash) {
+                console.debug(`Notifying clients to refresh ${key}`);
+                notifyClients(key);
+            }
+
+            saveDefaultDiaryDay(key, resp.clone());
+        })
+        .finally(() => refreshing.delete(key));
+
+    refreshing.set(key, p);
+}
+
+/**
+ * @param {string} url
+ */
+function notifyClients(url) {
+    sw.clients.matchAll().then(clients => {
+        clients.forEach(c =>
+            c.postMessage({ type: "API_UPDATED", url })
+        );
+    });
 }
 
 /**
@@ -272,6 +313,7 @@ async function clearStaleApiCache() {
         cache.keys().then(reqs => reqs.forEach(req => {
             const dateStr = req.url.match(dateR);
             if (dateStr && Date.parse(dateStr[1]) < staleCobThreshold.getTime()) {
+                console.log(`Deleting old api cache entry ${req.url}`);
                 cache.delete(req);
             }
         }))
@@ -468,18 +510,32 @@ async function saveDefaultDiaryDay(url, resp) {
  * @param {number} [timeout] Timeout in ms, optional
  * @returns {Promise<Response>}
  */
-async function fetchWrapper(req, opts, timeout) {
-    const resp = timeout
-        ? await fetchWithTimeout(req, opts, timeout)
-        : await fetch(req, opts);
-    if (resp.status === 504) {
-        throw new Error('Server unavailable');
+async function fetchWrapper(req, opts = {}, timeout) {
+    try {
+        const resp = timeout
+            ? await fetchWithTimeout(req, opts, timeout)
+            : await fetch(req, opts);
+
+        if (resp.status === 504) {
+            throw new Error('Server unavailable');
+        }
+
+        if (resp.ok) {
+            broadcastOnline();
+        } else {
+            broadcastOffline();
+        }
+
+        return resp;
+    } catch (err) {
+        broadcastOffline();
+        throw err;
     }
-    return resp;
 }
 
 /**
- * Fetch with timeout that aborts the request after timeout
+ * Fetch with timeout that aborts the request after timeout.
+ * DO NOT USE it directly. Use fetchWrapper instead.
  *
  * @param {Request} resource
  * @param {RequestInit} options
@@ -491,11 +547,8 @@ function fetchWithTimeout(resource, options = {}, timeout) {
     const { signal } = controller;
     const fetchOptions = { ...options, signal };
 
+    /** @type {ReturnType<typeof setTimeout>} */
     let timeoutId;
-
-    timeoutId = setTimeout(() => {
-        controller.abort(); // Abort only if response headers didn't arrive in time
-    }, timeout);
 
     const fetchPromise = fetch(resource, fetchOptions)
         .catch(err => {
@@ -503,9 +556,13 @@ function fetchWithTimeout(resource, options = {}, timeout) {
             throw err;
         })
         .then(response => {
-            clearTimeout(timeoutId); // Response arrived — clear the timeout
+            clearTimeout(timeoutId);
             return response;         // let response.body stream continue
         });
+
+    timeoutId = setTimeout(() => {
+        controller.abort(); // Abort only if response headers didn't arrive in time
+    }, timeout);
 
     return fetchPromise;
 }

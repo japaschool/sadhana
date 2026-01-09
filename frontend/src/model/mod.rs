@@ -122,7 +122,7 @@ pub struct IncompleteDays {
 }
 
 /// Assumes values are sorted by DiaryEntry.practice
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, PartialEq, Serialize, Clone)]
 pub struct DiaryDay {
     pub diary_day: Vec<DiaryEntry>,
 }
@@ -151,7 +151,7 @@ pub enum PracticeDataType {
 }
 
 impl PracticeDataType {
-    pub fn to_localised_string(&self) -> String {
+    pub fn to_localised_string(self) -> String {
         match self {
             PracticeDataType::Int => tr!(integer),
             PracticeDataType::Bool => tr!(boolean),
@@ -702,10 +702,4 @@ impl SupportMessageForm {
             message: message.into(),
         }
     }
-}
-
-#[derive(Debug, Deserialize, Clone, PartialEq)]
-pub struct BuildInfo {
-    pub git_hash: String,
-    pub build_time: String,
 }

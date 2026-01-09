@@ -10,7 +10,7 @@ use yew_router::prelude::*;
 use super::{calendar::Calendar, month_calendar::MonthCalendar};
 use crate::{
     css::*,
-    hooks::{NetworkStatusContext, use_on_wake},
+    hooks::{NetworkStatus, use_visibility},
     i18n::Locale,
     routes::AppRoute,
 };
@@ -330,23 +330,26 @@ pub fn blank_page(props: &Props) -> Html {
     let loading = use_bool_toggle(false);
     let show_month_cal = use_bool_toggle(false);
     let show_ctx_menu = use_bool_toggle(false);
-    let network_status_ctx =
-        use_context::<NetworkStatusContext>().expect("NetworkStatusContext not found");
+    let network_status = use_context::<NetworkStatus>().expect("NetworkStatus context not found");
+    let visibility = use_visibility();
 
     {
         // On wake of the app check for the app update
-        use_on_wake(Callback::from(move |_| {
-            let sw = window().navigator().service_worker();
+        use_effect_with(visibility.clone(), move |v| {
+            if v.visible {
+                let sw = window().navigator().service_worker();
 
-            spawn_local(async move {
-                if let Ok(Some(reg)) = JsFuture::from(sw.get_registration())
-                    .await
-                    .map(|v| v.dyn_into::<ServiceWorkerRegistration>().ok())
-                {
-                    reg.update().ok();
-                }
-            });
-        }));
+                spawn_local(async move {
+                    if let Ok(Some(reg)) = JsFuture::from(sw.get_registration())
+                        .await
+                        .map(|v| v.dyn_into::<ServiceWorkerRegistration>().ok())
+                    {
+                        log::debug!("Requesting SW to check for updates");
+                        reg.update().ok();
+                    }
+                });
+            }
+        });
     }
 
     let timer = {
@@ -405,7 +408,7 @@ pub fn blank_page(props: &Props) -> Html {
             <div
                 class="bg-hero dark:bg-herod bg-no-repeat bg-cover bg-center h-screen w-full fixed -z-10"
             />
-            if !network_status_ctx.online {
+            if !network_status.online {
                 <div
                     class="absolute bg-red-500 w-full h-4 top-[env(safe-area-inset-top)] z-10 overscroll-none"
                 >
@@ -419,7 +422,7 @@ pub fn blank_page(props: &Props) -> Html {
                 class={format!(
                         "fixed pt-safe-top top-0 {} left-0 right-0 overflow-y-auto {}",
                         if props.show_footer {"bottom-16"} else {"bottom-0"},
-                        if !network_status_ctx.online {"top-4"} else {""})}
+                        if !network_status.online {"top-4"} else {""})}
             >
                 // 100vh-4rem means screen minus bottom-16; env(...) - the height of iPhone notch
                 <div

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use chrono::NaiveDate;
 use common::error::AppError;
 use csv::{Reader, ReaderBuilder, StringRecord};
@@ -11,8 +11,8 @@ use wasm_bindgen_futures::spawn_local;
 use web_sys::{FileList, HtmlInputElement};
 use yew::prelude::*;
 use yew_hooks::{
-    use_async, use_bool_toggle, use_effect_update_with_deps, use_list, use_mount, UseAsyncHandle,
-    UseListHandle,
+    UseAsyncHandle, UseListHandle, use_async, use_bool_toggle, use_effect_update_with_deps,
+    use_list, use_mount,
 };
 use yew_router::prelude::use_navigator;
 
@@ -39,7 +39,7 @@ pub fn import() -> Html {
     let nav = use_navigator().unwrap();
 
     let all_practices = use_async(async move {
-        get_user_practices().await.map(|res| {
+        get_user_practices(false).await.map(|res| {
             res.user_practices
                 .iter()
                 .map(|up| (up.practice.clone(), up.data_type))
