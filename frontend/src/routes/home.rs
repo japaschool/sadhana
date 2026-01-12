@@ -263,7 +263,6 @@ pub fn home() -> Html {
         <BlankPage
             right_button={HeaderButtonProps::new_icon_redirect(AppRoute::UserPractices, "icon-bars")}
             show_footer=true
-            loading={diary_entry.loading}
             selected_page={AppRoute::Home}
             calendar={CalendarProps::new(date_is_incomplete)}
         >
