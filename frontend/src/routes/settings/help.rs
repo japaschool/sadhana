@@ -1,5 +1,6 @@
 use tw_merge::*;
 use yew::prelude::*;
+use yew_hooks::{use_async, use_mount};
 use yew_router::prelude::use_navigator;
 
 use crate::{
@@ -11,12 +12,20 @@ use crate::{
     hooks::use_user_context,
     i18n::*,
     routes::AppRoute,
+    services::get_version,
 };
 
 #[function_component(Help)]
 pub fn help() -> Html {
     let nav = use_navigator().unwrap();
     let ctx = use_user_context();
+    let api_version = use_async(async move { get_version().await });
+
+    {
+        let version = api_version.clone();
+        use_mount(move || version.run())
+    }
+
     let send_msg_onclick = {
         let nav = nav.clone();
         Callback::from(move |_: MouseEvent| {
@@ -113,6 +122,15 @@ pub fn help() -> Html {
                     </div>
                 </div>
             }
+            <div
+                class={tw_merge!(BODY_DIV_SPACE_10_CSS, "text-center text-sm")}
+            >
+                <label>
+                    { format!(
+                        "{} (Git hash)",
+                        api_version.data.clone().map(|info| info.git_sha).unwrap_or_default()) }
+                </label>
+            </div>
         </BlankPage>
     }
 }

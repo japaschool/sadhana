@@ -1,9 +1,9 @@
 use gloo::utils::window;
+use gloo_utils::format::JsValueSerdeExt;
+use serde::Serialize;
 use tw_merge::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen_futures::JsFuture;
-use web_sys::ServiceWorkerRegistration;
-use yew::{html::onclick::Event, platform::spawn_local, prelude::*};
+use wasm_bindgen::JsValue;
+use yew::{html::onclick::Event, prelude::*};
 use yew_hooks::{UseToggleHandle, use_bool_toggle, use_timeout};
 use yew_router::prelude::*;
 
@@ -13,6 +13,7 @@ use crate::{
     hooks::{NetworkStatus, use_visibility},
     i18n::Locale,
     routes::AppRoute,
+    services::requests,
 };
 
 #[derive(Properties, Clone, PartialEq)]
@@ -324,6 +325,13 @@ fn header_button(
 
 pub const HEADER_BUTTON_CSS: &str = "no-underline text-amber-400";
 
+#[derive(Debug, Serialize)]
+struct CheckUpdateMsg {
+    #[serde(rename = "type")]
+    msg_type: String,
+    token: String,
+}
+
 #[function_component(BlankPage)]
 pub fn blank_page(props: &Props) -> Html {
     let nav = use_navigator().unwrap();
@@ -337,17 +345,17 @@ pub fn blank_page(props: &Props) -> Html {
         // On wake of the app check for the app update
         use_effect_with(visibility.clone(), move |v| {
             if v.visible {
-                let sw = window().navigator().service_worker();
-
-                spawn_local(async move {
-                    if let Ok(Some(reg)) = JsFuture::from(sw.get_registration())
-                        .await
-                        .map(|v| v.dyn_into::<ServiceWorkerRegistration>().ok())
-                    {
-                        log::debug!("Requesting SW to check for updates");
-                        reg.update().ok();
+                if let Some(token) = requests::get_token() {
+                    if let Some(controller) = window().navigator().service_worker().controller() {
+                        let msg = CheckUpdateMsg {
+                            msg_type: "CHECK_UPDATE".into(),
+                            token,
+                        };
+                        let msg = JsValue::from_serde(&msg)
+                            .expect("Failed to serialize CHECK_UPDATE message");
+                        controller.post_message(&msg).ok();
                     }
-                });
+                }
             }
         });
     }

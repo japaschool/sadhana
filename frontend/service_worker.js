@@ -14,7 +14,8 @@ const idb = self.idb;
 const PRECACHE_MANIFEST = /** @type {any} */ (self).__PRECACHE_MANIFEST__;
 
 // Bump on every frontend release
-const STATIC_VERSION = 'static-v__GIT_SHA__';
+const GIT_SHA = '__GIT_SHA__';
+const STATIC_VERSION = 'static-v' + GIT_SHA;
 const CACHE_STATIC = STATIC_VERSION;
 
 // Bump only when API schema / semantics change
@@ -123,8 +124,13 @@ sw.addEventListener('fetch',
     });
 
 sw.addEventListener('message', event => {
-    if (event.data === 'SKIP_WAITING') {
-        sw.skipWaiting();
+    switch (event.data.type) {
+        case 'CHECK_UPDATE':
+            checkForUpdate(event.data.token);
+            break;
+        case 'SKIP_WAITING':
+            sw.skipWaiting();
+            break;
     }
 });
 
@@ -566,6 +572,25 @@ function fetchWithTimeout(resource, options = {}, timeout) {
 
     return fetchPromise;
 }
+
+/**
+ * @param {string} token
+ */
+async function checkForUpdate(token) {
+    const res = await fetchWrapper(
+        new Request('/api/version', {
+            headers: { Authorization: `Bearer ${token}` }
+        }),
+        { cache: 'no-store' },
+        3000);
+    const { git_sha } = await res.json();
+
+    if (GIT_SHA !== git_sha) {
+        console.log(`Downloading app update for sha ${git_sha}`);
+        sw.registration.update();
+    }
+}
+
 
 function broadcastOnline() {
     if (!connOnline) {

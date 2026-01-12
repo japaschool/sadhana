@@ -37,6 +37,7 @@ COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS build
+ARG GIT_SHA
 
 # Building dependencies in a caching layer
 COPY --from=planner /usr/src/sadhana-pro/recipe.json recipe.json
@@ -47,7 +48,6 @@ WORKDIR /usr/src/sadhana-pro
 COPY . .
 
 RUN touch .env
-RUN ./scripts/build_info.sh
 RUN cd frontend && trunk build --release
 RUN cargo build --release
 
@@ -60,6 +60,7 @@ RUN cd dist && \
 
 
 FROM gcr.io/distroless/cc-debian12
+ARG GIT_SHA
 
 # Copying postgres cient libraries
 # Source: https://github.com/i0n/distroless-libpq5-debian-11/blob/main/Dockerfile
@@ -96,4 +97,5 @@ COPY --from=build /usr/src/sadhana-pro/dist /usr/local/bin/dist
 COPY --from=build /usr/src/sadhana-pro/.env /usr/local/bin/.env
 
 WORKDIR /usr/local/bin
+ENV GIT_SHA=$GIT_SHA
 CMD [ "server" ]

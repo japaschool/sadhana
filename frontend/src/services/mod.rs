@@ -297,3 +297,7 @@ pub async fn update_yatra_user_practices(
 pub async fn send_support_message(subject: &str, message: &str) -> Result<(), AppError> {
     request_api_post("/support-form", &SupportMessageForm::new(subject, message)).await
 }
+
+pub async fn get_version() -> Result<ApiVersion, AppError> {
+    request_api_get("/version").await
+}
