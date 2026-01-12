@@ -37,7 +37,8 @@ async fn precache_manifest() -> HttpResponse {
 
 #[get("/version")]
 async fn version() -> HttpResponse {
-    let body = format!(r#"{{"git_sha":"{}"}}"#, git_sha());
+    let short_sha = &git_sha()[..8];
+    let body = format!(r#"{{"git_sha":"{}"}}"#, short_sha);
     HttpResponse::Ok()
         .content_type("application/json")
         .body(body)
