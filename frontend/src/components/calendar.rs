@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use chrono::{prelude::*, Days};
+use chrono::{Days, prelude::*};
 use gloo_events::EventListener;
 use tw_merge::*;
 use web_sys::{HtmlInputElement, VisibilityState};
@@ -101,7 +101,6 @@ pub fn calendar(props: &Props) -> Html {
                 }
             });
 
-            // Create a Closure from a Box<dyn Fn> - this has to be 'static
             let listener =
                 EventListener::new(&web_sys::window().unwrap(), "visibilitychange", move |e| {
                     onwakeup.emit(e.clone());
@@ -246,7 +245,8 @@ pub fn calendar(props: &Props) -> Html {
                 } else {
                     "text-zinc-500 dark:text-zinc-100"
                 },
-                "dark:can-hover:group-hover:text-white can-hover:group-hover:text-zinc-100 my-auto can-hover:group-hover:font-bold transition-all duration-300")
+                "dark:can-hover:group-hover:text-white can-hover:group-hover:text-zinc-100 my-auto can-hover:group-hover:font-bold transition-all duration-300"
+            )
         };
 
         let id = d.format(DATE_FORMAT);

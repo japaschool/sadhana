@@ -2,10 +2,7 @@ SHELL := /bin/bash
 
 db_url := postgres://postgres:postgres@192.168.68.102:5432/sadhana_pro
 
-build-info:
-	./scripts/build_info.sh
-
-frontend-build: build-info
+frontend-build:
 	cd frontend && trunk build
 
 run_server:
@@ -45,4 +42,4 @@ lint:
 	cargo clippy --all-targets --all-features -- -D warnings
 
 # non-file target for make
-.PHONY: run_server run frontend-build build-info create_migration migrate redo_migrate reset_db gen_schema test lint
+.PHONY: run_server run frontend-build create_migration migrate redo_migrate reset_db gen_schema test lint

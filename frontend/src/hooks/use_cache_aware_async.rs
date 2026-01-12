@@ -2,13 +2,14 @@ use common::error::AppError;
 use gloo::utils::window;
 use gloo_events::EventListener;
 use gloo_utils::format::JsValueSerdeExt;
+use serde::Deserialize;
 use std::{future::Future, ops::Deref};
 use wasm_bindgen::JsCast;
 use web_sys::MessageEvent;
 use yew::prelude::*;
 use yew_hooks::{UseAsyncHandle, use_async};
 
-#[derive(serde::Deserialize)]
+#[derive(Deserialize)]
 struct ApiUpdatedMessage {
     #[serde(rename = "type")]
     msg_type: String,

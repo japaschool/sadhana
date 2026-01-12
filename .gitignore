@@ -19,5 +19,3 @@ dist/
 
 .env
 *.code-workspace
-
-frontend/build_info.json

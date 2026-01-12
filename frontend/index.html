@@ -78,7 +78,6 @@
   <link data-trunk rel="css" href="icons/style.css" />
   <link data-trunk rel="copy-file" href="site.webmanifest" />
   <link data-trunk rel="copy-file" href="robots.txt" />
-  <link data-trunk rel="copy-file" href="build_info.json" />
   <link rel="manifest" href="/site.webmanifest" />
   <link data-trunk rel="copy-dir" href="images" />
   <link data-trunk rel="copy-dir" href="icons/fonts/" />
@@ -119,13 +118,6 @@
 
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/service_worker.js");
-
-        // TODO: remove this in a few weeks
-        navigator.serviceWorker.getRegistrations().then(regs => {
-          for (const reg of regs) {
-            reg.update();
-          }
-        });
       }
     };
 

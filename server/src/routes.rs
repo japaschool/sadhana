@@ -1,4 +1,7 @@
-use crate::app::{self};
+use crate::{
+    app::{self},
+    vars::git_sha,
+};
 use actix_files::{Files, NamedFile};
 use actix_web::{
     HttpResponse,
@@ -17,7 +20,7 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
 
 #[get("/precache-manifest.js")]
 async fn precache_manifest() -> HttpResponse {
-    let dist = std::path::Path::new("./dist");
+    let dist = Path::new("./dist");
     let mut assets = Vec::new();
 
     collect_precache_assets(dist, dist, &mut assets);
@@ -29,6 +32,14 @@ async fn precache_manifest() -> HttpResponse {
 
     HttpResponse::Ok()
         .content_type("application/javascript")
+        .body(body)
+}
+
+#[get("/version")]
+async fn version() -> HttpResponse {
+    let body = format!(r#"{{"git_sha":"{}"}}"#, git_sha());
+    HttpResponse::Ok()
+        .content_type("application/json")
         .body(body)
 }
 
@@ -50,6 +61,7 @@ fn collect_precache_assets(dir: &Path, base: &Path, out: &mut Vec<String>) {
 
 fn api_scope() -> impl HttpServiceFactory {
     web::scope("/api")
+        .service(version)
         .service(
             web::scope("/users")
                 .service(

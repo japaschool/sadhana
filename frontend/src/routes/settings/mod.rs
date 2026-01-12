@@ -167,7 +167,7 @@ pub fn settings() -> Html {
                             </label>
                         </a>
                     </li>
-                    if app_update.update_available {
+                    if app_update.update_ready {
                         <li
                             onclick={let update = app_update.apply_update.clone();
                             Callback::from(move |_| update.emit(()))}
