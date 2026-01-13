@@ -11,8 +11,8 @@ use yew_hooks::use_async;
 
 use crate::{
     css::POPUP_BG_CSS,
-    hooks::SessionStateContext,
-    i18n::{Locale, DAYS},
+    hooks::{SessionAction, Session},
+    i18n::{DAYS, Locale},
     services::get_incomplete_days,
 };
 
@@ -23,12 +23,12 @@ pub struct Props {
     pub highlight_incomplete_dates: bool,
 }
 
-const DAY_CSS: & str = "cursor-pointer text-center text-md rounded-full leading-loose transition-all ease-in-out duration-300";
+const DAY_CSS: &str = "cursor-pointer text-center text-md rounded-full leading-loose transition-all ease-in-out duration-300";
 
 #[function_component(MonthCalendar)]
 pub fn month_calendar(props: &Props) -> Html {
     let today: NaiveDate = Local::now().date_naive();
-    let session_ctx = use_context::<SessionStateContext>().expect("No session state ctx found");
+    let session_ctx = use_context::<Session>().expect("No session state ctx found");
     let month_start = use_state(|| {
         NaiveDate::from_ymd_opt(
             session_ctx.selected_date.year(),
@@ -119,7 +119,7 @@ pub fn month_calendar(props: &Props) -> Html {
             let day: u32 = input.id().parse().unwrap();
             let selected_date =
                 NaiveDate::from_ymd_opt(month_start.year(), month_start.month(), day).unwrap();
-            session.dispatch(selected_date);
+            session.dispatch(SessionAction::SetSelected(selected_date));
             close.emit(e);
         })
     };
@@ -128,7 +128,7 @@ pub fn month_calendar(props: &Props) -> Html {
         let session = session_ctx.clone();
         let close = props.close.clone();
         Callback::from(move |e| {
-            session.dispatch(today);
+            session.dispatch(SessionAction::SetSelected(today));
             close.emit(e);
         })
     };
