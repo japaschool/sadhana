@@ -37,6 +37,7 @@ const cacheTtlDays = 10;
 const defaultDiaryDayKey = '/default-diary-day';
 
 var connOnline = true;
+let isUpdate = false;
 
 sw.addEventListener('install',
     /** @param {ExtendableEvent} event */
@@ -44,6 +45,8 @@ sw.addEventListener('install',
         event.waitUntil(
             (async () => {
                 const cache = await caches.open(CACHE_STATIC);
+
+                console.log(`Installing update for version ${GIT_SHA}`);
 
                 await Promise.all(PRECACHE_MANIFEST.map(async url => {
                     const resp = await fetch(url, { cache: 'no-store' });
@@ -60,6 +63,8 @@ sw.addEventListener('install',
                             headers: resp.headers
                         })
                     );
+
+                    isUpdate = true;
                 }));
 
                 sw.skipWaiting();
@@ -72,8 +77,14 @@ sw.addEventListener('activate',
     event => {
         event.waitUntil(
             (async () => {
+                console.log(`Activating updated SW for version ${GIT_SHA}`);
+                await clearStaleCaches();
+
                 // Take control of all clients right away
                 await sw.clients.claim();
+
+                // Don't send the message if not a real update
+                if (!isUpdate) return;
 
                 // Notify UI an update is applied
                 sw.clients.matchAll({ type: 'window' }).then(clients => {
@@ -84,11 +95,6 @@ sw.addEventListener('activate',
                 })
             })()
         );
-
-        // Start cleanup in background
-        setTimeout(() => {
-            clearStaleCaches();
-        }, 0);
     });
 
 sw.addEventListener('fetch',
@@ -608,7 +614,7 @@ async function checkForUpdate(token) {
     const { git_sha } = await res.json();
 
     if (GIT_SHA !== git_sha) {
-        console.log(`Downloading app update for sha ${git_sha}`);
+        console.log(`Downloading app update for sha ${git_sha} from sha ${GIT_SHA}`);
         sw.registration.update();
     }
 }
