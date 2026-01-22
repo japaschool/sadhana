@@ -47,12 +47,13 @@ sw.addEventListener('install',
 
                 await Promise.all(PRECACHE_MANIFEST.map(async url => {
                     const resp = await fetch(url, { cache: 'no-store' });
+                    const cacheKey = url === '/index.html' ? '/' : url;
 
                     // Force body download
                     const body = await resp.clone().arrayBuffer();
 
                     await cache.put(
-                        url,
+                        cacheKey,
                         new Response(body, {
                             status: resp.status,
                             statusText: resp.statusText,
@@ -96,15 +97,43 @@ sw.addEventListener('fetch',
         const req = event.request;
         const url = new URL(req.url);
 
-        // CDN assets → network only
-        if (url.origin !== location.origin) {
+        if (req.mode === 'navigate') {
+            event.respondWith(
+                caches.open(CACHE_STATIC)
+                    .then(cache => cache.match('/'))
+                    .then(r => {
+                        return r || fetch(req);
+                    })
+            );
             return;
         }
 
-        // Static precached assets
+        // CDN assets caching
+        if (url.origin !== location.origin) {
+            event.respondWith(
+                caches.open(CACHE_STATIC)
+                    .then(c => c.match(req)
+                        .then(r => r || fetch(req))
+                        .then(resp =>
+                            resp.clone()
+                                .arrayBuffer()
+                                .then(body => c.put(req, new Response(body, {
+                                    status: resp.status,
+                                    statusText: resp.statusText,
+                                    headers: resp.headers
+                                })))
+                                .then(() => resp)
+                        ))
+            );
+            return;
+        }
+
+        // Static pre-cached assets
         if (PRECACHE_MANIFEST.includes(url.pathname)) {
             event.respondWith(
-                caches.match(req).then(r => r || fetch(req))
+                caches.open(CACHE_STATIC)
+                    .then(cache => cache.match(req))
+                    .then(r => r || fetch(req))
             );
             return;
         }
