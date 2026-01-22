@@ -52,7 +52,20 @@ fn collect_precache_assets(dir: &Path, base: &Path, out: &mut Vec<String>) {
         if path.is_dir() {
             collect_precache_assets(&path, base, out);
         } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-            if matches!(ext, "html" | "js" | "css" | "wasm") {
+            if matches!(
+                ext,
+                "html"
+                    | "js"
+                    | "css"
+                    | "wasm"
+                    | "webmanifest"
+                    | "jpg"
+                    | "png"
+                    | "ttf"
+                    | "svg"
+                    | "eot"
+                    | "woff"
+            ) {
                 let rel = path.strip_prefix(base).unwrap();
                 out.push(format!("/{}", rel.to_string_lossy()));
             }
