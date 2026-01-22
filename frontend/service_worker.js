@@ -115,14 +115,7 @@ sw.addEventListener('fetch',
                     .then(c => c.match(req)
                         .then(r => r || fetch(req))
                         .then(resp =>
-                            resp.clone()
-                                .arrayBuffer()
-                                .then(body => c.put(req, new Response(body, {
-                                    status: resp.status,
-                                    statusText: resp.statusText,
-                                    headers: resp.headers
-                                })))
-                                .then(() => resp)
+                            c.put(req, resp.clone()).then(() => resp)
                         ))
             );
             return;
