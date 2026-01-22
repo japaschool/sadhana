@@ -128,10 +128,10 @@ sw.addEventListener('fetch',
         }
 
         // Static pre-cached assets
-        if (PRECACHE_MANIFEST.includes(url.pathname)) {
+        if (PRECACHE_MANIFEST.includes(url.pathname) || url.pathname.startsWith('/fonts/')) {
             event.respondWith(
                 caches.open(CACHE_STATIC)
-                    .then(cache => cache.match(req))
+                    .then(cache => cache.match(req, { ignoreSearch: true }))
                     .then(r => r || fetch(req))
             );
             return;
