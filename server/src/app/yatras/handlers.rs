@@ -3,7 +3,7 @@ use common::error::AppError;
 
 use crate::middleware::{auth, state::AppState};
 
-use crate::app::yatras::{model, dto, stats};
+use crate::app::yatras::{domain, dto};
 
 /// Gets yatra data for a cob date
 pub async fn yatra_data(
@@ -19,20 +19,21 @@ pub async fn yatra_data(
 
     let res = web::block(move || {
         match (
-            model::YatraPractice::get_ordered_yatra_practices(&mut conn, &yatra_id),
-            model::YatraDataRow::get_yatra_data(&mut conn, &yatra_id, &cob_date),
-            stats::YatraStatisticResult::get_stats(&mut conn, &user_id, &yatra_id, &cob_date),
+            domain::YatraPractice::get_ordered_yatra_practices(&mut conn, &yatra_id),
+            domain::YatraDataRaw::get_yatra_data(&mut conn, &yatra_id, &cob_date),
+            domain::YatraStatisticResult::get_stats(&mut conn, &user_id, &yatra_id, &cob_date),
+            domain::DailyScore::get_raw_scores(&mut conn, &yatra_id, &cob_date),
         ) {
-            (Ok(data), Ok(practices), Ok(stats)) => Ok((data, practices, stats)),
-            (Err(e), _, _) | (_, Err(e), _) | (_, _, Err(e)) => {
+            (Ok(data), Ok(practices), Ok(stats), Ok(daily_scores)) => {
+                Ok((cob_date, data, practices, stats, daily_scores))
+            }
+            (Err(e), _, _, _) | (_, Err(e), _, _) | (_, _, Err(e), _) | (_, _, _, Err(e)) => {
                 log::warn!("Failed to retrieve yatra data: {e}");
                 Err(e)
             }
         }
     })
     .await??;
-
-    log::debug!("Yatra data: {:?}", res);
 
     Ok(HttpResponse::Ok().json(dto::YatraDataResponse::from(res)))
 }
@@ -46,7 +47,7 @@ pub async fn is_admin(
     let yatra_id = path.into_inner();
     let user_id = auth::get_current_user(&req)?.id;
 
-    let res = web::block(move || model::Yatra::is_admin(&mut conn, &user_id, &yatra_id)).await??;
+    let res = web::block(move || domain::Yatra::is_admin(&mut conn, &user_id, &yatra_id)).await??;
 
     Ok(HttpResponse::Ok().json(dto::YatraIsAdminResponse { is_admin: res }))
 }
@@ -60,7 +61,7 @@ pub async fn join_yatra(
     let yatra_id = path.into_inner();
     let user_id = auth::get_current_user(&req)?.id;
 
-    web::block(move || model::Yatra::join(&mut conn, &user_id, &yatra_id)).await??;
+    web::block(move || domain::Yatra::join(&mut conn, &user_id, &yatra_id)).await??;
 
     Ok(HttpResponse::Ok().json(()))
 }
@@ -74,7 +75,7 @@ pub async fn yatra_leave(
     let yatra_id = path.into_inner();
     let user_id = auth::get_current_user(&req)?.id;
 
-    web::block(move || model::Yatra::leave(&mut conn, &user_id, &yatra_id)).await??;
+    web::block(move || domain::Yatra::leave(&mut conn, &user_id, &yatra_id)).await??;
 
     Ok(HttpResponse::Ok().json(()))
 }
@@ -86,7 +87,7 @@ pub async fn user_yatras(
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
-    let yatras = web::block(move || model::Yatra::get_user_yatras(&mut conn, &user_id)).await??;
+    let yatras = web::block(move || domain::Yatra::get_user_yatras(&mut conn, &user_id)).await??;
 
     Ok(HttpResponse::Ok().json(dto::YatrasResponse { yatras }))
 }
@@ -101,7 +102,7 @@ pub async fn create_yatra(
     let name = form.name.clone();
     let user_id = auth::get_current_user(&req)?.id;
 
-    let yatra = web::block(move || model::Yatra::create(&mut conn, name, &user_id)).await??;
+    let yatra = web::block(move || domain::Yatra::create(&mut conn, name, &user_id)).await??;
 
     Ok(HttpResponse::Ok().json(dto::YatraResponse { yatra }))
 }
@@ -116,7 +117,7 @@ pub async fn delete_yatra(
     let user_id = auth::get_current_user(&req)?.id;
     let yatra_id = path.into_inner();
 
-    web::block(move || model::Yatra::delete(&mut conn, &user_id, &yatra_id)).await??;
+    web::block(move || domain::Yatra::delete(&mut conn, &user_id, &yatra_id)).await??;
 
     Ok(HttpResponse::Ok().json(()))
 }
@@ -144,7 +145,7 @@ pub async fn get_yatra(
     let mut conn = state.get_conn()?;
     let yatra_id = path.into_inner();
 
-    let yatra = web::block(move || model::Yatra::get_yatra(&mut conn, &yatra_id)).await??;
+    let yatra = web::block(move || domain::Yatra::get_yatra(&mut conn, &yatra_id)).await??;
 
     Ok(HttpResponse::Ok().json(dto::YatraResponse { yatra }))
 }
@@ -157,9 +158,10 @@ pub async fn get_yatra_practices(
     let mut conn = state.get_conn()?;
     let yatra_id = path.into_inner();
 
-    let practices =
-        web::block(move || model::YatraPractice::get_ordered_yatra_practices(&mut conn, &yatra_id))
-            .await??;
+    let practices = web::block(move || {
+        domain::YatraPractice::get_ordered_yatra_practices(&mut conn, &yatra_id)
+    })
+    .await??;
 
     Ok(HttpResponse::Ok().json(dto::YatraPracticesResponse { practices }))
 }
@@ -172,7 +174,8 @@ pub async fn get_yatra_users(
     let mut conn = state.get_conn()?;
     let yatra_id = path.into_inner();
 
-    let users = web::block(move || model::YatraUser::get_yatra_users(&mut conn, &yatra_id)).await??;
+    let users =
+        web::block(move || domain::YatraUser::get_yatra_users(&mut conn, &yatra_id)).await??;
 
     Ok(HttpResponse::Ok().json(dto::YatraUsersResponse { users }))
 }
@@ -188,8 +191,8 @@ pub async fn delete_yatra_user(
     let current_user_id = auth::get_current_user(&req)?.id;
 
     web::block(move || {
-        model::Yatra::ensure_admin_user(&mut conn, &current_user_id, &yatra_id)?;
-        model::Yatra::leave(&mut conn, &user_id, &yatra_id)
+        domain::Yatra::ensure_admin_user(&mut conn, &current_user_id, &yatra_id)?;
+        domain::Yatra::leave(&mut conn, &user_id, &yatra_id)
     })
     .await??;
 
@@ -206,8 +209,10 @@ pub async fn toggle_is_admin(
     let (yatra_id, user_id) = path.into_inner();
     let current_user_id = auth::get_current_user(&req)?.id;
 
-    web::block(move || model::Yatra::toggle_is_admin(&mut conn, &current_user_id, &user_id, &yatra_id))
-        .await??;
+    web::block(move || {
+        domain::Yatra::toggle_is_admin(&mut conn, &current_user_id, &user_id, &yatra_id)
+    })
+    .await??;
 
     Ok(HttpResponse::Ok().json(()))
 }
@@ -221,7 +226,8 @@ pub async fn create_yatra_practice(
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
 
-    web::block(move || model::YatraPractice::create(&mut conn, &user_id, &form.practice)).await??;
+    web::block(move || domain::YatraPractice::create(&mut conn, &user_id, &form.practice))
+        .await??;
 
     Ok(HttpResponse::Ok().json(()))
 }
@@ -235,7 +241,8 @@ pub async fn get_yatra_practice(
     let (yatra_id, practice_id) = path.into_inner();
 
     let practice =
-        web::block(move || model::YatraPractice::get(&mut conn, &yatra_id, &practice_id)).await??;
+        web::block(move || domain::YatraPractice::get(&mut conn, &yatra_id, &practice_id))
+            .await??;
 
     Ok(HttpResponse::Ok().json(dto::GetYatraPracticeResponse { practice }))
 }
@@ -250,7 +257,7 @@ pub async fn delete_yatra_practice(
     let user_id = auth::get_current_user(&req)?.id;
     let (yatra_id, practice_id) = path.into_inner();
 
-    web::block(move || model::YatraPractice::delete(&mut conn, &user_id, &yatra_id, &practice_id))
+    web::block(move || domain::YatraPractice::delete(&mut conn, &user_id, &yatra_id, &practice_id))
         .await??;
 
     Ok(HttpResponse::Ok().json(()))
@@ -268,7 +275,8 @@ pub async fn update_yatra_practice(
     let (yatra_id, _) = path.into_inner();
     let data = form.practice.clone();
 
-    web::block(move || model::YatraPractice::update(&mut conn, &user_id, &yatra_id, &data)).await??;
+    web::block(move || domain::YatraPractice::update(&mut conn, &user_id, &yatra_id, &data))
+        .await??;
 
     Ok(HttpResponse::Ok().json(()))
 }
@@ -296,8 +304,10 @@ pub async fn update_yatra_practice_order_key(
         })
         .collect();
 
-    web::block(move || model::YatraPractice::update_order_key(&mut conn, &user_id, &yatra_id, &data))
-        .await??;
+    web::block(move || {
+        domain::YatraPractice::update_order_key(&mut conn, &user_id, &yatra_id, &data)
+    })
+    .await??;
     Ok(HttpResponse::Ok().json(()))
 }
 
@@ -312,7 +322,7 @@ pub async fn get_yatra_user_practices(
     let user_id = auth::get_current_user(&req)?.id;
 
     let practices = web::block(move || {
-        model::YatraUserPractice::get_yatra_user_practices(&mut conn, &user_id, &yatra_id)
+        domain::YatraUserPractice::get_yatra_user_practices(&mut conn, &user_id, &yatra_id)
     })
     .await??;
 
@@ -332,7 +342,9 @@ pub async fn update_yatra_user_practices(
     let data = form.practices.clone();
 
     web::block(move || {
-        model::YatraUserPractice::update_yatra_user_practices(&mut conn, &user_id, &yatra_id, &data)
+        domain::YatraUserPractice::update_yatra_user_practices(
+            &mut conn, &user_id, &yatra_id, &data,
+        )
     })
     .await??;
 

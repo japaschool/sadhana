@@ -24,7 +24,7 @@ use crate::{
     },
     css::*,
     i18n::*,
-    model::{DiaryDay, DiaryEntry, PracticeDataType, PracticeEntryValue},
+    model::{DiaryDay, DiaryEntry, PracticeDataType, Value},
     routes::AppRoute,
     services::{get_user_practices, save_diary_owned},
 };
@@ -168,7 +168,7 @@ pub fn import() -> Html {
         for (h, data_type, v) in it.filter_map(|((h, data_type), v)| data_type.map(|dt| (h, dt, v)))
         {
             let value = (!v.trim().is_empty())
-                .then(|| PracticeEntryValue::try_from((&data_type, v)))
+                .then(|| Value::try_from((&data_type, v)))
                 .transpose()?;
             let entry = DiaryEntry {
                 practice: h.to_owned(),

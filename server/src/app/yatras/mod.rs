@@ -1,6 +1,6 @@
+pub mod domain;
 pub mod dto;
 pub mod handlers;
-pub mod model;
-pub mod stats;
+pub mod service;
 
 pub use handlers::*;
