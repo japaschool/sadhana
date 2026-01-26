@@ -1,5 +1,6 @@
 use crate::model::PracticeDataType;
 
+mod daily_score_conf;
 pub mod edit_user_practice;
 pub mod edit_yatra_practice;
 pub mod new_practice;

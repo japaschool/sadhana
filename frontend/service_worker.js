@@ -48,24 +48,27 @@ sw.addEventListener('install',
 
                 console.log(`Installing update for version ${GIT_SHA}`);
 
-                await Promise.all(PRECACHE_MANIFEST.map(async url => {
-                    const resp = await fetch(url, { cache: 'no-store' });
-                    const cacheKey = url === '/index.html' ? '/' : url;
+                // Guard for dev to not cache if the version has not been substituted
+                if (!GIT_SHA.startsWith('__GIT_')) {
+                    await Promise.all(PRECACHE_MANIFEST.map(async url => {
+                        const resp = await fetch(url, { cache: 'no-store' });
+                        const cacheKey = url === '/index.html' ? '/' : url;
 
-                    // Force body download
-                    const body = await resp.clone().arrayBuffer();
+                        // Force body download
+                        const body = await resp.clone().arrayBuffer();
 
-                    await cache.put(
-                        cacheKey,
-                        new Response(body, {
-                            status: resp.status,
-                            statusText: resp.statusText,
-                            headers: resp.headers
-                        })
-                    );
+                        await cache.put(
+                            cacheKey,
+                            new Response(body, {
+                                status: resp.status,
+                                statusText: resp.statusText,
+                                headers: resp.headers
+                            })
+                        );
 
-                    isUpdate = true;
-                }));
+                        isUpdate = true;
+                    }));
+                }
 
                 sw.skipWaiting();
             })()

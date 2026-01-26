@@ -21,15 +21,13 @@ pub fn summary_details(props: &Props) -> Html {
                 >
                     <i class="icon-chevron-left" />
                 </div>
-
                 <p class="transition can-hover:hover:opacity-50 pl-4 text-left">
                     { props.label.to_string() }
                 </p>
             </summary>
-
             <div
                 class="group-open:max-h-screen focus-within:max-h-screen
-                    max-h-0 px-4 overflow-hidden"
+                    max-h-0 overflow-hidden"
             >
                 { props.children.clone() }
             </div>
