@@ -11,7 +11,7 @@ use crate::{
     },
     css::*,
     i18n::Locale,
-    model::{PracticeDataType, PracticeEntryValue, ReportDataEntry, UserPractice},
+    model::{PracticeDataType, Value, ReportDataEntry, UserPractice},
     routes::charts::GridReport,
 };
 use chrono::{Datelike, Local};
@@ -183,7 +183,7 @@ pub fn charts_base(props: &ChartBaseProps) -> Html {
                                 cob.day(),
                                 Locale::current().month_name_short(cob.month())
                             );
-                            data.insert(0, Some(PracticeEntryValue::Text(date_str)));
+                            data.insert(0, Some(Value::Text(date_str)));
                             data
                         })
                         .collect::<Vec<Vec<_>>>()}
@@ -288,7 +288,7 @@ fn average_value(
                     / report_data.len() as u64) as u16;
                 Some(chart::GraphAverage::new(
                     avg_mins.to_string(),
-                    PracticeEntryValue::Duration(avg_mins)
+                    Value::Duration(avg_mins)
                         .as_duration_str()
                         .unwrap_or_default(),
                 ))
@@ -298,7 +298,7 @@ fn average_value(
                     .iter()
                     .flat_map(|e| {
                         e.value.iter().map(|v| match v {
-                            PracticeEntryValue::Time { h, m } => {
+                            Value::Time { h, m } => {
                                 // Start in day 2 to allow moving forward and backward by a day
                                 let mut h2 = *h + 48;
                                 if overflow_time > 0 && *h < 12 {
@@ -322,7 +322,7 @@ fn average_value(
 
                 h %= 24;
 
-                PracticeEntryValue::Time { h, m }
+                Value::Time { h, m }
                     .as_time_str()
                     .into_iter()
                     .map(|s| chart::GraphAverage::new(format!("2020-01-0{d} {s}:00"), s))
@@ -346,7 +346,7 @@ fn overflow_time(report_data: &[&ReportDataEntry]) -> i8 {
 
     for h in report_data.iter().filter_map(|v| {
         v.value.as_ref().and_then(|v| match v {
-            PracticeEntryValue::Time { h, m: _ } => Some(*h),
+            Value::Time { h, m: _ } => Some(*h),
             _ => None,
         })
     }) {
@@ -375,7 +375,7 @@ fn y_value(data_type: &PracticeDataType, entry: &ReportDataEntry, adjust_time: i
             .as_ref()
             .and_then(|v| {
                 let mut d = 2;
-                if let PracticeEntryValue::Time { h, m: _ } = v {
+                if let Value::Time { h, m: _ } = v {
                     if adjust_time < 0 && *h > 15 {
                         d -= 1;
                     } else if adjust_time > 0 && *h < 12 {
@@ -389,7 +389,7 @@ fn y_value(data_type: &PracticeDataType, entry: &ReportDataEntry, adjust_time: i
             .value
             .as_ref()
             .and_then(|v| match v {
-                PracticeEntryValue::Duration(minutes) => Some(minutes.to_string()),
+                Value::Duration(minutes) => Some(minutes.to_string()),
                 _ => None,
             })
             .unwrap_or_default(),

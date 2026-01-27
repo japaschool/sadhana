@@ -15,11 +15,14 @@ use crate::{
         summary_details::*,
     },
     css::*,
-    hooks::Session,
+    hooks::{Session, use_cache_aware_async},
     i18n::Locale,
-    model::{PracticeEntryValue, Yatra, YatraData, YatraDataRow},
+    model::{
+        BetterDirection, Bound, ColourZonesConfig, UserYatraData, Value, Yatra, YatraData,
+        ZoneColour,
+    },
     routes::AppRoute,
-    services::{create_yatra, get_user_yatras, get_yatra_data},
+    services::{create_yatra, get_user_yatras, get_yatra_data, url},
     tr,
 };
 
@@ -38,17 +41,30 @@ pub fn yatras() -> Html {
     let data = {
         let session = session_ctx.clone();
         let selected_yatra = selected_yatra.clone();
-        use_async(async move {
-            if let Some(y) = selected_yatra.as_ref() {
-                get_yatra_data(&y.id, &session.selected_date).await
-            } else {
-                Ok(YatraData::default())
-            }
-        })
+        use_cache_aware_async(
+            url::get_yatra_data(
+                &selected_yatra
+                    .as_ref()
+                    .map(|y| y.id.to_owned())
+                    .unwrap_or_default(),
+                &session.selected_date,
+            ),
+            move |cache_only| {
+                let selected_yatra = selected_yatra.clone();
+                let session = session.clone();
+                async move {
+                    if let Some(y) = selected_yatra.as_ref() {
+                        get_yatra_data(&y.id, &session.selected_date, cache_only).await
+                    } else {
+                        Ok(YatraData::default())
+                    }
+                }
+            },
+        )
     };
     let new_yatra = use_async(async move {
-        if let Some(yatra_name) = prompt(&Locale::current().yatra_new_name_prompt(), None)
-            .filter(|s| !s.trim().is_empty())
+        if let Some(yatra_name) =
+            prompt(&tr!(yatra_new_name_prompt), None).filter(|s| !s.trim().is_empty())
         {
             create_yatra(yatra_name.trim().to_owned())
                 .await
@@ -144,7 +160,8 @@ pub fn yatras() -> Html {
             .flat_map(|d| d.practices.iter())
             .map(|p| p.practice.clone())
             .collect::<Vec<_>>();
-        hd.insert(0, Locale::current().yatra_sadhaka_column_value());
+        hd.insert(0, tr!(yatra_7d_trend_column));
+        hd.insert(0, tr!(yatra_sadhaka_column_value));
         hd
     };
 
@@ -155,35 +172,107 @@ pub fn yatras() -> Html {
             .flat_map(|d| d.practices.iter())
             .map(|p| p.colour_zones.clone())
             .collect::<Vec<_>>();
-        confs.insert(0, None);
+        confs.insert(0, None); // trend column
+        confs.insert(0, None); // name column
         confs
     };
 
-    let grid_data = data
-        .data
-        .iter()
-        .flat_map(|d| d.data.iter())
-        .map(
-            |YatraDataRow {
-                 user_id: _,
-                 user_name,
-                 row,
-             }| {
-                let mut data_columns = row.clone();
-                data_columns.insert(0, Some(PracticeEntryValue::Text(user_name.clone())));
-                data_columns
-            },
-        )
-        .collect::<Vec<Vec<_>>>();
+    let grid_data = || {
+        data.data
+            .iter()
+            .flat_map(|d| d.data.iter())
+            .map(
+                |UserYatraData {
+                     user_id: _,
+                     user_name,
+                     row,
+                     trend_arrow,
+                     stability_heatmap: _,
+                 }| {
+                    let mut data_columns = row.clone();
+                    data_columns.insert(
+                        0,
+                        Some(Value::Text(
+                            trend_arrow.map(|a| a.to_string()).unwrap_or_default(),
+                        )),
+                    );
+                    data_columns.insert(0, Some(Value::Text(user_name.clone())));
+                    data_columns
+                },
+            )
+            .collect::<Vec<Vec<_>>>()
+    };
+
+    let heatmap_colour_coding = {
+        let mut res = vec![
+            Some(ColourZonesConfig {
+                better_direction: BetterDirection::Higher,
+                bounds: vec![
+                    // TODO:
+                    // Bound::new(Some(Value::Int(50)), ZoneColour::MutedRed),
+                    // Bound::new(Some(Value::Int(70)), ZoneColour::SoftRed),
+                    // Bound::new(Some(Value::Int(95)), ZoneColour::Yellow),
+                    // Bound::new(Some(Value::Int(105)), ZoneColour::Green),
+                    Bound::new(Some(Value::Int(10)), ZoneColour::MutedRed),
+                    Bound::new(Some(Value::Int(15)), ZoneColour::Red),
+                    Bound::new(Some(Value::Int(30)), ZoneColour::Yellow),
+                    Bound::new(Some(Value::Int(40)), ZoneColour::Green),
+                ],
+                no_value_colour: ZoneColour::Neutral,
+                best_colour: Some(ZoneColour::DarkGreen)
+            });
+            14
+        ];
+        res.insert(0, None); // name column
+        res
+    };
+
+    let heatmap_header = {
+        let mut res = data
+            .data
+            .iter()
+            .flat_map(|d| {
+                let days = &d.stability_heatmap_days;
+                let range = if session_ctx.today_selected() {
+                    0..days.len().saturating_sub(1)
+                } else {
+                    1..days.len()
+                };
+                days.get(range).into_iter().flatten()
+            })
+            .map(ToString::to_string)
+            .collect::<Vec<_>>();
+        res.insert(0, tr!(yatra_sadhaka_column_value));
+        res
+    };
+
+    let heatmap_data = || {
+        data.data
+            .iter()
+            .flat_map(|d| d.data.iter())
+            .map(|d| {
+                let mut row: Vec<_> = if session_ctx.today_selected() {
+                    &d.stability_heatmap[..d.stability_heatmap.len() - 1]
+                } else {
+                    &d.stability_heatmap[1..]
+                }
+                .iter()
+                .map(|v| (*v > 0).then_some(Value::Int(*v as u16)))
+                .collect();
+                row.insert(0, Some(Value::Text(d.user_name.clone())));
+                row
+            })
+            .collect::<Vec<Vec<_>>>()
+    };
 
     let empty_body = html! {
         <div class={BODY_DIV_CSS}>
             <ListErrors error={yatras.error.clone()} />
-            <span>{ Locale::current().yatra_blank_msg() }</span>
+            <span>{ tr!(yatra_blank_msg) }</span>
             <div class="relative">
                 <div class={LINKS_CSS}>
                     <a class={LINK_CSS} onclick={create_yatra_onclick.clone()}>
-                        { Locale::current().yatra_create() }
+                        { tr!(yatra_create) }
                     </a>
                 </div>
             </div>
@@ -214,11 +303,19 @@ pub fn yatras() -> Html {
                     </select>
                     <label for="yatra" class={INPUT_LABEL_CSS}>
                         <i class="icon-user-group" />
-                        { format!(" {}: ", Locale::current().yatra()) }
+                        { format!(" {}: ", tr!(yatra)) }
                     </label>
                 </div>
             </div>
-            <Grid header={grid_header} data={grid_data} color_coding={grid_colour_coding} />
+            <Grid header={grid_header} data={grid_data()} color_coding={grid_colour_coding} />
+            <SummaryDetails label={tr!(yatra_heatmap_label)} open=true>
+                <Grid
+                    header={heatmap_header}
+                    data={heatmap_data()}
+                    color_coding={heatmap_colour_coding}
+                    heatmap=true
+                />
+            </SummaryDetails>
             if data.data.iter().any(|inner| !inner.statistics.is_empty()) {
                 <div class={BODY_DIV_BASE_CSS}>
                     <SummaryDetails label={tr!(yatra_stats_label)} open=true>
@@ -250,7 +347,7 @@ pub fn yatras() -> Html {
             left_button={HeaderButtonProps::blank()}
             right_button={if let Some(yatra) = selected_yatra.as_ref() {
                     HeaderButtonProps::new_redirect(
-                        Locale::current().settings(),
+                        tr!(settings),
                         AppRoute::YatraSettings { id: yatra.id.clone() },
                         None,
                         ButtonType::Button
