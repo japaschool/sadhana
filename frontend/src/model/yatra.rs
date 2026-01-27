@@ -80,6 +80,7 @@ pub struct Yatra {
     pub id: String,
     pub name: String,
     pub statistics: Option<YatraStatistics>,
+    pub show_stability_metrics: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -192,7 +193,7 @@ pub struct BonusRule {
     pub points: u8,
 }
 
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize, Default)]
 pub struct DailyScoreConfig {
     pub better_direction: BetterDirection,
     pub mandatory_threshold: Option<Value>,
@@ -214,7 +215,7 @@ pub struct YatraPractice {
     pub practice: String,
     pub data_type: PracticeDataType,
     pub colour_zones: Option<ColourZonesConfig>,
-    pub daily_score_config: Option<DailyScoreConfig>,
+    pub daily_score: Option<DailyScoreConfig>,
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq)]
