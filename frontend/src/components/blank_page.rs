@@ -10,7 +10,7 @@ use yew_router::prelude::*;
 use super::{calendar::Calendar, month_calendar::MonthCalendar};
 use crate::{
     css::*,
-    hooks::{NetworkStatus, Session, SessionAction, use_visibility},
+    hooks::{NetworkStatus, use_visibility},
     i18n::Locale,
     routes::AppRoute,
     services::requests,
@@ -340,14 +340,11 @@ pub fn blank_page(props: &Props) -> Html {
     let show_ctx_menu = use_bool_toggle(false);
     let network_status = use_context::<NetworkStatus>().expect("NetworkStatus context not found");
     let visibility = use_visibility();
-    let session = use_context::<Session>().expect("SessionState context not found");
 
     {
-        // On wake of the app check for the app update and update today
-        let session = session.clone();
+        // On wake of the app check for the app update
         use_effect_with(visibility.clone(), move |v| {
             if v.visible {
-                session.dispatch(SessionAction::UpdateToday);
                 if let Some(token) = requests::get_token() {
                     if let Some(controller) = window().navigator().service_worker().controller() {
                         let msg = CheckUpdateMsg {

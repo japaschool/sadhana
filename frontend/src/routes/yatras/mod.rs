@@ -15,7 +15,7 @@ use crate::{
         summary_details::*,
     },
     css::*,
-    hooks::Session,
+    hooks::SessionStateContext,
     i18n::Locale,
     model::{PracticeEntryValue, Yatra, YatraData, YatraDataRow},
     routes::AppRoute,
@@ -31,7 +31,7 @@ const SELECTED_YATRA_ID_KEY: &str = "selected_yatra";
 
 #[function_component(Yatras)]
 pub fn yatras() -> Html {
-    let session_ctx = use_context::<Session>().expect("No session state found");
+    let session_ctx = use_context::<SessionStateContext>().expect("No session state found");
     let nav = use_navigator().unwrap();
     let yatras = use_async(async move { get_user_yatras().await.map(|y| y.yatras) });
     let selected_yatra = use_state(|| None::<Yatra>);
