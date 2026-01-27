@@ -128,7 +128,6 @@ diesel::table! {
         data_type -> PracticeDataTypeEnum,
         order_key -> Int4,
         colour_zones -> Nullable<Jsonb>,
-        daily_score_config -> Nullable<Jsonb>,
     }
 }
 

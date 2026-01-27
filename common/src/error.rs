@@ -129,21 +129,18 @@ impl From<JwtError> for AppError {
 #[cfg(feature = "backend")]
 impl From<DieselError> for AppError {
     fn from(err: DieselError) -> Self {
-        match &err {
+        match err {
             DieselError::DatabaseError(kind, info) => {
                 if let DatabaseErrorKind::UniqueViolation = kind {
                     let message = info.details().unwrap_or_else(|| info.message()).to_string();
                     AppError::UnprocessableEntity(vec![message])
                 } else {
-                    log::error!("Unexpected diesel database error {}", info.message());
+                    log::error!("Unexpected diesel error {:?}", info.message());
                     AppError::InternalServerError
                 }
             }
             DieselError::NotFound => AppError::NotFound,
-            _ => {
-                log::error!("Unexpected diesel error {err}");
-                AppError::InternalServerError
-            }
+            _ => AppError::InternalServerError,
         }
     }
 }

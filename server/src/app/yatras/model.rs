@@ -1,5 +1,3 @@
-use std::cmp::max;
-
 use chrono::NaiveDate;
 use common::error::AppError;
 use diesel::{
@@ -11,10 +9,6 @@ use diesel::{
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use uuid::Uuid;
-
-mod stats;
-
-pub use stats::*;
 
 use crate::{
     db_types::PracticeDataType,
@@ -150,11 +144,12 @@ impl Yatra {
     pub fn get_yatra_stats(
         conn: &mut PgConnection,
         yatra_id: &Uuid,
-    ) -> Result<Option<YatraStatistics>, AppError> {
+    ) -> Result<Option<crate::app::yatras::stats::YatraStatistics>, AppError> {
         let yatra = Self::get_yatra(conn, yatra_id)?;
         let res = match yatra.statistics {
             Some(stats_json) => {
-                let stats: YatraStatistics = serde_json::from_value(stats_json)?;
+                let stats: crate::app::yatras::stats::YatraStatistics =
+                    serde_json::from_value(stats_json)?;
                 Some(stats)
             }
             None => None,
@@ -562,7 +557,7 @@ impl YatraUserPractice {
 }
 
 #[derive(Serialize, Debug, QueryableByName)]
-pub struct YatraDataRaw {
+pub struct YatraDataRow {
     #[diesel(sql_type = DieselUuid)]
     pub user_id: Uuid,
     #[diesel(sql_type = Text)]
@@ -571,7 +566,7 @@ pub struct YatraDataRaw {
     pub value: Option<JsonValue>,
 }
 
-impl YatraDataRaw {
+impl YatraDataRow {
     pub fn get_yatra_data(
         conn: &mut PgConnection,
         yatra_id: &Uuid,
@@ -586,193 +581,28 @@ impl YatraDataRaw {
                     d.user_id
                 from
                     diary d
-                    join yatra_user_practices yup
-                        on yup.user_practice_id = d.practice_id
+                    join yatra_user_practices yup on (yup.user_practice_id = d.practice_id)
                 where
                     d.cob_date = $2
-            ),
-            t as (
-                select
-                    u.id as user_id,
-                    u."name" as user_name,
-                    d.value,
-                    yp.colour_zones,
-                    yp.practice,
-                    normalize_value(yp.data_type, d.value) as normalised_value,
-                    normalize_value(yp.data_type, yp.daily_score_config->'mandatory_threshold') as mandatory_threshold,
-                    yp.daily_score_config,
-                    yp.data_type,
-                    yp.order_key
-                from
-                    yatra_users yu
-                    join users u
-                        on u.id = yu.user_id
-                    join yatra_practices yp
-                        on yp.yatra_id = yu.yatra_id
-                    left join d on (
-                        d.yatra_practice_id = yp.id
-                        and d.user_id = u.id
-                    )
-                where
-                    yu.yatra_id = $1
             )
             select
-                t.user_id,
-                t.user_name,
-                t.value,
-                coalesce(
-                    case daily_score_config->>'better_direction'
-                        when 'Higher' then
-                            case when normalised_value >= mandatory_threshold then 1 else 0 end
-                        when 'Lower' then
-                            case when normalised_value <= mandatory_threshold then 1 else 0 end
-                    end,
-                    0) as mandatory_score,
-                coalesce((
-                    select sum( (br->>'points')::int )
-                    from jsonb_array_elements(daily_score_config->'bonus_rules') br
-                    where
-                        case daily_score_config->>'better_direction'
-                        when 'Higher' then
-                            normalised_value >= normalize_value(t.data_type, br->'threshold')
-                        when 'Lower' then
-                            normalised_value <= normalize_value(t.data_type, br->'threshold')
-                        end
-                    ),
-                    0) as bonus_score
-            from t
-            order by 2,1, order_key
+                u.id as user_id,
+                u."name" as user_name,
+                d.value
+            from
+                yatra_users yu
+                join users u on (u.id = yu.user_id)
+                join yatra_practices yp on (yp.yatra_id = yu.yatra_id)
+                left join d on (
+                    d.yatra_practice_id = yp.id
+                    and d.user_id = u.id
+                )
+            where
+                yu.yatra_id = $1
+            order by
+                1,
+                yp.order_key
             "#,
-        )
-        .bind::<DieselUuid, _>(yatra_id)
-        .bind::<Date, _>(cob_date)
-        .load::<Self>(conn)?;
-
-        Ok(data)
-    }
-}
-
-#[derive(Serialize, Debug, QueryableByName)]
-pub struct DailyScore {
-    #[diesel(sql_type = DieselUuid)]
-    pub user_id: Uuid,
-    #[diesel(sql_type = Integer)]
-    pub day: i32,
-    #[diesel(sql_type = SmallInt)]
-    pub mandatory_score: i16,
-    #[diesel(sql_type = SmallInt)]
-    pub mandatory_total: i16,
-    #[diesel(sql_type = SmallInt)]
-    pub bonus_score: i16,
-}
-
-impl DailyScore {
-    pub fn daily_total(&self) -> i16 {
-        let score = if self.mandatory_total > 0 && self.mandatory_score < self.mandatory_total {
-            self.mandatory_score
-        } else {
-            self.mandatory_score + self.bonus_score
-        };
-        score * 100 / max(self.mandatory_total, 1)
-    }
-
-    pub fn get_raw_scores(
-        conn: &mut PgConnection,
-        yatra_id: &Uuid,
-        cob_date: &NaiveDate,
-    ) -> Result<Vec<Self>, AppError> {
-        let data = sql_query(
-            r#"
-        with days as (
-        select generate_series(
-            $2::date - interval '20 days',
-            $2::date,
-            interval '1 day'
-        )::date as day
-        ),
-        per_practice as (
-        select
-            yu.user_id,
-            d.day,
-            /* mandatory per practice */
-            case yp.daily_score_config->>'better_direction'
-            when 'Higher' then
-                case
-                when normalize_value(yp.data_type, dv.value)
-                    >= normalize_value(yp.data_type, yp.daily_score_config->'mandatory_threshold')
-                then 1 else 0
-                end
-            when 'Lower' then
-                case
-                when normalize_value(yp.data_type, dv.value)
-                    <= normalize_value(yp.data_type, yp.daily_score_config->'mandatory_threshold')
-                then 1 else 0
-                end
-            end as mandatory_score,
-            /* bonus per practice (gated by mandatory) */
-            case
-            when (
-                case yp.daily_score_config->>'better_direction'
-                when 'Higher' then
-                    normalize_value(yp.data_type, dv.value)
-                    >= normalize_value(yp.data_type, yp.daily_score_config->'mandatory_threshold')
-                when 'Lower' then
-                    normalize_value(yp.data_type, dv.value)
-                    <= normalize_value(yp.data_type, yp.daily_score_config->'mandatory_threshold')
-                end
-            )
-            then coalesce((
-                select sum((br->>'points')::int)
-                from jsonb_array_elements(
-                yp.daily_score_config->'bonus_rules'
-                ) br
-                where
-                case yp.daily_score_config->>'better_direction'
-                    when 'Higher' then
-                    normalize_value(yp.data_type, dv.value)
-                    >= normalize_value(yp.data_type, br->'threshold')
-                    when 'Lower' then
-                    normalize_value(yp.data_type, dv.value)
-                    <= normalize_value(yp.data_type, br->'threshold')
-                end
-            ), 0)
-            else 0
-            end as bonus_score,
-            case
-                when nullif(yp.daily_score_config->'mandatory_threshold', '{}') is not null then 1
-                else 0
-            end as has_mandatory
-        from days d
-        join yatra_users yu
-            on yu.yatra_id = $1
-        join yatra_practices yp
-            on yp.yatra_id = yu.yatra_id
-        join yatra_user_practices yup
-            on yup.yatra_practice_id = yp.id
-        left join diary dv
-            on dv.cob_date = d.day
-        and dv.practice_id = yup.user_practice_id
-        and dv.user_id = yu.user_id
-        ),
-        per_day as (
-        select
-            user_id,
-            day,
-            sum(mandatory_score)::smallint as mandatory_score,
-            sum(has_mandatory)::smallint   as mandatory_total,
-            sum(bonus_score)::smallint     as bonus_score
-        from per_practice
-        group by user_id, day
-        )
-        select
-            user_id,
-            extract(day from day)::integer as day,
-            mandatory_score,
-            mandatory_total,
-            bonus_score
-        from per_day
-        order by user_id, per_day.day
-        "#,
         )
         .bind::<DieselUuid, _>(yatra_id)
         .bind::<Date, _>(cob_date)

@@ -76,8 +76,8 @@ impl YatraStatisticResult {
         yatra_id: &Uuid,
         cob_date: &NaiveDate,
     ) -> Result<Vec<Self>, AppError> {
-        let is_admin = crate::app::yatras::domain::Yatra::is_admin(conn, user_id, yatra_id)?;
-        let stats_conf = crate::app::yatras::domain::Yatra::get_yatra_stats(conn, yatra_id)?;
+        let is_admin = crate::app::yatras::model::Yatra::is_admin(conn, user_id, yatra_id)?;
+        let stats_conf = crate::app::yatras::model::Yatra::get_yatra_stats(conn, yatra_id)?;
 
         if stats_conf
             .as_ref()
@@ -87,7 +87,7 @@ impl YatraStatisticResult {
         }
 
         let practice_types: HashMap<_, _> =
-            crate::app::yatras::domain::YatraPractice::get_ordered_yatra_practices(conn, yatra_id)?
+            crate::app::yatras::model::YatraPractice::get_ordered_yatra_practices(conn, yatra_id)?
                 .iter()
                 .map(|p| (p.id, p.data_type.to_owned()))
                 .collect();

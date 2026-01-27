@@ -16,7 +16,7 @@ use crate::{
     css::*,
     hooks::{Session, use_cache_aware_async, use_visibility},
     i18n::{Locale, PracticeName},
-    model::{DiaryEntry, PracticeDataType, Value},
+    model::{DiaryEntry, PracticeDataType, PracticeEntryValue},
     services::{get_diary_day, get_user_practices, save_diary_entry, url},
     utils::time_dur_input_support::*,
 };
@@ -134,7 +134,7 @@ pub fn home() -> Html {
         if s.is_empty() {
             None
         } else {
-            Value::try_from((&entry.data_type, s.as_str())).ok()
+            PracticeEntryValue::try_from((&entry.data_type, s.as_str())).ok()
         }
     };
 
@@ -233,9 +233,9 @@ pub fn home() -> Html {
             if let Ok(add_minutes) = value.parse::<u16>() {
                 if let Some(idx) = *idx {
                     let mut entry = local_state.current()[idx].clone();
-                    if let Some(Value::Duration(minutes)) = entry.value {
+                    if let Some(PracticeEntryValue::Duration(minutes)) = entry.value {
                         if add_minutes > 0 {
-                            entry.value = Some(Value::Duration(minutes + add_minutes));
+                            entry.value = Some(PracticeEntryValue::Duration(minutes + add_minutes));
                             local_state.update(idx, entry.clone());
                             save_buffer.set(Some(entry));
                             save.run();
