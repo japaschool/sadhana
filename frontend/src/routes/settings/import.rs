@@ -23,6 +23,7 @@ use crate::{
         list_errors::ListErrors,
     },
     css::*,
+    hooks::use_cache_aware_async,
     i18n::*,
     model::{DiaryDay, DiaryEntry, PracticeDataType, Value},
     routes::AppRoute,
@@ -38,14 +39,12 @@ pub fn import() -> Html {
     let failures = use_list(vec![]);
     let nav = use_navigator().unwrap();
 
-    let all_practices = use_async(async move {
-        get_user_practices(false).await.map(|res| {
-            res.user_practices
-                .iter()
-                .map(|up| (up.practice.clone(), up.data_type))
-                .collect::<HashMap<_, _>>()
-        })
-    });
+    let all_practices = use_cache_aware_async(get_user_practices().map(|res| {
+        res.user_practices
+            .iter()
+            .map(|up| (up.practice.clone(), up.data_type))
+            .collect::<HashMap<_, _>>()
+    }));
 
     let save: UseAsyncHandle<Vec<()>, AppError> = {
         let successes = successes.clone();

@@ -12,6 +12,7 @@ use crate::{
         list_errors::ListErrors,
     },
     css::*,
+    hooks::use_cache_aware_async,
     i18n::Locale,
     model::UserPractice,
     services::{
@@ -27,11 +28,8 @@ pub fn user_practices() -> Html {
     let ordered_practices = use_list(vec![]);
     let local_practices = use_map(HashMap::default());
 
-    let server_practices = use_async(async move {
-        get_user_practices(false)
-            .await
-            .map(|res| res.user_practices)
-    });
+    let server_practices =
+        use_cache_aware_async(get_user_practices().map(|res| res.user_practices));
 
     let reorder_practices = {
         let op = ordered_practices.clone();
