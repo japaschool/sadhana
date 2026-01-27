@@ -1,7 +1,4 @@
-use std::sync::Arc;
-
 use common::error::*;
-use futures::{FutureExt, future::LocalBoxFuture};
 use gloo::storage::{LocalStorage, Storage};
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
@@ -12,66 +9,6 @@ use reqwest::{
 use serde::{Serialize, de::DeserializeOwned};
 
 const TOKEN_KEY: &str = "yew.token";
-
-pub struct RequestOptions {
-    pub use_cache: bool,
-    pub cache_key: Option<String>,
-}
-
-impl RequestOptions {
-    pub fn new(use_cache: bool) -> Self {
-        Self {
-            use_cache,
-            cache_key: None,
-        }
-    }
-}
-
-pub type GetApiFuture<T> = LocalBoxFuture<'static, Result<T, AppError>>;
-
-pub struct GetApiRequest<T> {
-    pub url: String,
-    pub send: Box<dyn Fn(RequestOptions) -> GetApiFuture<T>>,
-}
-
-impl<T> GetApiRequest<T> {
-    pub fn pure<F>(f: F) -> GetApiRequest<T>
-    where
-        F: Fn() -> T + 'static,
-        T: 'static,
-    {
-        GetApiRequest {
-            url: String::new(),
-            send: Box::new(move |_opts| {
-                let value = f();
-                async move { Ok(value) }.boxed_local()
-            }),
-        }
-    }
-
-    pub fn map<U, F>(self, f: F) -> GetApiRequest<U>
-    where
-        F: Fn(T) -> U + 'static,
-        T: 'static,
-        U: 'static,
-    {
-        let f = Arc::new(f);
-
-        GetApiRequest {
-            url: self.url,
-            send: Box::new(move |opts| {
-                let fut = (self.send)(opts);
-                let f = f.clone();
-
-                async move {
-                    let res = fut.await?;
-                    Ok(f(res))
-                }
-                .boxed_local()
-            }),
-        }
-    }
-}
 
 lazy_static! {
     /// Jwt token read from local storage.
@@ -203,48 +140,22 @@ where
     request_api(Method::DELETE, url, &(), None).await
 }
 
-/// Get api request bypassing caching
-pub async fn request_api_get_no_cache<T>(url: &str) -> Result<T, AppError>
+/// Get api request
+pub async fn request_api_get<T>(url: &str) -> Result<T, AppError>
 where
     T: DeserializeOwned + 'static + std::fmt::Debug,
 {
     request_api(Method::GET, url, &(), None).await
 }
 
-/// Get api request that can handle caching by SW
-pub fn request_api_get<T, S>(url: S) -> GetApiRequest<T>
+/// Get api request from cache only
+pub async fn request_api_get_cache_only<T>(url: &str) -> Result<T, AppError>
 where
     T: DeserializeOwned + 'static + std::fmt::Debug,
-    S: Into<String>,
 {
-    let url = url.into();
-    GetApiRequest {
-        url: url.clone(),
-        send: Box::new(
-            move |RequestOptions {
-                      use_cache,
-                      cache_key,
-                  }| {
-                let url = url.clone();
-                Box::pin(async move {
-                    let mut headers = HeaderMap::new();
-                    if use_cache {
-                        headers.insert("X-Cache-Only", HeaderValue::from_static("1"));
-                    }
-                    if let Some(key) = cache_key {
-                        headers.insert("X-Cache-Key", HeaderValue::from_str(&key).unwrap());
-                    }
-                    request_api(
-                        Method::GET,
-                        &url,
-                        &(),
-                        Some(headers).filter(|h| !h.is_empty()),
-                    )
-                    .await
-                })
-            },
-        ),
-    }
+    let mut headers = HeaderMap::new();
+    headers.insert("X-Cache-Only", HeaderValue::from_static("1"));
+    request_api(Method::GET, url, &(), Some(headers)).await
 }
 
 /// Post api request

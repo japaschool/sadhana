@@ -238,17 +238,13 @@ async function handleApiGet(request) {
     console.debug(`Trying to get from server not cached ${request.url}`);
     // Cold start
     const net = await fetchWrapper(request, {}, 30000);
-
-    // Only cache explicitly requested requests
-    if (request.headers.has('X-Cache-Key')) {
-        const body = await net.clone().arrayBuffer();
-        await cache.put(request, new Response(body, {
-            status: net.status,
-            statusText: net.statusText,
-            headers: net.headers
-        }));
-        saveDefaultDiaryDay(request.url, net.clone());
-    }
+    const body = await net.clone().arrayBuffer();
+    await cache.put(request, new Response(body, {
+        status: net.status,
+        statusText: net.statusText,
+        headers: net.headers
+    }));
+    saveDefaultDiaryDay(request.url, net.clone());
     return net;
 }
 
@@ -269,7 +265,7 @@ async function sha256(buffer) {
  * @param {Response} cached
  */
 function backgroundRefreshOnce(request, cache, cached) {
-    const key = request.headers.get("X-Cache-Key") || request.url;
+    const key = request.url;
 
     if (refreshing.has(key)) return;
 
@@ -305,12 +301,12 @@ function backgroundRefreshOnce(request, cache, cached) {
 }
 
 /**
- * @param {string} cacheKey
+ * @param {string} url
  */
-function notifyClients(cacheKey) {
+function notifyClients(url) {
     sw.clients.matchAll().then(clients => {
         clients.forEach(c =>
-            c.postMessage({ type: "API_UPDATED", cacheKey })
+            c.postMessage({ type: "API_UPDATED", url })
         );
     });
 }

@@ -1,6 +1,6 @@
 use tw_merge::*;
 use yew::prelude::*;
-use yew_hooks::use_mount;
+use yew_hooks::{use_async, use_mount};
 use yew_router::prelude::use_navigator;
 
 use crate::{
@@ -9,7 +9,7 @@ use crate::{
         summary_details::SummaryDetails,
     },
     css::*,
-    hooks::{use_cache_aware_async, use_user_context},
+    hooks::use_user_context,
     i18n::*,
     routes::AppRoute,
     services::get_version,
@@ -19,7 +19,7 @@ use crate::{
 pub fn help() -> Html {
     let nav = use_navigator().unwrap();
     let ctx = use_user_context();
-    let api_version = use_cache_aware_async(get_version());
+    let api_version = use_async(async move { get_version().await });
 
     {
         let version = api_version.clone();

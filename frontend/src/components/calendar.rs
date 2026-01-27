@@ -4,12 +4,12 @@ use chrono::{Days, prelude::*};
 use tw_merge::*;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
-use yew_hooks::use_mount;
+use yew_hooks::{use_async, use_mount};
 
 use crate::{
-    hooks::{Session, SessionAction, use_cache_aware_async},
+    hooks::{Session, SessionAction},
     i18n::Locale,
-    services::{get_incomplete_days, requests::GetApiRequest},
+    services::get_incomplete_days,
 };
 
 #[derive(Properties, Clone, PartialEq)]
@@ -61,11 +61,15 @@ pub fn calendar(props: &Props) -> Html {
     );
 
     let incomplete_days = {
-        use_cache_aware_async(if props.highlight_incomplete_dates {
-            get_incomplete_days(&prev_week_day, &next_week_day)
-                .map(|res| res.days.iter().map(|d| d.day()).collect::<HashSet<_>>())
-        } else {
-            GetApiRequest::pure(HashSet::default)
+        let enabled = props.highlight_incomplete_dates;
+        use_async(async move {
+            if enabled {
+                get_incomplete_days(&prev_week_day, &next_week_day)
+                    .await
+                    .map(|res| res.days.iter().map(|d| d.day()).collect::<HashSet<_>>())
+            } else {
+                Ok(HashSet::default())
+            }
         })
     };
 

@@ -16,7 +16,6 @@ use crate::{
         summary_details::SummaryDetails,
     },
     css::*,
-    hooks::use_cache_aware_async,
     i18n::*,
     model::{Aggregation, PracticeDataType, TimeRange, Yatra, YatraStatistic, YatraStatistics},
     services::{
@@ -47,14 +46,28 @@ pub fn admin_settings(props: &Props) -> Html {
 
     //-------------------------------------------------------------------------
 
-    let yatra = use_cache_aware_async(get_yatra(&props.yatra_id).map(|resp| resp.yatra));
+    let yatra = {
+        let yatra_id = props.yatra_id.clone();
+        use_async(async move { get_yatra(&yatra_id).await.map(|resp| resp.yatra) })
+    };
 
-    let all_practices = use_cache_aware_async(
-        get_yatra_practices(props.yatra_id.as_str()).map(|res| res.practices),
-    );
+    let all_practices = {
+        let yatra_id = props.yatra_id.to_owned();
+        use_async(async move {
+            get_yatra_practices(yatra_id.as_str())
+                .await
+                .map(|res| res.practices)
+        })
+    };
 
-    let members =
-        use_cache_aware_async(get_yatra_users(props.yatra_id.as_str()).map(|res| res.users));
+    let members = {
+        let yatra_id = props.yatra_id.to_owned();
+        use_async(async move {
+            get_yatra_users(yatra_id.as_str())
+                .await
+                .map(|res| res.users)
+        })
+    };
 
     let delete_member = {
         let yatra_id = props.yatra_id.to_owned();

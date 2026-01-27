@@ -1073,7 +1073,6 @@ dependencies = [
  "thiserror 2.0.11",
  "tw_merge",
  "urlencoding",
- "uuid",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-logger",

@@ -42,7 +42,6 @@ urlencoding = "2.1"
 nom = "8.0"
 strum = { version = "0.27", features = ["derive"] }
 tw_merge = { version = "0.1", features = ["variant"] }
-uuid = { version = "1", features = ["v4"] }
 
 [dependencies.web-sys]
 version = "0.3"

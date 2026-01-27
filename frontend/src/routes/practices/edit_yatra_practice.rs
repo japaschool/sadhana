@@ -15,7 +15,6 @@ use crate::{
         summary_details::SummaryDetails,
     },
     css::*,
-    hooks::use_cache_aware_async,
     i18n::*,
     model::{
         BetterDirection, Bound, ColourZonesConfig, DailyScoreConfig, PracticeDataType, Value,
@@ -51,7 +50,11 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
     let current_practice = {
         let practice_id = props.practice_id.clone();
         let yatra_id = props.yatra_id.clone();
-        use_cache_aware_async(get_yatra_practice(&yatra_id, &practice_id).map(|res| res.practice))
+        use_async(async move {
+            get_yatra_practice(&yatra_id, &practice_id)
+                .await
+                .map(|res| res.practice)
+        })
     };
 
     let update_practice = {
