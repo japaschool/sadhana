@@ -17,7 +17,7 @@ use crate::{
     hooks::{Session, use_cache_aware_async, use_visibility},
     i18n::{Locale, PracticeName},
     model::{DiaryEntry, PracticeDataType, Value},
-    services::{get_diary_day, get_user_practices, save_diary_entry, url},
+    services::{get_diary_day, get_user_practices, save_diary_entry},
     utils::time_dur_input_support::*,
 };
 
@@ -35,32 +35,15 @@ pub fn home() -> Html {
     let backspace_key_pressed = use_mut_ref(|| false);
     let visibility = use_visibility();
 
-    let required_practices = use_cache_aware_async(
-        url::GET_USER_PRACTICES.to_string(),
-        |cache_only| async move {
-            get_user_practices(cache_only).await.map(|res| {
-                res.user_practices
-                    .into_iter()
-                    .filter_map(|p| p.is_required.and_then(|req| req.then_some(p.practice)))
-                    .collect::<HashSet<_>>()
-            })
-        },
-    );
+    let required_practices = use_cache_aware_async(get_user_practices().map(|res| {
+        res.user_practices
+            .into_iter()
+            .filter_map(|p| p.is_required.and_then(|req| req.then_some(p.practice)))
+            .collect::<HashSet<_>>()
+    }));
 
-    let diary_entry = {
-        let session = session.clone();
-        use_cache_aware_async(
-            url::get_diary_day(&session.selected_date),
-            move |from_cache| {
-                let session = session.clone();
-                async move {
-                    get_diary_day(&session.selected_date, from_cache)
-                        .await
-                        .map(|je| je.diary_day)
-                }
-            },
-        )
-    };
+    let diary_entry =
+        use_cache_aware_async(get_diary_day(&session.selected_date).map(|je| je.diary_day));
 
     let save_diary_day_entry = {
         let session = session.clone();

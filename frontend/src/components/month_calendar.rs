@@ -7,13 +7,12 @@ use chrono::{Datelike, Local, Months, NaiveDate};
 use tw_merge::*;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
-use yew_hooks::use_async;
 
 use crate::{
     css::POPUP_BG_CSS,
-    hooks::{SessionAction, Session},
+    hooks::{Session, SessionAction, use_cache_aware_async},
     i18n::{DAYS, Locale},
-    services::get_incomplete_days,
+    services::{get_incomplete_days, requests::GetApiRequest},
 };
 
 #[derive(Properties, Clone, PartialEq)]
@@ -62,20 +61,14 @@ pub fn month_calendar(props: &Props) -> Html {
         format!("{DAY_CSS} {color_css}")
     };
 
-    let incomplete_days = {
-        let enabled = props.highlight_incomplete_dates;
+    let incomplete_days = use_cache_aware_async(if props.highlight_incomplete_dates {
         let month_start = month_start.clone();
-        use_async(async move {
-            if enabled {
-                let end = next_month_start.pred_opt().unwrap();
-                get_incomplete_days(&month_start, &end)
-                    .await
-                    .map(|res| res.days.iter().map(|d| d.day()).collect::<HashSet<_>>())
-            } else {
-                Ok(HashSet::default())
-            }
-        })
-    };
+        let end = next_month_start.pred_opt().unwrap();
+        get_incomplete_days(&month_start, &end)
+            .map(|res| res.days.iter().map(|d| d.day()).collect::<HashSet<_>>())
+    } else {
+        GetApiRequest::pure(HashSet::default)
+    });
 
     {
         let incomplete_days = incomplete_days.clone();
