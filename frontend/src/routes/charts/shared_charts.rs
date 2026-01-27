@@ -4,7 +4,7 @@ use crate::{
         blank_page::{BlankPage, CalendarProps},
         list_errors::ListErrors,
     },
-    hooks::SessionStateContext,
+    hooks::Session,
     routes::charts::{Report, SelectedReportId},
     services::{
         get_shared_practices,
@@ -23,7 +23,7 @@ pub struct SharedChartsProps {
 
 #[function_component(SharedCharts)]
 pub fn shared_charts(props: &SharedChartsProps) -> Html {
-    let session_ctx = use_context::<SessionStateContext>().expect("No session state found");
+    let session_ctx = use_context::<Session>().expect("No session state found");
     let active_report = use_state(|| None::<Report>);
     let duration = use_state(|| ReportDuration::Month);
 
