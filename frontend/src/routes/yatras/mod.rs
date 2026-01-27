@@ -16,6 +16,7 @@ use crate::{
     },
     css::*,
     hooks::{Session, use_cache_aware_async},
+    i18n::Locale,
     model::{
         BetterDirection, Bound, ColourZonesConfig, UserYatraData, Value, Yatra, YatraData,
         ZoneColour,
@@ -159,12 +160,7 @@ pub fn yatras() -> Html {
             .flat_map(|d| d.practices.iter())
             .map(|p| p.practice.clone())
             .collect::<Vec<_>>();
-        if selected_yatra
-            .as_ref()
-            .is_some_and(|y| y.show_stability_metrics)
-        {
-            hd.insert(0, tr!(yatra_7d_trend_column));
-        }
+        hd.insert(0, tr!(yatra_7d_trend_column));
         hd.insert(0, tr!(yatra_sadhaka_column_value));
         hd
     };
@@ -176,12 +172,7 @@ pub fn yatras() -> Html {
             .flat_map(|d| d.practices.iter())
             .map(|p| p.colour_zones.clone())
             .collect::<Vec<_>>();
-        if selected_yatra
-            .as_ref()
-            .is_some_and(|y| y.show_stability_metrics)
-        {
-            confs.insert(0, None); // trend column
-        }
+        confs.insert(0, None); // trend column
         confs.insert(0, None); // name column
         confs
     };
@@ -199,17 +190,12 @@ pub fn yatras() -> Html {
                      stability_heatmap: _,
                  }| {
                     let mut data_columns = row.clone();
-                    if selected_yatra
-                        .as_ref()
-                        .is_some_and(|y| y.show_stability_metrics)
-                    {
-                        data_columns.insert(
-                            0,
-                            Some(Value::Text(
-                                trend_arrow.map(|a| a.to_string()).unwrap_or_default(),
-                            )),
-                        );
-                    }
+                    data_columns.insert(
+                        0,
+                        Some(Value::Text(
+                            trend_arrow.map(|a| a.to_string()).unwrap_or_default(),
+                        )),
+                    );
                     data_columns.insert(0, Some(Value::Text(user_name.clone())));
                     data_columns
                 },
@@ -222,10 +208,15 @@ pub fn yatras() -> Html {
             Some(ColourZonesConfig {
                 better_direction: BetterDirection::Higher,
                 bounds: vec![
-                    Bound::new(Some(Value::Int(50)), ZoneColour::MutedRed),
-                    Bound::new(Some(Value::Int(70)), ZoneColour::Red),
-                    Bound::new(Some(Value::Int(95)), ZoneColour::Yellow),
-                    Bound::new(Some(Value::Int(105)), ZoneColour::Green),
+                    // TODO:
+                    // Bound::new(Some(Value::Int(50)), ZoneColour::MutedRed),
+                    // Bound::new(Some(Value::Int(70)), ZoneColour::SoftRed),
+                    // Bound::new(Some(Value::Int(95)), ZoneColour::Yellow),
+                    // Bound::new(Some(Value::Int(105)), ZoneColour::Green),
+                    Bound::new(Some(Value::Int(10)), ZoneColour::MutedRed),
+                    Bound::new(Some(Value::Int(15)), ZoneColour::Red),
+                    Bound::new(Some(Value::Int(30)), ZoneColour::Yellow),
+                    Bound::new(Some(Value::Int(40)), ZoneColour::Green),
                 ],
                 no_value_colour: ZoneColour::Neutral,
                 best_colour: Some(ZoneColour::DarkGreen)
@@ -317,18 +308,14 @@ pub fn yatras() -> Html {
                 </div>
             </div>
             <Grid header={grid_header} data={grid_data()} color_coding={grid_colour_coding} />
-            if selected_yatra.as_ref().is_some_and(|y| y.show_stability_metrics) {
-                <div class={BODY_DIV_BASE_CSS}>
-                    <SummaryDetails label={tr!(yatra_heatmap_label)} open=true>
-                        <Grid
-                            header={heatmap_header}
-                            data={heatmap_data()}
-                            color_coding={heatmap_colour_coding}
-                            heatmap=true
-                        />
-                    </SummaryDetails>
-                </div>
-            }
+            <SummaryDetails label={tr!(yatra_heatmap_label)} open=true>
+                <Grid
+                    header={heatmap_header}
+                    data={heatmap_data()}
+                    color_coding={heatmap_colour_coding}
+                    heatmap=true
+                />
+            </SummaryDetails>
             if data.data.iter().any(|inner| !inner.statistics.is_empty()) {
                 <div class={BODY_DIV_BASE_CSS}>
                     <SummaryDetails label={tr!(yatra_stats_label)} open=true>

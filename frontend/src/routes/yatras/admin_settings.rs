@@ -379,17 +379,6 @@ pub fn admin_settings(props: &Props) -> Html {
         })
     };
 
-    let checkbox_onclick = {
-        let state = yatra_state.clone();
-        Callback::from(move |ev: MouseEvent| {
-            let input: HtmlInputElement = ev.target_unchecked_into();
-
-            let mut new_state = (*state).clone();
-            new_state.show_stability_metrics = input.checked();
-            state.set(new_state);
-        })
-    };
-
     //-------------------------------------------------------------------------
 
     let visibility_options = [
@@ -433,33 +422,6 @@ pub fn admin_settings(props: &Props) -> Html {
                                     <i class="icon-doc" />
                                     { tr!(yatra_name_label) }
                                 </label>
-                            </div>
-                            <div>
-                                <label class="flex justify-between whitespace-nowrap pl-2 pr-2">
-                                    <span class="">
-                                        <i class="icon-tick" />
-                                        { tr!(yatra_show_stability) }
-                                    </span>
-                                    <div class="flex">
-                                        <input
-                                            type="checkbox"
-                                            class={CHECKBOX_INPUT_CSS}
-                                            onclick={checkbox_onclick}
-                                            checked={yatra_state.show_stability_metrics}
-                                        />
-                                    </div>
-                                </label>
-                                <div class="pt-2">
-                                    <p class="text-xs text-zinc-500 dark:text-zinc-200">
-                                        { tr!(yatra_heatmap_memo_p1) }
-                                    </p>
-                                    <p class="text-xs text-zinc-500 dark:text-zinc-200">
-                                        { tr!(yatra_heatmap_memo_p2) }
-                                    </p>
-                                    <p class="text-xs text-zinc-500 dark:text-zinc-200">
-                                        { tr!(yatra_heatmap_memo_p3) }
-                                    </p>
-                                </div>
                             </div>
                         </div>
                     </SummaryDetails>
