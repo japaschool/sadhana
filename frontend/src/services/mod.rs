@@ -7,7 +7,6 @@ use self::requests::*;
 
 pub mod report;
 pub mod requests;
-pub mod url;
 
 /// Login a user
 pub async fn login(login_info: &LoginInfoWrapper) -> Result<UserInfoWrapper, AppError> {
@@ -21,7 +20,7 @@ pub async fn send_confirmation_link(data: SendConfirmationLink) -> Result<(), Ap
 
 /// Get details by signup link id
 pub async fn get_signup_link_details(id: &str) -> Result<SignupLinkDetailsWrapper, AppError> {
-    request_api_get(&format!("/users/confirmation/{}", id)).await
+    request_api_get_no_cache(&format!("/users/confirmation/{}", id)).await
 }
 
 /// Register a user
@@ -35,8 +34,8 @@ pub async fn reset_pwd(data: ResetPassword) -> Result<(), AppError> {
 }
 
 /// Get current user info
-pub async fn current() -> Result<UserInfoWrapper, AppError> {
-    request_api_get("/user").await
+pub fn current() -> GetApiRequest<UserInfoWrapper> {
+    request_api_get("/user")
 }
 
 /// Update user
@@ -60,22 +59,8 @@ pub async fn update_user_password(
 }
 
 /// Get diary data for a date
-pub async fn get_diary_day(date: &NaiveDate, cache_only: bool) -> Result<DiaryDay, AppError> {
-    log::debug!(
-        "Fetching journal entry for {} {}",
-        date,
-        if cache_only {
-            "from cache"
-        } else {
-            Default::default()
-        }
-    );
-    let url = url::get_diary_day(date);
-    if cache_only {
-        request_api_get_cache_only(&url).await
-    } else {
-        request_api_get(&url).await
-    }
+pub fn get_diary_day(date: &NaiveDate) -> GetApiRequest<DiaryDay> {
+    request_api_get(format!("/diary/{}", date.format("%F")))
 }
 
 /// Save a diary entry for a date
@@ -95,30 +80,22 @@ pub async fn save_diary_owned(cob: &NaiveDate, data: DiaryDay) -> Result<(), App
 }
 
 /// Gets incomplete days between passed dates
-pub async fn get_incomplete_days(
-    from: &NaiveDate,
-    to: &NaiveDate,
-) -> Result<IncompleteDays, AppError> {
-    request_api_get(&format!(
+pub fn get_incomplete_days(from: &NaiveDate, to: &NaiveDate) -> GetApiRequest<IncompleteDays> {
+    request_api_get(format!(
         "/diary/incomplete-days?from={}&to={}",
         from.format("%F"),
         to.format("%F")
     ))
-    .await
 }
 
 /// Get user practice
-pub async fn get_user_practice(id: &str) -> Result<GetUserPractice, AppError> {
-    request_api_get(&format!("/user/practice/{id}")).await
+pub fn get_user_practice(id: &str) -> GetApiRequest<GetUserPractice> {
+    request_api_get(format!("/user/practice/{id}"))
 }
 
 /// Get user practices
-pub async fn get_user_practices(from_cache: bool) -> Result<AllUserPractices, AppError> {
-    if from_cache {
-        request_api_get_cache_only(url::GET_USER_PRACTICES).await
-    } else {
-        request_api_get(url::GET_USER_PRACTICES).await
-    }
+pub fn get_user_practices() -> GetApiRequest<AllUserPractices> {
+    request_api_get("/user/practices")
 }
 
 /// Updates a user practice
@@ -150,35 +127,30 @@ pub async fn create_user_practice(user_practice: NewUserPractice) -> Result<(), 
 }
 
 /// Get shared practices
-pub async fn get_shared_practices(user_id: &str) -> Result<AllUserPractices, AppError> {
-    request_api_get(&format!("/share/{user_id}/practices")).await
+pub fn get_shared_practices(user_id: &str) -> GetApiRequest<AllUserPractices> {
+    request_api_get(format!("/share/{user_id}/practices"))
 }
 
-pub async fn user_info(user_id: &str) -> Result<UserInfoWrapper, AppError> {
-    request_api_get(&format!("/share/{user_id}/user")).await
+pub fn user_info(user_id: &str) -> GetApiRequest<UserInfoWrapper> {
+    request_api_get(format!("/share/{user_id}/user"))
 }
 
 /// Get yatra data
-pub async fn get_yatra_data(
-    yatra_id: &str,
-    cob_date: &NaiveDate,
-    cache_only: bool,
-) -> Result<YatraData, AppError> {
-    if cache_only {
-        request_api_get_cache_only(&url::get_yatra_data(yatra_id, cob_date)).await
-    } else {
-        request_api_get(&url::get_yatra_data(yatra_id, cob_date)).await
-    }
+pub fn get_yatra_data(yatra_id: &str, cob_date: &NaiveDate) -> GetApiRequest<YatraData> {
+    request_api_get(format!(
+        "/yatra/{yatra_id}/data?cob_date={}",
+        cob_date.format("%F")
+    ))
 }
 
 /// Get user yatras
-pub async fn get_user_yatras() -> Result<Yatras, AppError> {
-    request_api_get("/yatras").await
+pub fn get_user_yatras() -> GetApiRequest<Yatras> {
+    request_api_get("/yatras")
 }
 
 /// Create a new yatra
-pub async fn get_yatra(yatra_id: &str) -> Result<YatraResponse, AppError> {
-    request_api_get(&format!("/yatra/{yatra_id}")).await
+pub fn get_yatra(yatra_id: &str) -> GetApiRequest<YatraResponse> {
+    request_api_get(format!("/yatra/{yatra_id}"))
 }
 
 /// Join yatra
@@ -207,26 +179,23 @@ pub async fn update_yatra(yatra_id: &str, yatra: Yatra) -> Result<(), AppError> 
 }
 
 /// Check is_admin flag
-pub async fn is_yatra_admin(yatra_id: &str) -> Result<IsYatraAdminResponse, AppError> {
-    request_api_get(&format!("/yatra/{yatra_id}/is_admin")).await
+pub fn is_yatra_admin(yatra_id: &str) -> GetApiRequest<IsYatraAdminResponse> {
+    request_api_get(format!("/yatra/{yatra_id}/is_admin"))
 }
 
 /// Get yatra practices
-pub async fn get_yatra_practices(yatra_id: &str) -> Result<YatraPractices, AppError> {
-    request_api_get(&format!("/yatra/{yatra_id}/practices")).await
+pub fn get_yatra_practices(yatra_id: &str) -> GetApiRequest<YatraPractices> {
+    request_api_get(format!("/yatra/{yatra_id}/practices"))
 }
 
 /// Get yatra practice
-pub async fn get_yatra_practice(
-    yatra_id: &str,
-    practice_id: &str,
-) -> Result<GetYatraPractice, AppError> {
-    request_api_get(&format!("/yatra/{yatra_id}/practice/{practice_id}")).await
+pub fn get_yatra_practice(yatra_id: &str, practice_id: &str) -> GetApiRequest<GetYatraPractice> {
+    request_api_get(format!("/yatra/{yatra_id}/practice/{practice_id}"))
 }
 
 /// Get yatra users
-pub async fn get_yatra_users(yatra_id: &str) -> Result<YatraUsers, AppError> {
-    request_api_get(&format!("/yatra/{yatra_id}/users")).await
+pub fn get_yatra_users(yatra_id: &str) -> GetApiRequest<YatraUsers> {
+    request_api_get(format!("/yatra/{yatra_id}/users"))
 }
 
 /// Delete yatra user
@@ -281,8 +250,8 @@ pub async fn update_yatra_practice(
 }
 
 /// Get yatra user practices mapping
-pub async fn get_yatra_user_practices(yatra_id: &str) -> Result<YatraUserPractices, AppError> {
-    request_api_get(&format!("/yatra/{yatra_id}/user-practices")).await
+pub fn get_yatra_user_practices(yatra_id: &str) -> GetApiRequest<YatraUserPractices> {
+    request_api_get(format!("/yatra/{yatra_id}/user-practices"))
 }
 
 pub async fn update_yatra_user_practices(
@@ -302,6 +271,6 @@ pub async fn send_support_message(subject: &str, message: &str) -> Result<(), Ap
     request_api_post("/support-form", &SupportMessageForm::new(subject, message)).await
 }
 
-pub async fn get_version() -> Result<ApiVersion, AppError> {
-    request_api_get("/version").await
+pub fn get_version() -> GetApiRequest<ApiVersion> {
+    request_api_get("/version")
 }

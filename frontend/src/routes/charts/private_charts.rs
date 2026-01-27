@@ -14,7 +14,7 @@ use crate::{
     i18n::Locale,
     model::ReportData,
     routes::AppRoute,
-    services::{get_user_practices, report::*, url},
+    services::{get_user_practices, report::*, requests::RequestOptions},
 };
 use common::ReportDuration;
 use csv::Writer;
@@ -48,43 +48,18 @@ pub fn charts() -> Html {
         Locale::current().copy_reports_link()
     };
 
-    let reports = use_cache_aware_async(url::GET_REPORTS.to_string(), |cache_only| async move {
-        get_reports(cache_only).await.map(|res| res.reports)
-    });
+    let reports = use_cache_aware_async(get_reports().map(|res| res.reports));
 
-    let all_practices = use_cache_aware_async(
-        url::GET_USER_PRACTICES.to_string(),
-        |cache_only| async move {
-            get_user_practices(cache_only).await.map(|res| {
-                res.user_practices
-                    .into_iter()
-                    .filter(|p| p.is_active)
-                    .collect::<Vec<_>>()
-            })
-        },
+    let all_practices = use_cache_aware_async(get_user_practices().map(|res| {
+        res.user_practices
+            .into_iter()
+            .filter(|p| p.is_active)
+            .collect::<Vec<_>>()
+    }));
+
+    let report_data = use_cache_aware_async(
+        get_report_data(&session_ctx.selected_date, &duration).map(|res| res.values),
     );
-
-    let report_data = {
-        let duration = duration.clone();
-        let session = session_ctx.clone();
-        use_cache_aware_async(
-            url::get_report_data(&session.selected_date, &duration),
-            move |cache_only| {
-                log::debug!(
-                    "Getting report data for {:?} for duration {:?}",
-                    session.selected_date,
-                    duration
-                );
-                let session = session.clone();
-                let duration = duration.clone();
-                async move {
-                    get_report_data(&session.selected_date, &duration, cache_only)
-                        .await
-                        .map(|res| res.values)
-                }
-            },
-        )
-    };
 
     let delete_report = {
         let reports = reports.clone();
@@ -207,8 +182,7 @@ pub fn charts() -> Html {
             let duration = duration.clone();
             let selected_date = session.selected_date;
             spawn_local(async move {
-                get_report_data(&selected_date, &duration, false)
-                    .await
+                (get_report_data(&selected_date, &duration)
                     .map(|data| {
                         // To guarantee UTF-8 (especially for Cyrillic), prepending a UTF-8 BOM
                         let csv = format!("\u{FEFF}{}", to_csv_str(data).unwrap_or_default());
@@ -241,7 +215,9 @@ pub fn charts() -> Html {
 
                         a.remove();
                     })
-                    .unwrap();
+                    .send)(RequestOptions::new(true))
+                .await
+                .unwrap();
             });
         })
     };

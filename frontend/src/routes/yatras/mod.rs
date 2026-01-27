@@ -21,7 +21,7 @@ use crate::{
         ZoneColour,
     },
     routes::AppRoute,
-    services::{create_yatra, get_user_yatras, get_yatra_data, url},
+    services::{create_yatra, get_user_yatras, get_yatra_data, requests::GetApiRequest},
     tr,
 };
 
@@ -35,32 +35,18 @@ const SELECTED_YATRA_ID_KEY: &str = "selected_yatra";
 pub fn yatras() -> Html {
     let session_ctx = use_context::<Session>().expect("No session state found");
     let nav = use_navigator().unwrap();
-    let yatras = use_async(async move { get_user_yatras().await.map(|y| y.yatras) });
+    let yatras = use_cache_aware_async(get_user_yatras().map(|y| y.yatras));
     let selected_yatra = use_state(|| None::<Yatra>);
     let data = {
         let session = session_ctx.clone();
         let selected_yatra = selected_yatra.clone();
-        use_cache_aware_async(
-            url::get_yatra_data(
-                &selected_yatra
-                    .as_ref()
-                    .map(|y| y.id.to_owned())
-                    .unwrap_or_default(),
-                &session.selected_date,
-            ),
-            move |cache_only| {
-                let selected_yatra = selected_yatra.clone();
-                let session = session.clone();
-                async move {
-                    if let Some(y) = selected_yatra.as_ref() {
-                        get_yatra_data(&y.id, &session.selected_date, cache_only).await
-                    } else {
-                        Ok(YatraData::default())
-                    }
-                }
-            },
-        )
+        use_cache_aware_async(if let Some(y) = selected_yatra.as_ref() {
+            get_yatra_data(&y.id, &session.selected_date)
+        } else {
+            GetApiRequest::pure(YatraData::default)
+        })
     };
+
     let new_yatra = use_async(async move {
         if let Some(yatra_name) =
             prompt(&tr!(yatra_new_name_prompt), None).filter(|s| !s.trim().is_empty())

@@ -39,7 +39,7 @@
   "choose_practice": "Choose a practice",
   "is_required": "Is required",
   "is_required_memo": "If a practice is required and hasn't been filled in for a past date, a red dot will appear next to that date in the calendar.",
-  "asterisk_is_required_memo": "* marks required practices.",
+  "asterisk_is_required_memo": "* required practice.",
   "date": "Date",
   "mon": "Mon",
   "tue": "Tue",
