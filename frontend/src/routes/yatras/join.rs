@@ -6,6 +6,7 @@ use yew_router::prelude::use_navigator;
 use crate::{
     components::{blank_page::BlankPage, list_errors::ListErrors},
     css::*,
+    hooks::use_cache_aware_async,
     i18n::Locale,
     routes::AppRoute,
     services,
@@ -18,10 +19,7 @@ pub struct Props {
 
 #[function_component(JoinYatra)]
 pub fn join_yatra(props: &Props) -> Html {
-    let yatra = {
-        let yatra_id = props.yatra_id.clone();
-        use_async(async move { services::get_yatra(&yatra_id).await.map(|resp| resp.yatra) })
-    };
+    let yatra = use_cache_aware_async(services::get_yatra(&props.yatra_id).map(|resp| resp.yatra));
     let nav = use_navigator().unwrap();
 
     let join = {
