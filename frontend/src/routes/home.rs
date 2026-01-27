@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use chrono::Local;
 use gloo::utils::window;
 use tw_merge::*;
 use wasm_bindgen::JsCast;
@@ -14,7 +15,7 @@ use crate::{
         prompt::Prompt,
     },
     css::*,
-    hooks::{Session, use_cache_aware_async, use_visibility},
+    hooks::{SessionStateContext, use_cache_aware_async, use_visibility},
     i18n::{Locale, PracticeName},
     model::{DiaryEntry, PracticeDataType, PracticeEntryValue},
     services::{get_diary_day, get_user_practices, save_diary_entry, url},
@@ -25,7 +26,8 @@ use super::AppRoute;
 
 #[function_component(Home)]
 pub fn home() -> Html {
-    let session = use_context::<Session>().expect("No session state found");
+    let today = Local::now().date_naive();
+    let session_ctx = use_context::<SessionStateContext>().expect("No session state found");
 
     // A copy of backend data with local changes
     let local_diary_entry = use_list(Vec::new());
@@ -48,7 +50,7 @@ pub fn home() -> Html {
     );
 
     let diary_entry = {
-        let session = session.clone();
+        let session = session_ctx.clone();
         use_cache_aware_async(
             url::get_diary_day(&session.selected_date),
             move |from_cache| {
@@ -63,7 +65,7 @@ pub fn home() -> Html {
     };
 
     let save_diary_day_entry = {
-        let session = session.clone();
+        let session = session_ctx.clone();
         let entry = current_entry.clone();
         use_async(async move {
             if let Some(e) = &*entry {
@@ -107,7 +109,7 @@ pub fn home() -> Html {
     {
         // Fetch data from server on date change
         let diary_entry = diary_entry.clone();
-        use_effect_with(session.clone(), move |_| {
+        use_effect_with(session_ctx.clone(), move |_| {
             diary_entry.run();
             || ()
         });
@@ -247,7 +249,7 @@ pub fn home() -> Html {
         })
     };
 
-    let date_is_incomplete = (session.selected_date < session.today)
+    let date_is_incomplete = (session_ctx.selected_date < today)
         .then_some(0)
         .and_then(|_| required_practices.data.as_ref())
         .map(|required| {
@@ -280,7 +282,7 @@ pub fn home() -> Html {
                 <div class={TWO_COLS_CSS}>
                     { for local_diary_entry.current().iter().enumerate().map(|(idx, DiaryEntry {practice, data_type, dropdown_variants, value})| {
                         let wrapper_css =
-                            (value.is_none() && !diary_entry.loading && session.selected_date < session.today)
+                            (value.is_none() && !diary_entry.loading && session_ctx.selected_date < today)
                                 .then_some(0)
                                 .and_then(|_| required_practices.data.as_ref())
                                 .filter(|req| req.contains(practice))

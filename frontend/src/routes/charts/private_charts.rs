@@ -10,7 +10,7 @@ use crate::{
         list_errors::ListErrors,
         share_link::{ShareLink, can_share, emit_signal_callback, set_signal_callback},
     },
-    hooks::{Session, use_cache_aware_async, use_user_context},
+    hooks::{SessionStateContext, use_cache_aware_async, use_user_context},
     i18n::Locale,
     model::ReportData,
     routes::AppRoute,
@@ -28,7 +28,7 @@ use yew_hooks::{use_async, use_bool_toggle, use_mount};
 
 #[function_component(Charts)]
 pub fn charts() -> Html {
-    let session_ctx = use_context::<Session>().expect("No session state found");
+    let session_ctx = use_context::<SessionStateContext>().expect("No session state found");
     let user_ctx = use_user_context();
     let duration = use_state(|| ReportDuration::Week);
     let editing = use_bool_toggle(false);

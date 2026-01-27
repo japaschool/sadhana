@@ -1,16 +1,13 @@
 use std::collections::HashSet;
 
 use chrono::{Days, prelude::*};
+use gloo_events::EventListener;
 use tw_merge::*;
-use web_sys::HtmlInputElement;
+use web_sys::{HtmlInputElement, VisibilityState};
 use yew::prelude::*;
 use yew_hooks::{use_async, use_mount};
 
-use crate::{
-    hooks::{Session, SessionAction},
-    i18n::Locale,
-    services::get_incomplete_days,
-};
+use crate::{hooks::SessionStateContext, i18n::Locale, services::get_incomplete_days};
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
@@ -36,13 +33,15 @@ const OUT_OF_WEEK_DAY_CSS: &str = "opacity-30 scale-80 hover:opacity-70";
 
 #[function_component(Calendar)]
 pub fn calendar(props: &Props) -> Html {
-    let session = use_context::<Session>().expect("No session state context found");
+    let today = use_state(|| Local::now().date_naive());
+    let session_state =
+        use_context::<SessionStateContext>().expect("No session state context found");
     let touch_start = use_mut_ref(|| None::<(i32, i32)>);
     let translate_x = use_state(|| 0);
     let is_animating = use_state(|| false);
 
     let week = {
-        let d = session.selected_date.week(Weekday::Mon).first_day();
+        let d = session_state.selected_date.week(Weekday::Mon).first_day();
         let mut res = vec![d];
         for i in 1..7 {
             res.push(d.checked_add_days(Days::new(i)).unwrap());
@@ -54,7 +53,7 @@ pub fn calendar(props: &Props) -> Html {
     let next_week_day = week.last().unwrap().succ_opt().unwrap();
 
     let selected_date_str = titlecase(
-        &session
+        &session_state
             .selected_date
             .format_localized("%A, %e %B %Y", Locale::current().chrono())
             .to_string(),
@@ -85,20 +84,38 @@ pub fn calendar(props: &Props) -> Html {
 
     {
         let incomplete_days = incomplete_days.clone();
-        use_effect_with(session.clone(), move |_| {
+        use_effect_with(session_state.clone(), move |_| {
             incomplete_days.run();
             || ()
         });
     }
 
+    {
+        let today = today.clone();
+        use_effect(move || {
+            let onwakeup = Callback::from(move |_: Event| {
+                if let Some(doc) = web_sys::window().and_then(|w| w.document()) {
+                    if doc.visibility_state() == VisibilityState::Visible {
+                        today.set(Local::now().date_naive());
+                    }
+                }
+            });
+
+            let listener =
+                EventListener::new(&web_sys::window().unwrap(), "visibilitychange", move |e| {
+                    onwakeup.emit(e.clone());
+                });
+
+            move || drop(listener)
+        });
+    }
+
     let is_incomplete_day = |day| {
-        // For the selected day we receive incompleteness in props
-        if incomplete_days.data.is_some() && session.selected_date.day() == day {
+        if !incomplete_days.loading && session_state.selected_date.day() == day {
             if let Some(selected_date_incomplete) = props.selected_date_incomplete.as_ref() {
                 return *selected_date_incomplete;
             }
         }
-        // For the rest we load from the backend
         incomplete_days
             .data
             .as_ref()
@@ -107,37 +124,37 @@ pub fn calendar(props: &Props) -> Html {
     };
 
     let onclick_date = {
-        let ss = session.clone();
+        let ss = session_state.clone();
         Callback::from(move |ev: MouseEvent| {
             let input: HtmlInputElement = ev.target_unchecked_into();
             let new_date = NaiveDate::parse_from_str(input.id().as_str(), DATE_FORMAT).unwrap();
-            ss.dispatch(SessionAction::SetSelected(new_date));
+            ss.dispatch(new_date);
         })
     };
 
     let next_week_onclick = {
-        let selected_date = session.selected_date;
-        let ss = session.clone();
+        let selected_date = session_state.selected_date;
+        let ss = session_state.clone();
         Callback::from(move |_: MouseEvent| {
             let new_date = if selected_date.weekday() == Weekday::Sun {
                 selected_date.succ_opt().unwrap()
             } else {
                 selected_date.checked_add_days(Days::new(7)).unwrap()
             };
-            ss.dispatch(SessionAction::SetSelected(new_date));
+            ss.dispatch(new_date);
         })
     };
 
     let prev_week_onclick = {
-        let selected_date = session.selected_date;
-        let ss = session.clone();
+        let selected_date = session_state.selected_date;
+        let ss = session_state.clone();
         Callback::from(move |_: MouseEvent| {
             let new_date = if selected_date.weekday() == Weekday::Mon {
                 selected_date.pred_opt().unwrap()
             } else {
                 selected_date.checked_sub_days(Days::new(7)).unwrap()
             };
-            ss.dispatch(SessionAction::SetSelected(new_date));
+            ss.dispatch(new_date);
         })
     };
 
@@ -206,7 +223,7 @@ pub fn calendar(props: &Props) -> Html {
     };
 
     let calendar_day = |for_selected_date: bool, is_outside_week: bool, d: &NaiveDate| -> Html {
-        let date_css = match (for_selected_date, *d == session.today) {
+        let date_css = match (for_selected_date, *d == *today) {
             (true, true) => tw_merge!(SELECTED_TODAY_DATE_COLOR_CSS, "h-9 w-9"),
             (true, false) => tw_merge!(SELECTED_DATE_COLOR_CSS, "h-8 w-8"),
             (false, true) => tw_merge!(HOVER_TODAY_DATE_COLOR_CSS, "h-8 w-8"),
@@ -223,7 +240,7 @@ pub fn calendar(props: &Props) -> Html {
             "text-zinc-500 dark:text-zinc-100 my-auto font-bold".into()
         } else {
             tw_merge!(
-                if *d == session.today {
+                if *d == *today {
                     "text-amber-400"
                 } else {
                     "text-zinc-500 dark:text-zinc-100"
@@ -299,7 +316,7 @@ pub fn calendar(props: &Props) -> Html {
                     { for week.iter().map(|d| html! {
                         <div class="flex justify-center pointer-events-none">
                             <div class="pointer-events-auto">
-                                { calendar_day(*d == session.selected_date, false, d) }
+                                { calendar_day(*d == session_state.selected_date, false, d) }
                             </div>
                         </div>
                     }) }
