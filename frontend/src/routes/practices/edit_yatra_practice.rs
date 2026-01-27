@@ -4,6 +4,8 @@ use yew::prelude::*;
 use yew_hooks::{use_async, use_bool_toggle, use_mount};
 use yew_router::prelude::use_navigator;
 
+use super::daily_score_conf::DailyScoreConf;
+
 use crate::{
     AppRoute,
     components::{
@@ -15,8 +17,8 @@ use crate::{
     css::*,
     i18n::*,
     model::{
-        BetterDirection, Bound, ColourZonesConfig, PracticeDataType, Value, YatraPractice,
-        ZoneColour,
+        BetterDirection, Bound, ColourZonesConfig, DailyScoreConfig, PracticeDataType, Value,
+        YatraPractice, ZoneColour,
     },
     routes::practices::COLOUR_ZONE_DATA_TYPES,
     services::{get_yatra_practice, update_yatra_practice},
@@ -39,6 +41,7 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
     let color_zones_hidden = use_bool_toggle(true);
     let color_zones_enabled = use_bool_toggle(false);
     let colour_zones_config = use_state(ColourZonesConfig::default);
+    let daily_score_config = use_state(DailyScoreConfig::default);
     // use_mut_ref is to avoid re-rendering on every key press
     let backspace_key_pressed = use_mut_ref(|| false);
 
@@ -60,9 +63,13 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
         let yatra_id = props.yatra_id.clone();
         let colour_zones =
             (!colour_zones_config.bounds.is_empty()).then_some((*colour_zones_config).clone());
+        let daily_score = (!daily_score_config.bonus_rules.is_empty()
+            || daily_score_config.mandatory_threshold.is_some())
+        .then_some((*daily_score_config).clone());
         use_async(async move {
             let p = YatraPractice {
                 colour_zones,
+                daily_score,
                 ..practice
             };
             update_yatra_practice(&yatra_id, &p)
@@ -85,8 +92,12 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
         let color_zones_hidden = color_zones_hidden.clone();
         let color_zones_enabled = color_zones_enabled.clone();
         let colour_zones_config = colour_zones_config.clone();
+        let daily_score_config = daily_score_config.clone();
         use_effect_with(current_practice.clone(), move |current| {
             current.data.iter().for_each(|p| {
+                p.daily_score.iter().for_each(|ds| {
+                    daily_score_config.set(ds.to_owned());
+                });
                 color_zones_hidden.set(!COLOUR_ZONE_DATA_TYPES.contains(&p.data_type));
                 color_zones_enabled.set(
                     p.colour_zones
@@ -205,6 +216,13 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
             colour_zones_config.set(config);
             let _ = input.report_validity();
         }
+    };
+
+    let daily_score_onchange = {
+        let daily_score_config = daily_score_config.clone();
+        Callback::from(move |new_config: DailyScoreConfig| {
+            daily_score_config.set(new_config);
+        })
     };
 
     let onkeydown_time_dur = {
@@ -494,9 +512,6 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
                                             <i class="icon-eye" />
                                             { format!(" {}", tr!(colour_zones_preview)) }
                                         </label>
-                                        <p class="text-xs text-zinc-500 dark:text-zinc-200">
-                                            { tr!(colour_zones_preview_description) }
-                                        </p>
                                         <Grid
                                             color_coding={preview_heatmap_conf}
                                             data={vec![preview_values(&colour_zones_config.bounds)
@@ -505,10 +520,18 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
                                                 .collect::<Vec<_>>()]}
                                             first_column_highlighted=false
                                         />
+                                        <p class="text-xs text-zinc-500 dark:text-zinc-200">
+                                            { tr!(colour_zones_preview_description) }
+                                        </p>
                                     </div>
                                 }
                             </div>
                         </SummaryDetails>
+                        <DailyScoreConf
+                            config={(*daily_score_config).clone()}
+                            data_type={practice.data_type}
+                            on_change={daily_score_onchange}
+                        />
                     }
                     <div
                         class="relative"
