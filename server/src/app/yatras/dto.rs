@@ -1,11 +1,12 @@
-use std::collections::HashMap;
-
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use uuid::Uuid;
 
-use super::{domain::*, service::*};
+use super::{
+    model::{YatraDataRow, YatraPractice},
+    stats::YatraStatisticResult,
+};
 
 pub type YatraIdSlug = Uuid;
 pub type YatraIdPracticeSlug = (Uuid, Uuid);
@@ -23,12 +24,12 @@ pub struct CreateYatraForm {
 
 #[derive(Deserialize, Debug)]
 pub struct UpdateYatraForm {
-    pub yatra: Yatra,
+    pub yatra: crate::app::yatras::model::Yatra,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct CreateYatraPracticeForm {
-    pub practice: NewYatraPractice,
+    pub practice: crate::app::yatras::model::NewYatraPractice,
 }
 
 #[derive(Deserialize, Debug)]
@@ -53,28 +54,18 @@ pub struct YatraIsAdminResponse {
 }
 
 #[derive(Serialize, Debug)]
-pub struct UserYatraData {
+pub struct YatraDataRowResponse {
     pub user_id: Uuid,
     pub user_name: String,
     pub row: Vec<Option<JsonValue>>,
-    pub trend_arrow: Option<TrendArrow>,
-    pub stability_heatmap: Vec<i16>,
 }
 
-impl UserYatraData {
-    fn new(
-        user_id: Uuid,
-        user_name: String,
-        row: Vec<Option<JsonValue>>,
-        trend_arrow: Option<TrendArrow>,
-        heatmap_values: Vec<i16>,
-    ) -> Self {
+impl YatraDataRowResponse {
+    fn new(user_id: Uuid, user_name: String, row: Vec<Option<JsonValue>>) -> Self {
         Self {
             user_id,
             user_name,
             row,
-            trend_arrow,
-            stability_heatmap: heatmap_values,
         }
     }
 }
@@ -82,105 +73,73 @@ impl UserYatraData {
 #[derive(Serialize, Debug)]
 pub struct YatraDataResponse {
     pub practices: Vec<YatraPractice>,
-    pub data: Vec<UserYatraData>,
+    pub data: Vec<YatraDataRowResponse>,
     pub statistics: Vec<YatraStatisticResult>,
-    pub stability_heatmap_days: Vec<i32>,
 }
 
 impl
     From<(
-        NaiveDate,
         Vec<YatraPractice>,
-        Vec<YatraDataRaw>,
+        Vec<YatraDataRow>,
         Vec<YatraStatisticResult>,
-        Vec<DailyScore>,
     )> for YatraDataResponse
 {
     fn from(
         value: (
-            NaiveDate,
             Vec<YatraPractice>,
-            Vec<YatraDataRaw>,
+            Vec<YatraDataRow>,
             Vec<YatraStatisticResult>,
-            Vec<DailyScore>,
         ),
     ) -> Self {
-        let (cob, practices, rows, statistics, raw_scores) = value;
+        let (practices, rows, statistics) = value;
 
-        let mut user_scores: HashMap<_, Vec<_>> = HashMap::new();
-
-        // Assumes the data is already sorted by date
-        for score in raw_scores.into_iter() {
-            user_scores.entry(score.user_id).or_default().push(score);
+        // Note, assumes data comes in sorted by user and then practice order key
+        let mut curr_user = None;
+        let mut curr_user_data = vec![];
+        let mut all_users_data = vec![];
+        for row in rows.into_iter() {
+            if let Some((user_id, user_name)) = curr_user.take() {
+                if user_id == row.user_id {
+                    curr_user_data.push(row.value);
+                } else {
+                    all_users_data.push(YatraDataRowResponse::new(
+                        user_id,
+                        user_name,
+                        curr_user_data,
+                    ));
+                    curr_user_data = vec![row.value];
+                }
+                curr_user = Some((row.user_id, row.user_name));
+            } else {
+                curr_user = Some((row.user_id, row.user_name));
+                curr_user_data = vec![row.value];
+            }
         }
 
-        let stability_heatmap_days = user_scores
-            .iter()
-            .take(1)
-            .flat_map(|s| s.1[6..=20].iter().map(|s| s.day))
-            .collect();
-
-        let mut user_metrics: HashMap<Uuid, UserMetrics> = user_scores
-            .into_iter()
-            .map(|(user, scores)| (user, UserMetrics::from((cob, scores))))
-            .collect();
-
-        // Re-aggregating the values that come in flat
-        // Note, assumes data comes in sorted by user and then practice order key
-        let mut data = vec![];
-        let mut rows = rows.into_iter().peekable();
-
-        while let Some(row) = rows.next() {
-            let user_id = row.user_id;
-            let user_name = row.user_name;
-            let mut user_values = vec![row.value];
-
-            // collect all rows for this user in one pass
-            while let Some(next) = rows.peek() {
-                if next.user_id == user_id {
-                    user_values.push(rows.next().unwrap().value);
-                } else {
-                    break;
-                }
-            }
-
-            // extract metrics once
-            let (trend_arrow, heatmap_values) = user_metrics
-                .remove(&user_id)
-                .map(
-                    |UserMetrics {
-                         trend_arrow,
-                         stability_heatmap,
-                     }| (trend_arrow, stability_heatmap),
-                )
-                .unwrap_or((None, vec![]));
-
-            data.push(UserYatraData::new(
+        if let Some((user_id, user_name)) = curr_user.take() {
+            all_users_data.push(YatraDataRowResponse::new(
                 user_id,
                 user_name,
-                user_values,
-                trend_arrow,
-                heatmap_values,
+                curr_user_data,
             ));
         }
 
         Self {
             practices,
-            data,
+            data: all_users_data,
             statistics,
-            stability_heatmap_days,
         }
     }
 }
 
 #[derive(Serialize, Debug)]
 pub struct YatrasResponse {
-    pub yatras: Vec<Yatra>,
+    pub yatras: Vec<crate::app::yatras::model::Yatra>,
 }
 
 #[derive(Serialize, Debug)]
 pub struct YatraResponse {
-    pub yatra: Yatra,
+    pub yatra: crate::app::yatras::model::Yatra,
 }
 
 #[derive(Serialize, Debug)]
@@ -195,10 +154,10 @@ pub struct GetYatraPracticeResponse {
 
 #[derive(Serialize, Debug)]
 pub struct YatraUsersResponse {
-    pub users: Vec<YatraUser>,
+    pub users: Vec<crate::app::yatras::model::YatraUser>,
 }
 
 #[derive(Serialize, Debug, Deserialize)]
 pub struct YatraUserPractices {
-    pub practices: Vec<YatraUserPractice>,
+    pub practices: Vec<crate::app::yatras::model::YatraUserPractice>,
 }

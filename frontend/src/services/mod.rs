@@ -159,16 +159,12 @@ pub async fn user_info(user_id: &str) -> Result<UserInfoWrapper, AppError> {
 }
 
 /// Get yatra data
-pub async fn get_yatra_data(
-    yatra_id: &str,
-    cob_date: &NaiveDate,
-    cache_only: bool,
-) -> Result<YatraData, AppError> {
-    if cache_only {
-        request_api_get_cache_only(&url::get_yatra_data(yatra_id, cob_date)).await
-    } else {
-        request_api_get(&url::get_yatra_data(yatra_id, cob_date)).await
-    }
+pub async fn get_yatra_data(yatra_id: &str, cob_date: &NaiveDate) -> Result<YatraData, AppError> {
+    request_api_get(&format!(
+        "/yatra/{yatra_id}/data?cob_date={}",
+        cob_date.format("%F")
+    ))
+    .await
 }
 
 /// Get user yatras

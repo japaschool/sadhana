@@ -1,3 +1,4 @@
+use strum::IntoEnumIterator;
 use tw_merge::*;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
@@ -5,7 +6,6 @@ use yew_hooks::{use_async, use_bool_toggle, use_mount};
 use yew_router::prelude::use_navigator;
 
 use crate::{
-    AppRoute,
     components::{
         blank_page::{BlankPage, HeaderButtonProps},
         grid::Grid,
@@ -15,13 +15,14 @@ use crate::{
     css::*,
     i18n::*,
     model::{
-        BetterDirection, Bound, ColourZonesConfig, PracticeDataType, Value, YatraPractice,
-        ZoneColour,
+        BetterDirection, Bound, ColourZonesConfig, PracticeDataType, PracticeEntryValue,
+        YatraPractice, ZoneColour,
     },
     routes::practices::COLOUR_ZONE_DATA_TYPES,
     services::{get_yatra_practice, update_yatra_practice},
     tr,
     utils::time_dur_input_support::*,
+    AppRoute,
 };
 
 #[derive(Properties, Clone, PartialEq)]
@@ -29,8 +30,6 @@ pub struct Props {
     pub yatra_id: AttrValue,
     pub practice_id: AttrValue,
 }
-
-const ZONE_COLOURS: [ZoneColour; 3] = [ZoneColour::Red, ZoneColour::Yellow, ZoneColour::Green];
 
 #[function_component(EditYatraPractice)]
 pub fn edit_yatra_practice(props: &Props) -> Html {
@@ -190,7 +189,8 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
             let mut config: ColourZonesConfig = (*colour_zones_config).clone();
             let colour = input.id().as_str().parse().unwrap_or(ZoneColour::Neutral);
             // parse number safely
-            let value = Value::try_from((&practice.data_type, input.value().as_str())).ok();
+            let value =
+                PracticeEntryValue::try_from((&practice.data_type, input.value().as_str())).ok();
             // set the bound value
             if let Some(bound) = config.bounds.iter_mut().find(|b| b.colour == colour) {
                 bound.to = value;
@@ -473,10 +473,10 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
                                             "appearance-none text-center [text-align-last:center] has-value",
                                             INPUT_CSS)}
                                     >
-                                        { for ZONE_COLOURS.iter().map(|zc| html!{
+                                        { for ZoneColour::iter().map(|zc| html!{
                                         <option
                                             class="text-black"
-                                            selected={ colour_zones_config.no_value_colour == *zc }
+                                            selected={ colour_zones_config.no_value_colour == zc }
                                             value={ zc.to_string() }
                                         >
                                             { zc.to_localised_string() }
@@ -521,7 +521,6 @@ pub fn edit_yatra_practice(props: &Props) -> Html {
     }
 }
 
-/// Checks the bounds are valid - namely that the values are properly ordered
 fn is_bound_value_valid(bounds: &[Bound], colour: ZoneColour) -> bool {
     if let Some(idx) = bounds.iter().position(|b| b.colour == colour) {
         if idx == 0 {
@@ -536,16 +535,20 @@ fn is_bound_value_valid(bounds: &[Bound], colour: ZoneColour) -> bool {
     true
 }
 
-fn midpoint(a: &Value, b: &Value) -> Option<Value> {
+fn midpoint(a: &PracticeEntryValue, b: &PracticeEntryValue) -> Option<PracticeEntryValue> {
     match (a, b) {
-        (Value::Int(x), Value::Int(y)) => Some(Value::Int((x + y) / 2)),
-        (Value::Duration(x), Value::Duration(y)) => Some(Value::Duration((x + y) / 2)),
-        (Value::Time { h: h1, m: m1 }, Value::Time { h: h2, m: m2 }) => {
+        (PracticeEntryValue::Int(x), PracticeEntryValue::Int(y)) => {
+            Some(PracticeEntryValue::Int((x + y) / 2))
+        }
+        (PracticeEntryValue::Duration(x), PracticeEntryValue::Duration(y)) => {
+            Some(PracticeEntryValue::Duration((x + y) / 2))
+        }
+        (PracticeEntryValue::Time { h: h1, m: m1 }, PracticeEntryValue::Time { h: h2, m: m2 }) => {
             let t1 = (*h1 as u16) * 60 + (*m1 as u16);
             let t2 = (*h2 as u16) * 60 + (*m2 as u16);
             let mid = (t1 + t2) / 2;
 
-            Some(Value::Time {
+            Some(PracticeEntryValue::Time {
                 h: (mid / 60) as u8,
                 m: (mid % 60) as u8,
             })
@@ -554,13 +557,13 @@ fn midpoint(a: &Value, b: &Value) -> Option<Value> {
     }
 }
 
-fn just_above(v: &Value) -> Option<Value> {
+fn just_above(v: &PracticeEntryValue) -> Option<PracticeEntryValue> {
     match v {
-        Value::Int(x) => Some(Value::Int(x + 1)),
-        Value::Duration(x) => Some(Value::Duration(x + 1)),
-        Value::Time { h, m } => {
+        PracticeEntryValue::Int(x) => Some(PracticeEntryValue::Int(x + 1)),
+        PracticeEntryValue::Duration(x) => Some(PracticeEntryValue::Duration(x + 1)),
+        PracticeEntryValue::Time { h, m } => {
             let t = (*h as u16) * 60 + (*m as u16) + 1;
-            Some(Value::Time {
+            Some(PracticeEntryValue::Time {
                 h: (t / 60) as u8,
                 m: (t % 60) as u8,
             })
@@ -569,14 +572,14 @@ fn just_above(v: &Value) -> Option<Value> {
     }
 }
 
-fn preview_values(bounds: &[Bound]) -> Vec<Value> {
+fn preview_values(bounds: &[Bound]) -> Vec<PracticeEntryValue> {
     let mut out = Vec::new();
 
     // Find first concrete value to infer type
     let mut prev = match bounds.iter().flat_map(|b| b.to.iter()).next() {
-        Some(Value::Int(_)) => Value::Int(0),
-        Some(Value::Duration(_)) => Value::Duration(0),
-        Some(Value::Time { .. }) => Value::Time { h: 0, m: 1 },
+        Some(PracticeEntryValue::Int(_)) => PracticeEntryValue::Int(0),
+        Some(PracticeEntryValue::Duration(_)) => PracticeEntryValue::Duration(0),
+        Some(PracticeEntryValue::Time { .. }) => PracticeEntryValue::Time { h: 0, m: 1 },
         _ => return vec![],
     };
 
