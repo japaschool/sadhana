@@ -1,6 +1,4 @@
-alter table yatra_practices add column daily_score jsonb;
-
-alter table yatras add column show_stability_metrics bool not null default false;
+alter table yatra_practices add column daily_score_config jsonb;
 
 create or replace function normalize_value(
     data_type practice_data_type_enum,

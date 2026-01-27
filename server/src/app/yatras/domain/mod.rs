@@ -32,7 +32,6 @@ pub struct Yatra {
     pub id: Uuid,
     pub name: String,
     pub statistics: Option<JsonValue>,
-    pub show_stability_metrics: bool,
 }
 
 impl Yatra {
@@ -202,7 +201,6 @@ impl Yatra {
             id,
             name,
             statistics: None,
-            show_stability_metrics: false,
         })
     }
 
@@ -233,7 +231,6 @@ impl Yatra {
             .set((
                 yatras::name.eq(&self.name),
                 yatras::statistics.eq(&self.statistics),
-                yatras::show_stability_metrics.eq(&self.show_stability_metrics),
             ))
             .execute(conn)?;
 
@@ -267,7 +264,6 @@ pub struct YatraPractice {
     pub practice: String,
     pub data_type: PracticeDataType,
     pub colour_zones: Option<JsonValue>,
-    pub daily_score: Option<JsonValue>,
 }
 
 impl YatraPractice {
@@ -309,7 +305,6 @@ impl YatraPractice {
             .set((
                 yatra_practices::practice.eq(&practice.practice),
                 yatra_practices::colour_zones.eq(&practice.colour_zones),
-                yatra_practices::daily_score.eq(&practice.daily_score),
             ))
             .execute(conn)?;
 
@@ -558,7 +553,6 @@ impl YatraUserPractice {
                         practice: yatra_practice,
                         data_type,
                         colour_zones: None,
-                        daily_score: None,
                     },
                     user_practice,
                 },
@@ -605,8 +599,8 @@ impl YatraDataRaw {
                     yp.colour_zones,
                     yp.practice,
                     normalize_value(yp.data_type, d.value) as normalised_value,
-                    normalize_value(yp.data_type, yp.daily_score->'mandatory_threshold') as mandatory_threshold,
-                    yp.daily_score,
+                    normalize_value(yp.data_type, yp.daily_score_config->'mandatory_threshold') as mandatory_threshold,
+                    yp.daily_score_config,
                     yp.data_type,
                     yp.order_key
                 from
@@ -627,7 +621,7 @@ impl YatraDataRaw {
                 t.user_name,
                 t.value,
                 coalesce(
-                    case daily_score->>'better_direction'
+                    case daily_score_config->>'better_direction'
                         when 'Higher' then
                             case when normalised_value >= mandatory_threshold then 1 else 0 end
                         when 'Lower' then
@@ -636,9 +630,9 @@ impl YatraDataRaw {
                     0) as mandatory_score,
                 coalesce((
                     select sum( (br->>'points')::int )
-                    from jsonb_array_elements(daily_score->'bonus_rules') br
+                    from jsonb_array_elements(daily_score_config->'bonus_rules') br
                     where
-                        case daily_score->>'better_direction'
+                        case daily_score_config->>'better_direction'
                         when 'Higher' then
                             normalised_value >= normalize_value(t.data_type, br->'threshold')
                         when 'Lower' then
@@ -701,39 +695,39 @@ impl DailyScore {
             yu.user_id,
             d.day,
             /* mandatory per practice */
-            case yp.daily_score->>'better_direction'
+            case yp.daily_score_config->>'better_direction'
             when 'Higher' then
                 case
                 when normalize_value(yp.data_type, dv.value)
-                    >= normalize_value(yp.data_type, yp.daily_score->'mandatory_threshold')
+                    >= normalize_value(yp.data_type, yp.daily_score_config->'mandatory_threshold')
                 then 1 else 0
                 end
             when 'Lower' then
                 case
                 when normalize_value(yp.data_type, dv.value)
-                    <= normalize_value(yp.data_type, yp.daily_score->'mandatory_threshold')
+                    <= normalize_value(yp.data_type, yp.daily_score_config->'mandatory_threshold')
                 then 1 else 0
                 end
             end as mandatory_score,
             /* bonus per practice (gated by mandatory) */
             case
             when (
-                case yp.daily_score->>'better_direction'
+                case yp.daily_score_config->>'better_direction'
                 when 'Higher' then
                     normalize_value(yp.data_type, dv.value)
-                    >= normalize_value(yp.data_type, yp.daily_score->'mandatory_threshold')
+                    >= normalize_value(yp.data_type, yp.daily_score_config->'mandatory_threshold')
                 when 'Lower' then
                     normalize_value(yp.data_type, dv.value)
-                    <= normalize_value(yp.data_type, yp.daily_score->'mandatory_threshold')
+                    <= normalize_value(yp.data_type, yp.daily_score_config->'mandatory_threshold')
                 end
             )
             then coalesce((
                 select sum((br->>'points')::int)
                 from jsonb_array_elements(
-                yp.daily_score->'bonus_rules'
+                yp.daily_score_config->'bonus_rules'
                 ) br
                 where
-                case yp.daily_score->>'better_direction'
+                case yp.daily_score_config->>'better_direction'
                     when 'Higher' then
                     normalize_value(yp.data_type, dv.value)
                     >= normalize_value(yp.data_type, br->'threshold')
@@ -745,7 +739,7 @@ impl DailyScore {
             else 0
             end as bonus_score,
             case
-                when nullif(yp.daily_score->'mandatory_threshold', '{}') is not null then 1
+                when nullif(yp.daily_score_config->'mandatory_threshold', '{}') is not null then 1
                 else 0
             end as has_mandatory
         from days d

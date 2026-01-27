@@ -128,7 +128,7 @@ diesel::table! {
         data_type -> PracticeDataTypeEnum,
         order_key -> Int4,
         colour_zones -> Nullable<Jsonb>,
-        daily_score -> Nullable<Jsonb>,
+        daily_score_config -> Nullable<Jsonb>,
     }
 }
 
@@ -154,7 +154,6 @@ diesel::table! {
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
         statistics -> Nullable<Jsonb>,
-        show_stability_metrics -> Bool,
     }
 }
 
