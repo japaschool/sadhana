@@ -764,7 +764,7 @@ impl DailyScore {
         select
             user_id,
             day,
-            sum(mandatory_score)::smallint as mandatory_score,
+            coalesce(sum(mandatory_score), 0)::smallint as mandatory_score,
             sum(has_mandatory)::smallint   as mandatory_total,
             sum(bonus_score)::smallint     as bonus_score
         from per_practice
