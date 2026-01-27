@@ -5,20 +5,41 @@ use yew::prelude::*;
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SessionState {
     pub selected_date: NaiveDate,
+    pub today: NaiveDate,
+}
+
+pub enum SessionAction {
+    UpdateToday,
+    SetSelected(NaiveDate),
 }
 
 impl Reducible for SessionState {
-    type Action = NaiveDate;
+    type Action = SessionAction;
 
     fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
-        SessionState {
-            selected_date: action,
+        match action {
+            SessionAction::UpdateToday => {
+                let today = Local::now().date_naive();
+                if today == self.today {
+                    self
+                } else {
+                    Self {
+                        selected_date: self.selected_date,
+                        today,
+                    }
+                    .into()
+                }
+            }
+            SessionAction::SetSelected(selected_date) => Self {
+                today: self.today,
+                selected_date,
+            }
+            .into(),
         }
-        .into()
     }
 }
 
-pub type SessionStateContext = UseReducerHandle<SessionState>;
+pub type Session = UseReducerHandle<SessionState>;
 
 #[derive(Properties, Debug, PartialEq)]
 pub struct SessionStateProviderProps {
@@ -28,13 +49,15 @@ pub struct SessionStateProviderProps {
 
 #[function_component]
 pub fn SessionStateProvider(props: &SessionStateProviderProps) -> Html {
+    let init = Local::now().date_naive();
     let state = use_reducer(|| SessionState {
-        selected_date: Local::now().date_naive(),
+        selected_date: init,
+        today: init,
     });
 
     html! {
-        <ContextProvider<SessionStateContext> context={state}>
+        <ContextProvider<Session> context={state}>
             { props.children.clone() }
-        </ContextProvider<SessionStateContext>>
+        </ContextProvider<Session>>
     }
 }
