@@ -3,23 +3,19 @@ use gloo::utils::window;
 use gloo_events::EventListener;
 use gloo_utils::format::JsValueSerdeExt;
 use serde::Deserialize;
-use std::ops::Deref;
-use uuid::Uuid;
+use std::{future::Future, ops::Deref};
 use wasm_bindgen::JsCast;
 use web_sys::MessageEvent;
 use yew::prelude::*;
 use yew_hooks::{UseAsyncHandle, use_async};
 
-use crate::services::requests::{GetApiRequest, RequestOptions};
 #[derive(Deserialize)]
 struct ApiUpdatedMessage {
     #[serde(rename = "type")]
     msg_type: String,
-    #[serde(rename = "cacheKey")]
-    cache_key: String,
+    url: String,
 }
 
-#[derive(PartialEq)]
 pub struct UseCacheAwareAsyncApi<T> {
     pub api: UseAsyncHandle<T, AppError>,
 }
@@ -38,23 +34,20 @@ impl<T> Deref for UseCacheAwareAsyncApi<T> {
 /// This hook in turn catches that message and reruns the fetcher with cache
 /// only flag set.
 #[hook]
-pub fn use_cache_aware_async<T>(req: GetApiRequest<T>) -> UseCacheAwareAsyncApi<T>
+pub fn use_cache_aware_async<T, F, Fut>(key: String, fetch: F) -> UseCacheAwareAsyncApi<T>
 where
+    F: Fn(bool) -> Fut + Clone + 'static,
+    Fut: Future<Output = Result<T, AppError>>,
     T: Clone + 'static,
 {
     let refresh_mode = use_mut_ref(|| false);
-    let hook_id = use_state(|| Uuid::new_v4().to_string());
 
     let api = {
         let refresh_mode = refresh_mode.clone();
-        let hook_id = hook_id.clone();
+        let fetch = fetch.clone();
         use_async(async move {
-            let opts = RequestOptions {
-                use_cache: *refresh_mode.borrow(),
-                cache_key: Some(hook_id.to_string()),
-            };
-
-            let res = (req.send)(opts).await;
+            let from_cache = *refresh_mode.borrow();
+            let res = fetch(from_cache).await;
             *refresh_mode.borrow_mut() = false;
             res
         })
@@ -69,27 +62,29 @@ where
         })
     };
 
-    {
-        let hook_id = hook_id.clone();
-        use_effect(move || {
-            let sw = window().navigator().service_worker();
+    use_effect(move || {
+        let sw = window().navigator().service_worker();
 
-            let listener = EventListener::new(sw.as_ref(), "message", move |e| {
-                let e = e
-                    .dyn_ref::<MessageEvent>()
-                    .expect("event should be a MessageEvent");
+        let listener = EventListener::new(sw.as_ref(), "message", move |e| {
+            let e = e
+                .dyn_ref::<MessageEvent>()
+                .expect("event should be a MessageEvent");
 
-                if let Ok(msg) = e.data().into_serde::<ApiUpdatedMessage>() {
-                    if msg.msg_type == "API_UPDATED" && msg.cache_key.contains(&*hook_id) {
-                        log::debug!("Calling refresh of async task for {}", msg.cache_key);
-                        refresh_cache.emit(());
-                    }
+            if let Ok(msg) = e.data().into_serde::<ApiUpdatedMessage>() {
+                log::debug!("Processing API_UPDATED for {} and key {}", msg.url, key);
+                if msg.msg_type == "API_UPDATED" && msg.url.contains(&key) {
+                    log::debug!(
+                        "Calling refresh of async task for {} and key {}",
+                        msg.url,
+                        key
+                    );
+                    refresh_cache.emit(());
                 }
-            });
-
-            move || drop(listener)
+            }
         });
-    }
+
+        move || drop(listener)
+    });
 
     UseCacheAwareAsyncApi { api }
 }

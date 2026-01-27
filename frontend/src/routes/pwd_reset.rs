@@ -8,7 +8,7 @@ use crate::{
     i18n::Locale,
     model,
     routes::AppRoute,
-    services::{get_signup_link_details, reset_pwd},
+    services,
 };
 use common::error::AppError;
 use gloo_dialogs::alert;
@@ -35,7 +35,7 @@ pub fn pwd_reset(props: &Props) -> Html {
 
     let email = {
         let confirmation_id = props.id.clone();
-        use_async(async move { get_signup_link_details(confirmation_id.as_str()).await })
+        use_async(async move { services::get_signup_link_details(confirmation_id.as_str()).await })
     };
 
     {
@@ -52,7 +52,7 @@ pub fn pwd_reset(props: &Props) -> Html {
         let pwd = pwd.clone();
         let finished = finished.clone();
         use_async(async move {
-            reset_pwd(model::ResetPassword {
+            services::reset_pwd(model::ResetPassword {
                 confirmation_id: email.data.as_ref().unwrap().confirmation.id.clone(),
                 password: (*pwd).clone(),
             })

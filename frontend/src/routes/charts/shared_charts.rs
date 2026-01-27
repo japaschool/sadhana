@@ -4,7 +4,7 @@ use crate::{
         blank_page::{BlankPage, CalendarProps},
         list_errors::ListErrors,
     },
-    hooks::{Session, use_cache_aware_async},
+    hooks::Session,
     routes::charts::{Report, SelectedReportId},
     services::{
         get_shared_practices,
@@ -14,7 +14,7 @@ use crate::{
 };
 use common::ReportDuration;
 use yew::prelude::*;
-use yew_hooks::use_mount;
+use yew_hooks::{use_async, use_mount};
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct SharedChartsProps {
@@ -29,22 +29,36 @@ pub fn shared_charts(props: &SharedChartsProps) -> Html {
 
     let user_info = {
         let share_id = props.share_id.clone();
-        use_cache_aware_async(user_info(&share_id).map(|inner| inner.user))
+        use_async(async move { user_info(&share_id).await.map(|inner| inner.user) })
     };
 
-    let reports = use_cache_aware_async(get_shared_reports(&props.share_id).map(|res| res.reports));
+    let reports = {
+        let share_id = props.share_id.clone();
+        use_async(async move { get_shared_reports(&share_id).await.map(|res| res.reports) })
+    };
 
-    let practices = use_cache_aware_async(get_shared_practices(&props.share_id).map(|res| {
-        res.user_practices
-            .into_iter()
-            .filter(|p| p.is_active)
-            .collect::<Vec<_>>()
-    }));
+    let practices = {
+        let share_id = props.share_id.clone();
+        use_async(async move {
+            get_shared_practices(&share_id).await.map(|res| {
+                res.user_practices
+                    .into_iter()
+                    .filter(|p| p.is_active)
+                    .collect::<Vec<_>>()
+            })
+        })
+    };
 
-    let report_data = use_cache_aware_async(
-        get_shared_report_data(&props.share_id, &session_ctx.selected_date, &duration)
-            .map(|res| res.values),
-    );
+    let report_data = {
+        let duration = duration.clone();
+        let share_id = props.share_id.clone();
+        let session = session_ctx.clone();
+        use_async(async move {
+            get_shared_report_data(&share_id, &session.selected_date, &duration)
+                .await
+                .map(|res| res.values)
+        })
+    };
 
     {
         // Load state on mount

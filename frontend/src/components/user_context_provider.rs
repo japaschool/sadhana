@@ -1,5 +1,4 @@
 use crate::{
-    hooks::use_cache_aware_async,
     model::UserInfo,
     routes::AppRoute,
     services::{
@@ -9,7 +8,7 @@ use crate::{
 };
 use common::error::AppError;
 use yew::prelude::*;
-use yew_hooks::prelude::use_mount;
+use yew_hooks::prelude::{use_async, use_mount};
 use yew_router::prelude::*;
 
 #[derive(Properties, Clone, PartialEq)]
@@ -20,7 +19,7 @@ pub struct Props {
 #[function_component(UserContextProvider)]
 pub fn user_context_provider(props: &Props) -> Html {
     let user_ctx = use_state(UserInfo::default);
-    let current_user = use_cache_aware_async(current());
+    let current_user = use_async(async move { current().await });
     let navigator = use_navigator().unwrap();
     let location = use_location();
 

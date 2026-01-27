@@ -13,7 +13,6 @@ use crate::{
         list_errors::ListErrors,
     },
     css::*,
-    hooks::use_cache_aware_async,
     i18n::Locale,
     model::{PracticeDataType, YatraUserPractice},
     routes::AppRoute,
@@ -32,20 +31,26 @@ pub struct Props {
 pub fn yatra_settings(props: &Props) -> Html {
     let yatra = {
         let yatra_id = props.yatra_id.clone();
-        use_cache_aware_async(get_yatra(&yatra_id).map(|resp| resp.yatra))
+        use_async(async move { get_yatra(&yatra_id).await.map(|resp| resp.yatra) })
+    };
+    let yatra_user_practices = {
+        let yatra_id = props.yatra_id.clone();
+        use_async(async move {
+            get_yatra_user_practices(yatra_id.as_str())
+                .await
+                .map(|res| res.practices)
+        })
     };
 
-    let yatra_user_practices = use_cache_aware_async(
-        get_yatra_user_practices(props.yatra_id.as_str()).map(|res| res.practices),
-    );
-
     let user_practices = {
-        use_cache_aware_async(get_user_practices().map(|res| {
-            res.user_practices
-                .into_iter()
-                .filter(|p| p.is_active)
-                .collect::<Vec<_>>()
-        }))
+        use_async(async move {
+            get_user_practices(false).await.map(|res| {
+                res.user_practices
+                    .into_iter()
+                    .filter(|p| p.is_active)
+                    .collect::<Vec<_>>()
+            })
+        })
     };
     let nav = use_navigator().unwrap();
 
@@ -64,7 +69,11 @@ pub fn yatra_settings(props: &Props) -> Html {
 
     let is_admin = {
         let yatra_id = props.yatra_id.clone();
-        use_cache_aware_async(is_yatra_admin(yatra_id.as_str()).map(|resp| resp.is_admin))
+        use_async(async move {
+            is_yatra_admin(yatra_id.as_str())
+                .await
+                .map(|resp| resp.is_admin)
+        })
     };
 
     let save = {

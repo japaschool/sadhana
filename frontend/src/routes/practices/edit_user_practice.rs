@@ -10,7 +10,6 @@ use crate::{
         list_errors::ListErrors,
     },
     css::*,
-    hooks::use_cache_aware_async,
     i18n::*,
     model::UserPractice,
     routes::DROPDOWN_PRACTICE_TYPES,
@@ -28,8 +27,10 @@ pub fn edit_user_practice(props: &Props) -> Html {
     let practice = use_state(UserPractice::default);
     let is_dropdown = use_bool_toggle(false);
 
-    let current_practice =
-        use_cache_aware_async(get_user_practice(&props.id).map(|res| res.practice));
+    let current_practice = {
+        let p = props.id.clone();
+        use_async(async move { get_user_practice(&p).await.map(|res| res.practice) })
+    };
 
     let update_user_practice = {
         let practice = practice.clone();
