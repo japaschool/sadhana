@@ -695,8 +695,12 @@ impl DailyScore {
             $2::date,
             interval '1 day'
         )::date as day
-        ),
-        per_practice as (
+        ), user_data as (
+        select dv.cob_date, dv.user_id, p.yatra_practice_id, dv.value
+        from diary dv
+        join yatra_user_practices p
+            on p.user_practice_id = dv.practice_id
+        ), per_practice as (
         select
             yu.user_id,
             d.day,
@@ -753,12 +757,10 @@ impl DailyScore {
             on yu.yatra_id = $1
         join yatra_practices yp
             on yp.yatra_id = yu.yatra_id
-        join yatra_user_practices yup
-            on yup.yatra_practice_id = yp.id
-        left join diary dv
+        left join user_data dv
             on dv.cob_date = d.day
-        and dv.practice_id = yup.user_practice_id
-        and dv.user_id = yu.user_id
+            and dv.user_id = yu.user_id
+            and dv.yatra_practice_id = yp.id
         ),
         per_day as (
         select
