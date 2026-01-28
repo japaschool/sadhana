@@ -46,4 +46,5 @@ jobs:
               SSH_HOST: ${{ secrets.SSH_HOST }}
 
       - name: Executing update script
-        run: ssh sadhana 'bash -s < /home/sadhana/scripts/sadhana_reload.sh git-${GITHUB_SHA::7}'
+        run: |
+          ssh sadhana "bash /home/sadhana/scripts/sadhana_reload.sh git-${GITHUB_SHA::7}"
