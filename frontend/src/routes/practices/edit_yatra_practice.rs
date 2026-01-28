@@ -33,7 +33,12 @@ pub struct Props {
     pub practice_id: AttrValue,
 }
 
-const ZONE_COLOURS: [ZoneColour; 3] = [ZoneColour::Red, ZoneColour::Yellow, ZoneColour::Green];
+const ZONE_COLOURS: [ZoneColour; 4] = [
+    ZoneColour::Neutral,
+    ZoneColour::Red,
+    ZoneColour::Yellow,
+    ZoneColour::Green,
+];
 
 #[function_component(EditYatraPractice)]
 pub fn edit_yatra_practice(props: &Props) -> Html {

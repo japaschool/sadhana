@@ -47,7 +47,7 @@ pub fn grid(props: &GridProps) -> Html {
                                     {for row.iter().enumerate().map(|(idx, cell)|
                                         if idx == 0 && props.first_column_highlighted {
                                             html! {
-                                                <th scope="row" class="flex items-center px-1 py-2 text-zinc-400 whitespace-nowrap dark:text-zinc-300">
+                                                <th scope="row" class="items-center px-1 py-2 text-zinc-400 whitespace-nowrap dark:text-zinc-300">
                                                     <div class="text-sm font-normal">{ cell.as_ref().map(|v|v.to_string()).unwrap_or_default() }</div>
                                                 </th>
                                             }
