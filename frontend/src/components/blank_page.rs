@@ -1,4 +1,3 @@
-use gloo::utils::window;
 use gloo_utils::format::JsValueSerdeExt;
 use serde::Serialize;
 use tw_merge::*;
@@ -14,6 +13,7 @@ use crate::{
     i18n::Locale,
     routes::AppRoute,
     services::requests,
+    utils::service_worker::get_service_worker,
 };
 
 #[derive(Properties, Clone, PartialEq)]
@@ -349,14 +349,17 @@ pub fn blank_page(props: &Props) -> Html {
             if v.visible {
                 session.dispatch(SessionAction::UpdateToday);
                 if let Some(token) = requests::get_token() {
-                    if let Some(controller) = window().navigator().service_worker().controller() {
-                        let msg = CheckUpdateMsg {
-                            msg_type: "CHECK_UPDATE".into(),
-                            token,
-                        };
-                        let msg = JsValue::from_serde(&msg)
-                            .expect("Failed to serialize CHECK_UPDATE message");
-                        controller.post_message(&msg).ok();
+                    // Check if serviceWorker API is available in this browser
+                    if let Some(sw) = get_service_worker() {
+                        if let Some(controller) = sw.controller() {
+                            let msg = CheckUpdateMsg {
+                                msg_type: "CHECK_UPDATE".into(),
+                                token,
+                            };
+                            let msg = JsValue::from_serde(&msg)
+                                .expect("Failed to serialize CHECK_UPDATE message");
+                            controller.post_message(&msg).ok();
+                        }
                     }
                 }
             }

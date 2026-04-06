@@ -1,9 +1,10 @@
-use gloo::utils::window;
 use gloo_events::EventListener;
 use wasm_bindgen::JsCast;
 use web_sys::MessageEvent;
 use yew::{html::ChildrenProps, prelude::*};
 use yew_hooks::use_bool_toggle;
+
+use crate::utils::service_worker::get_service_worker;
 
 #[derive(Clone, PartialEq)]
 pub struct NetworkStatus {
@@ -23,19 +24,27 @@ pub fn network_status_provider(props: &ChildrenProps) -> Html {
 
         // Using effect with deps to avoid running on ever render
         use_effect_with((), move |_| {
-            let sw = window().navigator().service_worker();
+            // Check if serviceWorker API is available in this browser
+            let listener = if let Some(sw) = get_service_worker() {
+                // Only attach listener if a service worker is actively controlling this page
+                if sw.controller().is_some() {
+                    Some(EventListener::new(&sw, "message", move |event| {
+                        let event = event.dyn_ref::<MessageEvent>().unwrap();
 
-            let listener = EventListener::new(&sw, "message", move |event| {
-                let event = event.dyn_ref::<MessageEvent>().unwrap();
-
-                if let Some(msg) = event.data().as_string() {
-                    if msg == "ONLINE" {
-                        online.set(true);
-                    } else if msg == "OFFLINE" {
-                        online.set(false);
-                    }
+                        if let Some(msg) = event.data().as_string() {
+                            if msg == "ONLINE" {
+                                online.set(true);
+                            } else if msg == "OFFLINE" {
+                                online.set(false);
+                            }
+                        }
+                    }))
+                } else {
+                    None
                 }
-            });
+            } else {
+                None
+            };
 
             move || {
                 drop(listener);

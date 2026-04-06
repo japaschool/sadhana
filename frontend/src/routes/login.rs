@@ -5,12 +5,13 @@ use yew_hooks::prelude::*;
 use yew_router::prelude::*;
 
 use crate::{
+    BaseRoute,
     components::{blank_page::BlankPage, list_errors::ListErrors},
     css::*,
     hooks::use_user_context,
     i18n::*,
     model::*,
-    services, BaseRoute,
+    services,
 };
 
 #[function_component(Login)]

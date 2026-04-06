@@ -21,18 +21,18 @@ log = { version = "0.4", features = [
 wasm-logger = "0.2"
 lazy_static = "1.4"
 parking_lot = "0.12"
-gloo = { version = "0.11", features = ["file", "futures"] }
-gloo-dialogs = "0.2"
-gloo-events = "0.2"
-gloo-utils = "0.2"
-reqwest = { version = "0.12", features = ["json"] }
+gloo = { version = "0.12", features = ["file", "futures"] }
+gloo-dialogs = "0.3"
+gloo-events = "0.3"
+gloo-utils = "0.3"
+reqwest = { version = "0.13", features = ["json"] }
 thiserror = "2.0"
 chrono = { version = "0.4", features = ["serde", "unstable-locales"] }
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 i18n_codegen = "0.1"
 once_cell = "1"
-plotly = { version = "0.12", features = ["wasm"] }
+plotly = { version = "0.14" }
 const_format = "0.2"
 Inflector = "0.11"
 js-sys = "0.3"
@@ -40,9 +40,9 @@ csv = "1"
 futures = "0.3"
 urlencoding = "2.1"
 nom = "8.0"
-strum = { version = "0.27", features = ["derive"] }
+strum = { version = "0.28", features = ["derive"] }
 tw_merge = { version = "0.1", features = ["variant"] }
-uuid = { version = "1", features = ["v4"] }
+uuid = { version = "1", features = ["v4", "js"] }
 
 [dependencies.web-sys]
 version = "0.3"

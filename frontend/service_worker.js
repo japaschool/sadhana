@@ -240,7 +240,7 @@ async function handleApiGet(request) {
     const net = await fetchWrapper(request, {}, 30000);
 
     // Only cache explicitly requested requests
-    if (request.headers.has('X-Cache-Key')) {
+    if (request.headers.has('X-Cache-Key') && net.ok) {
         const body = await net.clone().arrayBuffer();
         await cache.put(request, new Response(body, {
             status: net.status,
@@ -561,11 +561,8 @@ async function fetchWrapper(req, opts = {}, timeout) {
             throw new Error('Server unavailable');
         }
 
-        if (resp.ok) {
-            broadcastOnline();
-        } else {
-            broadcastOffline();
-        }
+        // Successfully got a response, network is working
+        broadcastOnline();
 
         return resp;
     } catch (err) {

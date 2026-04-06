@@ -453,8 +453,7 @@ pub fn home() -> Html {
                                             placeholder={idx.to_string()}
                                             onchange={onchange_int.clone()}
                                             value={value.iter().find_map(|v| v.as_text()).unwrap_or_default()}
-                                            >
-                                        </textarea>
+                                            />
                                     }
                                     <label
                                         for={idx.to_string()}

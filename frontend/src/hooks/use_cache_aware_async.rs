@@ -1,5 +1,4 @@
 use common::error::AppError;
-use gloo::utils::window;
 use gloo_events::EventListener;
 use gloo_utils::format::JsValueSerdeExt;
 use serde::Deserialize;
@@ -11,6 +10,7 @@ use yew::prelude::*;
 use yew_hooks::{UseAsyncHandle, use_async};
 
 use crate::services::requests::{GetApiRequest, RequestOptions};
+use crate::utils::service_worker::get_service_worker;
 #[derive(Deserialize)]
 struct ApiUpdatedMessage {
     #[serde(rename = "type")]
@@ -72,22 +72,32 @@ where
     {
         let hook_id = hook_id.clone();
         use_effect(move || {
-            let sw = window().navigator().service_worker();
+            // Check if serviceWorker API is available in this browser
+            let listener = if let Some(sw) = get_service_worker() {
+                // Only attach listener if a service worker is actively controlling this page
+                if sw.controller().is_some() {
+                    Some(EventListener::new(&sw, "message", move |e| {
+                        let e = e
+                            .dyn_ref::<MessageEvent>()
+                            .expect("event should be a MessageEvent");
 
-            let listener = EventListener::new(sw.as_ref(), "message", move |e| {
-                let e = e
-                    .dyn_ref::<MessageEvent>()
-                    .expect("event should be a MessageEvent");
-
-                if let Ok(msg) = e.data().into_serde::<ApiUpdatedMessage>() {
-                    if msg.msg_type == "API_UPDATED" && msg.cache_key.contains(&*hook_id) {
-                        log::debug!("Calling refresh of async task for {}", msg.cache_key);
-                        refresh_cache.emit(());
-                    }
+                        if let Ok(msg) = e.data().into_serde::<ApiUpdatedMessage>() {
+                            if msg.msg_type == "API_UPDATED" && msg.cache_key.contains(&*hook_id) {
+                                log::debug!("Calling refresh of async task for {}", msg.cache_key);
+                                refresh_cache.emit(());
+                            }
+                        }
+                    }))
+                } else {
+                    None
                 }
-            });
+            } else {
+                None
+            };
 
-            move || drop(listener)
+            move || {
+                drop(listener);
+            }
         });
     }
 

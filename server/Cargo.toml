@@ -28,9 +28,9 @@ diesel = { version = "2.1", features = [
 diesel_migrations = "2.1"
 diesel-derive-enum = { version = "2.1", features = ["postgres"] }
 validator = { version = "0.20", features = ["derive"] }
-bcrypt = { version = "0.16" }
+bcrypt = { version = "0.19" }
 uuid = { version = "1", features = ["serde", "v4"] }
-jsonwebtoken = { version = "9" }
+jsonwebtoken = { version = "10", features = ["aws_lc_rs"] }
 thiserror = "2.0"
 futures = { version = "0.3" }
 chrono = { version = "0.4", features = ["serde"] }

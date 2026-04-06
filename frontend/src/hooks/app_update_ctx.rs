@@ -5,6 +5,8 @@ use web_sys::MessageEvent;
 use yew::{html::ChildrenProps, prelude::*};
 use yew_hooks::use_bool_toggle;
 
+use crate::utils::service_worker::get_service_worker;
+
 #[derive(Clone, PartialEq)]
 pub struct AppUpdate {
     pub update_ready: bool,
@@ -24,19 +26,29 @@ pub fn app_update_provider(props: &ChildrenProps) -> Html {
         // so that it wouldn't respond to re-renders.
         let update_ready = update_ready.clone();
         use_effect_with((), move |_| {
-            let sw = window().navigator().service_worker();
+            // Check if serviceWorker API is available in this browser
+            let listener = if let Some(sw) = get_service_worker() {
+                // Only attach listener if a service worker is actively controlling this page
+                if sw.controller().is_some() {
+                    Some(EventListener::new(&sw, "message", move |event| {
+                        let event = event.dyn_ref::<MessageEvent>().unwrap();
 
-            let listener = EventListener::new(&sw, "message", move |event| {
-                let event = event.dyn_ref::<MessageEvent>().unwrap();
-
-                if let Some(msg) = event.data().as_string() {
-                    if msg == "UPDATE_READY" {
-                        update_ready.set(true);
-                    }
+                        if let Some(msg) = event.data().as_string() {
+                            if msg == "UPDATE_READY" {
+                                update_ready.set(true);
+                            }
+                        }
+                    }))
+                } else {
+                    None
                 }
-            });
+            } else {
+                None
+            };
 
-            move || drop(listener)
+            move || {
+                drop(listener);
+            }
         });
     }
 

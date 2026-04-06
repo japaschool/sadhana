@@ -58,7 +58,7 @@ pub struct LoginInfoWrapper {
     pub user: LoginInfo,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct LoginInfo {
     pub email: String,
     pub password: String,
