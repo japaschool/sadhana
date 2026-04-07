@@ -14,8 +14,8 @@ RUN rustup target add wasm32-unknown-unknown
 # Installing cargo-chef that helps to cache rust dependencies
 # RUN cargo install cargo-chef
 RUN wget -qO- https://github.com/LukeMathWalker/cargo-chef/releases/download/v0.1.77/cargo-chef-x86_64-unknown-linux-gnu.tar.xz | tar -xJf-
-RUN chmod +x cargo-chef
-RUN cp cargo-chef /usr/local/cargo/bin/
+RUN chmod +x cargo-chef-x86_64-unknown-linux-gnu/cargo-chef
+RUN cp cargo-chef-x86_64-unknown-linux-gnu/cargo-chef /usr/local/cargo/bin/
 
 # RUN cargo install trunk wasm-bindgen-cli
 RUN wget -qO- https://github.com/thedodd/trunk/releases/download/v0.21.14/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
