@@ -38,3 +38,7 @@ pub fn support_email_address() -> String {
 pub fn git_sha() -> String {
     var("GIT_SHA").expect("GIT_SHA is not set")
 }
+
+pub fn release_channel() -> String {
+    var("RELEASE_CHANNEL").unwrap_or_else(|_| "stable".to_string())
+}
