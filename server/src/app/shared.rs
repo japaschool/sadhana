@@ -1,3 +1,5 @@
+pub mod version;
+
 use actix_web::{web, HttpResponse};
 use chrono::NaiveDate;
 use common::{error::AppError, ReportDuration};
