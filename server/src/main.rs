@@ -34,11 +34,13 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         let app_state = middleware::state::AppState::init(pool.clone());
 
-        app_state
-            .get_conn()
-            .unwrap()
-            .run_pending_migrations(MIGRATIONS)
-            .unwrap();
+        if vars::run_db_migrations_on_startup() {
+            app_state
+                .get_conn()
+                .unwrap()
+                .run_pending_migrations(MIGRATIONS)
+                .unwrap();
+        }
 
         App::new()
             .wrap(Logger::default())
