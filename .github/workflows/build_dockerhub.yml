@@ -2,6 +2,16 @@ name: Build and Upload to Docker Hub
 
 on:
   workflow_dispatch:
+    inputs:
+      deploy_channel:
+        description: "Deploy this build after push (none, preview, stable)"
+        required: true
+        default: "none"
+        type: choice
+        options:
+          - none
+          - preview
+          - stable
 
 jobs:
   build:
@@ -29,6 +39,7 @@ jobs:
           docker push japaschool/sadhana:git-${GITHUB_SHA::7}
 
       - name: Configure SSH
+        if: ${{ github.event.inputs.deploy_channel != 'none' }}
         run: |
               mkdir -p ~/.ssh/
               echo "$SSH_KEY" > ~/.ssh/sadhana.key
@@ -45,6 +56,11 @@ jobs:
               SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
               SSH_HOST: ${{ secrets.SSH_HOST }}
 
-      - name: Executing update script
+      - name: Deploy selected channel
+        if: ${{ github.event.inputs.deploy_channel != 'none' }}
         run: |
-          ssh sadhana "bash /home/sadhana/scripts/sadhana_reload.sh git-${GITHUB_SHA::7}"
+          # Expects remote script signature:
+          #   sadhana_reload.sh <channel> <tag>
+          CHANNEL="${{ github.event.inputs.deploy_channel }}"
+          TAG="git-${GITHUB_SHA::7}"
+          ssh sadhana "bash /home/sadhana/scripts/sadhana_reload.sh ${CHANNEL} ${TAG}"
