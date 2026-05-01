@@ -15,12 +15,10 @@ const PRECACHE_MANIFEST = /** @type {any} */ (self).__PRECACHE_MANIFEST__;
 
 // Bump on every frontend release
 const GIT_SHA = '__GIT_SHA__';
-const STATIC_VERSION = 'static-v' + GIT_SHA;
-const CACHE_STATIC = STATIC_VERSION;
-
-// Bump only when API schema / semantics change
-const API_VERSION = 'api-v1';
-const CACHE_API = API_VERSION;
+const CACHE_STATIC_PREFIX = 'static-v';
+const CACHE_API_PREFIX = 'api-v';
+const CACHE_STATIC = `${CACHE_STATIC_PREFIX}${GIT_SHA}`;
+const CACHE_API = `${CACHE_API_PREFIX}${GIT_SHA}`;
 
 const DB_NAME = 'SadhanaProPostDB';
 const DB_VERSION = 1;
@@ -170,7 +168,11 @@ async function clearStaleCaches() {
         const keys = await caches.keys();
         await Promise.all(
             keys
-                .filter(k => !k.startsWith(CACHE_STATIC))
+                .filter(k =>
+                    (k.startsWith(CACHE_STATIC_PREFIX) || k.startsWith(CACHE_API_PREFIX))
+                    && k !== CACHE_STATIC
+                    && k !== CACHE_API
+                )
                 .map(k => caches.delete(k))
         );
 
