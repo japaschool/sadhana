@@ -106,4 +106,6 @@ impl SupportMessageForm {
 #[derive(Debug, Deserialize, Clone)]
 pub struct ApiVersion {
     pub git_sha: String,
+    #[serde(default)]
+    pub release_channel: Option<String>,
 }

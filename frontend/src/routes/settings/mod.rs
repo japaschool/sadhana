@@ -3,6 +3,7 @@ use crate::{
     css::*,
     hooks::{AppUpdate, use_user_context},
     routes::{AppRoute, BaseRoute},
+    utils::release_channel::{ReleaseChannel, current_release_channel, toggle_release_channel},
     tr,
 };
 use gloo::storage::{LocalStorage, Storage};
@@ -49,6 +50,13 @@ pub fn settings() -> Html {
             }
         })
     };
+
+    let preview_channel_onclick = Callback::from(move |_| {
+        toggle_release_channel();
+        if let Some(window) = web_sys::window() {
+            let _ = window.location().reload();
+        }
+    });
 
     let edit_user_onclick = {
         let nav = nav.clone();
@@ -135,6 +143,30 @@ pub fn settings() -> Html {
                                 />
                                 <label
                                     for="dark_toggle"
+                                    class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-400 dark:bg-zinc-300 cursor-pointer"
+                                />
+                            </div>
+                        </div>
+                    </li>
+                    <li>
+                        <div class={LI_DIV_CSS}>
+                            <label for="preview_channel_toggle">
+                                <i class="icon-adjust flex-shrink-0 w-5" />
+                                { "Preview Channel" }
+                            </label>
+                            <div
+                                class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in ml-7"
+                            >
+                                <input
+                                    type="checkbox"
+                                    name="preview_channel_toggle"
+                                    id="preview_channel_toggle"
+                                    onclick={preview_channel_onclick.clone()}
+                                    checked={current_release_channel() == ReleaseChannel::Preview}
+                                    class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"
+                                />
+                                <label
+                                    for="preview_channel_toggle"
                                     class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-400 dark:bg-zinc-300 cursor-pointer"
                                 />
                             </div>

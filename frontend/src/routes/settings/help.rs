@@ -127,8 +127,14 @@ pub fn help() -> Html {
             >
                 <label>
                     { format!(
-                        "{} (Git hash)",
-                        api_version.data.clone().map(|info| info.git_sha).unwrap_or_default()) }
+                        "{} (Git hash) · {}",
+                        api_version.data.clone().map(|info| info.git_sha).unwrap_or_default(),
+                        api_version
+                            .data
+                            .clone()
+                            .and_then(|info| info.release_channel)
+                            .unwrap_or_else(|| "stable".to_owned())
+                    ) }
                 </label>
             </div>
         </BlankPage>
