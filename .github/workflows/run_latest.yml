@@ -1,10 +1,24 @@
-name: Run latest version from Docker Hub
+name: Deploy tagged image from Docker Hub
 
-on: 
-   workflow_dispatch:
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_channel:
+        description: "Target channel (preview or stable)"
+        required: true
+        default: "stable"
+        type: choice
+        options:
+          - stable
+          - preview
+      image_tag:
+        description: "Image tag to deploy (for example: latest or git-abc1234)"
+        required: true
+        default: "latest"
+        type: string
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,4 +40,9 @@ jobs:
               SSH_HOST: ${{ secrets.SSH_HOST }}
               
       - name: Executing update script
-        run: ssh sadhana  'bash -s < /home/sadhana/scripts/sadhana_reload.sh'
+        run: |
+          # Expects remote script signature:
+          #   sadhana_reload.sh <channel> <tag>
+          CHANNEL="${{ github.event.inputs.deploy_channel }}"
+          TAG="${{ github.event.inputs.image_tag }}"
+          ssh sadhana "bash /home/sadhana/scripts/sadhana_reload.sh ${CHANNEL} ${TAG}"
