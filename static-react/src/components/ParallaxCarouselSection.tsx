@@ -30,7 +30,7 @@ export default function ParallaxCarouselSection({
   return (
     <section
       ref={ref}
-      className="relative h-screen flex items-center justify-center overflow-hidden"
+      className="relative min-h-[100svh] flex items-center justify-center overflow-hidden py-16"
     >
       {/* Background */}
       <motion.div
