@@ -1,4 +1,5 @@
-use web_sys::window;
+use wasm_bindgen::JsCast;
+use web_sys::{HtmlDocument, window};
 
 const COOKIE_NAME: &str = "sadhana_release_channel";
 
@@ -18,7 +19,10 @@ impl ReleaseChannel {
 }
 
 pub fn current_release_channel() -> ReleaseChannel {
-    let Some(document) = window().and_then(|w| w.document()) else {
+    let Some(document) = window()
+        .and_then(|w| w.document())
+        .and_then(|d| d.dyn_into::<HtmlDocument>().ok())
+    else {
         return ReleaseChannel::Stable;
     };
     let Ok(cookie) = document.cookie() else {
@@ -29,7 +33,10 @@ pub fn current_release_channel() -> ReleaseChannel {
 }
 
 pub fn set_release_channel(channel: ReleaseChannel) {
-    if let Some(document) = window().and_then(|w| w.document()) {
+    if let Some(document) = window()
+        .and_then(|w| w.document())
+        .and_then(|d| d.dyn_into::<HtmlDocument>().ok())
+    {
         let cookie = format!(
             "{}={}; Path=/; Secure; SameSite=Lax; Max-Age=2592000",
             COOKIE_NAME,
