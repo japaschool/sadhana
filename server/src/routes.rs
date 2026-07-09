@@ -310,8 +310,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn no_cache_header_value_is_set() {
+    #[actix_rt::test]
+    async fn no_cache_header_value_is_set() {
         let mut response = HttpResponse::Ok().finish();
         set_no_cache_headers(&mut response);
 
