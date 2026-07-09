@@ -23,7 +23,7 @@ export default function ParallaxSection({ image, title, text, overlay = true }: 
   return (
     <section
       ref={ref}
-      className="relative h-screen flex items-center justify-center overflow-hidden"
+      className="relative min-h-[100svh] flex items-center justify-center overflow-hidden py-16"
     >
       {/* Background image with limited transform */}
       <motion.div
