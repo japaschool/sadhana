@@ -1,0 +1,35 @@
+name: Promote preview to stable
+
+# Ships whatever image the preview container is currently running to the stable
+# channel. No tag input: the remote script self-discovers preview's tag, so you
+# always promote exactly what was tested on preview.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure SSH
+        run: |
+              mkdir -p ~/.ssh/
+              echo "$SSH_KEY" > ~/.ssh/sadhana.key
+              chmod 600 ~/.ssh/sadhana.key
+              cat >>~/.ssh/config <<END
+              Host sadhana
+                HostName $SSH_HOST
+                User $SSH_USER
+                IdentityFile ~/.ssh/sadhana.key
+                StrictHostKeyChecking no
+              END
+        env:
+              SSH_USER: sadhana
+              SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+              SSH_HOST: ${{ secrets.SSH_HOST }}
+
+      - name: Promote current preview image to stable
+        run: |
+          # Remote script discovers preview's tag and deploys it to stable:
+          #   sadhana_reload.sh promote
+          ssh sadhana "bash /home/sadhana/scripts/sadhana_reload.sh promote"
