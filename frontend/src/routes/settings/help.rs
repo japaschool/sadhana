@@ -97,6 +97,25 @@ pub fn help() -> Html {
                             </div>
                         </SummaryDetails>
                     }) }
+                    <SummaryDetails label={Locale::current().help_yatra_mapping()}>
+                        <div class="pl-4 pr-4 pt-0 pb-2 text-left space-y-3">
+                            <p>{ Locale::current().yatra_mapping_info() }</p>
+                            <img
+                                class="rounded max-w-xs mx-auto"
+                                src="/images/faq/yatra-mapping-unmatched.png"
+                                alt={Locale::current().help_yatra_mapping_img_unmatched_alt()}
+                                />
+                            <ul class="list-disc pl-5 space-y-2">
+                                <li>{ Locale::current().help_yatra_mapping_home_symptom() }</li>
+                                <li>{ Locale::current().help_yatra_mapping_type_symptom() }</li>
+                            </ul>
+                            <img
+                                class="rounded max-w-xs mx-auto"
+                                src="/images/faq/yatra-mapping-matched.png"
+                                alt={Locale::current().help_yatra_mapping_img_matched_alt()}
+                                />
+                        </div>
+                    </SummaryDetails>
                 </div>
             </div>
             if ctx.is_authenticated() {

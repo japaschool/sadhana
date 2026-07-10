@@ -25,11 +25,10 @@ pub fn summary_details(props: &Props) -> Html {
                     { props.label.to_string() }
                 </p>
             </summary>
-            <div
-                class="group-open:max-h-screen focus-within:max-h-screen
-                    max-h-0 overflow-hidden"
-            >
-                { props.children.clone() }
+            <div class="grid grid-rows-[0fr] group-open:grid-rows-[1fr] focus-within:grid-rows-[1fr]">
+                <div class="overflow-hidden">
+                    { props.children.clone() }
+                </div>
             </div>
         </details>
     }
