@@ -24,8 +24,8 @@ export default function ScreenshotsCarousel() {
   }))
 
   return (
-    <section className="bg-base-100 py-24 px-6">
-      <div className="max-w-2xl mx-auto">
+    <section className="bg-base-200 py-24 px-6">
+      <div className="max-w-6xl mx-auto">
         <h2
           className="text-4xl md:text-5xl font-bold text-center text-base-content mb-12"
           style={{ fontFamily: "'Playfair Display', serif" }}
@@ -33,36 +33,39 @@ export default function ScreenshotsCarousel() {
           {t('preview.title')}
         </h2>
 
-        <div className="carousel w-full rounded-2xl overflow-hidden shadow-xl">
-          {slides.map((slide, i) => (
-            <div
-              key={i}
-              id={`sp-slide-${i}`}
-              className="carousel-item relative w-full flex-col"
-            >
-              <img
-                src={slide.image}
-                alt={slide.caption}
-                className="w-full object-cover select-none"
-                draggable={false}
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-neutral/60 backdrop-blur-sm text-neutral-content text-center py-3 px-4 text-sm font-light">
-                {slide.caption}
+        {/* Phone-width carousel centred on page */}
+        <div className="max-w-xs mx-auto">
+          <div className="carousel w-full rounded-3xl overflow-hidden shadow-2xl shadow-base-content/10 ring-1 ring-base-300">
+            {slides.map((slide, i) => (
+              <div
+                key={i}
+                id={`sp-slide-${i}`}
+                className="carousel-item relative w-full"
+              >
+                <img
+                  src={slide.image}
+                  alt={slide.caption}
+                  className="w-full h-[540px] object-cover select-none"
+                  draggable={false}
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-neutral/70 backdrop-blur-sm text-neutral-content text-center py-3 px-4 text-xs font-light">
+                  {slide.caption}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        {/* Dot navigation */}
-        <div className="flex justify-center gap-2 mt-5 flex-wrap">
-          {slides.map((_, i) => (
-            <a
-              key={i}
-              href={`#sp-slide-${i}`}
-              className="w-2.5 h-2.5 rounded-full bg-base-300 hover:bg-primary transition-colors duration-200"
-              aria-label={`Go to slide ${i + 1}`}
-            />
-          ))}
+          {/* Dot navigation */}
+          <div className="flex justify-center gap-2 mt-5 flex-wrap">
+            {slides.map((_, i) => (
+              <a
+                key={i}
+                href={`#sp-slide-${i}`}
+                className="w-2.5 h-2.5 rounded-full bg-base-300 hover:bg-primary transition-colors duration-200"
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </section>

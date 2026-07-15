@@ -7,6 +7,11 @@ const cardVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 }
 
+const iconBg: Record<string, string> = {
+  'text-primary': 'bg-primary/10',
+  'text-secondary': 'bg-secondary/10',
+}
+
 export default function FeaturesGrid() {
   const { t } = useTranslation()
 
@@ -44,11 +49,14 @@ export default function FeaturesGrid() {
           {features.map((f, i) => (
             <motion.div
               key={i}
-              className="card bg-base-100 shadow-sm hover:shadow-md transition-shadow duration-300"
+              className="card bg-base-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-base-200"
               variants={cardVariants}
+              whileHover={{ scale: 1.01 }}
             >
-              <div className="card-body gap-3 p-6">
-                <div className={`text-3xl ${f.color}`}>{f.icon}</div>
+              <div className="card-body gap-4 p-6">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl ${f.color} ${iconBg[f.color]}`}>
+                  {f.icon}
+                </div>
                 <h3 className="card-title text-base-content text-lg leading-snug">{f.title}</h3>
                 <p className="text-base-content/55 text-sm leading-relaxed">{f.desc}</p>
               </div>
