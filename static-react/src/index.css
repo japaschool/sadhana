@@ -1,7 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
 @import 'tailwindcss';
+@plugin "daisyui";
 
-/* Ensure the page scroll container has a non-static position so
-	 Framer Motion's useScroll can calculate offsets correctly. */
+/* Custom "spiritual" theme — warm amber/ivory palette */
+[data-theme="spiritual"] {
+  color-scheme: light;
+
+  --color-primary:          oklch(67.15% 0.131 55.73);   /* #D4872A amber/gold */
+  --color-primary-content:  oklch(100%  0     0);         /* #FFFFFF white */
+  --color-secondary:        oklch(58.43% 0.051 144.16);  /* #7B8F6E sage green */
+  --color-secondary-content: oklch(100% 0     0);
+  --color-accent:           oklch(62.11% 0.101 55.16);   /* #C4733F terracotta */
+  --color-accent-content:   oklch(100%  0     0);
+  --color-neutral:          oklch(28.27% 0.041 46.36);   /* #3D3228 deep brown */
+  --color-neutral-content:  oklch(95.5%  0.021 78.56);   /* #F5EFE3 cream */
+  --color-base-100:         oklch(98.46% 0.014 80.88);   /* #FDFAF5 ivory */
+  --color-base-200:         oklch(95.5%  0.021 78.56);   /* #F5EFE3 warm cream */
+  --color-base-300:         oklch(91.82% 0.031 75.59);   /* #EDE5D4 cream */
+  --color-base-content:     oklch(26.05% 0.047 55.48);   /* #2D2418 warm dark brown */
+
+  --font-sans: 'Inter', sans-serif;
+}
+
 html, body, #root {
-	position: relative;
+  position: relative;
 }

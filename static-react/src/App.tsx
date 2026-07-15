@@ -21,7 +21,7 @@ import ParallaxCarouselSection from './components/ParallaxCarouselSection'
 export default function App() {
   const { t } = useTranslation()
   return (
-    <div className="relative font-sans bg-neutral-100 text-gray-900">
+    <div data-theme="spiritual" className="relative font-sans">
       <FloatingHeaderButtons />
       <LandingView />
       <ParallaxSection
