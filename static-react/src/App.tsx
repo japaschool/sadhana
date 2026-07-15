@@ -2,7 +2,7 @@ import LandingView from './components/LandingView'
 import ParallaxSection from './components/ParallaxSection'
 import FloatingCTA from './components/FloatingCTA'
 import Footer from './components/Footer'
-import FloatingHeaderButtons from './components/FloatingHeaderButtons'
+import Navbar from './components/Navbar'
 import mountain from './assets/2.jpg'
 import forest from './assets/4.jpg'
 import showcaseBg from './assets/2-2.jpg'
@@ -22,7 +22,7 @@ export default function App() {
   const { t } = useTranslation()
   return (
     <div data-theme="spiritual" className="relative font-sans">
-      <FloatingHeaderButtons />
+      <Navbar />
       <LandingView />
       <ParallaxSection
         image={mountain}
