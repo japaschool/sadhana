@@ -1,16 +1,66 @@
 import { useTranslation } from 'react-i18next'
 
+const columns = [
+  {
+    title: 'Practices',
+    links: [
+      { label: 'Meditation', href: '#' },
+      { label: 'Yoga',       href: '#' },
+      { label: 'Breathwork', href: '#' },
+      { label: 'Journaling', href: '#' },
+      { label: 'Chanting',   href: '#' },
+    ],
+  },
+  {
+    title: 'Community',
+    links: [
+      { label: 'Join Group',   href: 'https://t.me/sadhanapro' },
+      { label: 'Video Guides', href: 'https://www.youtube.com/@SadhanaPro' },
+      { label: 'Support',      href: 'https://t.me/sadhanapro' },
+    ],
+  },
+]
+
 export default function Footer() {
   const { t } = useTranslation()
 
   return (
-    <footer className="bg-neutral-900 text-white py-8 px-6">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="text-sm">
-          {t('footer.copyright')}
+    <footer
+      style={{ background: '#E0DAD4', borderTop: '1px solid rgba(0,0,0,0.07)' }}
+      className="px-6 py-16"
+    >
+      <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-2 gap-10 mb-12 max-w-sm">
+          {columns.map(col => (
+            <div key={col.title}>
+              <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: 'rgba(28,28,28,0.35)' }}>
+                {col.title}
+              </p>
+              <ul className="flex flex-col gap-3">
+                {col.links.map(link => (
+                  <li key={link.label}>
+                    <a
+                      href={link.href}
+                      target={link.href.startsWith('http') ? '_blank' : undefined}
+                      rel="noreferrer"
+                      className="text-sm transition-colors duration-150 hover:text-primary"
+                      style={{ color: 'rgba(28,28,28,0.52)' }}
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div
+          className="pt-8 flex flex-col sm:flex-row justify-between items-center gap-3"
+          style={{ borderTop: '1px solid rgba(0,0,0,0.08)' }}
+        >
+          <p className="text-xs" style={{ color: 'rgba(28,28,28,0.30)' }}>{t('footer.copyright')}</p>
+          <p className="text-xs" style={{ color: 'rgba(28,28,28,0.22)' }}>Made with 🙏 for practitioners everywhere</p>
         </div>
       </div>
     </footer>
