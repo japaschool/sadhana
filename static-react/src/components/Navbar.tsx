@@ -1,15 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FaTelegramPlane, FaYoutube } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
 
 export default function Navbar() {
   const { i18n, t } = useTranslation()
   const [scrolled, setScrolled] = useState(false)
-  const [langOpen, setLangOpen] = useState(false)
-  const dropRef = useRef<HTMLDivElement>(null)
 
-  const current = (i18n.resolvedLanguage || i18n.language || 'en').slice(0, 2).toUpperCase()
   const lang = (i18n.resolvedLanguage || i18n.language || 'en').slice(0, 2)
+  const current = lang.toUpperCase()
   const href = lang === 'uk' ? 'https://mapp.sadhana.pro/' : 'https://app.sadhana.pro/'
 
   useEffect(() => {
@@ -18,20 +16,9 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  useEffect(() => {
-    function onDoc(e: MouseEvent) {
-      if (dropRef.current && !dropRef.current.contains(e.target as Node)) {
-        setLangOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', onDoc)
-    return () => document.removeEventListener('mousedown', onDoc)
-  }, [])
-
   function changeLang(l: 'en' | 'ru' | 'uk') {
     void i18n.changeLanguage(l)
     window.history.pushState({}, '', l === 'en' ? '/' : `/${l}`)
-    setLangOpen(false)
   }
 
   return (
@@ -70,23 +57,15 @@ export default function Navbar() {
           <FaYoutube className="w-5 h-5" />
         </a>
 
-        <div ref={dropRef} className="relative">
-          <button
-            onClick={() => setLangOpen(v => !v)}
-            className="btn btn-ghost btn-circle text-base-content font-semibold text-sm"
-            aria-haspopup="menu"
-            aria-expanded={langOpen}
-            title="Change language"
-          >
+        <div className="dropdown dropdown-end">
+          <button tabIndex={0} className="btn btn-ghost btn-circle text-base-content font-semibold text-sm" title="Change language">
             {current}
           </button>
-          {langOpen && (
-            <ul className="absolute top-14 right-0 menu bg-base-100 rounded-box shadow-lg w-44 p-2 border border-base-300 z-60">
-              <li><button onClick={() => changeLang('en')} className="w-full text-left">🇬🇧 English</button></li>
-              <li><button onClick={() => changeLang('ru')} className="w-full text-left">🇷🇺 Русский</button></li>
-              <li><button onClick={() => changeLang('uk')} className="w-full text-left">🇺🇦 Українська</button></li>
-            </ul>
-          )}
+          <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box shadow-lg w-44 p-2 border border-base-300 z-[60]">
+            <li><button onClick={() => changeLang('en')} className="w-full text-left">🇬🇧 English</button></li>
+            <li><button onClick={() => changeLang('ru')} className="w-full text-left">🇷🇺 Русский</button></li>
+            <li><button onClick={() => changeLang('uk')} className="w-full text-left">🇺🇦 Українська</button></li>
+          </ul>
         </div>
 
         <a
