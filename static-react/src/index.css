@@ -1,7 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
 @import 'tailwindcss';
+@plugin "daisyui";
 
-/* Ensure the page scroll container has a non-static position so
-	 Framer Motion's useScroll can calculate offsets correctly. */
-html, body, #root {
-	position: relative;
+/*
+  "sadhana" light theme — mirrors Insight Timer's cream palette
+  Section bg:  #EDE8E3  →  oklch(93% 0.007 82)
+  Forest green accent: #3E8D6B → oklch(55% 0.12 155)
+*/
+[data-theme="sadhana"] {
+  color-scheme: light;
+
+  --color-primary:           oklch(52%  0.18  150);  /* forest green — vivid */
+  --color-primary-content:   oklch(100% 0     0);
+
+  --color-secondary:         oklch(60%  0.10  150);
+  --color-secondary-content: oklch(100% 0     0);
+
+  --color-accent:            oklch(55%  0.12  155);
+  --color-accent-content:    oklch(100% 0     0);
+
+  --color-neutral:           oklch(20%  0.008 82);
+  --color-neutral-content:   oklch(95%  0.006 82);
+
+  --color-base-100:          oklch(93.5% 0.007 82);  /* #EDE8E3 warm cream */
+  --color-base-200:          oklch(90%  0.009 82);   /* slightly deeper cream */
+  --color-base-300:          oklch(85%  0.012 82);
+  --color-base-content:      oklch(16%  0.008 82);   /* dark charcoal text */
+
+  --rounded-btn: 9999px;
+  --font-sans: 'Inter', sans-serif;
 }
+
+html, body, #root { position: relative; }
