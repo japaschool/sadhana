@@ -1,27 +1,34 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
 @import 'tailwindcss';
 @plugin "daisyui";
 
-/* Custom "spiritual" theme — warm amber/ivory palette */
-[data-theme="spiritual"] {
-  color-scheme: light;
+/*
+  "sadhana" theme — mirroring Insight Timer's dark navy / jade palette
+  Background:  #0B0D14  →  oklch(7.5% 0.022 265)
+  Jade accent: #2AC394  →  oklch(71%  0.148 167)
+*/
+[data-theme="sadhana"] {
+  color-scheme: dark;
 
-  --color-primary:          oklch(67.15% 0.131 55.73);   /* #D4872A amber/gold */
-  --color-primary-content:  oklch(100%  0     0);         /* #FFFFFF white */
-  --color-secondary:        oklch(58.43% 0.051 144.16);  /* #7B8F6E sage green */
-  --color-secondary-content: oklch(100% 0     0);
-  --color-accent:           oklch(62.11% 0.101 55.16);   /* #C4733F terracotta */
-  --color-accent-content:   oklch(100%  0     0);
-  --color-neutral:          oklch(28.27% 0.041 46.36);   /* #3D3228 deep brown */
-  --color-neutral-content:  oklch(95.5%  0.021 78.56);   /* #F5EFE3 cream */
-  --color-base-100:         oklch(98.46% 0.014 80.88);   /* #FDFAF5 ivory */
-  --color-base-200:         oklch(95.5%  0.021 78.56);   /* #F5EFE3 warm cream */
-  --color-base-300:         oklch(91.82% 0.031 75.59);   /* #EDE5D4 cream */
-  --color-base-content:     oklch(26.05% 0.047 55.48);   /* #2D2418 warm dark brown */
+  --color-primary:           oklch(71%  0.148 167);   /* jade #2AC394   */
+  --color-primary-content:   oklch(12%  0.04  167);
 
+  --color-secondary:         oklch(64%  0.120 200);   /* lighter teal   */
+  --color-secondary-content: oklch(12%  0.03  200);
+
+  --color-accent:            oklch(71%  0.148 167);
+  --color-accent-content:    oklch(12%  0.04  167);
+
+  --color-neutral:           oklch(16%  0.028 265);   /* card bg        */
+  --color-neutral-content:   oklch(90%  0.010 265);
+
+  --color-base-100:          oklch(7.5% 0.022 265);   /* #0B0D14        */
+  --color-base-200:          oklch(11%  0.022 260);   /* #131620        */
+  --color-base-300:          oklch(15%  0.028 265);   /* #1A1E2E        */
+  --color-base-content:      oklch(98%  0     0);     /* white          */
+
+  --rounded-btn: 9999px;
   --font-sans: 'Inter', sans-serif;
 }
 
-html, body, #root {
-  position: relative;
-}
+html, body, #root { position: relative; }

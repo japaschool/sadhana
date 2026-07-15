@@ -1,17 +1,17 @@
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
-import FeaturesGrid from './components/FeaturesGrid'
-import ScreenshotsCarousel from './components/ScreenshotsCarousel'
+import PracticeCategories from './components/PracticeCategories'
+import FeatureRows from './components/FeatureRows'
 import TrackBanner from './components/TrackBanner'
 import Footer from './components/Footer'
 
 export default function App() {
   return (
-    <div data-theme="spiritual" className="font-sans">
+    <div data-theme="sadhana" className="font-sans">
       <Navbar />
       <Hero />
-      <FeaturesGrid />
-      <ScreenshotsCarousel />
+      <PracticeCategories />
+      <FeatureRows />
       <TrackBanner />
       <Footer />
     </div>
