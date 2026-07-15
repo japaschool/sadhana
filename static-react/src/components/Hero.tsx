@@ -18,9 +18,11 @@ export default function Hero() {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-base-100 pt-16">
-      {/* Amber glow blob */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="w-[600px] h-[600px] rounded-full bg-primary/8 blur-[120px]" />
+      {/* Colourful background blobs */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full bg-primary/10 blur-[100px]" />
+        <div className="absolute top-1/3 right-1/4 w-[400px] h-[400px] rounded-full blur-[100px]" style={{ background: 'oklch(72% 0.12 320 / 0.08)' }} />
+        <div className="absolute bottom-1/4 left-1/3 w-[350px] h-[350px] rounded-full blur-[90px]" style={{ background: 'oklch(68% 0.14 200 / 0.07)' }} />
       </div>
 
       {/* Slowly rotating mandala */}
@@ -62,8 +64,14 @@ export default function Hero() {
         </motion.div>
 
         <motion.h1
-          className="text-5xl md:text-7xl font-bold text-base-content leading-tight"
-          style={{ fontFamily: "'Playfair Display', serif" }}
+          className="text-5xl md:text-7xl font-bold leading-tight"
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            background: 'linear-gradient(135deg, oklch(26.05% 0.047 55.48) 0%, oklch(67.15% 0.131 55.73) 50%, oklch(62.11% 0.101 55.16) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
           variants={itemVariants}
         >
           {t('landing.title')}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { FaTelegramPlane, FaYoutube } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
+import logo from '../assets/logo.png'
 
 export default function Navbar() {
   const { i18n, t } = useTranslation()
@@ -28,12 +29,15 @@ export default function Navbar() {
       }`}
     >
       <div className="navbar-start">
-        <span
-          className="text-xl font-bold text-base-content select-none"
-          style={{ fontFamily: "'Playfair Display', serif" }}
-        >
-          Sadhana Pro
-        </span>
+        <div className="flex items-center gap-2.5">
+          <img src={logo} alt="Sadhana Pro" className="h-9 w-9 rounded-xl" />
+          <span
+            className="text-lg font-bold text-base-content select-none"
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
+            Sadhana Pro
+          </span>
+        </div>
       </div>
 
       <div className="navbar-end gap-1">
