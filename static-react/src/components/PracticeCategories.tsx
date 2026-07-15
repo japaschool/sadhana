@@ -1,67 +1,57 @@
 import { motion } from 'framer-motion'
 
-// Insight Timer-style: topic grid, dark cards with hover
 const categories = [
-  { label: 'Meditation',   emoji: '🧘', href: '#' },
-  { label: 'Yoga',         emoji: '🌞', href: '#' },
-  { label: 'Breathwork',   emoji: '💨', href: '#' },
-  { label: 'Journaling',   emoji: '📔', href: '#' },
-  { label: 'Chanting',     emoji: '🕉️', href: '#' },
-  { label: 'Reading',      emoji: '📖', href: '#' },
-  { label: 'Prayer',       emoji: '🙏', href: '#' },
-  { label: 'Fasting',      emoji: '🌿', href: '#' },
-  { label: 'Sleep',        emoji: '🌙', href: '#' },
-  { label: 'Exercise',     emoji: '⚡', href: '#' },
-  { label: 'Cold Shower',  emoji: '❄️', href: '#' },
-  { label: 'Any Habit',    emoji: '✨', href: '#' },
+  { label: 'Meditation',   emoji: '🧘' },
+  { label: 'Yoga',         emoji: '🌞' },
+  { label: 'Breathwork',   emoji: '💨' },
+  { label: 'Journaling',   emoji: '📔' },
+  { label: 'Chanting',     emoji: '🕉️' },
+  { label: 'Reading',      emoji: '📖' },
+  { label: 'Prayer',       emoji: '🙏' },
+  { label: 'Fasting',      emoji: '🌿' },
+  { label: 'Sleep',        emoji: '🌙' },
+  { label: 'Exercise',     emoji: '⚡' },
+  { label: 'Cold Shower',  emoji: '❄️' },
+  { label: 'Any Habit',    emoji: '✨' },
 ]
 
 export default function PracticeCategories() {
   return (
-    <section id="features" style={{ background: '#0B0D14' }} className="py-24 px-6">
-      <div className="max-w-5xl mx-auto">
+    <section id="track" style={{ background: '#E8E3DE' }} className="py-20 px-6">
+      <div className="max-w-4xl mx-auto">
         <motion.div
-          className="text-center mb-12"
-          initial={{ opacity: 0, y: 16 }}
+          className="text-center mb-10"
+          initial={{ opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
         >
-          <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: '#2AC394' }}>
-            What you can track
-          </p>
           <h2
-            className="text-3xl md:text-4xl font-bold text-white"
-            style={{ fontFamily: "'Playfair Display', serif" }}
+            className="text-2xl md:text-3xl font-bold"
+            style={{ fontFamily: "'Playfair Display', serif", color: '#1C1C1E' }}
           >
-            Any Practice. Any Tradition.
+            Track any practice, any tradition
           </h2>
         </motion.div>
 
         <motion.div
-          className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3"
+          className="flex flex-wrap justify-center gap-3"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.04 } } }}
         >
           {categories.map((c, i) => (
-            <motion.a
+            <motion.div
               key={i}
-              href={c.href}
-              className="flex flex-col items-center gap-2 py-5 px-2 rounded-2xl cursor-pointer select-none transition-colors duration-200"
-              style={{ background: '#131620', border: '1px solid rgba(255,255,255,0.07)' }}
-              variants={{
-                hidden: { opacity: 0, y: 12 },
-                visible: { opacity: 1, y: 0, transition: { duration: 0.35 } },
-              }}
-              whileHover={{ background: '#1A1E2E', borderColor: 'rgba(42,195,148,0.35)', scale: 1.04 } as never}
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium cursor-default select-none transition-colors duration-150"
+              style={{ background: 'rgba(255,255,255,0.60)', border: '1px solid rgba(0,0,0,0.09)', color: 'rgba(28,28,28,0.70)' }}
+              variants={{ hidden: { opacity: 0, scale: 0.9 }, visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } } }}
+              whileHover={{ background: 'rgba(62,141,107,0.12)', borderColor: 'rgba(62,141,107,0.35)', color: '#2d7a5a' } as never}
             >
-              <span className="text-2xl leading-none">{c.emoji}</span>
-              <span className="text-xs font-medium text-center leading-tight" style={{ color: 'rgba(255,255,255,0.65)' }}>
-                {c.label}
-              </span>
-            </motion.a>
+              <span>{c.emoji}</span>
+              <span>{c.label}</span>
+            </motion.div>
           ))}
         </motion.div>
       </div>

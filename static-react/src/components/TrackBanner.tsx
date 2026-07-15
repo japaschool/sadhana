@@ -7,56 +7,36 @@ export default function TrackBanner() {
   const href = lang === 'uk' ? 'https://mapp.sadhana.pro/' : 'https://app.sadhana.pro/'
 
   return (
-    <section
-      className="relative overflow-hidden py-32 px-6"
-      style={{ background: '#0B0D14' }}
-    >
-      {/* Insight Timer-style: single centered radial glow */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse 70% 60% at 50% 50%, rgba(42,195,148,0.15) 0%, rgba(42,195,148,0.04) 50%, transparent 75%)',
-        }}
-        aria-hidden="true"
-      />
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse 60% 50% at 20% 80%, rgba(88,60,180,0.12) 0%, transparent 65%)',
-        }}
-        aria-hidden="true"
-      />
-
+    <section style={{ background: '#EDE8E3' }} className="py-28 px-6">
       <motion.div
-        className="relative z-10 max-w-3xl mx-auto text-center"
-        initial={{ opacity: 0, y: 24 }}
+        className="max-w-2xl mx-auto text-center"
+        initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.65 }}
+        transition={{ duration: 0.6 }}
         viewport={{ once: true }}
       >
         <h2
-          className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight"
-          style={{ fontFamily: "'Playfair Display', serif" }}
+          className="text-4xl md:text-5xl font-bold mb-5 leading-tight"
+          style={{ fontFamily: "'Playfair Display', serif", color: '#1C1C1E' }}
         >
-          Join 10 000+ people today<br />
-          <span style={{ color: '#2AC394' }}>to deepen your practice</span>
+          Track Anything, Anywhere
         </h2>
-        <p className="text-lg leading-relaxed mb-10 max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.48)' }}>
-          {t('trackAnythingText')}
+        <p className="text-base md:text-lg leading-relaxed mb-9" style={{ color: 'rgba(28,28,28,0.52)' }}>
+          Use Sadhana Pro to track your daily sadhana, yoga practices, meditation, journaling, reading, or any personal habits. With full offline mode and phone installation support, your data stays with you wherever you go.
         </p>
         <motion.a
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="btn btn-primary btn-lg px-14 font-semibold"
-          style={{ boxShadow: '0 0 40px rgba(42,195,148,0.40)', fontSize: '1rem' }}
-          whileHover={{ scale: 1.05 }}
+          className="btn btn-lg px-12 font-semibold"
+          style={{ background: 'rgba(28,28,28,0.12)', color: 'rgba(28,28,28,0.70)', border: '1px solid rgba(28,28,28,0.15)' }}
+          whileHover={{ scale: 1.04 }}
           whileTap={{ scale: 0.97 }}
         >
-          Get Started — it's free
+          {t('cta.openNow')}
         </motion.a>
-        <p className="mt-5 text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
-          No credit card required
+        <p className="mt-4 text-xs" style={{ color: 'rgba(28,28,28,0.30)' }}>
+          Free forever · No credit card required
         </p>
       </motion.div>
     </section>

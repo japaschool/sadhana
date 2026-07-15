@@ -2,65 +2,70 @@ interface PhoneFrameProps {
   src: string
   alt: string
   accentColor?: string
+  size?: 'sm' | 'md' | 'lg'
 }
 
-export default function PhoneFrame({ src, alt, accentColor = '#2AC394' }: PhoneFrameProps) {
+const sizes = {
+  sm: { w: 230, h: 484 },
+  md: { w: 290, h: 610 },
+  lg: { w: 340, h: 714 },
+}
+
+export default function PhoneFrame({ src, alt, accentColor = '#3A7D5C', size = 'md' }: PhoneFrameProps) {
+  const { w, h } = sizes[size]
+  const radius = Math.round(w * 0.175)
+  const pad = Math.round(w * 0.035)
+
   return (
     <div
       style={{
-        width: '270px',
-        height: '568px',
+        width: w,
+        height: h,
         background: '#0A0A0A',
-        borderRadius: '50px',
-        padding: '10px',
+        borderRadius: radius,
+        padding: pad,
         boxShadow: `
-          0 0 0 1.5px rgba(255,255,255,0.11),
-          0 60px 140px rgba(0,0,0,0.75),
-          0 20px 50px rgba(0,0,0,0.50),
-          0 0 60px ${accentColor}22
+          0 0 0 1.5px rgba(255,255,255,0.10),
+          0 50px 120px rgba(0,0,0,0.30),
+          0 20px 50px rgba(0,0,0,0.20),
+          0 0 40px ${accentColor}18
         `,
         position: 'relative',
         flexShrink: 0,
       }}
     >
-      {/* Dynamic island notch */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '18px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '88px',
-          height: '26px',
-          background: '#0A0A0A',
-          borderRadius: '13px',
-          zIndex: 10,
-        }}
-      />
+      {/* Dynamic island */}
+      <div style={{
+        position: 'absolute',
+        top: Math.round(h * 0.028),
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: Math.round(w * 0.30),
+        height: Math.round(w * 0.085),
+        background: '#0A0A0A',
+        borderRadius: 99,
+        zIndex: 10,
+      }} />
 
       {/* Screen */}
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          borderRadius: '42px',
-          overflow: 'hidden',
-          background: '#111',
-        }}
-      >
-        <img
-          src={src}
-          alt={alt}
+      <div style={{
+        width: '100%',
+        height: '100%',
+        borderRadius: radius - pad,
+        overflow: 'hidden',
+        background: '#111',
+      }}>
+        <img src={src} alt={alt}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
           draggable={false}
         />
       </div>
 
-      {/* Side button hints */}
-      <div style={{ position: 'absolute', right: '-4px', top: '100px', width: '3px', height: '32px', background: '#1a1a1a', borderRadius: '2px' }} />
-      <div style={{ position: 'absolute', left: '-4px', top: '85px',  width: '3px', height: '28px', background: '#1a1a1a', borderRadius: '2px' }} />
-      <div style={{ position: 'absolute', left: '-4px', top: '125px', width: '3px', height: '48px', background: '#1a1a1a', borderRadius: '2px' }} />
-      <div style={{ position: 'absolute', left: '-4px', top: '183px', width: '3px', height: '48px', background: '#1a1a1a', borderRadius: '2px' }} />
+      {/* Side buttons */}
+      <div style={{ position: 'absolute', right: -3, top: '17%', width: 3, height: '5%', background: '#1a1a1a', borderRadius: 2 }} />
+      <div style={{ position: 'absolute', left: -3, top: '14%', width: 3, height: '5%', background: '#1a1a1a', borderRadius: 2 }} />
+      <div style={{ position: 'absolute', left: -3, top: '21%', width: 3, height: '8%', background: '#1a1a1a', borderRadius: 2 }} />
+      <div style={{ position: 'absolute', left: -3, top: '32%', width: 3, height: '8%', background: '#1a1a1a', borderRadius: 2 }} />
     </div>
   )
 }

@@ -3,29 +3,29 @@
 @plugin "daisyui";
 
 /*
-  "sadhana" theme — mirroring Insight Timer's dark navy / jade palette
-  Background:  #0B0D14  →  oklch(7.5% 0.022 265)
-  Jade accent: #2AC394  →  oklch(71%  0.148 167)
+  "sadhana" light theme — mirrors Insight Timer's cream palette
+  Section bg:  #EDE8E3  →  oklch(93% 0.007 82)
+  Forest green accent: #3E8D6B → oklch(55% 0.12 155)
 */
 [data-theme="sadhana"] {
-  color-scheme: dark;
+  color-scheme: light;
 
-  --color-primary:           oklch(71%  0.148 167);   /* jade #2AC394   */
-  --color-primary-content:   oklch(12%  0.04  167);
+  --color-primary:           oklch(52%  0.18  150);  /* forest green — vivid */
+  --color-primary-content:   oklch(100% 0     0);
 
-  --color-secondary:         oklch(64%  0.120 200);   /* lighter teal   */
-  --color-secondary-content: oklch(12%  0.03  200);
+  --color-secondary:         oklch(60%  0.10  150);
+  --color-secondary-content: oklch(100% 0     0);
 
-  --color-accent:            oklch(71%  0.148 167);
-  --color-accent-content:    oklch(12%  0.04  167);
+  --color-accent:            oklch(55%  0.12  155);
+  --color-accent-content:    oklch(100% 0     0);
 
-  --color-neutral:           oklch(16%  0.028 265);   /* card bg        */
-  --color-neutral-content:   oklch(90%  0.010 265);
+  --color-neutral:           oklch(20%  0.008 82);
+  --color-neutral-content:   oklch(95%  0.006 82);
 
-  --color-base-100:          oklch(7.5% 0.022 265);   /* #0B0D14        */
-  --color-base-200:          oklch(11%  0.022 260);   /* #131620        */
-  --color-base-300:          oklch(15%  0.028 265);   /* #1A1E2E        */
-  --color-base-content:      oklch(98%  0     0);     /* white          */
+  --color-base-100:          oklch(93.5% 0.007 82);  /* #EDE8E3 warm cream */
+  --color-base-200:          oklch(90%  0.009 82);   /* slightly deeper cream */
+  --color-base-300:          oklch(85%  0.012 82);
+  --color-base-content:      oklch(16%  0.008 82);   /* dark charcoal text */
 
   --rounded-btn: 9999px;
   --font-sans: 'Inter', sans-serif;
