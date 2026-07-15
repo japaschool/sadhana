@@ -1,4 +1,4 @@
-import LandingView from './components/LandingView'
+import Hero from './components/Hero'
 import ParallaxSection from './components/ParallaxSection'
 import FloatingCTA from './components/FloatingCTA'
 import Footer from './components/Footer'
@@ -23,7 +23,7 @@ export default function App() {
   return (
     <div data-theme="spiritual" className="relative font-sans">
       <Navbar />
-      <LandingView />
+      <Hero />
       <ParallaxSection
         image={mountain}
         title={t('keyFeatures.title')}
