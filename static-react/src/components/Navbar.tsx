@@ -1,4 +1,4 @@
-import { useState } from 'react'
+
 import { FaTelegramPlane, FaYoutube } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
 import logo from '../assets/logo.png'
@@ -22,11 +22,11 @@ export default function Navbar() {
       className="relative z-50 w-full"
       style={{ background: 'transparent' }}
     >
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-[10%] h-16 flex items-center justify-between">
         {/* Logo */}
         <a href="/" className="flex items-center gap-2.5 flex-shrink-0">
-          <img src={logo} alt="Sadhana Pro" className="h-8 w-8 rounded-lg" />
-          <span className="text-base font-semibold tracking-wide" style={{ fontFamily: "'Playfair Display', serif", color: logoColor }}>
+          <img src={logo} alt="Sadhana Pro" style={{ height: '35px', width: '35px' }} className="rounded-lg" />
+          <span className="font-semibold tracking-wide" style={{ fontFamily: "'Playfair Display', serif", color: logoColor, fontSize: '17.6px' }}>
             Sadhana Pro
           </span>
         </a>
@@ -70,7 +70,7 @@ export default function Navbar() {
           <a href={href} target="_blank" rel="noopener noreferrer"
             className="btn btn-sm px-5 ml-2 font-semibold text-sm text-white rounded-full"
             style={{ background: 'rgba(255,255,255,0.20)', border: '1px solid rgba(255,255,255,0.30)', backdropFilter: 'blur(8px)' }}>
-            {t('cta.openNow')}
+            {t('cta.openNow', 'Open Now')}
           </a>
         </div>
       </div>

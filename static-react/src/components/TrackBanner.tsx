@@ -16,7 +16,7 @@ export default function TrackBanner() {
         viewport={{ once: true }}
       >
         <h2
-          className="text-4xl md:text-5xl font-bold mb-5 leading-tight"
+          className="text-2xl md:text-3xl font-medium mb-5 leading-tight"
           style={{ fontFamily: "'Playfair Display', serif", color: '#1C1C1E' }}
         >
           Track Anything, Anywhere

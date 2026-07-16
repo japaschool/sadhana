@@ -18,7 +18,6 @@ interface PhoneCarouselProps {
 
 export default function PhoneCarousel({
   slides,
-  eyebrow = 'Inside the app',
   title = 'See it in action',
   description = 'Browse through the app and discover how Sadhana Pro makes daily practice effortless.',
   accent = '#3A7D5C',
@@ -30,9 +29,9 @@ export default function PhoneCarousel({
   const next = () => setIndex(i => Math.min(slides.length - 1, i + 1))
 
   // Show 3 phones at once — all same size, like Insight Timer
-  const leftSlide   = index > 0                  ? slides[index - 1] : null
+  const leftSlide = index > 0 ? slides[index - 1] : null
   const centerSlide = slides[index]
-  const rightSlide  = index < slides.length - 1  ? slides[index + 1] : null
+  const rightSlide = index < slides.length - 1 ? slides[index + 1] : null
 
   return (
     <section id={id} style={{ background: '#EDE8E3' }} className="py-24 px-4 overflow-hidden">
@@ -46,11 +45,8 @@ export default function PhoneCarousel({
           transition={{ duration: 0.55 }}
           viewport={{ once: true }}
         >
-          <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: accent }}>
-            {eyebrow}
-          </p>
           <h2
-            className="text-4xl md:text-5xl font-bold mb-4"
+            className="text-2xl md:text-3xl font-medium mb-4"
             style={{ fontFamily: "'Playfair Display', serif", color: '#1C1C1E' }}
           >
             {title}
@@ -75,60 +71,60 @@ export default function PhoneCarousel({
             </button>
           )}
 
-          {/* Left phone — same size, slightly dimmed */}
-          <div style={{ width: 290, flexShrink: 0, opacity: leftSlide ? 0.70 : 0, transition: 'opacity 0.3s' }}>
-            {leftSlide && (
-              <AnimatePresence mode="popLayout">
-                <motion.div
-                  key={`l-${index}`}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="cursor-pointer"
-                  onClick={prev}
-                >
-                  <PhoneFrame src={leftSlide.src} alt={leftSlide.caption} accentColor={accent} size="md" />
-                </motion.div>
-              </AnimatePresence>
-            )}
+          {/* Left phone — fixed width so layout never shifts */}
+          <div style={{ width: 230, flexShrink: 0 }}>
+            <motion.div
+              animate={{ opacity: leftSlide ? 0.70 : 0 }}
+              transition={{ duration: 0.3 }}
+              className="cursor-pointer"
+              onClick={leftSlide ? prev : undefined}
+            >
+              {leftSlide && (
+                <PhoneFrame src={leftSlide.src} alt={leftSlide.caption} accentColor={accent} size="sm" />
+              )}
+            </motion.div>
           </div>
 
-          {/* Center phone — full opacity, slightly larger */}
-          <div style={{ flexShrink: 0, zIndex: 10 }}>
-            <AnimatePresence mode="popLayout">
+          {/* Center phone — fixed width, mode="wait" so only one frame renders at a time */}
+          <div style={{ width: 230, flexShrink: 0, zIndex: 10 }}>
+            <AnimatePresence mode="wait">
               <motion.div
                 key={`c-${index}`}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.35 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
               >
-                <PhoneFrame src={centerSlide.src} alt={centerSlide.caption} accentColor={accent} size="md" />
-                <p className="text-center mt-4 text-sm" style={{ color: 'rgba(28,28,28,0.45)' }}>
-                  {centerSlide.caption}
-                </p>
+                <PhoneFrame src={centerSlide.src} alt={centerSlide.caption} accentColor={accent} size="sm" />
               </motion.div>
+            </AnimatePresence>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={`cap-${index}`}
+                className="text-center mt-4 text-sm"
+                style={{ color: 'rgba(28,28,28,0.45)' }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {centerSlide.caption}
+              </motion.p>
             </AnimatePresence>
           </div>
 
-          {/* Right phone — same size as left, slightly dimmed */}
-          <div style={{ width: 280, flexShrink: 0, opacity: rightSlide ? 0.70 : 0, transition: 'opacity 0.3s' }}>
-            {rightSlide && (
-              <AnimatePresence mode="popLayout">
-                <motion.div
-                  key={`r-${index}`}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3 }}
-                  className="cursor-pointer"
-                  onClick={next}
-                >
-                  <PhoneFrame src={rightSlide.src} alt={rightSlide.caption} accentColor={accent} size="md" />
-                </motion.div>
-              </AnimatePresence>
-            )}
+          {/* Right phone — fixed width so layout never shifts */}
+          <div style={{ width: 230, flexShrink: 0 }}>
+            <motion.div
+              animate={{ opacity: rightSlide ? 0.70 : 0 }}
+              transition={{ duration: 0.3 }}
+              className="cursor-pointer"
+              onClick={rightSlide ? next : undefined}
+            >
+              {rightSlide && (
+                <PhoneFrame src={rightSlide.src} alt={rightSlide.caption} accentColor={accent} size="sm" />
+              )}
+            </motion.div>
           </div>
 
           {/* Right arrow */}

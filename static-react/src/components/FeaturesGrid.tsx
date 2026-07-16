@@ -2,11 +2,6 @@ import { motion } from 'framer-motion'
 import { FaSeedling, FaChartBar, FaWifi, FaMobileAlt, FaShareAlt, FaUsers, FaFileCsv } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-}
-
 export default function FeaturesGrid() {
   const { t } = useTranslation()
 
@@ -21,53 +16,42 @@ export default function FeaturesGrid() {
   ]
 
   return (
-    <section className="bg-base-100 py-28 px-6">
+    <section style={{ background: '#E8E3DE' }} className="py-20 px-6">
       <div className="max-w-6xl mx-auto">
         <motion.div
-          className="text-center mb-16"
-          initial={{ opacity: 0, y: 20 }}
+          className="text-center mb-10"
+          initial={{ opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.5 }}
           viewport={{ once: true }}
         >
-          <span className="inline-block text-xs font-semibold tracking-widest uppercase text-primary mb-4 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
-            Everything you need
-          </span>
           <h2
-            className="text-4xl md:text-5xl font-bold mt-3"
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              background: 'linear-gradient(135deg, var(--color-base-content) 0%, var(--color-primary) 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
+            className="text-xl md:text-2xl font-medium"
+            style={{ fontFamily: "'Playfair Display', serif", color: '#1C1C1E' }}
           >
             {t('keyFeatures.title')}
           </h2>
         </motion.div>
 
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+          className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
+          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.07 } } }}
         >
           {features.map((f, i) => (
             <motion.div
               key={i}
-              className={`card bg-base-100 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 border ${f.border} hover:${f.glow}`}
-              style={{ boxShadow: '0 2px 12px oklch(0% 0 0 / 0.04)' }}
-              variants={cardVariants}
-              whileHover={{ scale: 1.01 }}
+              className="flex items-start gap-4"
+              variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}
             >
-              <div className="card-body gap-4 p-6">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl ${f.color} ${f.bg}`}>
-                  {f.icon}
-                </div>
-                <h3 className="card-title text-base-content text-lg leading-snug">{f.title}</h3>
-                <p className="text-base-content/55 text-sm leading-relaxed">{f.desc}</p>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 mt-0.5 ${f.color} ${f.bg}`}>
+                {f.icon}
+              </div>
+              <div>
+                <p className="font-semibold text-sm mb-1" style={{ color: '#1C1C1E' }}>{f.title}</p>
+                <p className="text-sm leading-relaxed" style={{ color: 'rgba(28,28,28,0.55)' }}>{f.desc}</p>
               </div>
             </motion.div>
           ))}
