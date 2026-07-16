@@ -27,7 +27,7 @@ export default function PracticeCategories() {
           viewport={{ once: true }}
         >
           <h2
-            className="text-2xl md:text-3xl font-bold"
+            className="text-xl md:text-2xl font-medium"
             style={{ fontFamily: "'Playfair Display', serif", color: '#1C1C1E' }}
           >
             Track any practice, any tradition

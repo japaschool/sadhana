@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { useRef } from 'react'
-import Carousel from './Carousel'
+// import Carousel from './Carousel'
 
 interface Props {
   image: string
@@ -16,7 +16,6 @@ interface Slide {
 export default function ParallaxCarouselSection({
   image,
   title,
-  slides,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null)
 
@@ -46,10 +45,7 @@ export default function ParallaxCarouselSection({
           {title}
         </h2>
 
-        <Carousel
-          slides={slides}
-          className="mt-10"
-        />
+        <div className="mt-10" />
       </div>
     </section>
   )
