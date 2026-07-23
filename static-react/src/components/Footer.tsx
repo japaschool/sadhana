@@ -7,11 +7,11 @@ export default function Footer() {
     {
       title: t('footer.practices'),
       links: [
-        { label: t('practices.meditation'), href: '#' },
-        { label: t('practices.yoga'),       href: '#' },
-        { label: t('practices.breathwork'), href: '#' },
-        { label: t('practices.journaling'), href: '#' },
-        { label: t('practices.chanting'),   href: '#' },
+        { label: t('practices.meditation'), href: '#track' },
+        { label: t('practices.yoga'),       href: '#track' },
+        { label: t('practices.breathwork'), href: '#track' },
+        { label: t('practices.journaling'), href: '#track' },
+        { label: t('practices.chanting'),   href: '#track' },
       ],
     },
     {

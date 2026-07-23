@@ -28,12 +28,10 @@ export default function App() {
 
   return (
     <div data-theme="sadhana" className="font-sans">
-      <div className="relative">
-        <div className="absolute top-8 left-0 right-0 z-50">
-          <Navbar />
-        </div>
-        <Hero />
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <Navbar />
       </div>
+      <Hero />
       <PhoneCarousel
         id="preview"
         slides={slides}

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import heroBg from '../assets/crowded-scene-indian-city.jpg'
@@ -8,6 +9,15 @@ export default function Hero() {
   const { i18n, t } = useTranslation()
   const lang = (i18n.resolvedLanguage || i18n.language || 'en').slice(0, 2)
   const href = lang === 'uk' ? 'https://mapp.sadhana.pro/' : 'https://app.sadhana.pro/'
+  const [showCue, setShowCue] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowCue(true), 1500)
+    const onScroll = () => { if (window.scrollY > 60) setScrolled(true) }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => { clearTimeout(timer); window.removeEventListener('scroll', onScroll) }
+  }, [])
 
   return (
     <section className="relative min-h-[100dvh] flex items-start lg:items-center justify-center overflow-hidden pt-[120px] md:pt-[120px] lg:pt-0">
@@ -108,6 +118,24 @@ export default function Hero() {
             </motion.a>
           </div>
         </div>
+      </motion.div>
+
+      {/* Scroll cue */}
+      <motion.div
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: showCue && !scrolled ? 1 : 0 }}
+        transition={{ duration: 0.6 }}
+        aria-hidden="true"
+      >
+        <motion.div
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,0.60)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </motion.div>
       </motion.div>
     </section>
   )

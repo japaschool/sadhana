@@ -20,7 +20,7 @@ export default function PracticeCategories() {
   ]
 
   return (
-    <section id="track" style={{ background: '#E8E3DE' }} className="py-14 md:py-20 px-6">
+    <section id="track" style={{ background: '#E8E3DE', borderTop: '1px solid rgba(0,0,0,0.06)' }} className="py-14 md:py-20 px-6">
       <div className="max-w-4xl mx-auto">
         <motion.div
           className="text-center mb-10"
@@ -33,7 +33,7 @@ export default function PracticeCategories() {
             className="text-xl md:text-2xl font-medium"
             style={{ fontFamily: "'Playfair Display', serif", color: '#1C1C1E' }}
           >
-            {t('trackAnything')}
+            {t('practices.title')}
           </h2>
         </motion.div>
 
