@@ -116,7 +116,7 @@ export default function PhoneCarousel({
               <motion.p
                 key={`cap-${index}`}
                 className="text-center mt-4 text-sm"
-                style={{ color: 'rgba(28,28,28,0.45)' }}
+                style={{ color: 'rgba(28,28,28,0.65)' }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}

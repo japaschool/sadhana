@@ -43,7 +43,7 @@ export default function FeaturesGrid() {
           {features.map((f, i) => (
             <motion.div
               key={i}
-              className="flex items-start gap-4"
+              className={`flex items-start gap-4 ${i === features.length - 1 && features.length % 2 !== 0 ? 'md:col-span-2 md:max-w-sm md:mx-auto' : ''}`}
               variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}
             >
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 mt-0.5 ${f.color} ${f.bg}`}>
