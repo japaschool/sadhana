@@ -40,7 +40,16 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-6 sm:px-[10%] h-16 flex items-center justify-between">
         {/* Logo */}
         <a href="/" className="flex items-center gap-2.5 flex-shrink-0">
-          <img src={logo} alt="Sadhana Pro" style={{ height: '35px', width: '35px' }} className="rounded-lg" />
+          <img
+            src={logo}
+            alt="Sadhana Pro"
+            className="rounded-lg transition-all duration-300"
+            style={{
+              height: '35px',
+              width: '35px',
+              filter: scrolled ? 'invert(0.75)' : 'none',
+            }}
+          />
           <span className="hidden sm:inline font-semibold tracking-wide transition-colors duration-300" style={{ fontFamily: "'Playfair Display', serif", color: logoColor, fontSize: '17.6px' }}>
             Sadhana Pro
           </span>
