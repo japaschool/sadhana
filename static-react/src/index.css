@@ -32,3 +32,8 @@
 }
 
 html, body, #root { position: relative; }
+
+/* iOS/Android tap & scroll polish */
+* { -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+button, a { touch-action: manipulation; }

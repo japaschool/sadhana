@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import PhoneFrame from './PhoneFrame'
 
@@ -23,23 +23,34 @@ export default function PhoneCarousel({
   accent = '#3A7D5C',
   id,
 }: PhoneCarouselProps) {
-  const [index, setIndex] = useState(1)
+  const [index, setIndex] = useState(0)
+  const touchStartX = useRef<number | null>(null)
 
   const prev = () => setIndex(i => Math.max(0, i - 1))
   const next = () => setIndex(i => Math.min(slides.length - 1, i + 1))
 
-  // Show 3 phones at once — all same size, like Insight Timer
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+  }
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return
+    const diff = touchStartX.current - e.changedTouches[0].clientX
+    if (diff > 40) next()
+    else if (diff < -40) prev()
+    touchStartX.current = null
+  }
+
   const leftSlide = index > 0 ? slides[index - 1] : null
   const centerSlide = slides[index]
   const rightSlide = index < slides.length - 1 ? slides[index + 1] : null
 
   return (
-    <section id={id} style={{ background: '#EDE8E3' }} className="py-24 px-4 overflow-hidden">
+    <section id={id} style={{ background: '#EDE8E3' }} className="py-14 md:py-20 lg:py-24 px-4 overflow-hidden">
       <div className="max-w-5xl mx-auto">
 
         {/* Heading */}
         <motion.div
-          className="text-center mb-16"
+          className="text-center mb-10 md:mb-16"
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55 }}
@@ -56,13 +67,16 @@ export default function PhoneCarousel({
           </p>
         </motion.div>
 
-        {/* 3 phones — all same size, Insight Timer layout */}
-        <div className="relative flex items-center justify-center gap-5 md:gap-8">
-
+        {/* Phones */}
+        <div
+          className="relative flex items-center justify-center gap-5 lg:gap-8"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           {/* Left arrow */}
           {index > 0 && (
             <button onClick={prev}
-              className="absolute left-0 z-20 flex items-center justify-center w-10 h-10 rounded-full shadow-md transition-transform hover:scale-110 flex-shrink-0"
+              className="absolute left-0 z-20 flex items-center justify-center w-11 h-11 rounded-full shadow-md transition-transform hover:scale-110 flex-shrink-0"
               style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.10)' }}
               aria-label="Previous">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -71,8 +85,8 @@ export default function PhoneCarousel({
             </button>
           )}
 
-          {/* Left phone — hidden on mobile */}
-          <div className="hidden md:block" style={{ width: 230, flexShrink: 0 }}>
+          {/* Left phone — desktop only */}
+          <div className="hidden lg:block" style={{ width: 230, flexShrink: 0 }}>
             <motion.div
               animate={{ opacity: leftSlide ? 0.70 : 0 }}
               transition={{ duration: 0.3 }}
@@ -85,7 +99,7 @@ export default function PhoneCarousel({
             </motion.div>
           </div>
 
-          {/* Center phone — fixed width, mode="wait" so only one frame renders at a time */}
+          {/* Center phone */}
           <div style={{ width: 230, flexShrink: 0, zIndex: 10 }}>
             <AnimatePresence mode="wait">
               <motion.div
@@ -113,8 +127,8 @@ export default function PhoneCarousel({
             </AnimatePresence>
           </div>
 
-          {/* Right phone — hidden on mobile */}
-          <div className="hidden md:block" style={{ width: 230, flexShrink: 0 }}>
+          {/* Right phone — desktop only */}
+          <div className="hidden lg:block" style={{ width: 230, flexShrink: 0 }}>
             <motion.div
               animate={{ opacity: rightSlide ? 0.70 : 0 }}
               transition={{ duration: 0.3 }}
@@ -130,7 +144,7 @@ export default function PhoneCarousel({
           {/* Right arrow */}
           {index < slides.length - 1 && (
             <button onClick={next}
-              className="absolute right-0 z-20 flex items-center justify-center w-10 h-10 rounded-full shadow-md transition-transform hover:scale-110 flex-shrink-0"
+              className="absolute right-0 z-20 flex items-center justify-center w-11 h-11 rounded-full shadow-md transition-transform hover:scale-110 flex-shrink-0"
               style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.10)' }}
               aria-label="Next">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

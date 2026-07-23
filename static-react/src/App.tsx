@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import PhoneCarousel from './components/PhoneCarousel'
@@ -13,16 +14,18 @@ import shotCharts from './assets/shot-charts.jpg'
 import shotGroup from './assets/shot-group.jpg'
 import shotFaq from './assets/shot-faq.jpg'
 
-const slides = [
-  { src: shotHome, caption: 'Track your daily sadhana — japa, wake time, reading, and more' },
-  { src: shotOffline, caption: "Works offline — syncs when you're back online" },
-  { src: shotAddPractice, caption: 'Add any practice with custom data types' },
-  { src: shotCharts, caption: 'Visual graphs across multiple metrics over time' },
-  { src: shotGroup, caption: "Group tracking — see your sangha's progress together" },
-  { src: shotFaq, caption: 'Built-in support with video guides and direct contact' },
-]
-
 export default function App() {
+  const { t } = useTranslation()
+
+  const slides = [
+    { src: shotHome,        caption: t('preview.slide1') },
+    { src: shotOffline,     caption: t('preview.slide2') },
+    { src: shotAddPractice, caption: t('preview.slide3') },
+    { src: shotCharts,      caption: t('preview.slide4') },
+    { src: shotGroup,       caption: t('preview.slide5') },
+    { src: shotFaq,         caption: t('preview.slide6') },
+  ]
+
   return (
     <div data-theme="sadhana" className="font-sans">
       <div className="relative">
@@ -34,8 +37,8 @@ export default function App() {
       <PhoneCarousel
         id="preview"
         slides={slides}
-        title="Your practice, beautifully tracked"
-        description="Browse all 8 screens of Sadhana Pro and see how easy it is to track any spiritual practice."
+        title={t('preview.carouselTitle')}
+        description={t('preview.carouselDescription')}
         accent="#3A7D5C"
       />
       <FeaturesGrid />

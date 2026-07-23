@@ -16,7 +16,7 @@ export default function FeaturesGrid() {
   ]
 
   return (
-    <section style={{ background: '#E8E3DE' }} className="py-20 px-6">
+    <section style={{ background: '#E8E3DE' }} className="py-14 md:py-20 px-6">
       <div className="max-w-6xl mx-auto">
         <motion.div
           className="text-center mb-10"

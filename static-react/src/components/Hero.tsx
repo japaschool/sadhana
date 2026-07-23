@@ -10,7 +10,7 @@ export default function Hero() {
   const href = lang === 'uk' ? 'https://mapp.sadhana.pro/' : 'https://app.sadhana.pro/'
 
   return (
-    <section className="relative min-h-screen flex items-start md:items-center justify-center overflow-hidden pt-[120px] md:pt-0">
+    <section className="relative min-h-[100dvh] flex items-start lg:items-center justify-center overflow-hidden pt-[120px] md:pt-[120px] lg:pt-0">
       {/* Background */}
       <img
         src={heroBg}
@@ -40,13 +40,13 @@ export default function Hero() {
 
       {/* Frosted glass card */}
       <motion.div
-        className="relative z-10 mx-6 w-full max-w-3xl mb-8 md:mt-16 md:mb-0"
+        className="relative z-10 mx-6 w-full max-w-3xl mb-8 lg:mt-16 lg:mb-0"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: 'easeOut' }}
       >
         <div
-          className="rounded-3xl p-6 sm:p-10 md:p-14 lg:p-20 flex flex-col md:flex-row items-start gap-6 md:gap-10"
+          className="rounded-3xl p-6 sm:p-10 md:p-10 lg:p-20 flex flex-col md:flex-row items-stretch gap-6 md:gap-10"
           style={{
             background: 'rgba(255,255,255,0.16)',
             backdropFilter: 'blur(28px)',
@@ -60,7 +60,7 @@ export default function Hero() {
           </div>
 
           {/* Text */}
-          <div className="flex-1 text-white flex flex-col gap-5 md:gap-0 md:justify-between md:min-h-[484px]">
+          <div className="flex-1 text-white flex flex-col gap-5">
             <motion.h1
               className="text-4xl md:text-5xl font-medium leading-none"
               style={{ fontFamily: "'Playfair Display', serif", color: '#fff' }}
@@ -77,22 +77,22 @@ export default function Hero() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.25 }}
             >
-              Sadhana tracker and chart — a tracker for spiritual practice, meditation, and habits
+              {t('landing.subtitle')}
             </motion.p>
             <motion.p
               className="leading-relaxed"
-              style={{ color: 'rgba(255,255,255,0.60)', fontSize: '15.4px' }}
+              style={{ color: 'rgba(255,255,255,0.60)', fontSize: '14.5px' }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.35 }}
             >
-              Sadhana Pro is a powerful and flexible sadhana (daily spiritual practice) diary that helps you track your daily practices, habits, and meditation. You can track your activities in convenient tables or monitor your progress on visual graphs. The app is ideal for both regular spiritual practice and systematically tracking your daily tasks and habits. With Sadhana Pro, you can consciously develop your spiritual discipline.
+              {t('landing.description')}
             </motion.p>
             <motion.a
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block self-start px-7 py-2.5 rounded-full font-semibold text-sm"
+              className="inline-block self-start mt-auto px-7 py-2.5 rounded-full font-semibold text-sm"
               style={{
                 background: 'rgba(255,255,255,0.18)',
                 border: '1.5px solid rgba(255,255,255,0.45)',
