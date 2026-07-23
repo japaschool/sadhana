@@ -22,11 +22,14 @@ export default function Navbar() {
     <nav className="relative z-50 w-full" style={{ background: 'transparent' }}>
       <div className="max-w-7xl mx-auto px-6 sm:px-[10%] h-16 flex items-center justify-between">
         {/* Logo */}
-        <a href="/" className="flex items-center flex-shrink-0">
+        <a href="/" className="flex items-center gap-2.5 flex-shrink-0">
           <img src={logo} alt="Sadhana Pro" style={{ height: '35px', width: '35px' }} className="rounded-lg" />
+          <span className="hidden sm:inline font-semibold tracking-wide" style={{ fontFamily: "'Playfair Display', serif", color: '#fff', fontSize: '17.6px' }}>
+            Sadhana Pro
+          </span>
         </a>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0">
           {/* Desktop only: Telegram + YouTube + language dropdown */}
           <a href="https://t.me/sadhanapro" target="_blank" rel="noreferrer" title="Telegram"
             className="hidden sm:flex btn btn-ghost btn-circle btn-sm"
@@ -62,7 +65,7 @@ export default function Navbar() {
 
           {/* CTA */}
           <a href={href} target="_blank" rel="noopener noreferrer"
-            className="btn btn-sm px-5 ml-2 font-semibold text-sm text-white rounded-full"
+            className="btn btn-sm px-5 ml-1 font-semibold text-sm text-white rounded-full"
             style={{ background: 'rgba(255,255,255,0.20)', border: '1px solid rgba(255,255,255,0.30)', backdropFilter: 'blur(8px)' }}>
             {t('cta.openNow', 'Open Now')}
           </a>

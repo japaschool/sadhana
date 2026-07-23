@@ -58,6 +58,7 @@ export default function PhoneFrame({ src, alt, accentColor = '#3A7D5C', size = '
         <img src={src} alt={alt}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
           draggable={false}
+          loading="lazy"
         />
       </div>
 

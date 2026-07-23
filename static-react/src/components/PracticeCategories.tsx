@@ -1,23 +1,26 @@
 import { motion } from 'framer-motion'
-
-const categories = [
-  { label: 'Meditation',   emoji: '🧘' },
-  { label: 'Yoga',         emoji: '🌞' },
-  { label: 'Breathwork',   emoji: '💨' },
-  { label: 'Journaling',   emoji: '📔' },
-  { label: 'Chanting',     emoji: '🕉️' },
-  { label: 'Reading',      emoji: '📖' },
-  { label: 'Prayer',       emoji: '🙏' },
-  { label: 'Fasting',      emoji: '🌿' },
-  { label: 'Sleep',        emoji: '🌙' },
-  { label: 'Exercise',     emoji: '⚡' },
-  { label: 'Cold Shower',  emoji: '❄️' },
-  { label: 'Any Habit',    emoji: '✨' },
-]
+import { useTranslation } from 'react-i18next'
 
 export default function PracticeCategories() {
+  const { t } = useTranslation()
+
+  const categories = [
+    { key: 'meditation', emoji: '🧘' },
+    { key: 'yoga',       emoji: '🌞' },
+    { key: 'breathwork', emoji: '💨' },
+    { key: 'journaling', emoji: '📔' },
+    { key: 'chanting',   emoji: '🕉️' },
+    { key: 'reading',    emoji: '📖' },
+    { key: 'prayer',     emoji: '🙏' },
+    { key: 'fasting',    emoji: '🌿' },
+    { key: 'sleep',      emoji: '🌙' },
+    { key: 'exercise',   emoji: '⚡' },
+    { key: 'coldShower', emoji: '❄️' },
+    { key: 'anyHabit',   emoji: '✨' },
+  ]
+
   return (
-    <section id="track" style={{ background: '#E8E3DE' }} className="py-20 px-6">
+    <section id="track" style={{ background: '#E8E3DE' }} className="py-14 md:py-20 px-6">
       <div className="max-w-4xl mx-auto">
         <motion.div
           className="text-center mb-10"
@@ -30,7 +33,7 @@ export default function PracticeCategories() {
             className="text-xl md:text-2xl font-medium"
             style={{ fontFamily: "'Playfair Display', serif", color: '#1C1C1E' }}
           >
-            Track any practice, any tradition
+            {t('trackAnything')}
           </h2>
         </motion.div>
 
@@ -50,7 +53,7 @@ export default function PracticeCategories() {
               whileHover={{ background: 'rgba(62,141,107,0.12)', borderColor: 'rgba(62,141,107,0.35)', color: '#2d7a5a' } as never}
             >
               <span>{c.emoji}</span>
-              <span>{c.label}</span>
+              <span>{t(`practices.${c.key}`)}</span>
             </motion.div>
           ))}
         </motion.div>
