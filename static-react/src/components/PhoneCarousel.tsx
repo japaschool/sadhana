@@ -71,8 +71,8 @@ export default function PhoneCarousel({
             </button>
           )}
 
-          {/* Left phone — fixed width so layout never shifts */}
-          <div style={{ width: 230, flexShrink: 0 }}>
+          {/* Left phone — hidden on mobile */}
+          <div className="hidden md:block" style={{ width: 230, flexShrink: 0 }}>
             <motion.div
               animate={{ opacity: leftSlide ? 0.70 : 0 }}
               transition={{ duration: 0.3 }}
@@ -113,8 +113,8 @@ export default function PhoneCarousel({
             </AnimatePresence>
           </div>
 
-          {/* Right phone — fixed width so layout never shifts */}
-          <div style={{ width: 230, flexShrink: 0 }}>
+          {/* Right phone — hidden on mobile */}
+          <div className="hidden md:block" style={{ width: 230, flexShrink: 0 }}>
             <motion.div
               animate={{ opacity: rightSlide ? 0.70 : 0 }}
               transition={{ duration: 0.3 }}
