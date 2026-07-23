@@ -10,7 +10,7 @@ export default function Hero() {
   const href = lang === 'uk' ? 'https://mapp.sadhana.pro/' : 'https://app.sadhana.pro/'
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-screen flex items-start md:items-center justify-center overflow-hidden pt-[120px] md:pt-0">
       {/* Background */}
       <img
         src={heroBg}
@@ -40,13 +40,13 @@ export default function Hero() {
 
       {/* Frosted glass card */}
       <motion.div
-        className="relative z-10 mx-6 w-full max-w-3xl mt-12 md:mt-16"
+        className="relative z-10 mx-6 w-full max-w-3xl mb-8 md:mt-16 md:mb-0"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: 'easeOut' }}
       >
         <div
-          className="rounded-3xl p-20 flex flex-col md:flex-row items-start gap-10"
+          className="rounded-3xl p-6 sm:p-10 md:p-14 lg:p-20 flex flex-col md:flex-row items-start gap-6 md:gap-10"
           style={{
             background: 'rgba(255,255,255,0.16)',
             backdropFilter: 'blur(28px)',
@@ -55,12 +55,12 @@ export default function Hero() {
             boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
           }}
         >
-          <div className="flex-shrink-0">
+          <div className="hidden md:flex flex-shrink-0">
             <PhoneFrame src={shot1} alt="App preview" accentColor="#3E8D6B" size="sm" />
           </div>
 
           {/* Text */}
-          <div className="flex-1 text-white flex flex-col justify-between" style={{ minHeight: '484px' }}>
+          <div className="flex-1 text-white flex flex-col gap-5 md:gap-0 md:justify-between md:min-h-[484px]">
             <motion.h1
               className="text-4xl md:text-5xl font-medium leading-none"
               style={{ fontFamily: "'Playfair Display', serif", color: '#fff' }}
