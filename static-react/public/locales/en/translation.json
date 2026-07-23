@@ -49,7 +49,13 @@
   "trackAnything": "Track Anything, Anywhere",
   "trackAnythingText": "Use Sadhana Pro to track your daily sadhana, yoga practices, meditation, journaling, reading, or any personal habits. With full offline mode and phone installation support, your data stays with you wherever you go.",
   "footer": {
-    "copyright": "© Sadhana Pro 2025. All rights reserved."
+    "copyright": "© Sadhana Pro 2025. All rights reserved.",
+    "tagline": "Made with 🙏 for practitioners everywhere",
+    "practices": "Practices",
+    "community": "Community",
+    "joinGroup": "Join Group",
+    "videoGuides": "Video Guides",
+    "support": "Support"
   },
   "meta": {
     "title": "Sadhana Tracker, Journal & Chart — Track Your Spiritual Practice, Meditation, and Habits",
