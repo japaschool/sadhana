@@ -1,28 +1,28 @@
 import { useTranslation } from 'react-i18next'
 
-const columns = [
-  {
-    title: 'Practices',
-    links: [
-      { label: 'Meditation', href: '#' },
-      { label: 'Yoga',       href: '#' },
-      { label: 'Breathwork', href: '#' },
-      { label: 'Journaling', href: '#' },
-      { label: 'Chanting',   href: '#' },
-    ],
-  },
-  {
-    title: 'Community',
-    links: [
-      { label: 'Join Group',   href: 'https://t.me/sadhanapro' },
-      { label: 'Video Guides', href: 'https://www.youtube.com/@SadhanaPro' },
-      { label: 'Support',      href: 'https://t.me/sadhanapro' },
-    ],
-  },
-]
-
 export default function Footer() {
   const { t } = useTranslation()
+
+  const columns = [
+    {
+      title: t('footer.practices'),
+      links: [
+        { label: t('practices.meditation'), href: '#' },
+        { label: t('practices.yoga'),       href: '#' },
+        { label: t('practices.breathwork'), href: '#' },
+        { label: t('practices.journaling'), href: '#' },
+        { label: t('practices.chanting'),   href: '#' },
+      ],
+    },
+    {
+      title: t('footer.community'),
+      links: [
+        { label: t('footer.joinGroup'),   href: 'https://t.me/sadhanapro' },
+        { label: t('footer.videoGuides'), href: 'https://www.youtube.com/@SadhanaPro' },
+        { label: t('footer.support'),     href: 'https://t.me/sadhanapro' },
+      ],
+    },
+  ]
 
   return (
     <footer
@@ -30,7 +30,7 @@ export default function Footer() {
       className="px-6 py-16"
     >
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-2 gap-10 mb-12 max-w-sm">
+        <div className="grid grid-cols-2 gap-10 mb-12 max-w-sm">
           {columns.map(col => (
             <div key={col.title}>
               <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: 'rgba(28,28,28,0.35)' }}>
@@ -60,7 +60,7 @@ export default function Footer() {
           style={{ borderTop: '1px solid rgba(0,0,0,0.08)' }}
         >
           <p className="text-xs" style={{ color: 'rgba(28,28,28,0.30)' }}>{t('footer.copyright')}</p>
-          <p className="text-xs" style={{ color: 'rgba(28,28,28,0.22)' }}>Made with 🙏 for practitioners everywhere</p>
+          <p className="text-xs" style={{ color: 'rgba(28,28,28,0.22)' }}>{t('footer.tagline')}</p>
         </div>
       </div>
     </footer>
