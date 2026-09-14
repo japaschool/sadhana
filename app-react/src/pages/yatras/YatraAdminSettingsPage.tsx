@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fa'
 import {
   LuCheck, LuCopy, LuLink, LuHash, LuTimer, LuClock, LuType, LuToggleRight, LuX,
-  LuChartBar,
+  LuChartBar, LuShare2,
 } from 'react-icons/lu'
 import {
   DndContext,
@@ -242,10 +242,21 @@ export function YatraAdminSettingsPage() {
 
   // ── Other helpers ─────────────────────────────────────────────────────────────
 
-  function copyInvite() {
-    navigator.clipboard.writeText(`${window.location.origin}/yatra/${id}/join`)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  function handleInvite() {
+    const url = `${window.location.origin}/yatra/${id}/join`
+    const yatraName = yatraQuery.data?.name ?? 'Yatra'
+    const canNativeShare =
+      typeof navigator.share === 'function' &&
+      navigator.canShare?.({ url }) === true
+    if (canNativeShare) {
+      navigator.share({ title: yatraName, url }).catch(() => {
+        // user dismissed share sheet — ignore
+      })
+    } else {
+      navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
   }
 
   function getPracticeType(practiceId: string): string {
@@ -422,26 +433,40 @@ export function YatraAdminSettingsPage() {
 
       {/* Invite link */}
       <SectionLabel>{t('yatras.sectionInvite')}</SectionLabel>
-      <button
-        type="button"
-        onClick={copyInvite}
-        className="rounded-2xl px-4 py-3.5 flex items-center gap-3 w-full text-left transition-all"
-        style={glass}
-      >
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ background: copied ? 'rgba(245,158,11,0.10)' : 'rgba(255,255,255,0.06)' }}
-        >
-          <LuLink className="w-4 h-4" style={{ color: copied ? ACCENT : 'rgba(242,244,246,0.65)' }} />
-        </div>
-        <span className="flex-1 text-sm font-semibold text-base-content">
-          {copied ? t('yatras.inviteCopied') : t('yatras.copyInvite')}
-        </span>
-        {copied
-          ? <LuCheck className="w-4 h-4 flex-shrink-0" style={{ color: ACCENT }} />
-          : <LuCopy className="w-4 h-4 flex-shrink-0" style={{ color: '#d1d5db' }} />
-        }
-      </button>
+      {(() => {
+        const canNativeShare =
+          typeof navigator.share === 'function' &&
+          navigator.canShare?.({ url: `${window.location.origin}/yatra/${id}/join` }) === true
+        return (
+          <button
+            type="button"
+            onClick={handleInvite}
+            className="rounded-2xl px-4 py-3.5 flex items-center gap-3 w-full text-left transition-all"
+            style={glass}
+          >
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: copied ? 'rgba(245,158,11,0.10)' : 'rgba(255,255,255,0.06)' }}
+            >
+              <LuLink className="w-4 h-4" style={{ color: copied ? ACCENT : 'rgba(242,244,246,0.65)' }} />
+            </div>
+            <span className="flex-1 text-sm font-semibold text-base-content">
+              {copied
+                ? t('yatras.inviteCopied')
+                : canNativeShare
+                  ? t('yatras.shareInvite')
+                  : t('yatras.copyInvite')
+              }
+            </span>
+            {copied
+              ? <LuCheck className="w-4 h-4 flex-shrink-0" style={{ color: ACCENT }} />
+              : canNativeShare
+                ? <LuShare2 className="w-4 h-4 flex-shrink-0" style={{ color: '#d1d5db' }} />
+                : <LuCopy className="w-4 h-4 flex-shrink-0" style={{ color: '#d1d5db' }} />
+            }
+          </button>
+        )
+      })()}
 
       {/* Practices */}
       <SectionToggle label={`${t('yatras.sectionPractices')} (${practices.length})`} open={showPractices} onToggle={() => setShowPractices(v => !v)} />
