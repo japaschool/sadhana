@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
@@ -9,6 +9,18 @@ import {
   LuCheck, LuCopy, LuLink, LuHash, LuTimer, LuClock, LuType, LuToggleRight, LuX,
   LuChartBar,
 } from 'react-icons/lu'
+import {
+  DndContext,
+  closestCenter,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { yatrasApi } from '../../api/yatras'
 import { Spinner } from '../../components/ui/Spinner'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
@@ -200,6 +212,11 @@ export function YatraAdminSettingsPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['yatra-practices', id] }),
   })
 
+  const reorderPractices = useMutation({
+    mutationFn: (ids: string[]) => yatrasApi.reorderPractices(id!, ids),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['yatra-practices', id] }),
+  })
+
   const deleteYatra = useMutation({
     mutationFn: () => yatrasApi.deleteYatra(id!),
     onSuccess: () => {
@@ -239,8 +256,95 @@ export function YatraAdminSettingsPage() {
   const members = usersQuery.data ?? []
   const practices = practicesQuery.data ?? []
 
+  const [orderedPractices, setOrderedPractices] = useState<typeof practices>([])
+  const practicesInitialized = useRef(false)
+
+  // Sync order from server on first load
+  if (!practicesInitialized.current && practices.length > 0) {
+    setOrderedPractices(practices)
+    practicesInitialized.current = true
+  }
+
+  // Reset when server data refreshes after a mutation
+  useEffect(() => {
+    if (practicesQuery.isSuccess) {
+      practicesInitialized.current = false
+    }
+  }, [practicesQuery.dataUpdatedAt])
+
   if (isLoading) return <Spinner />
   if (!yatraQuery.data) return null
+
+  function handlePracticeDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIdx = orderedPractices.findIndex((p) => p.id === active.id)
+    const newIdx = orderedPractices.findIndex((p) => p.id === over.id)
+    const next = arrayMove(orderedPractices, oldIdx, newIdx)
+    setOrderedPractices(next)
+    reorderPractices.mutate(next.map((p) => p.id))
+  }
+
+  function SortablePracticeRow({ p }: { p: YatraPractice }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id })
+    const meta = TYPE_META[p.data_type] ?? TYPE_META.Text
+    const TypeIcon = meta.icon
+    return (
+      <div
+        ref={setNodeRef}
+        style={{
+          ...glass,
+          transform: CSS.Transform.toString(transform),
+          transition,
+          opacity: isDragging ? 0.4 : 1,
+        }}
+        className="rounded-2xl px-4 py-3.5 flex items-center gap-3"
+      >
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="w-6 h-6 flex items-center justify-center flex-shrink-0 touch-none"
+          style={{ color: '#d1d5db', cursor: 'grab', border: 'none', background: 'none' }}
+          aria-label="Drag to reorder"
+        >
+          <FaGripVertical className="w-3.5 h-3.5" />
+        </button>
+        <div
+          className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ background: meta.bg }}
+        >
+          <TypeIcon className="w-3.5 h-3.5" style={{ color: meta.color }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <span className="text-sm font-semibold text-base-content block truncate">{p.practice}</span>
+          <span className="text-xs font-medium" style={{ color: meta.color }}>{t(meta.tKey)}</span>
+        </div>
+        <Link
+          to={`/yatra/${id}/practice/${p.id}/edit`}
+          className="w-8 h-8 flex items-center justify-center rounded-xl flex-shrink-0"
+          style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.40)' }}
+        >
+          <FaEdit className="w-3 h-3" />
+        </Link>
+        <button
+          type="button"
+          onClick={() => (document.getElementById(`del-practice-${p.id}`) as HTMLDialogElement)?.showModal()}
+          className="w-8 h-8 flex items-center justify-center rounded-xl flex-shrink-0"
+          style={{ background: 'rgba(225,29,72,0.07)', color: 'rgba(225,29,72,0.55)', border: 'none' }}
+        >
+          <FaTrash className="w-3 h-3" />
+        </button>
+        <ConfirmModal
+          id={`del-practice-${p.id}`}
+          title={t('yatras.deletePracticeTitle')}
+          message={t('yatras.deletePracticeMsg', { name: p.practice })}
+          confirmLabel={t('common.delete')}
+          onConfirm={() => deletePractice.mutate(p.id)}
+        />
+      </div>
+    )
+  }
 
   return (
     <form
@@ -343,47 +447,18 @@ export function YatraAdminSettingsPage() {
       <SectionToggle label={`${t('yatras.sectionPractices')} (${practices.length})`} open={showPractices} onToggle={() => setShowPractices(v => !v)} />
       {showPractices && (
         <div className="flex flex-col gap-2">
-          {practices.map((p: YatraPractice) => {
-            const meta = TYPE_META[p.data_type] ?? TYPE_META.Text
-            const TypeIcon = meta.icon
-            return (
-              <div key={p.id} className="rounded-2xl px-4 py-3.5 flex items-center gap-3" style={glass}>
-                <FaGripVertical className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#d1d5db' }} />
-                <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: meta.bg }}
-                >
-                  <TypeIcon className="w-3.5 h-3.5" style={{ color: meta.color }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm font-semibold text-base-content block truncate">{p.practice}</span>
-                  <span className="text-xs font-medium" style={{ color: meta.color }}>{t(meta.tKey)}</span>
-                </div>
-                <Link
-                  to={`/yatra/${id}/practice/${p.id}/edit`}
-                  className="w-8 h-8 flex items-center justify-center rounded-xl flex-shrink-0"
-                  style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.40)' }}
-                >
-                  <FaEdit className="w-3 h-3" />
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => (document.getElementById(`del-practice-${p.id}`) as HTMLDialogElement)?.showModal()}
-                  className="w-8 h-8 flex items-center justify-center rounded-xl flex-shrink-0"
-                  style={{ background: 'rgba(225,29,72,0.07)', color: 'rgba(225,29,72,0.55)', border: 'none' }}
-                >
-                  <FaTrash className="w-3 h-3" />
-                </button>
-                <ConfirmModal
-                  id={`del-practice-${p.id}`}
-                  title={t('yatras.deletePracticeTitle')}
-                  message={t('yatras.deletePracticeMsg', { name: p.practice })}
-                  confirmLabel={t('common.delete')}
-                  onConfirm={() => deletePractice.mutate(p.id)}
-                />
+          <DndContext collisionDetection={closestCenter} onDragEnd={handlePracticeDragEnd}>
+            <SortableContext
+              items={orderedPractices.map((p) => p.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="flex flex-col gap-2">
+                {orderedPractices.map((p) => (
+                  <SortablePracticeRow key={p.id} p={p} />
+                ))}
               </div>
-            )
-          })}
+            </SortableContext>
+          </DndContext>
           <Link
             to={`/yatra/${id}/practice/new`}
             className="w-full h-12 rounded-full text-sm font-semibold flex items-center justify-center gap-2 no-underline"
