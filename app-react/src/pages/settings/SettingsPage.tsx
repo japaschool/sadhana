@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { FaCog, FaChevronRight, FaSignOutAlt } from 'react-icons/fa'
-import { LuUser, LuLock, LuLayers, LuUpload, LuGlobe, LuCircleHelp } from 'react-icons/lu'
+import { LuUser, LuLock, LuLayers, LuUpload, LuGlobe, LuCircleHelp, LuInfo, LuRefreshCw } from 'react-icons/lu'
 import { useAuthStore } from '../../store/authStore'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import { ACCENT_GRADIENT } from '../../theme/tokens'
+import { useServiceWorkerUpdate } from '../../hooks/useServiceWorkerUpdate'
 
 const glass: React.CSSProperties = {
   background: 'rgba(255,255,255,0.06)',
@@ -68,6 +69,7 @@ export function SettingsPage() {
   const user = useAuthStore((s) => s.user)
   const navigate = useNavigate()
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const { updateReady, applyUpdate } = useServiceWorkerUpdate()
 
   useEffect(() => {
     if (showLogoutConfirm) {
@@ -114,8 +116,32 @@ export function SettingsPage() {
 
       {/* App */}
       <SectionCard title={t('settings.app')}>
-        <MenuItem label={t('settings.language')} to="/settings/language" icon={LuGlobe} last />
+        {updateReady && (
+          <button
+            onClick={applyUpdate}
+            className="flex items-center gap-3 px-4 py-3.5 w-full text-left transition-colors"
+            style={{
+              borderBottom: '1px solid rgba(255,255,255,0.08)',
+              color: 'inherit',
+              background: 'rgba(245,158,11,0.06)',
+            }}
+          >
+            <LuRefreshCw className="w-4 h-4 flex-shrink-0" style={{ color: '#f59e0b' }} />
+            <span className="flex-1 text-sm font-medium" style={{ color: '#f59e0b' }}>{t('settings.updateApp')}</span>
+          </button>
+        )}
+        <MenuItem label={t('settings.language')} to="/settings/language" icon={LuGlobe} />
         <MenuItem label={t('settings.help')}     to="/help"              icon={LuCircleHelp} />
+        <a
+          href="https://sadhana.pro"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 px-4 py-3.5 transition-colors"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.08)', color: 'inherit', textDecoration: 'none' }}
+        >
+          <LuInfo className="w-4 h-4 flex-shrink-0" style={{ color: '#f59e0b' }} />
+          <span className="flex-1 text-sm font-medium text-base-content">{t('settings.about')}</span>
+        </a>
       </SectionCard>
 
       {/* Logout — lives in the settings surface (now a glass popup) */}

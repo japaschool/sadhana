@@ -262,6 +262,8 @@
     "app": "App",
     "language": "Language",
     "help": "Help & FAQ",
+    "about": "About Sadhana",
+    "updateApp": "Update app",
     "saved": "Changes saved",
     "currentPassword": "Current password",
     "subtitle": "Account & preferences",
