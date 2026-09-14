@@ -600,6 +600,7 @@ function ReportCard({
           <FaTrash className="w-3 h-3" />
         </button>
         <button
+          data-testid="report-card-toggle"
           onClick={() => setOpen(o => !o)}
           className="w-7 h-7 flex items-center justify-center rounded-xl flex-shrink-0"
           style={{ background: 'rgba(0,0,0,0.05)', color: 'rgba(242,244,246,0.65)', border: 'none' }}

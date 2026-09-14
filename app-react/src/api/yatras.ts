@@ -48,7 +48,7 @@ export const yatrasApi = {
     await apiClient.put(`/yatra/${yatraId}/users/${userId}/toggle_admin`)
   },
   async reorderPractices(yatraId: string, practiceIds: string[]): Promise<void> {
-    await apiClient.put(`/yatra/${yatraId}/practices`, { practices: practiceIds })
+    await apiClient.put(`/yatra/${yatraId}/practices/reorder`, { practices: practiceIds })
   },
   async createYatraPractice(yatraId: string, data: { practice: string; data_type: PracticeDataType }): Promise<void> {
     await apiClient.post(`/yatra/${yatraId}/practices`, {

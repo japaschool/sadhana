@@ -21,7 +21,7 @@ type PracticeFormMode = { type: 'user' } | { type: 'yatra'; yatraId: string }
 
 interface PracticeFormProps {
   mode: PracticeFormMode
-  initialValues?: { name: string; dataType: PracticeDataType; isRequired?: boolean; dropdownVariants?: string; id?: string }
+  initialValues?: { name: string; dataType: PracticeDataType; isRequired?: boolean; dropdownVariants?: string; id?: string; isActive?: boolean }
   onSuccess: () => void
 }
 
@@ -75,6 +75,7 @@ export function PracticeForm({ mode, initialValues, onSuccess }: PracticeFormPro
       const data = {
         practice: name,
         data_type: dataType,
+        is_active: initialValues?.isActive ?? true,
         is_required: isRequired || undefined,
         dropdown_variants: dataType === 'Text' ? dropdownVariants || undefined : undefined,
       }

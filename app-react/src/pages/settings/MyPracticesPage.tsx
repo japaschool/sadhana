@@ -38,7 +38,7 @@ function SortableRow({
 }: {
   practice: UserPractice
   onDelete: (id: string) => void
-  onToggleActive: (id: string, active: boolean) => void
+  onToggleActive: (practice: UserPractice) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: practice.id })
   const { t } = useTranslation()
@@ -108,7 +108,7 @@ function SortableRow({
         <button
           type="button"
           aria-label={practice.is_active ? t('practice.hide') : t('practice.show')}
-          onClick={() => onToggleActive(practice.id, !practice.is_active)}
+          onClick={() => onToggleActive(practice)}
           className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-xl transition-colors"
           style={{ color: practice.is_active ? 'rgba(242,244,246,0.45)' : '#f59e0b', border: 'none', background: 'none' }}
         >
@@ -170,8 +170,14 @@ export function MyPracticesPage() {
   })
 
   const toggleActive = useMutation({
-    mutationFn: ({ id, active }: { id: string; active: boolean }) =>
-      practicesApi.updateUserPractice(id, { is_active: active }),
+    mutationFn: (practice: UserPractice) =>
+      practicesApi.updateUserPractice(practice.id, {
+        practice: practice.practice,
+        data_type: practice.data_type,
+        is_active: !practice.is_active,
+        is_required: practice.is_required || undefined,
+        dropdown_variants: practice.dropdown_variants || undefined,
+      }),
     onSuccess: () => {
       initialized.current = false
       qc.invalidateQueries({ queryKey: ['practices'] })
@@ -241,7 +247,7 @@ export function MyPracticesPage() {
                   key={p.id}
                   practice={p}
                   onDelete={(id) => deleteMutation.mutate(id)}
-                  onToggleActive={(id, active) => toggleActive.mutate({ id, active })}
+                  onToggleActive={(practice) => toggleActive.mutate(practice)}
                 />
               ))}
             </div>

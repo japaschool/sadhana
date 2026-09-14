@@ -192,25 +192,26 @@ describe('ChartsPage — Y-axis select', () => {
         </MemoryRouter>
       </QueryClientProvider>
     )
-    // Wait for reports to load (the manage section shows a count)
-    await screen.findByText(/manage reports/i)
-    // Find Y-axis selects (only present when manage panel is open)
-    const selects = screen.queryAllByRole('combobox', { name: /y-axis/i })
-    if (selects.length > 0) {
-      await user.selectOptions(selects[0], 'Y2')
-      await waitFor(() => {
-        expect(vi.mocked(chartsApi.updateReport)).toHaveBeenCalledWith(
-          'r1',
-          'Test Report',
-          expect.objectContaining({
-            Graph: expect.objectContaining({
-              traces: expect.arrayContaining([
-                expect.objectContaining({ y_axis: 'Y2' }),
-              ]),
-            }),
-          })
-        )
-      })
-    }
+    // Open outer manage accordion, then expand the report card's trace editor
+    const manageBtn = await screen.findByText(/manage reports/i)
+    await user.click(manageBtn)
+    const cardToggle = await screen.findByTestId('report-card-toggle')
+    await user.click(cardToggle)
+    // Y-axis select is now visible inside the open trace editor
+    const select = await screen.findByRole('combobox', { name: /y-axis/i })
+    await user.selectOptions(select, 'Y2')
+    await waitFor(() => {
+      expect(vi.mocked(chartsApi.updateReport)).toHaveBeenCalledWith(
+        'r1',
+        'Test Report',
+        expect.objectContaining({
+          Graph: expect.objectContaining({
+            traces: expect.arrayContaining([
+              expect.objectContaining({ y_axis: 'Y2' }),
+            ]),
+          }),
+        })
+      )
+    })
   })
 })

@@ -65,6 +65,7 @@ export function PracticeEditPage() {
           isRequired: practice.is_required,
           dropdownVariants: practice.dropdown_variants,
           id: practice.id,
+          isActive: practice.is_active,
         }}
         onSuccess={() => navigate('/user/practices')}
       />

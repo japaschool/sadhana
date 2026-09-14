@@ -42,7 +42,13 @@ describe('MyPracticesPage', () => {
     const hideBtn = await screen.findByLabelText('Hide practice')
     fireEvent.click(hideBtn)
     await waitFor(() => {
-      expect(vi.mocked(practicesApi.updateUserPractice)).toHaveBeenCalledWith('1', { is_active: false })
+      expect(vi.mocked(practicesApi.updateUserPractice)).toHaveBeenCalledWith('1', {
+        practice: 'Meditation',
+        data_type: 'Bool',
+        is_active: false,
+        is_required: undefined,
+        dropdown_variants: undefined,
+      })
     })
   })
 })
