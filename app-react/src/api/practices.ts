@@ -13,7 +13,7 @@ export const practicesApi = {
   },
   async updateUserPractice(id: string, data: { practice?: string; data_type?: PracticeDataType; is_active?: boolean; is_required?: boolean; dropdown_variants?: string }): Promise<void> {
     await apiClient.put(`/user/practice/${id}`, {
-      user_practice: { id, is_active: true, ...data },
+      user_practice: { id, ...data },
     })
   },
   async deleteUserPractice(id: string): Promise<void> {

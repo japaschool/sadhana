@@ -89,6 +89,8 @@
     "deleteConfirm": "Delete",
     "empty": "No practices yet",
     "edit": "Edit practice",
+    "hide": "Hide practice",
+    "show": "Show practice",
     "notFound": "Not found",
     "typeBool": "Yes / No",
     "typeInt": "Count",

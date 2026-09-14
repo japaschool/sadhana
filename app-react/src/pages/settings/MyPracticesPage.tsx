@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { FaGripVertical, FaEdit, FaTrash, FaPlus, FaLayerGroup } from 'react-icons/fa'
+import { FaGripVertical, FaEdit, FaTrash, FaPlus, FaLayerGroup, FaEye, FaEyeSlash } from 'react-icons/fa'
 import { LuToggleRight, LuHash, LuTimer, LuClock, LuType, LuX } from 'react-icons/lu'
 import {
   DndContext,
@@ -31,13 +31,21 @@ const TYPE_META: Record<string, { icon: React.ComponentType<{ className?: string
   Text:     { icon: LuType,        color: '#fb7185', bg: 'rgba(251,113,133,0.16)', tKey: 'practice.typeText'     },
 }
 
-function SortableRow({ practice, onDelete }: { practice: UserPractice; onDelete: (id: string) => void }) {
+function SortableRow({
+  practice,
+  onDelete,
+  onToggleActive,
+}: {
+  practice: UserPractice
+  onDelete: (id: string) => void
+  onToggleActive: (id: string, active: boolean) => void
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: practice.id })
   const { t } = useTranslation()
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0.4 : practice.is_active ? 1 : 0.4,
   }
   const modalId = `delete-practice-${practice.id}`
   const meta = TYPE_META[practice.data_type] ?? TYPE_META.Text
@@ -79,7 +87,7 @@ function SortableRow({ practice, onDelete }: { practice: UserPractice; onDelete:
         {/* Name */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="font-semibold text-base-content text-sm truncate">{practice.practice}</span>
+            <span className="font-semibold text-base-content text-sm truncate" style={{ textDecoration: practice.is_active ? undefined : 'line-through' }}>{practice.practice}</span>
             {practice.is_required && (
               <span className="text-xs font-bold flex-shrink-0" style={{ color: '#e11d48' }}>*</span>
             )}
@@ -95,6 +103,20 @@ function SortableRow({ practice, onDelete }: { practice: UserPractice; onDelete:
         >
           <FaEdit className="w-3.5 h-3.5" />
         </Link>
+
+        {/* Hide/show toggle */}
+        <button
+          type="button"
+          aria-label={practice.is_active ? t('practice.hide') : t('practice.show')}
+          onClick={() => onToggleActive(practice.id, !practice.is_active)}
+          className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-xl transition-colors"
+          style={{ color: practice.is_active ? 'rgba(242,244,246,0.45)' : '#f59e0b', border: 'none', background: 'none' }}
+        >
+          {practice.is_active
+            ? <FaEye className="w-3.5 h-3.5" />
+            : <FaEyeSlash className="w-3.5 h-3.5" />
+          }
+        </button>
 
         {/* Delete */}
         <button
@@ -145,6 +167,16 @@ export function MyPracticesPage() {
       initialized.current = false
       qc.invalidateQueries({ queryKey: ['practices'] })
     },
+  })
+
+  const toggleActive = useMutation({
+    mutationFn: ({ id, active }: { id: string; active: boolean }) =>
+      practicesApi.updateUserPractice(id, { is_active: active }),
+    onSuccess: () => {
+      initialized.current = false
+      qc.invalidateQueries({ queryKey: ['practices'] })
+    },
+    onError: () => showToast({ message: t('settings.reorderFailed'), variant: 'error' }),
   })
 
   function handleDragEnd(event: DragEndEvent) {
@@ -205,7 +237,12 @@ export function MyPracticesPage() {
           <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col gap-2">
               {items.map((p) => (
-                <SortableRow key={p.id} practice={p} onDelete={(id) => deleteMutation.mutate(id)} />
+                <SortableRow
+                  key={p.id}
+                  practice={p}
+                  onDelete={(id) => deleteMutation.mutate(id)}
+                  onToggleActive={(id, active) => toggleActive.mutate({ id, active })}
+                />
               ))}
             </div>
           </SortableContext>
