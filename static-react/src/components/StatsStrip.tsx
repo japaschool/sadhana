@@ -1,43 +1,26 @@
-import { motion } from 'framer-motion'
-
-const stats = [
-  { value: '10 000+', label: 'Active Users' },
-  { value: '50+', label: 'Practice Types' },
-  { value: '100%', label: 'Free to Use' },
-  { value: '3', label: 'Languages' },
-]
+import { useTranslation } from 'react-i18next'
 
 export default function StatsStrip() {
+  const { t } = useTranslation()
+
+  const stats = [
+    { value: '5', label: t('landing.stats.typesLabel') },
+    { value: '3', label: t('landing.stats.langLabel') },
+    { value: '100%', label: t('landing.stats.offlineLabel') },
+  ]
+
   return (
-    <section
-      className="py-14 px-6"
-      style={{ background: 'oklch(16% 0.08 165)' }}
-    >
-      <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
-        {stats.map((s, i) => (
-          <motion.div
-            key={i}
-            className="text-center"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: i * 0.1 }}
-            viewport={{ once: true }}
-          >
-            <div
-              className="text-3xl md:text-4xl font-bold mb-1"
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                background: 'linear-gradient(135deg, #ffffff 0%, oklch(82% 0.18 155) 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              {s.value}
+    <section className="py-16 px-6 bg-[#0b0b0d]">
+      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+        <p className="text-white/70 max-w-sm">{t('landing.stats.intro')}</p>
+        <div className="grid grid-cols-3 gap-8">
+          {stats.map((s) => (
+            <div key={s.label} className="flex flex-col gap-1">
+              <span className="font-serif text-4xl text-white">{s.value}</span>
+              <span className="text-[11px] uppercase tracking-wide text-white/50">{s.label}</span>
             </div>
-            <div className="text-white/50 text-xs tracking-widest uppercase">{s.label}</div>
-          </motion.div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   )

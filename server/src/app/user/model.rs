@@ -98,6 +98,37 @@ impl User {
         Ok(token)
     }
 
+    pub fn signin_oauth(
+        conn: &mut PgConnection,
+        email: &str,
+        name: &str,
+    ) -> Result<(User, Token), AppError> {
+        if let Ok(user) = users::table
+            .filter(users::email.eq(email))
+            .first::<User>(conn)
+        {
+            let token = user.generate_token()?;
+            return Ok((user, token));
+        }
+
+        let hashed = hasher::hash_password(&uuid::Uuid::new_v4().to_string())?;
+        let record = SignupUser { email, hash: &hashed, name };
+        let user = diesel::insert_into(users::table)
+            .values(&record)
+            .get_result::<User>(conn)?;
+
+        sql_query(
+            r#"INSERT INTO user_practices (user_id, practice, data_type, is_active, order_key)
+               SELECT $1, practice, data_type, true, order_key
+               FROM default_user_practices WHERE lang = 'en'"#,
+        )
+        .bind::<DieselUuid, _>(&user.id)
+        .execute(conn)?;
+
+        let token = user.generate_token()?;
+        Ok((user, token))
+    }
+
     pub fn find(conn: &mut PgConnection, id: &Uuid) -> Result<Self, AppError> {
         let user = users::table.find(id).first(conn)?;
         Ok(user)

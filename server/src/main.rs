@@ -44,6 +44,7 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .wrap(Logger::default())
+            .wrap(actix_web::middleware::Compress::default())
             .app_data(Data::new(app_state))
             .wrap(middleware::cors::cors())
             .wrap(middleware::auth::Authentication)

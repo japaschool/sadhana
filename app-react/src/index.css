@@ -1,0 +1,96 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+@theme {
+  --font-serif: 'Playfair Display', ui-serif, Georgia, serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-base-100: #0e141b;
+  --color-base-200: #151d27;
+  --color-base-300: #1b2531;
+  --color-base-content: #eef3f8;
+  --color-primary: #f59e0b;
+  --color-primary-content: #1c1005;
+  --color-secondary: #a8b0bf;
+  --color-secondary-content: #101a30;
+  --color-accent: #fcd34d;
+  --color-accent-content: #1c1005;
+  --color-neutral: #313d4b;
+  --color-neutral-content: #f2f4f6;
+  --color-info: #5aa9e6;
+  --color-info-content: #101a30;
+  --color-success: #3fb98f;
+  --color-success-content: #101a30;
+  --color-warning: #e0a336;
+  --color-warning-content: #101a30;
+  --color-error: #f2607b;
+  --color-error-content: #101a30;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --color-base-100: #f4f5f7;
+  --color-base-200: #e9ebef;
+  --color-base-300: #d8dbe1;
+  --color-base-content: #1f2937;
+  --color-primary: #f59e0b;
+  --color-primary-content: #1c1005;
+  --color-secondary: #64748b;
+  --color-secondary-content: #ffffff;
+  --color-accent: #fcd34d;
+  --color-accent-content: #1c1005;
+  --color-neutral: #334155;
+  --color-neutral-content: #f8fafc;
+  --color-info: #2f80c4;
+  --color-info-content: #ffffff;
+  --color-success: #2f9e6f;
+  --color-success-content: #ffffff;
+  --color-warning: #c98a1e;
+  --color-warning-content: #ffffff;
+  --color-error: #d24b62;
+  --color-error-content: #ffffff;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Hide native number-input spinners globally */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Native <select> option popups: match the Deep Ink surface instead of the
+   OS default grey. Scoped to the dark theme so light theme is unaffected. */
+[data-theme="dark"] option {
+  background-color: #151d27;
+  color: #eef3f8;
+}
+[data-theme="dark"] option:checked,
+[data-theme="dark"] option:hover {
+  background-color: #1b2531;
+}

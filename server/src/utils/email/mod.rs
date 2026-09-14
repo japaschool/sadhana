@@ -10,7 +10,7 @@ pub async fn send_email_smtp(to: &str, subject: &str, body: String) -> Result<()
     let user = vars::smtp_username();
     let mut mailer_builder =
         AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&vars::smtp_host())?
-            .port(587)
+            .port(vars::smtp_port())
             .hello_name(ClientId::Domain("sadhana.pro".to_string()));
 
     if !vars::smtp_tls_enabled() {

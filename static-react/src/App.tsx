@@ -1,47 +1,34 @@
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
-import PhoneCarousel from './components/PhoneCarousel'
-import FeaturesGrid from './components/FeaturesGrid'
-import PracticeCategories from './components/PracticeCategories'
-import TrackBanner from './components/TrackBanner'
+import { SocialStrip } from './components/SocialStrip'
+import StatsStrip from './components/StatsStrip'
+import { FeatureRow } from './components/FeatureRow'
+import { FeatureSplits } from './components/FeatureSplits'
+import { TestimonialSpotlight } from './components/TestimonialSpotlight'
+import { CtaSection } from './components/CtaSection'
 import Footer from './components/Footer'
 
-import shotHome from './assets/shot-home.jpg'
-import shotOffline from './assets/shot-offline.jpg'
-import shotAddPractice from './assets/shot-add-practice.jpg'
-import shotCharts from './assets/shot-charts.jpg'
-import shotGroup from './assets/shot-group.jpg'
-import shotFaq from './assets/shot-faq.jpg'
-
 export default function App() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
-  const slides = [
-    { src: shotHome,        caption: t('preview.slide1') },
-    { src: shotOffline,     caption: t('preview.slide2') },
-    { src: shotAddPractice, caption: t('preview.slide3') },
-    { src: shotCharts,      caption: t('preview.slide4') },
-    { src: shotGroup,       caption: t('preview.slide5') },
-    { src: shotFaq,         caption: t('preview.slide6') },
-  ]
+  useEffect(() => {
+    document.title = t('meta.title')
+    document.querySelector('meta[name="description"]')?.setAttribute('content', t('meta.description'))
+    document.querySelector('meta[name="keywords"]')?.setAttribute('content', t('meta.keywords'))
+  }, [t, i18n.resolvedLanguage])
 
   return (
-    <div data-theme="sadhana" className="font-sans">
-      <div className="fixed top-0 left-0 right-0 z-50">
-        <Navbar />
-      </div>
+    <div className="relative font-sans bg-[#0b0b0d] text-[#f5f4f2] overflow-x-hidden">
+      <Navbar />
       <Hero />
-      <PhoneCarousel
-        id="preview"
-        slides={slides}
-        title={t('preview.carouselTitle')}
-        description={t('preview.carouselDescription')}
-        accent="#3A7D5C"
-      />
-      <FeaturesGrid />
-      <PracticeCategories />
-      <TrackBanner />
+      <SocialStrip />
+      <StatsStrip />
+      <FeatureRow />
+      <FeatureSplits />
+      <TestimonialSpotlight />
+      <CtaSection />
       <Footer />
     </div>
   )

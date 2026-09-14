@@ -1,141 +1,56 @@
-import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import heroBg from '../assets/crowded-scene-indian-city.jpg'
-import shot1 from '../assets/shot-home.jpg'
-import PhoneFrame from './PhoneFrame'
+import { Pill } from './Pill'
+import heroBg from '../assets/1.jpg'
+
+const APP_URL = 'https://app.sadhana.pro/'
 
 export default function Hero() {
-  const { i18n, t } = useTranslation()
-  const lang = (i18n.resolvedLanguage || i18n.language || 'en').slice(0, 2)
-  const href = lang === 'uk' ? 'https://mapp.sadhana.pro/' : 'https://app.sadhana.pro/'
-  const [showCue, setShowCue] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShowCue(true), 1500)
-    const onScroll = () => { if (window.scrollY > 60) setScrolled(true) }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => { clearTimeout(timer); window.removeEventListener('scroll', onScroll) }
-  }, [])
+  const { t } = useTranslation()
 
   return (
-    <section className="relative min-h-[100dvh] flex items-start lg:items-center justify-center overflow-hidden pt-[120px] md:pt-[120px] lg:pt-0">
-      {/* Background */}
-      <img
-        src={heroBg}
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover select-none"
-        draggable={false}
-        style={{
-          objectPosition: 'center 65%',
-          animation: 'kenburns 20s ease-out forwards',
-          transformOrigin: 'center 65%',
-        }}
-      />
-      <style>{`
-        @keyframes kenburns {
-          0%   { transform: scale(1.18) translate(-15px, -25px); }
-          100% { transform: scale(1.0) translate(0px, 0px); }
-        }
-      `}</style>
-
-      {/* Overlay */}
-      <div
-        className="absolute inset-0"
-        style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.18) 60%, rgba(237,232,227,1) 100%)' }}
-        aria-hidden="true"
-      />
-
-      {/* Frosted glass card */}
+    <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden">
+      {/* Background with slow zoom */}
       <motion.div
-        className="relative z-10 mx-6 w-full max-w-3xl mb-8 lg:mt-16 lg:mb-0"
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${heroBg})` }}
+        initial={{ scale: 1.1 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 10, ease: 'easeOut' }}
+        aria-hidden="true"
+      />
+
+      {/* Gradient overlay */}
+      <div
+        className="absolute inset-0 bg-linear-to-b from-black/70 via-black/40 to-black/85"
+        aria-hidden="true"
+      />
+
+      {/* Content */}
+      <motion.div
+        className="relative z-10 text-center px-6 flex flex-col items-center gap-6 max-w-3xl mx-auto"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
+        transition={{ duration: 0.9, ease: 'easeOut' }}
       >
-        <div
-          className="rounded-3xl p-6 sm:p-10 md:p-10 lg:p-20 flex flex-col md:flex-row items-stretch gap-6 md:gap-10"
-          style={{
-            background: 'rgba(255,255,255,0.16)',
-            backdropFilter: 'blur(28px)',
-            WebkitBackdropFilter: 'blur(28px)',
-            border: '1px solid rgba(255,255,255,0.28)',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
-          }}
-        >
-          <div className="hidden md:flex flex-shrink-0">
-            <PhoneFrame src={shot1} alt="App preview" accentColor="#3E8D6B" size="sm" />
-          </div>
+        {/* Badge */}
+        <span className="inline-flex items-center rounded-full border border-white/20 text-white/80 text-xs px-3 py-1">
+          {t('landing.hero.badge')}
+        </span>
 
-          {/* Text */}
-          <div className="flex-1 text-white flex flex-col gap-5">
-            <motion.h1
-              className="text-4xl md:text-5xl font-medium leading-none"
-              style={{ fontFamily: "'Playfair Display', serif", color: '#fff' }}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15, duration: 0.7 }}
-            >
-              Sadhana Pro
-            </motion.h1>
-            <motion.p
-              className="font-medium leading-snug"
-              style={{ color: 'rgba(255,255,255,0.70)', fontFamily: "'Inter', sans-serif", fontSize: '16.8px' }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.25 }}
-            >
-              {t('landing.subtitle')}
-            </motion.p>
-            <motion.p
-              className="leading-relaxed"
-              style={{ color: 'rgba(255,255,255,0.60)', fontSize: '14.5px' }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.35 }}
-            >
-              {t('landing.description')}
-            </motion.p>
-            <motion.a
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block self-start mt-auto px-7 py-2.5 rounded-full font-semibold text-sm"
-              style={{
-                background: 'rgba(255,255,255,0.18)',
-                border: '1.5px solid rgba(255,255,255,0.45)',
-                color: '#fff',
-              }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              whileHover={{ background: 'rgba(255,255,255,0.28)' } as never}
-              whileTap={{ scale: 0.97 }}
-            >
-              {t('cta.openNow', 'Open Now')}
-            </motion.a>
-          </div>
-        </div>
-      </motion.div>
+        {/* Headline */}
+        <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl leading-[1.05] text-white">
+          <span className="block">{t('landing.hero.title1')}</span>
+          <span className="block">{t('landing.hero.title2')}</span>
+        </h1>
 
-      {/* Scroll cue */}
-      <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: showCue && !scrolled ? 1 : 0 }}
-        transition={{ duration: 0.6 }}
-        aria-hidden="true"
-      >
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,0.60)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </motion.div>
+        {/* Subtitle */}
+        <p className="text-white/70 max-w-xl text-base md:text-lg leading-relaxed">
+          {t('landing.hero.subtitle')}
+        </p>
+
+        {/* CTA */}
+        <Pill href={APP_URL}>{t('landing.hero.cta')}</Pill>
       </motion.div>
     </section>
   )

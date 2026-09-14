@@ -38,7 +38,7 @@ static LANG: Lazy<String> = Lazy::new(|| {
             })
         })
         .and_then(|l| l.split('_').next().map(|x| x.to_owned()))
-        .unwrap_or("ru".to_string())
+        .unwrap_or("en".to_string())
 });
 
 #[macro_export]

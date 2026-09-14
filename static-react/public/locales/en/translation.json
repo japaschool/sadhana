@@ -1,9 +1,110 @@
 {
   "landing": {
     "title": "Sadhana Pro",
-    "subtitle": "Sadhana tracker and chart — a tracker for spiritual practice, meditation, and habits",
+    "subtitle": "Sadhana tracker and chart - a tracker for spiritual practice, meditation, and habits",
     "description": "Sadhana Pro is a powerful and flexible sadhana (daily spiritual practice) diary that helps you track your daily practices, habits, and meditation. You can track your activities in convenient tables or monitor your progress on visual graphs. The app is ideal for both regular spiritual practice and systematically tracking your daily tasks and habits. With Sadhana Pro, you can consciously develop your spiritual discipline.",
-    "freeForever": "Free forever · No credit card required"
+    "nav": {
+      "features": "Features",
+      "practices": "Practices",
+      "charts": "Charts",
+      "signIn": "Sign in",
+      "getStarted": "Get started"
+    },
+    "hero": {
+      "badge": "New · Group yatras",
+      "title1": "Practice with intention.",
+      "title2": "Track what truly matters.",
+      "subtitle": "Sadhana Pro helps you build lasting spiritual habits — log daily, join group yatras, and watch your progress unfold.",
+      "cta": "Get started"
+    },
+    "social": {
+      "line": "Trusted by practitioners building a steady daily sadhana."
+    },
+    "stats": {
+      "intro": "Everything you need to sustain a practice — from first log to long-term insight.",
+      "typesLabel": "practice types",
+      "langLabel": "languages",
+      "offlineLabel": "offline-first"
+    },
+    "features": {
+      "label": "Core",
+      "title": "Built for daily practice",
+      "items": {
+        "custom": {
+          "title": "Custom practices",
+          "desc": "Track anything: minutes, counts, times, notes, or simple done/not."
+        },
+        "offline": {
+          "title": "Offline-first",
+          "desc": "Log anywhere; changes sync when you're back online."
+        },
+        "yatras": {
+          "title": "Group yatras",
+          "desc": "Practice together and see the group's stability at a glance."
+        },
+        "charts": {
+          "title": "Insightful charts",
+          "desc": "Turn daily logs into trends that keep you going."
+        }
+      }
+    },
+    "splitA": {
+      "label": "Practices",
+      "title": "Your practice canvas",
+      "description": "Shape a practice that fits your life. Add what you want to track, mark what's required, and log it in seconds each day.",
+      "cta": "Explore practices",
+      "step1": "Add practices",
+      "step2": "Mark what's required",
+      "step3": "Log daily",
+      "step4": "Review trends"
+    },
+    "splitB": {
+      "label": "Insights",
+      "title": "See your progress",
+      "description": "Charts turn your daily logs into patterns — so you can see what's working and adjust.",
+      "cta": "Explore charts",
+      "step1": "Pick practices",
+      "step2": "Choose a range",
+      "step3": "Read the trend",
+      "step4": "Adjust your routine"
+    },
+    "splitC": {
+      "label": "Yatras",
+      "title": "Practice together",
+      "description": "Join a yatra to share the journey — see each member's consistency and encourage one another.",
+      "cta": "Explore yatras"
+    },
+    "testimonial": {
+      "heading": "How practitioners built a lasting sadhana",
+      "quote": "Sadhana turned scattered intentions into a steady daily rhythm — watching the streak build keeps me honest.",
+      "author": "Illustrative — a Sadhana practitioner",
+      "stat": "365 days"
+    },
+    "cta": {
+      "title": "Ready to deepen your practice?",
+      "subtitle": "Start tracking today — it's free.",
+      "button": "Get started"
+    },
+    "footer": {
+      "product": {
+        "title": "Product",
+        "practices": "Practices",
+        "charts": "Charts",
+        "yatras": "Yatras"
+      },
+      "company": {
+        "title": "Company",
+        "about": "About",
+        "contact": "Contact"
+      },
+      "resources": {
+        "title": "Resources",
+        "help": "Help",
+        "privacy": "Privacy"
+      },
+      "copyright": "© 2026 Sadhana Pro",
+      "tagline": "Build a steady daily sadhana."
+    }
   },
   "keyFeatures": {
     "title": "Key Features",
@@ -23,41 +124,22 @@
     "dataDescription": "Import and export your data as CSV files for backup and analysis."
   },
   "preview": {
-    "carouselTitle": "Your practice, beautifully tracked",
-    "carouselDescription": "Browse all 6 screens of Sadhana Pro and see how easy it is to track any spiritual practice.",
-    "slide1": "Track your daily sadhana — japa, wake time, reading, and more",
-    "slide2": "Works offline — syncs when you're back online",
-    "slide3": "Add any practice with custom data types",
-    "slide4": "Visual graphs across multiple metrics over time",
-    "slide5": "Group tracking — see your sangha's progress together",
-    "slide6": "Built-in support with video guides and direct contact"
-  },
-  "practices": {
-    "title": "Track any practice, any tradition",
-    "meditation": "Meditation",
-    "yoga": "Yoga",
-    "breathwork": "Breathwork",
-    "journaling": "Journaling",
-    "chanting": "Chanting",
-    "reading": "Reading",
-    "prayer": "Prayer",
-    "fasting": "Fasting",
-    "sleep": "Sleep",
-    "exercise": "Exercise",
-    "coldShower": "Cold Shower",
-    "anyHabit": "Any Habit"
+    "title": "Preview",
+    "slide1": "Log your sadhana on the home screen",
+    "slide2": "Logged data while offline will be synced up when connectivity restored",
+    "slide3": "Add your own practices of various types",
+    "slide4": "Observe your progress on highly customisable visual graphs",
+    "slide5": "Observe your progress on highly customisable visual graphs",
+    "slide6": "The data can also be viewed as a table view",
+    "slide7": "Join into groups to support each other when going gets tough",
+    "slide8": "Support page has FAQ with video guides and ways to contact the developers"
   },
   "trackAnything": "Track Anything, Anywhere",
   "trackAnythingText": "Use Sadhana Pro to track your daily sadhana, yoga practices, meditation, journaling, reading, or any personal habits. With full offline mode and phone installation support, your data stays with you wherever you go.",
   "footer": {
-    "copyright": "© Sadhana Pro 2025. All rights reserved.",
-    "tagline": "Made with 🙏 for practitioners everywhere",
-    "practices": "Practices",
-    "community": "Community",
-    "joinGroup": "Join Group",
-    "videoGuides": "Video Guides",
-    "support": "Support"
-  },
+    "copyright": "© Sadhana Pro 2025. All rights reserved."
+  }
+  ,
   "meta": {
     "title": "Sadhana Tracker, Journal & Chart — Track Your Spiritual Practice, Meditation, and Habits",
     "description": "Sadhana Pro is your customizable daily sadhana journal, chart, and spiritual practice tracker. Record your progress in meditation, yoga, chanting, or daily habits with reports, offline mode, graph sharing, and CSV export.",
