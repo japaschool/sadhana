@@ -162,7 +162,10 @@
     "barLayoutOverlaid": "Накладені",
     "traceCustomLabel": "Мітка",
     "showAverage": "Показати середнє",
-    "download": "Завантажити"
+    "download": "Завантажити",
+    "yAxis": "Вісь Y",
+    "yAxisAuto": "Авто",
+    "yAxisRight": "Права вісь"
   },
   "yatras": {
     "empty": "Ятри не знайдено",

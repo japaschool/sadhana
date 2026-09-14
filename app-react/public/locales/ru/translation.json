@@ -162,7 +162,10 @@
     "barLayoutOverlaid": "Наложенные",
     "traceCustomLabel": "Ярлык",
     "showAverage": "Показать среднее",
-    "download": "Скачать"
+    "download": "Скачать",
+    "yAxis": "Ось Y",
+    "yAxisAuto": "Авто",
+    "yAxisRight": "Правая ось"
   },
   "yatras": {
     "empty": "Ятры не найдены",

@@ -144,7 +144,7 @@ function ChartPanel({ report, practices, practiceMap, chartHeight = 290 }: Chart
 
   const byId = new Map(practices.map((p) => [p.id, p]))
 
-  const traces: { name: string; type_: TraceType; color: string; dataType: PracticeDataType; showAverage: boolean }[] =
+  const traces: { name: string; type_: TraceType; color: string; dataType: PracticeDataType; showAverage: boolean; yAxis: string | null }[] =
     report === null
       ? activePractices.map((p, i) => ({
           name: p.practice,
@@ -152,6 +152,7 @@ function ChartPanel({ report, practices, practiceMap, chartHeight = 290 }: Chart
           color: TRACE_COLORS[i % TRACE_COLORS.length],
           dataType: p.data_type,
           showAverage: false,
+          yAxis: null,
         }))
       : isGrid(report.definition)
         ? report.definition.Grid.practices.map((pid, i) => ({
@@ -160,6 +161,7 @@ function ChartPanel({ report, practices, practiceMap, chartHeight = 290 }: Chart
             color: TRACE_COLORS[i % TRACE_COLORS.length],
             dataType: byId.get(pid)?.data_type ?? 'Int',
             showAverage: false,
+            yAxis: null,
           }))
         : report.definition.Graph.traces.map((t, i) => ({
             name: practiceMap[t.practice] ?? t.practice,
@@ -167,6 +169,7 @@ function ChartPanel({ report, practices, practiceMap, chartHeight = 290 }: Chart
             color: TRACE_COLORS[i % TRACE_COLORS.length],
             dataType: byId.get(t.practice)?.data_type ?? 'Int',
             showAverage: t.show_average,
+            yAxis: t.y_axis,
           }))
 
   const visibleTraces = selectedPractice
@@ -181,19 +184,25 @@ function ChartPanel({ report, practices, practiceMap, chartHeight = 290 }: Chart
   )
   const isGridReport = report !== null && isGrid(report.definition)
 
-  const usedAxes = new Set(visibleTraces.map((t) => axisKindFor(t.dataType)))
+  function resolveAxisId(yAxis: string | null, dataType: PracticeDataType): string {
+    if (yAxis === 'Y2' && axisKindFor(dataType) === 'num') return 'num-right'
+    return axisKindFor(dataType)
+  }
+
+  const usedAxes = new Set(visibleTraces.map((t) => resolveAxisId(t.yAxis, t.dataType)))
   const numAxisAllDuration =
-    visibleTraces.filter((t) => axisKindFor(t.dataType) === 'num').every((t) => t.dataType === 'Duration') &&
-    visibleTraces.some((t) => axisKindFor(t.dataType) === 'num')
+    visibleTraces.filter((t) => ['num', 'num-right'].includes(resolveAxisId(t.yAxis, t.dataType)))
+      .every((t) => t.dataType === 'Duration') &&
+    visibleTraces.some((t) => ['num', 'num-right'].includes(resolveAxisId(t.yAxis, t.dataType)))
 
   const averages = visibleTraces
     .filter((t) => t.showAverage)
     .map((t) => {
       const entries = rawValues.filter((e: { practice: string }) => e.practice === t.name)
       const avg = averageForType(entries as { cob_date: string; value: unknown }[], t.dataType, todayCob)
-      return avg === null ? null : { axis: axisKindFor(t.dataType), value: avg, color: t.color }
+      return avg === null ? null : { axis: resolveAxisId(t.yAxis, t.dataType), value: avg, color: t.color }
     })
-    .filter((a): a is { axis: 'num' | 'time' | 'unit'; value: number; color: string } => a !== null)
+    .filter((a): a is { axis: string; value: number; color: string } => a !== null)
 
   async function handleDownload() {
     const entries = await chartsApi.getReportData(todayCob, duration)
@@ -274,6 +283,18 @@ function ChartPanel({ report, practices, practiceMap, chartHeight = 290 }: Chart
                   tickFormatter={(v: number) => (numAxisAllDuration ? `${v} min` : String(v))}
                 />
               )}
+              {usedAxes.has('num-right') && (
+                <YAxis
+                  yAxisId="num-right"
+                  orientation="right"
+                  domain={[0, 'auto']}
+                  stroke="rgba(255,255,255,0.15)"
+                  tick={{ fontSize: 10, fill: 'rgba(238,243,248,0.55)' }}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v: number) => (numAxisAllDuration ? `${v} min` : String(v))}
+                />
+              )}
               {usedAxes.has('time') && (
                 <YAxis
                   yAxisId="time"
@@ -308,8 +329,8 @@ function ChartPanel({ report, practices, practiceMap, chartHeight = 290 }: Chart
                   </span>
                 )}
               />
-              {visibleTraces.map(({ name, type_, color, dataType }) => {
-                const yAxisId = axisKindFor(dataType)
+              {visibleTraces.map(({ name, type_, color, dataType, yAxis }) => {
+                const yAxisId = resolveAxisId(yAxis, dataType)
                 const label = traceLabel(type_)
                 if (label === 'Bar') {
                   return <Bar key={name} yAxisId={yAxisId} dataKey={name} fill={color} fillOpacity={0.35} radius={[2, 2, 0, 0]} maxBarSize={20} />
@@ -673,6 +694,18 @@ function ReportCard({
                           />
                           {t('charts.showAverage')}
                         </label>
+                        {/* Y-axis override */}
+                        <select
+                          value={trace.y_axis ?? ''}
+                          onChange={e => changeTrace(trace.practice, { y_axis: e.target.value === '' ? null : e.target.value })}
+                          className="text-xs rounded-lg px-2 h-6 outline-none flex-shrink-0"
+                          style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: TEXT }}
+                          aria-label={t('charts.yAxis')}
+                          title={t('charts.yAxis')}
+                        >
+                          <option value="">{t('charts.yAxisAuto')}</option>
+                          <option value="Y2">{t('charts.yAxisRight')}</option>
+                        </select>
                       </div>
                     </div>
                   ))

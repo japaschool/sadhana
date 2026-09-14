@@ -158,7 +158,10 @@
     "barLayoutOverlaid": "Overlaid",
     "traceCustomLabel": "Custom label",
     "showAverage": "Show average",
-    "download": "Download"
+    "download": "Download",
+    "yAxis": "Y-axis",
+    "yAxisAuto": "Auto",
+    "yAxisRight": "Right axis"
   },
   "yatras": {
     "empty": "No yatras found",

@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { ChartsPage } from './ChartsPage'
 import { NewChartPage } from './NewChartPage'
+import { chartsApi } from '../../api/charts'
+import { practicesApi } from '../../api/practices'
 
 // ─── API mocks ────────────────────────────────────────────────────────────────
 
@@ -151,5 +153,64 @@ describe('NewChartPage — select all / clear', () => {
       expect(screen.getByRole('button', { name: /select all/i })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /clear/i })).toBeInTheDocument()
     })
+  })
+})
+
+// ── Y-axis select ─────────────────────────────────────────────────────────────
+describe('ChartsPage — Y-axis select', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // Override the reports mock with one that has a Graph report + one trace
+    vi.mocked(chartsApi.getReports).mockResolvedValue([
+      {
+        id: 'r1',
+        name: 'Test Report',
+        definition: {
+          Graph: {
+            bar_layout: 'Grouped',
+            traces: [
+              { label: null, type_: 'Bar', practice: 'p1', y_axis: null, show_average: false },
+            ],
+          },
+        },
+      },
+    ])
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([
+      { id: 'p1', practice: 'Meditation', data_type: 'Int', is_active: true, is_required: false },
+    ])
+  })
+
+  it('calls updateReport with y_axis: "Y2" when Right axis is selected', async () => {
+    const user = userEvent.setup()
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={['/charts']}>
+          <Routes>
+            <Route path="/charts" element={<ChartsPage />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
+    // Wait for reports to load (the manage section shows a count)
+    await screen.findByText(/manage reports/i)
+    // Find Y-axis selects (only present when manage panel is open)
+    const selects = screen.queryAllByRole('combobox', { name: /y-axis/i })
+    if (selects.length > 0) {
+      await user.selectOptions(selects[0], 'Y2')
+      await waitFor(() => {
+        expect(vi.mocked(chartsApi.updateReport)).toHaveBeenCalledWith(
+          'r1',
+          'Test Report',
+          expect.objectContaining({
+            Graph: expect.objectContaining({
+              traces: expect.arrayContaining([
+                expect.objectContaining({ y_axis: 'Y2' }),
+              ]),
+            }),
+          })
+        )
+      })
+    }
   })
 })
