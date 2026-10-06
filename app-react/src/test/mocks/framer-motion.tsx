@@ -19,6 +19,10 @@ export const motion = new Proxy(
             transition: _t,
             whileHover: _wh,
             whileTap: _wt,
+            drag: _d,
+            dragConstraints: _dc,
+            dragElastic: _de,
+            onDragEnd: _ode,
             ...rest
           }: React.HTMLAttributes<HTMLElement> & {
             initial?: unknown
@@ -27,6 +31,10 @@ export const motion = new Proxy(
             transition?: unknown
             whileHover?: unknown
             whileTap?: unknown
+            drag?: unknown
+            dragConstraints?: unknown
+            dragElastic?: unknown
+            onDragEnd?: unknown
           },
           ref: React.Ref<HTMLElement>,
         ) => React.createElement(tag, { ...rest, ref }, children),
