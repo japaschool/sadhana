@@ -51,6 +51,7 @@ describe('TodayMobile', () => {
     expect(screen.getByRole('region', { name: 'Practices' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Log' })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('link', { name: 'Log' }).querySelector('svg')).not.toBeNull()
+    expect(screen.getByRole('link', { name: 'Log' })).toHaveTextContent(/^$/)
   })
 
   it('saves a toggle for the selected day', async () => {

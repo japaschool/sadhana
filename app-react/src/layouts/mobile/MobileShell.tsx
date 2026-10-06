@@ -14,7 +14,7 @@ const TABS = [
 
 function TabIcon({ d }: { d: string }) {
   return (
-    <svg aria-hidden viewBox="0 0 1024 1024" className="h-[22px] w-[22px] fill-current">
+    <svg aria-hidden viewBox="0 0 1024 1024" className="h-7 w-7 fill-current">
       <path transform="matrix(1 0 0 -1 0 960)" d={d} />
     </svg>
   )
@@ -24,17 +24,13 @@ function TabBar() {
   const { t } = useTranslation()
   return (
     <nav aria-label={t('today.tabs')}
-      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-ui-control bg-ui-tabbar px-4 pt-2.5 pb-[calc(10px+env(safe-area-inset-bottom))] text-xs font-semibold text-ui-faint2">
+      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-ui-control bg-ui-tabbar px-4 pt-2 pb-[calc(8px+env(safe-area-inset-bottom))] text-ui-faint2">
       {TABS.map((tab) => (
-        <NavLink key={tab.to} to={tab.to} end={tab.to === '/'}
-          className={({ isActive }) => `flex flex-col items-center gap-1.5 ${isActive ? 'text-ui-ink' : ''}`}>
+        <NavLink key={tab.to} to={tab.to} end={tab.to === '/'} aria-label={t(tab.key)} className="flex justify-center">
           {({ isActive }) => (
-            <>
-              <span className={`flex h-7 w-11 items-center justify-center rounded-full ${isActive ? 'bg-ui-accent-pill' : ''}`}>
-                <span className={isActive ? 'text-ui-accent' : ''}><TabIcon d={isActive ? tab.activeIcon : tab.icon} /></span>
-              </span>
-              {t(tab.key)}
-            </>
+            <span className={`flex h-11 w-16 items-center justify-center rounded-full ${isActive ? 'bg-ui-accent-pill text-ui-accent' : ''}`}>
+              <TabIcon d={isActive ? tab.activeIcon : tab.icon} />
+            </span>
           )}
         </NavLink>
       ))}
