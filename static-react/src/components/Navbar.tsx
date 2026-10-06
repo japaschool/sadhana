@@ -19,7 +19,7 @@ export default function Navbar() {
 
   function changeLang(l: 'en' | 'ru' | 'uk') {
     void i18n.changeLanguage(l)
-    window.history.pushState({}, '', l === 'en' ? '/' : `/${l}`)
+    window.history.pushState({}, '', l === 'en' ? '/' : `/${l}/`)
   }
 
   const textColor = scrolled ? 'rgba(28,28,28,0.70)' : 'rgba(255,255,255,0.80)'
