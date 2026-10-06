@@ -2,11 +2,13 @@ import { lazy } from 'react'
 import { createBrowserRouter, isRouteErrorResponse, useRouteError } from 'react-router-dom'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { GuestRoute } from './components/layout/GuestRoute'
+import { ByLayout } from './layouts/ByLayout'
 
 // AppShell is the authenticated layout; lazy-load it so the guest/login
 // bundle doesn't pull in the whole nav subtree (TopBar/BottomNav/
 // SettingsModal/HeaderMenu) and framer-motion via PageTransition.
 const AppShell = lazy(() => import('./components/layout/AppShell').then((m) => ({ default: m.AppShell })))
+const TodayMobileScreen = lazy(() => import('./features/today/mobile/TodayMobile').then((m) => ({ default: m.TodayMobileScreen })))
 
 function RootError() {
   const error = useRouteError()
@@ -84,9 +86,14 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       {
+        // Redesigned layouts render their own shell; the rest fall back to the legacy AppShell.
+        path: '/',
+        element: <ByLayout mobile={<TodayMobileScreen />} legacy={<AppShell />} />,
+        children: [{ index: true, element: <HomePage /> }],
+      },
+      {
         element: <AppShell />,
         children: [
-          { path: '/', element: <HomePage /> },
           { path: '/charts', element: <ChartsPage /> },
           { path: '/charts/new', element: <NewChartPage /> },
           { path: '/yatras', element: <YatrasPage /> },

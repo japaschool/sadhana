@@ -1,34 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useUiStore } from '../../store/uiStore'
-import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../hooks/useToast'
-import { chartsApi } from '../../api/charts'
-import { practicesApi } from '../../api/practices'
-import { toCSV, triggerCSVDownload } from '../../pages/charts/csv'
+import { copyShareLink, downloadCsv } from '../../features/today/actions'
 import { HeaderMenu, type HeaderMenuItem } from './HeaderMenu'
 
 export function HomeHeaderActions() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const requestYatraCreate = useUiStore((s) => s.requestYatraCreate)
-
-  async function downloadCsv() {
-    const cob = new Date().toISOString().slice(0, 10)
-    const [entries, practices] = await Promise.all([
-      chartsApi.getReportData(cob, 'AllData'),
-      practicesApi.getUserPractices(),
-    ])
-    const practiceMap = Object.fromEntries(practices.map((p) => [p.id, p.practice]))
-    triggerCSVDownload(toCSV(entries, practiceMap))
-  }
-
-  function shareLink() {
-    const user = useAuthStore.getState().user
-    if (!user) return
-    void navigator.clipboard.writeText(`${window.location.origin}/shared/${user.id}`)
-    useToastStore.getState().showToast({ message: t('charts.copied'), variant: 'success' })
-  }
 
   const practices: HeaderMenuItem[] = [
     { label: t('home.addPractice'), to: '/user/practice/new' },
@@ -48,7 +28,12 @@ export function HomeHeaderActions() {
   const charts: HeaderMenuItem[] = [
     { label: t('charts.addReport'), to: '/charts/new' },
     { label: t('charts.downloadCsv'), onClick: () => void downloadCsv() },
-    { label: t('charts.shareLink'), onClick: shareLink },
+    {
+      label: t('charts.shareLink'),
+      onClick: () => {
+        if (copyShareLink()) useToastStore.getState().showToast({ message: t('charts.copied'), variant: 'success' })
+      },
+    },
   ]
 
   return (
