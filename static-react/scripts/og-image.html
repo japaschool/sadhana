@@ -1,0 +1,39 @@
+<!doctype html>
+<!-- Source for public/og-image-{en,ru,uk}.jpg (link-preview images). Regenerate with:
+  for l in en ru uk; do "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
+    --virtual-time-budget=4000 --window-size=1200,630 --screenshot=/tmp/og-$l.png "file://$PWD/scripts/og-image.html?$l" \
+    && sips -s format jpeg -s formatOptions 85 /tmp/og-$l.png --out public/og-image-$l.jpg; done --><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;box-sizing:border-box}
+body{width:1200px;height:630px;overflow:hidden;font-family:Inter,sans-serif;position:relative;background:#1c1c1c}
+.bg{position:absolute;inset:0;background:url(../src/assets/hero.webp) center 60%/cover;filter:saturate(.9)}
+.shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(20,16,12,.92) 0%,rgba(20,16,12,.78) 45%,rgba(20,16,12,.25) 100%)}
+.text{position:absolute;left:80px;top:0;bottom:0;width:640px;display:flex;flex-direction:column;justify-content:center;color:#fff}
+.brand{display:flex;align-items:center;gap:16px;font:700 34px 'Playfair Display',serif;margin-bottom:34px}
+.brand img{width:56px;height:56px;filter:brightness(0) invert(1)}
+h1{font:700 60px/1.08 'Playfair Display',serif;margin-bottom:24px}
+p{font-size:26px;line-height:1.4;color:rgba(255,255,255,.82);margin-bottom:34px}
+.pill{align-self:flex-start;background:#3A7D5C;padding:12px 24px;border-radius:999px;font-weight:600;font-size:22px}
+.phone{position:absolute;right:110px;top:70px;width:250px;height:540px;border-radius:40px;border:10px solid #111;overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,.55);transform:rotate(4deg)}
+.phone img{width:100%;height:100%;object-fit:cover;object-position:top}
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="text">
+  <div class="brand"><img src="../src/assets/logo.png">Sadhana Pro</div>
+  <h1 id="h"></h1>
+  <p id="p"></p>
+  <div class="pill" id="pill"></div>
+</div>
+<div class="phone"><img src="../src/assets/shot-home.jpg"></div>
+<script>
+const copy = {
+  en: ['Your daily sadhana, tracked', 'Japa, wake-up time, reading — charts you can share with your mentor.', 'Free · Works offline'],
+  ru: ['Дневник садханы на каждый день', 'Джапа, время подъёма, чтение — графики, которыми можно поделиться с куратором.', 'Бесплатно · Работает офлайн'],
+  uk: ['Щоденник садхани на кожен день', 'Джапа, час підйому, читання — графіки, якими можна поділитися з куратором.', 'Безкоштовно · Працює офлайн'],
+}
+const lang = location.search.slice(1) || 'en'
+document.documentElement.lang = lang
+;[h.textContent, p.textContent, pill.textContent] = copy[lang]
+</script>
+</body></html>
