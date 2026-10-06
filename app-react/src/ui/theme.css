@@ -1,0 +1,105 @@
+/* New design system (Sadhana Redesign, Turn 3). Tokens are scoped to .ui-root
+   so the legacy DaisyUI dark shell is untouched. Anything portalled must render
+   inside a .ui-root element too (see ui/primitives/UiPortal.tsx). Light values
+   come from frame 3a; dark values only from frame 1a-dark (+ #C2412D danger). */
+.ui-root {
+  color-scheme: light;
+  --ui-bg: #F7F4EE;
+  --ui-surface: #FFFFFF;
+  --ui-sheet: #FFFDF9;
+  --ui-field: #F8F4EC;
+  --ui-chip: #F1ECE2;
+  --ui-hairline: #ECE6DB;
+  --ui-control: #E7E1D6;
+  --ui-ink: #1F1B16;
+  --ui-ink2: #3E372E;
+  --ui-muted: #7A7163;
+  --ui-faint: #BDB4A6;
+  --ui-faint2: #8A8174;
+  --ui-accent: #9A6410;
+  --ui-accent-fill: #E8A93A;
+  --ui-accent-soft: #FBF0DA;
+  --ui-accent-pill: #F3DDB0;
+  --ui-toggle-off: #ECE6DB;
+  --ui-toggle-off-knob: #FFFFFF;
+  --ui-toggle-on-knob: #FFFFFF;
+  --ui-selected: #1F1B16;
+  --ui-on-selected: #F7F4EE;
+  --ui-backdrop: rgba(31, 27, 22, 0.42);
+  --ui-tabbar: rgba(247, 244, 238, 0.96);
+  --ui-danger: #C2412D;
+  --ui-primary: #1F1B16;
+  --ui-on-primary: #F7F4EE;
+
+  color: var(--ui-ink);
+  /* Literal, not var(--font-ui): Tailwind may tree-shake unused theme vars. */
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ui-root {
+    color-scheme: dark;
+    --ui-bg: #15121D;
+    --ui-surface: #211D2C;
+    --ui-sheet: #211D2C;
+    --ui-field: #2C2738;
+    --ui-chip: #2C2738;
+    --ui-hairline: #2C2738;
+    --ui-control: #332E40;
+    --ui-ink: #F1ECE4;
+    --ui-ink2: #BDB6C9;
+    --ui-muted: #A39DB0;
+    --ui-faint: #5C566B;
+    --ui-faint2: #8F88A0;
+    --ui-accent: #F0B54A;
+    --ui-accent-fill: #F0B54A;
+    --ui-accent-soft: #4A3D25;
+    --ui-accent-pill: #4A3D25;
+    --ui-toggle-off: #3A3448;
+    --ui-toggle-off-knob: #8F88A0;
+    --ui-toggle-on-knob: #15121D;
+    --ui-selected: #F0B54A;
+    --ui-on-selected: #15121D;
+    --ui-backdrop: rgba(21, 18, 29, 0.6);
+    --ui-tabbar: rgba(21, 18, 29, 0.94);
+    --ui-danger: #C2412D;
+    --ui-primary: #F1ECE4;
+    --ui-on-primary: #15121D;
+  }
+}
+
+@theme inline {
+  --color-ui-bg: var(--ui-bg);
+  --color-ui-surface: var(--ui-surface);
+  --color-ui-sheet: var(--ui-sheet);
+  --color-ui-field: var(--ui-field);
+  --color-ui-chip: var(--ui-chip);
+  --color-ui-hairline: var(--ui-hairline);
+  --color-ui-control: var(--ui-control);
+  --color-ui-ink: var(--ui-ink);
+  --color-ui-ink2: var(--ui-ink2);
+  --color-ui-muted: var(--ui-muted);
+  --color-ui-faint: var(--ui-faint);
+  --color-ui-faint2: var(--ui-faint2);
+  --color-ui-accent: var(--ui-accent);
+  --color-ui-accent-fill: var(--ui-accent-fill);
+  --color-ui-accent-soft: var(--ui-accent-soft);
+  --color-ui-accent-pill: var(--ui-accent-pill);
+  --color-ui-toggle-off: var(--ui-toggle-off);
+  --color-ui-toggle-off-knob: var(--ui-toggle-off-knob);
+  --color-ui-toggle-on-knob: var(--ui-toggle-on-knob);
+  --color-ui-selected: var(--ui-selected);
+  --color-ui-on-selected: var(--ui-on-selected);
+  --color-ui-backdrop: var(--ui-backdrop);
+  --color-ui-tabbar: var(--ui-tabbar);
+  --color-ui-danger: var(--ui-danger);
+  --color-ui-primary: var(--ui-primary);
+  --color-ui-on-primary: var(--ui-on-primary);
+  --font-ui: Manrope, ui-sans-serif, system-ui, sans-serif;
+  --font-ui-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+.font-ui-mono {
+  font-variant-numeric: tabular-nums;
+}
