@@ -15,7 +15,7 @@ export default function LanguageSelector({ compact }: { compact?: boolean }) {
   function change(lang: LangCode) {
     void i18n.changeLanguage(lang)
     // Keep the URL path in sync so /, /ru and /uk map to languages.
-    const newPath = lang === 'en' ? '/' : `/${lang}`
+    const newPath = lang === 'en' ? '/' : `/${lang}/`
     if (typeof window !== 'undefined') {
       window.history.pushState({}, '', newPath)
     }

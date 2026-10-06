@@ -17,11 +17,17 @@ function raf(time: number) {
 }
 requestAnimationFrame(raf)
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-)
+// Mount only once translations are loaded, so the pre-rendered HTML stays
+// on screen instead of flashing raw translation keys.
+function mount() {
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  )
+}
+if (i18n.isInitialized) mount()
+else i18n.on('initialized', mount)
 
 // Update meta description based on current language and translations
 function updateMeta() {
@@ -41,7 +47,7 @@ function updateMeta() {
   if (metaOgDescription) metaOgDescription.setAttribute('content', desc)
   document.title = title
   if (metaTitle) metaTitle.textContent = title
-  if (metaOgTitle) metaOgTitle.textContent = title
+  if (metaOgTitle) metaOgTitle.setAttribute('content', title)
   if (metaKeywords) metaKeywords.setAttribute('content', keywords)
 
   // update canonical link to reflect current language

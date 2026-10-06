@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import crowdedScene from '../assets/crowded-scene-indian-city.jpg'
+import crowdedScene from '../assets/hero.webp'
 
 export function TestimonialSpotlight() {
   const { t } = useTranslation()
