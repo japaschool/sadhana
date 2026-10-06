@@ -1,0 +1,177 @@
+import { useState } from 'react'
+import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { PracticeValue, UserPractice } from '../../../types/api'
+import { Toggle } from '../../../ui/primitives/Toggle'
+import { AnchoredMenu, MenuDivider, MenuItem } from '../../../ui/primitives/AnchoredMenu'
+import { formatTimeInput, parseTime } from '../../../pages/home/inputFormat'
+import { formatDuration, formatTime, parseOptions } from '../values'
+import { AddTimeSheet, type TimeMode } from './AddTimeSheet'
+import { TextRow } from './TextRow'
+import { Chevron, EmptyValue } from './rowParts'
+
+interface PracticeRowProps {
+  practice: UserPractice
+  value?: PracticeValue
+  failed: boolean
+  onSave: (v: PracticeValue | null) => void
+}
+
+export function PracticeRow(props: PracticeRowProps) {
+  const { practice, value } = props
+  const options = choiceOptions(practice)
+  if (options.length) return <ChoiceRow {...props} options={options} />
+  switch (practice.data_type) {
+    case 'Bool':
+      return <BoolRow {...props} />
+    case 'Duration':
+      return <DurationRow {...props} />
+    case 'Text':
+      return (
+        <TextRow label={practice.practice} value={value && 'Text' in value ? value.Text : ''}
+          required={!!practice.is_required} failed={props.failed} onSave={props.onSave} />
+      )
+    default:
+      return <InlineInputRow {...props} />
+  }
+}
+
+/** Int and Text practices can have options; Int options must be numbers. */
+function choiceOptions(p: UserPractice): string[] {
+  if (p.data_type === 'Text') return parseOptions(p.dropdown_variants)
+  if (p.data_type === 'Int') return parseOptions(p.dropdown_variants).filter((o) => Number.isFinite(Number(o)))
+  return []
+}
+
+function RowShell({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex min-h-[50px] items-center justify-between gap-3 bg-ui-surface pr-2 pl-4">
+      <span className="min-w-0 text-[15px] font-medium">{label}</span>
+      <div className="flex shrink-0 items-center gap-2">{children}</div>
+    </div>
+  )
+}
+
+function InlineInputRow({ practice, value, failed, onSave }: PracticeRowProps) {
+  const { t } = useTranslation()
+  const isTime = practice.data_type === 'Time'
+  const shown = value && 'Time' in value ? formatTime(value.Time) : value && 'Int' in value ? String(value.Int) : ''
+  const [draft, setDraft] = useState<string | null>(null) // null = not editing
+
+  function commit() {
+    if (draft === null) return
+    const text = draft.trim()
+    setDraft(null)
+    if (!text) return onSave(null)
+    if (isTime) {
+      const time = parseTime(text)
+      if (time) onSave({ Time: time })
+      return
+    }
+    const n = parseInt(text, 10)
+    if (!isNaN(n) && n >= 0) onSave({ Int: n })
+  }
+
+  return (
+    <RowShell label={practice.practice}>
+      {draft !== null ? (
+        <input
+          autoFocus
+          type="text"
+          inputMode="numeric"
+          aria-label={practice.practice}
+          placeholder={isTime ? 'HH:MM' : undefined}
+          value={draft}
+          onChange={(e) => setDraft(isTime ? formatTimeInput(e.target.value) : e.target.value.replace(/\D/g, ''))}
+          onBlur={commit}
+          onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
+          className="mr-1 h-9 w-20 rounded-[10px] border-[1.5px] border-ui-accent-fill bg-ui-field px-2 text-right font-ui-mono text-[15px] font-medium outline-none"
+        />
+      ) : shown ? (
+        <button type="button" aria-label={t('today.editValue', { name: practice.practice })} onClick={() => setDraft(shown)}
+          className={`pr-2 font-ui-mono text-[15px] font-medium ${failed ? 'text-ui-danger' : ''}`}>
+          {shown}
+        </button>
+      ) : (
+        <EmptyValue required={!!practice.is_required} name={practice.practice} onClick={() => setDraft('')} />
+      )}
+    </RowShell>
+  )
+}
+
+function BoolRow({ practice, value, onSave }: PracticeRowProps) {
+  const checked = !!value && 'Bool' in value && value.Bool
+  return (
+    <RowShell label={practice.practice}>
+      <span className="pr-2">
+        <Toggle label={practice.practice} checked={checked} onChange={(v) => onSave({ Bool: v })} />
+      </span>
+    </RowShell>
+  )
+}
+
+function ChoiceRow({ practice, value, failed, onSave, options }: PracticeRowProps & { options: string[] }) {
+  const { t } = useTranslation()
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null)
+  const current = value && 'Int' in value ? String(value.Int) : value && 'Text' in value ? value.Text : ''
+
+  function pick(option: string | null) {
+    setAnchor(null)
+    if (option === null) onSave(null)
+    else onSave(practice.data_type === 'Int' ? { Int: Number(option) } : { Text: option })
+  }
+
+  return (
+    <RowShell label={practice.practice}>
+      {current ? (
+        <button type="button" aria-haspopup="menu" aria-expanded={!!anchor}
+          aria-label={t('today.editValue', { name: practice.practice })}
+          onClick={(e) => setAnchor(e.currentTarget)}
+          className={`flex items-center gap-2 pr-2.5 text-[15px] font-semibold ${failed ? 'text-ui-danger' : ''}`}>
+          {current}
+          <Chevron />
+        </button>
+      ) : (
+        <EmptyValue required={!!practice.is_required} name={practice.practice} onClick={(e) => setAnchor(e.currentTarget)} />
+      )}
+      {anchor && (
+        <AnchoredMenu anchor={anchor} label={practice.practice} onClose={() => setAnchor(null)}>
+          {options.map((o) => (
+            <MenuItem key={o} selected={o === current} onSelect={() => pick(o)}>{o}</MenuItem>
+          ))}
+          <MenuDivider />
+          <MenuItem muted onSelect={() => pick(null)}>{t('today.clear')}</MenuItem>
+        </AnchoredMenu>
+      )}
+    </RowShell>
+  )
+}
+
+function DurationRow({ practice, value, failed, onSave }: PracticeRowProps) {
+  const { t } = useTranslation()
+  const [mode, setMode] = useState<TimeMode | null>(null)
+  const minutes = value && 'Duration' in value ? value.Duration : 0
+  const units = { h: t('today.unitH'), min: t('today.unitMin') }
+
+  return (
+    <RowShell label={practice.practice}>
+      {value ? (
+        <>
+          <button type="button" aria-label={t('today.editValue', { name: practice.practice })} onClick={() => setMode('set')}
+            className={`font-ui-mono text-[15px] font-medium ${failed ? 'text-ui-danger' : ''}`}>
+            {formatDuration(minutes, units)}
+          </button>
+          <button type="button" aria-label={t('today.addTimeFor', { name: practice.practice })} onClick={() => setMode('add')}
+            className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-ui-accent-soft text-xl leading-none font-semibold text-ui-accent">
+            +
+          </button>
+        </>
+      ) : (
+        <EmptyValue required={!!practice.is_required} name={practice.practice} onClick={() => setMode('add')} />
+      )}
+      {mode && (
+        <AddTimeSheet practice={practice.practice} current={minutes} initialMode={mode} onSave={onSave} onClose={() => setMode(null)} />
+      )}
+    </RowShell>
+  )
+}
