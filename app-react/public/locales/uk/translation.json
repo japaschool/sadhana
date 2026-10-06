@@ -274,7 +274,22 @@
     "subtitle": "Акаунт і налаштування",
     "logoutConfirmTitle": "Вийти?",
     "logoutConfirmMsg": "Ви впевнені, що хочете вийти?",
-    "reorderFailed": "Не вдалося зберегти порядок — спробуйте ще раз"
+    "reorderFailed": "Не вдалося зберегти порядок — спробуйте ще раз",
+    "userDetails": "Дані профілю",
+    "preferences": "Параметри",
+    "theme": "Тема",
+    "themeAuto": "Авто",
+    "themeLight": "Світла",
+    "themeDark": "Темна",
+    "previewChannel": "Ранній доступ",
+    "previewHint": "Пробуйте нові функції до релізу",
+    "accountData": "Акаунт і дані",
+    "importCsv": "Імпорт CSV",
+    "support": "Підтримка",
+    "helpSupport": "Допомога та підтримка",
+    "aboutShort": "Про застосунок",
+    "updateAvailable": "Доступне оновлення — натисніть, щоб перезавантажити",
+    "logout": "Вийти"
   },
   "help": {
     "title": "Допомога",

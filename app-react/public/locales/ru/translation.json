@@ -274,7 +274,22 @@
     "subtitle": "Аккаунт и настройки",
     "logoutConfirmTitle": "Выйти?",
     "logoutConfirmMsg": "Вы уверены, что хотите выйти?",
-    "reorderFailed": "Не удалось сохранить порядок — попробуйте снова"
+    "reorderFailed": "Не удалось сохранить порядок — попробуйте снова",
+    "userDetails": "Данные профиля",
+    "preferences": "Параметры",
+    "theme": "Тема",
+    "themeAuto": "Авто",
+    "themeLight": "Светлая",
+    "themeDark": "Тёмная",
+    "previewChannel": "Ранний доступ",
+    "previewHint": "Пробуйте новые функции до релиза",
+    "accountData": "Аккаунт и данные",
+    "importCsv": "Импорт CSV",
+    "support": "Поддержка",
+    "helpSupport": "Помощь и поддержка",
+    "aboutShort": "О приложении",
+    "updateAvailable": "Доступно обновление — нажмите, чтобы перезагрузить",
+    "logout": "Выйти"
   },
   "help": {
     "title": "Помощь",

@@ -270,7 +270,22 @@
     "subtitle": "Account & preferences",
     "logoutConfirmTitle": "Log out?",
     "logoutConfirmMsg": "Are you sure you want to log out?",
-    "reorderFailed": "Couldn't save order — please try again"
+    "reorderFailed": "Couldn't save order — please try again",
+    "userDetails": "User details",
+    "preferences": "Preferences",
+    "theme": "Theme",
+    "themeAuto": "Auto",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "previewChannel": "Preview channel",
+    "previewHint": "Try new features before release",
+    "accountData": "Account & data",
+    "importCsv": "Import CSV",
+    "support": "Support",
+    "helpSupport": "Help and support",
+    "aboutShort": "About",
+    "updateAvailable": "Update available — tap to reload",
+    "logout": "Logout"
   },
   "help": {
     "title": "Help",
