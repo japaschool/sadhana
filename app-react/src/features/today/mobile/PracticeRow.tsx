@@ -100,7 +100,7 @@ function InlineInputRow({ practice, value, failed, onSave }: PracticeRowProps) {
           onChange={(e) => change(e.target.value)}
           onBlur={commit}
           onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
-          className="mr-1 h-9 w-20 rounded-[10px] border-[1.5px] border-ui-accent-fill bg-ui-field px-2 text-right font-ui-mono text-[15px] font-medium outline-none"
+          className="mr-1 h-9 w-20 rounded-[10px] border-[1.5px] border-ui-accent-fill bg-ui-field px-2 text-right font-ui-mono font-medium outline-none"
         />
       ) : shown ? (
         <>

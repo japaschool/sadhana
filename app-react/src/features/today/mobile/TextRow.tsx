@@ -92,7 +92,7 @@ export function TextRow({ label, value, required, failed, onSave }: TextRowProps
             rows={3}
             onChange={(e) => change(e.target.value)}
             onBlur={finish}
-            className="min-h-[120px] resize-none rounded-xl border-[1.5px] border-ui-accent-fill bg-ui-surface px-3.5 py-3 text-[15px] leading-[1.55] shadow-[0_0_0_4px_var(--ui-accent-soft)] outline-none"
+            className="min-h-[120px] resize-none rounded-xl border-[1.5px] border-ui-accent-fill bg-ui-surface px-3.5 py-3 leading-[1.55] shadow-[0_0_0_4px_var(--ui-accent-soft)] outline-none"
           />
           <p className="mt-2 text-xs text-ui-muted">{t('today.savedAsYouType')}</p>
         </>
