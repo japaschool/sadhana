@@ -6,7 +6,7 @@ import { Toggle } from '../../../ui/primitives/Toggle'
 import { AnchoredMenu, MenuDivider, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import { formatTimeInput, parseTime } from '../../../pages/home/inputFormat'
 import { formatDuration, formatTime, parseOptions } from '../values'
-import { AddTimeSheet, type TimeMode } from './AddTimeSheet'
+import { AddTimeSheet } from './AddTimeSheet'
 import { TextRow } from './TextRow'
 import { Chevron, EmptyValue } from './rowParts'
 
@@ -24,8 +24,6 @@ export function PracticeRow(props: PracticeRowProps) {
   switch (practice.data_type) {
     case 'Bool':
       return <BoolRow {...props} />
-    case 'Duration':
-      return <DurationRow {...props} />
     case 'Text':
       return (
         <TextRow label={practice.practice} value={value && 'Text' in value ? value.Text : ''}
@@ -52,11 +50,27 @@ function RowShell({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
+/** Time, Int and Duration (in minutes) edit inline; a set Duration also gets a ＋ that opens the add sheet. */
 function InlineInputRow({ practice, value, failed, onSave }: PracticeRowProps) {
   const { t } = useTranslation()
-  const isTime = practice.data_type === 'Time'
-  const shown = value && 'Time' in value ? formatTime(value.Time) : value && 'Int' in value ? String(value.Int) : ''
+  const kind = practice.data_type
+  const isTime = kind === 'Time'
+  const units = { h: t('today.unitH'), min: t('today.unitMin') }
+  const minutes = value && 'Duration' in value ? value.Duration : 0
+  const editText = value && 'Time' in value ? formatTime(value.Time)
+    : value && 'Int' in value ? String(value.Int)
+    : value && 'Duration' in value ? String(value.Duration) : ''
+  const shown = value && 'Duration' in value ? formatDuration(minutes, units) : editText
   const [draft, setDraft] = useState<string | null>(null) // null = not editing
+  const [adding, setAdding] = useState(false)
+
+  function change(raw: string) {
+    if (!isTime) return setDraft(raw.replace(/\D/g, ''))
+    const next = formatTimeInput(raw)
+    // Backspace over the auto-inserted ':' would just re-add it; drop the hour digit instead.
+    const deleting = raw.length < (draft ?? '').length
+    setDraft(deleting && next === draft ? formatTimeInput(raw.replace(/\D/g, '').slice(0, -1)) : next)
+  }
 
   function commit() {
     if (draft === null) return
@@ -69,7 +83,8 @@ function InlineInputRow({ practice, value, failed, onSave }: PracticeRowProps) {
       return
     }
     const n = parseInt(text, 10)
-    if (!isNaN(n) && n >= 0) onSave({ Int: n })
+    if (isNaN(n) || n < 0) return
+    onSave(kind === 'Duration' ? { Duration: n } : { Int: n })
   }
 
   return (
@@ -82,18 +97,29 @@ function InlineInputRow({ practice, value, failed, onSave }: PracticeRowProps) {
           aria-label={practice.practice}
           placeholder={isTime ? 'HH:MM' : undefined}
           value={draft}
-          onChange={(e) => setDraft(isTime ? formatTimeInput(e.target.value) : e.target.value.replace(/\D/g, ''))}
+          onChange={(e) => change(e.target.value)}
           onBlur={commit}
           onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
           className="mr-1 h-9 w-20 rounded-[10px] border-[1.5px] border-ui-accent-fill bg-ui-field px-2 text-right font-ui-mono text-[15px] font-medium outline-none"
         />
       ) : shown ? (
-        <button type="button" aria-label={t('today.editValue', { name: practice.practice })} onClick={() => setDraft(shown)}
-          className={`pr-2 font-ui-mono text-[15px] font-medium ${failed ? 'text-ui-danger' : ''}`}>
-          {shown}
-        </button>
+        <>
+          <button type="button" aria-label={t('today.editValue', { name: practice.practice })} onClick={() => setDraft(editText)}
+            className={`font-ui-mono text-[15px] font-medium ${kind === 'Duration' ? '' : 'pr-2'} ${failed ? 'text-ui-danger' : ''}`}>
+            {shown}
+          </button>
+          {kind === 'Duration' && (
+            <button type="button" aria-label={t('today.addTimeFor', { name: practice.practice })} onClick={() => setAdding(true)}
+              className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-ui-accent-soft text-xl leading-none font-semibold text-ui-accent">
+              +
+            </button>
+          )}
+        </>
       ) : (
         <EmptyValue required={!!practice.is_required} name={practice.practice} onClick={() => setDraft('')} />
+      )}
+      {adding && (
+        <AddTimeSheet practice={practice.practice} current={minutes} initialMode="add" onSave={onSave} onClose={() => setAdding(false)} />
       )}
     </RowShell>
   )
@@ -142,35 +168,6 @@ function ChoiceRow({ practice, value, failed, onSave, options }: PracticeRowProp
           <MenuDivider />
           <MenuItem muted onSelect={() => pick(null)}>{t('today.clear')}</MenuItem>
         </AnchoredMenu>
-      )}
-    </RowShell>
-  )
-}
-
-function DurationRow({ practice, value, failed, onSave }: PracticeRowProps) {
-  const { t } = useTranslation()
-  const [mode, setMode] = useState<TimeMode | null>(null)
-  const minutes = value && 'Duration' in value ? value.Duration : 0
-  const units = { h: t('today.unitH'), min: t('today.unitMin') }
-
-  return (
-    <RowShell label={practice.practice}>
-      {value ? (
-        <>
-          <button type="button" aria-label={t('today.editValue', { name: practice.practice })} onClick={() => setMode('set')}
-            className={`font-ui-mono text-[15px] font-medium ${failed ? 'text-ui-danger' : ''}`}>
-            {formatDuration(minutes, units)}
-          </button>
-          <button type="button" aria-label={t('today.addTimeFor', { name: practice.practice })} onClick={() => setMode('add')}
-            className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-ui-accent-soft text-xl leading-none font-semibold text-ui-accent">
-            +
-          </button>
-        </>
-      ) : (
-        <EmptyValue required={!!practice.is_required} name={practice.practice} onClick={() => setMode('add')} />
-      )}
-      {mode && (
-        <AddTimeSheet practice={practice.practice} current={minutes} initialMode={mode} onSave={onSave} onClose={() => setMode(null)} />
       )}
     </RowShell>
   )

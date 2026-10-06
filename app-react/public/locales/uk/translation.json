@@ -353,7 +353,6 @@
     "keyBackspace": "Видалити цифру",
     "keyReset": "Скинути",
     "savedAsYouType": "Зберігається під час введення",
-    "textPrompt": "Що у вас на душі сьогодні?",
     "calendar": "Календар",
     "openCalendar": "Відкрити календар",
     "prevMonth": "Попередній місяць",
@@ -366,7 +365,7 @@
     "unitH": "год",
     "more": "Більше",
     "tabs": "Основна навігація",
-    "tabToday": "Сьогодні",
+    "tabLog": "Журнал",
     "tabInsights": "Аналітика",
     "tabYatra": "Ятра",
     "tabSettings": "Налаштування"

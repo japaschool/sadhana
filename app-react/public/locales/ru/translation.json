@@ -353,7 +353,6 @@
     "keyBackspace": "Удалить цифру",
     "keyReset": "Сбросить",
     "savedAsYouType": "Сохраняется по мере ввода",
-    "textPrompt": "Что у вас на душе сегодня?",
     "calendar": "Календарь",
     "openCalendar": "Открыть календарь",
     "prevMonth": "Предыдущий месяц",
@@ -366,7 +365,7 @@
     "unitH": "ч",
     "more": "Ещё",
     "tabs": "Основная навигация",
-    "tabToday": "Сегодня",
+    "tabLog": "Журнал",
     "tabInsights": "Аналитика",
     "tabYatra": "Ятра",
     "tabSettings": "Настройки"

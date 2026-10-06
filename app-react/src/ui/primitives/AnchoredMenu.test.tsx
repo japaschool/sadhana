@@ -50,6 +50,15 @@ describe('AnchoredMenu', () => {
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
   })
 
+  it('left-aligns to the anchor when right-aligning would overflow the left edge', () => {
+    render(<Harness />)
+    const opener = screen.getByText('open')
+    opener.getBoundingClientRect = () => ({ left: 16, right: 120, top: 60, bottom: 100, width: 104, height: 40, x: 16, y: 60, toJSON: () => ({}) })
+    fireEvent.click(opener)
+    expect(screen.getByRole('menu').style.left).toBe('16px')
+    expect(screen.getByRole('menu').style.right).toBe('')
+  })
+
   it('renders inside a .ui-root portal', () => {
     render(<Harness />)
     fireEvent.click(screen.getByText('open'))

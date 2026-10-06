@@ -12,9 +12,9 @@ describe('TextRow', () => {
     return { onSave, ...utils }
   }
 
-  it('shows the prompt when empty and opens a focused editor on tap', () => {
+  it('shows + Add when empty and opens a focused editor on tap', () => {
     setup()
-    fireEvent.click(screen.getByText("What's on your mind today?"))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Gratitude' }))
     expect(screen.getByRole('textbox', { name: 'Gratitude' })).toHaveFocus()
     expect(screen.getByText('Saved as you type')).toBeInTheDocument()
   })

@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PracticeValue } from '../../../types/api'
-import { RequiredBadge } from './rowParts'
+import { EmptyValue } from './rowParts'
 
 const DEBOUNCE_MS = 600
 
@@ -69,15 +69,15 @@ export function TextRow({ label, value, required, failed, onSave }: TextRowProps
   }, [editing])
 
   return (
-    <div className="flex flex-col bg-ui-surface px-4 pb-3.5">
+    <div className={`flex flex-col bg-ui-surface px-4 ${editing || value ? 'pb-3.5' : ''}`}>
       <div className="flex min-h-[50px] items-center justify-between gap-3">
         <span className="text-[15px] font-medium">{label}</span>
         {editing ? (
           <button type="button" onPointerDown={(e) => e.preventDefault()} onClick={finish} className="text-sm font-bold text-ui-accent">
             {t('today.done')}
           </button>
-        ) : !value && required ? (
-          <RequiredBadge />
+        ) : !value ? (
+          <EmptyValue required={required} name={label} onClick={start} />
         ) : (
           <button type="button" onClick={start} className="text-xs font-semibold text-ui-muted">{t('today.edit')}</button>
         )}
@@ -96,15 +96,15 @@ export function TextRow({ label, value, required, failed, onSave }: TextRowProps
           />
           <p className="mt-2 text-xs text-ui-muted">{t('today.savedAsYouType')}</p>
         </>
-      ) : (
+      ) : value ? (
         <button
           type="button"
           onClick={start}
-          className={`whitespace-pre-wrap rounded-xl bg-ui-field px-3 py-2.5 text-left text-sm leading-normal ${failed ? 'text-ui-danger' : value ? 'text-ui-ink2' : 'text-ui-muted'}`}
+          className={`whitespace-pre-wrap rounded-xl bg-ui-field px-3 py-2.5 text-left text-sm leading-normal ${failed ? 'text-ui-danger' : 'text-ui-ink2'}`}
         >
-          {value || t('today.textPrompt')}
+          {value}
         </button>
-      )}
+      ) : null}
     </div>
   )
 }

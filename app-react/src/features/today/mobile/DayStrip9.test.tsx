@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { DayStrip9 } from './DayStrip9'
 import { toDateStr } from '../date'
 
@@ -13,6 +13,26 @@ describe('DayStrip9', () => {
     expect(days[0]).toHaveTextContent('4')
     expect(days[8]).toHaveTextContent('12')
     expect(days[2]).toHaveAttribute('aria-current', 'date')
+  })
+
+  describe('selected day', () => {
+    afterEach(() => { vi.useRealTimers() })
+    const numeral = (i: number) => screen.getAllByRole('button')[i].children[1]
+
+    it('is filled when it is today', () => {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(new Date(2026, 9, 6, 12))
+      render(<DayStrip9 date={date} incomplete={new Set()} onSelect={() => {}} />)
+      expect(numeral(2)).toHaveClass('bg-ui-selected')
+    })
+
+    it('is only outlined when it is not today', () => {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(new Date(2026, 9, 8, 12))
+      render(<DayStrip9 date={date} incomplete={new Set()} onSelect={() => {}} />)
+      expect(numeral(2)).not.toHaveClass('bg-ui-selected')
+      expect(numeral(2)).toHaveClass('border-ui-selected')
+    })
   })
 
   it('marks incomplete days with a dot', () => {

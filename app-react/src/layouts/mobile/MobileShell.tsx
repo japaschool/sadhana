@@ -3,13 +3,22 @@ import type { ReactNode, RefObject } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ToastContainer } from '../../components/ui/Toast'
+import { TAB_ICONS } from './tabIcons'
 
 const TABS = [
-  { to: '/', key: 'today.tabToday', icon: 'rounded-[3px]' },
-  { to: '/charts', key: 'today.tabInsights', icon: 'rounded-[3px]' },
-  { to: '/yatras', key: 'today.tabYatra', icon: 'rounded-full' },
-  { to: '/settings', key: 'today.tabSettings', icon: 'rotate-45' },
+  { to: '/', key: 'today.tabLog', icon: TAB_ICONS.edit, activeIcon: TAB_ICONS.editSolid },
+  { to: '/charts', key: 'today.tabInsights', icon: TAB_ICONS.graph, activeIcon: TAB_ICONS.graphSolid },
+  { to: '/yatras', key: 'today.tabYatra', icon: TAB_ICONS.userGroup, activeIcon: TAB_ICONS.userGroupSolid },
+  { to: '/settings', key: 'today.tabSettings', icon: TAB_ICONS.adjust, activeIcon: TAB_ICONS.adjustSolid },
 ] as const
+
+function TabIcon({ d }: { d: string }) {
+  return (
+    <svg aria-hidden viewBox="0 0 1024 1024" className="h-[22px] w-[22px] fill-current">
+      <path transform="matrix(1 0 0 -1 0 960)" d={d} />
+    </svg>
+  )
+}
 
 function TabBar() {
   const { t } = useTranslation()
@@ -22,7 +31,7 @@ function TabBar() {
           {({ isActive }) => (
             <>
               <span className={`flex h-7 w-11 items-center justify-center rounded-full ${isActive ? 'bg-ui-accent-pill' : ''}`}>
-                <span aria-hidden className={`h-2.5 w-2.5 ${tab.icon} ${isActive ? 'bg-ui-accent' : 'border-[1.5px] border-ui-faint2'}`} />
+                <span className={isActive ? 'text-ui-accent' : ''}><TabIcon d={isActive ? tab.activeIcon : tab.icon} /></span>
               </span>
               {t(tab.key)}
             </>

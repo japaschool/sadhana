@@ -17,8 +17,10 @@ export function AnchoredMenu({ anchor, onClose, label, children }: AnchoredMenuP
     const r = anchor.getBoundingClientRect()
     const height = ref.current?.offsetHeight ?? 0
     const fitsBelow = window.innerHeight - r.bottom - GAP >= height
+    // Right-align to the anchor unless the menu would then overflow the left edge.
+    const fitsRightAligned = r.right - WIDTH >= 8
     setPos({
-      right: Math.max(8, window.innerWidth - r.right),
+      ...(fitsRightAligned ? { right: Math.max(8, window.innerWidth - r.right) } : { left: Math.max(8, r.left) }),
       ...(fitsBelow ? { top: r.bottom + GAP } : { bottom: window.innerHeight - r.top + GAP }),
     })
     const target = ref.current?.querySelector<HTMLElement>('[aria-checked="true"]') ?? ref.current?.querySelector<HTMLElement>(ITEM)

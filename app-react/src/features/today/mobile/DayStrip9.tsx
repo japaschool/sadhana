@@ -34,8 +34,9 @@ export function DayStrip9({ date, incomplete, onSelect }: DayStrip9Props) {
         const selected = isSameDay(d, date)
         const edge = i === 0 || i === 8
         const missing = incomplete.has(ds)
-        const numTone = selected
+        const numTone = selected && isSameDay(d, today)
           ? 'bg-ui-selected text-ui-on-selected'
+          : selected ? 'border-[1.5px] border-ui-selected text-ui-ink'
           : isFuture(d, today) || edge ? 'text-ui-faint' : 'text-ui-ink'
         return (
           <button key={ds} type="button" onClick={() => onSelect(d)} aria-label={full.format(d)}

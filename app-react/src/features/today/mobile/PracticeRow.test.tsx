@@ -21,6 +21,16 @@ describe('PracticeRow', () => {
     expect(onSave).toHaveBeenCalledWith({ Time: { h: 4, m: 10 } })
   })
 
+  it('Time: backspace steps back over the colon into the hours', () => {
+    setup({ practice: 'Wake up', data_type: 'Time' }, { Time: { h: 4, m: 10 } })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Wake up' }))
+    const input = screen.getByRole('textbox', { name: 'Wake up' })
+    for (const [typed, shown] of [['04:1', '04:1'], ['04:', '04:'], ['04', '0'], ['', '']]) {
+      fireEvent.change(input, { target: { value: typed } })
+      expect(input).toHaveValue(shown)
+    }
+  })
+
   it('Int: shows the value; clearing saves null', () => {
     const onSave = setup({ practice: 'Rounds', data_type: 'Int' }, { Int: 17 })
     fireEvent.click(screen.getByRole('button', { name: 'Edit Rounds' }))
@@ -67,18 +77,33 @@ describe('PracticeRow', () => {
     expect(screen.getAllByRole('menuitemradio').every((el) => el.getAttribute('aria-checked') === 'false')).toBe(true)
   })
 
-  it('Duration: + opens Add mode, the value opens Set total', () => {
-    setup({ practice: 'Audiobooks', data_type: 'Duration' }, { Duration: 30 })
+  it('Duration: the value edits inline in minutes; + opens the add sheet', () => {
+    const onSave = setup({ practice: 'Audiobooks', data_type: 'Duration' }, { Duration: 30 })
     expect(screen.getByText('30 min')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Audiobooks' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    const input = screen.getByRole('textbox', { name: 'Audiobooks' })
+    expect(input).toHaveValue('30')
+    fireEvent.change(input, { target: { value: '45' } })
+    fireEvent.blur(input)
+    expect(onSave).toHaveBeenCalledWith({ Duration: 45 })
     fireEvent.click(screen.getByRole('button', { name: 'Add time to Audiobooks' }))
     expect(screen.getByRole('radio', { name: 'Add' })).toHaveAttribute('aria-checked', 'true')
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Edit Audiobooks' }))
-    expect(screen.getByRole('radio', { name: 'Set total' })).toHaveAttribute('aria-checked', 'true')
   })
 
-  it('Text without options renders the text row', () => {
+  it('Duration: empty edits inline, with no add sheet', () => {
+    const onSave = setup({ practice: 'Audiobooks', data_type: 'Duration' })
+    expect(screen.queryByRole('button', { name: 'Add time to Audiobooks' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Audiobooks' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    fireEvent.change(screen.getByRole('textbox', { name: 'Audiobooks' }), { target: { value: '20' } })
+    fireEvent.blur(screen.getByRole('textbox', { name: 'Audiobooks' }))
+    expect(onSave).toHaveBeenCalledWith({ Duration: 20 })
+  })
+
+  it('Text without options renders the text row with no placeholder', () => {
     setup({ practice: 'Gratitude', data_type: 'Text' })
-    expect(screen.getByText("What's on your mind today?")).toBeInTheDocument()
+    expect(screen.getByText('+ Add')).toBeInTheDocument()
+    expect(screen.queryByText(/on your mind/)).not.toBeInTheDocument()
   })
 })
