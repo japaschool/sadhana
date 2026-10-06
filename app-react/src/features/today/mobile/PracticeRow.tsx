@@ -6,6 +6,7 @@ import { Toggle } from '../../../ui/primitives/Toggle'
 import { AnchoredMenu, MenuDivider, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import { formatTimeInput, parseTime } from '../../../pages/home/inputFormat'
 import { formatDuration, formatTime, parseOptions } from '../values'
+import { useOnAppHidden } from '../useOnAppHidden'
 import { AddTimeSheet } from './AddTimeSheet'
 import { TextRow } from './TextRow'
 import { Chevron, EmptyValue } from './rowParts'
@@ -86,6 +87,7 @@ function InlineInputRow({ practice, value, failed, onSave }: PracticeRowProps) {
     if (isNaN(n) || n < 0) return
     onSave(kind === 'Duration' ? { Duration: n } : { Int: n })
   }
+  useOnAppHidden(commit)
 
   return (
     <RowShell label={practice.practice}>

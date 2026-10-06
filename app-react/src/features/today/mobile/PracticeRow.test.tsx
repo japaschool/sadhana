@@ -1,7 +1,13 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { PracticeRow } from './PracticeRow'
 import type { PracticeValue, UserPractice } from '../../../types/api'
+
+function hideApp() {
+  Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
+  document.dispatchEvent(new Event('visibilitychange'))
+  Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
+}
 
 function setup(p: Partial<UserPractice> & Pick<UserPractice, 'practice' | 'data_type'>, value?: PracticeValue) {
   const onSave = vi.fn()
@@ -29,6 +35,14 @@ describe('PracticeRow', () => {
       fireEvent.change(input, { target: { value: typed } })
       expect(input).toHaveValue(shown)
     }
+  })
+
+  it('saves an inline value when the app is hidden without a blur (iOS PWA close)', () => {
+    const onSave = setup({ practice: 'Rounds', data_type: 'Int' })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Rounds' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Rounds' }), { target: { value: '16' } })
+    act(() => hideApp())
+    expect(onSave).toHaveBeenCalledWith({ Int: 16 })
   })
 
   it('Int: shows the value; clearing saves null', () => {

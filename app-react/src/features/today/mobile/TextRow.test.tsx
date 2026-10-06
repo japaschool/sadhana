@@ -2,6 +2,12 @@ import { render, screen, fireEvent, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { TextRow } from './TextRow'
 
+function hideApp() {
+  Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
+  document.dispatchEvent(new Event('visibilitychange'))
+  Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
+}
+
 describe('TextRow', () => {
   beforeEach(() => { vi.useFakeTimers() })
   afterEach(() => { vi.useRealTimers() })
@@ -49,6 +55,14 @@ describe('TextRow', () => {
     fireEvent.change(screen.getByRole('textbox'), { target: { value: '   ' } })
     fireEvent.blur(screen.getByRole('textbox'))
     expect(onSave).toHaveBeenCalledWith(null)
+  })
+
+  it('flushes a pending edit when the app is hidden', () => {
+    const { onSave } = setup('Old')
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Typed' } })
+    act(() => hideApp())
+    expect(onSave).toHaveBeenCalledWith({ Text: 'Typed' })
   })
 
   it('flushes a pending edit on unmount', () => {

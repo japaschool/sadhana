@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PracticeValue } from '../../../types/api'
+import { useOnAppHidden } from '../useOnAppHidden'
 import { EmptyValue } from './rowParts'
 
 const DEBOUNCE_MS = 600
@@ -33,6 +34,7 @@ export function TextRow({ label, value, required, failed, onSave }: TextRowProps
   // Leaving the day (row unmounts) must not drop what was typed.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => flush, [])
+  useOnAppHidden(flush)
 
   function change(text: string) {
     setDraft(text)
