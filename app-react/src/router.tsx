@@ -9,6 +9,7 @@ import { ByLayout } from './layouts/ByLayout'
 // SettingsModal/HeaderMenu) and framer-motion via PageTransition.
 const AppShell = lazy(() => import('./components/layout/AppShell').then((m) => ({ default: m.AppShell })))
 const TodayMobileScreen = lazy(() => import('./features/today/mobile/TodayMobile').then((m) => ({ default: m.TodayMobileScreen })))
+const SettingsMobileScreen = lazy(() => import('./features/settings/mobile/SettingsMobile').then((m) => ({ default: m.SettingsMobileScreen })))
 
 function RootError() {
   const error = useRouteError()
@@ -92,6 +93,11 @@ export const router = createBrowserRouter([
         children: [{ index: true, element: <HomePage /> }],
       },
       {
+        path: '/settings',
+        element: <ByLayout mobile={<SettingsMobileScreen />} legacy={<AppShell />} />,
+        children: [{ index: true, element: <SettingsPage /> }],
+      },
+      {
         element: <AppShell />,
         children: [
           { path: '/charts', element: <ChartsPage /> },
@@ -102,7 +108,6 @@ export const router = createBrowserRouter([
           { path: '/yatra/:id/admin/settings', element: <YatraAdminSettingsPage /> },
           { path: '/yatra/:id/practice/new', element: <YatraPracticeNewPage /> },
           { path: '/yatra/:id/practice/:practice_id/edit', element: <YatraPracticeEditPage /> },
-          { path: '/settings', element: <SettingsPage /> },
           { path: '/settings/edit-user', element: <EditUserPage /> },
           { path: '/settings/edit-password', element: <EditPasswordPage /> },
           { path: '/settings/language', element: <LanguagePage /> },
