@@ -26,7 +26,7 @@ export const practicesApi = {
     const res = await apiClient.get<{ diary_day: DiaryEntry[] }>(`/diary/${date}`)
     return res.data.diary_day
   },
-  async saveDiaryEntry(date: string, practice: string, value: PracticeValue): Promise<void> {
+  async saveDiaryEntry(date: string, practice: string, value: PracticeValue | null): Promise<void> {
     await apiClient.put(`/diary/${date}/entry`, { entry: { practice, value } })
   },
   async getIncompleteDays(from: string, to: string): Promise<string[]> {
