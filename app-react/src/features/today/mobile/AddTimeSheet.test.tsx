@@ -48,6 +48,15 @@ describe('AddTimeSheet', () => {
     expect(onSave).toHaveBeenCalledWith(null)
   })
 
+  it('accepts the physical keyboard: digits, Backspace, Enter', () => {
+    const { onSave } = setup()
+    const press = (key: string) => fireEvent.keyDown(screen.getByRole('dialog'), { key })
+    press('4'); press('5'); press('6'); press('Backspace')
+    expect(screen.getByTestId('amount')).toHaveTextContent('+45')
+    press('Enter')
+    expect(onSave).toHaveBeenCalledWith({ Duration: 75 })
+  })
+
   it('switching mode resets the amount', () => {
     const { key } = setup('add', 30)
     key('+10')

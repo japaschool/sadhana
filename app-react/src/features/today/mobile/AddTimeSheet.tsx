@@ -1,4 +1,4 @@
-import { useReducer } from 'react'
+import { useEffect, useReducer, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BottomSheet } from '../../../ui/primitives/BottomSheet'
 import { Keypad, type KeypadKey } from '../../../ui/primitives/Keypad'
@@ -49,6 +49,7 @@ export function AddTimeSheet({ practice, current, initialMode, onSave, onClose }
   const [s, dispatch] = useReducer(reducer, init(initialMode, current))
   const total = s.mode === 'add' ? current + s.minutes : s.minutes
   const clearing = s.mode === 'set' && s.minutes === 0
+  const disabled = s.mode === 'add' && s.minutes === 0
   const label = clearing
     ? t('today.clear')
     : s.mode === 'add'
@@ -59,6 +60,25 @@ export function AddTimeSheet({ practice, current, initialMode, onSave, onClose }
     onSave(clearing ? null : { Duration: total })
     onClose()
   }
+
+  // Physical keyboard mirrors the on-screen keypad; Enter submits.
+  const onKeyRef = useRef<(e: KeyboardEvent) => void>(undefined)
+  useEffect(() => {
+    onKeyRef.current = (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      if (/^[0-9]$/.test(e.key)) dispatch({ type: 'key', key: e.key as KeypadKey })
+      else if (e.key === 'Backspace') dispatch({ type: 'key', key: '⌫' })
+      else if (e.key === 'Delete') dispatch({ type: 'key', key: 'C' })
+      else if (e.key === 'Enter' && !(e.target instanceof HTMLButtonElement) && !disabled) submit()
+      else return
+      e.preventDefault()
+    }
+  })
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => onKeyRef.current?.(e)
+    window.addEventListener('keydown', listener)
+    return () => window.removeEventListener('keydown', listener)
+  }, [])
 
   return (
     <BottomSheet label={practice} onClose={onClose}>
@@ -103,7 +123,7 @@ export function AddTimeSheet({ practice, current, initialMode, onSave, onClose }
         <button type="button" onClick={onClose} className="h-[52px] rounded-2xl text-[15px] font-bold text-ui-muted">
           {t('common.cancel')}
         </button>
-        <button type="button" onClick={submit} disabled={s.mode === 'add' && s.minutes === 0}
+        <button type="button" onClick={submit} disabled={disabled}
           className="h-[52px] rounded-2xl bg-ui-primary text-[15px] font-bold text-ui-on-primary disabled:opacity-40">
           {label}
         </button>
