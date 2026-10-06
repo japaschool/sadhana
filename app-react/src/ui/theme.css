@@ -37,8 +37,40 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* Dark: an explicit choice (Settings → Theme), or the system when not forced to light.
+   The token list appears twice; keep both copies identical. */
+:root[data-ui-theme='dark'] .ui-root {
+  color-scheme: dark;
+  --ui-bg: #15121D;
+  --ui-surface: #211D2C;
+  --ui-sheet: #211D2C;
+  --ui-field: #2C2738;
+  --ui-chip: #2C2738;
+  --ui-hairline: #2C2738;
+  --ui-control: #332E40;
+  --ui-ink: #F1ECE4;
+  --ui-ink2: #BDB6C9;
+  --ui-muted: #A39DB0;
+  --ui-faint: #5C566B;
+  --ui-faint2: #8F88A0;
+  --ui-accent: #F0B54A;
+  --ui-accent-fill: #F0B54A;
+  --ui-accent-soft: #4A3D25;
+  --ui-accent-pill: #4A3D25;
+  --ui-toggle-off: #3A3448;
+  --ui-toggle-off-knob: #8F88A0;
+  --ui-toggle-on-knob: #15121D;
+  --ui-selected: #F0B54A;
+  --ui-on-selected: #15121D;
+  --ui-backdrop: rgba(21, 18, 29, 0.6);
+  --ui-tabbar: rgba(21, 18, 29, 0.94);
+  --ui-danger: #C2412D;
+  --ui-primary: #F1ECE4;
+  --ui-on-primary: #15121D;
+}
+
 @media (prefers-color-scheme: dark) {
-  .ui-root {
+  :root:not([data-ui-theme='light']) .ui-root {
     color-scheme: dark;
     --ui-bg: #15121D;
     --ui-surface: #211D2C;

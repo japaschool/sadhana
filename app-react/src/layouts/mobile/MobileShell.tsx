@@ -38,7 +38,7 @@ function TabBar() {
   )
 }
 
-/** Matches the browser chrome and overscroll area to the shell's background while mounted. */
+/** Matches the browser chrome and overscroll area to the shell's background (system scheme or theme override) while mounted. */
 function useShellBackground(ref: RefObject<HTMLDivElement | null>) {
   useEffect(() => {
     let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
@@ -57,9 +57,13 @@ function useShellBackground(ref: RefObject<HTMLDivElement | null>) {
       html.style.backgroundColor = bg
     }
     const scheme = window.matchMedia('(prefers-color-scheme: dark)')
+    // Settings → Theme flips data-ui-theme on <html>; follow it without any wiring.
+    const observer = new MutationObserver(apply)
     apply()
     scheme.addEventListener('change', apply)
+    observer.observe(html, { attributes: true, attributeFilter: ['data-ui-theme'] })
     return () => {
+      observer.disconnect()
       scheme.removeEventListener('change', apply)
       html.style.backgroundColor = prevBg
       if (created) meta!.remove()

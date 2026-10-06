@@ -8,6 +8,7 @@ import { router } from './router'
 import { useAuthStore } from './store/authStore'
 import { Spinner } from './components/ui/Spinner'
 import { authApi } from './api/auth'
+import { applyThemePref } from './ui/theme'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,6 +34,8 @@ async function hydrateAuth() {
     setLoading(false)
   }
 }
+
+applyThemePref()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
