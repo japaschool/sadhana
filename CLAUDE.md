@@ -52,3 +52,13 @@ On this machine the dev environment runs inside a VS Code dev container(`.devcon
 To build/test/run, exec into the running dev container rather than invoking tooling on the host, e.g.:
 
 `docker exec <container> bash -lc 'cd /workspaces/sadhana-pro && cargo test ...'`
+## UI redesign (`redesign` branch, `app-react/`)
+
+`app-react/` is the React rewrite of the frontend. It is being redesigned again, screen by screen, from the claude.ai/design project "Sadhana Redesign" (`Sadhana Redesign.dc.html`). Spec and plan: `docs/superpowers/specs/2026-10-06-mobile-today-redesign-design.md`, `docs/superpowers/plans/2026-10-06-mobile-today-redesign.md`.
+
+- **Three real layouts (mobile / tablet / desktop)**, each with its own component tree, not one layout with media queries. `useLayout()` + `<ByLayout mobile tablet desktop legacy>` pick per route. A layout with no new version yet falls back to the legacy page in the old dark `AppShell`.
+- **New code lives in** `src/ui` (tokens, primitives), `src/layouts` (shells) and `src/features/<screen>` (logic in hooks; components per layout). Don't extend legacy `pages/`, `components/layout/` or `theme/tokens.ts`; delete them as screens are replaced.
+- **Theme:** the design's palette replaces the old one. Light is the default; dark follows `prefers-color-scheme` and uses only the "1a · dark" colours (plus `#C2412D` danger). Tokens are CSS vars scoped to `.ui-root` (`src/ui/theme.css`), used as `ui-*` Tailwind colours. No DaisyUI in new code, and portals go through `UiPortal`.
+- **Fonts:** Manrope + IBM Plex Mono (both have Cyrillic, so they cover ru/uk). All strings are in en/ru/uk.
+- **Practice groups are out of scope for now.** One hardcoded "Practices" group.
+- **Data rules:** local `yyyy-mm-dd` dates (never `toISOString()`); an empty input saves `null`; dropdown options are comma- or newline-separated.
