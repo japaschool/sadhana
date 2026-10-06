@@ -54,7 +54,7 @@ To build/test/run, exec into the running dev container rather than invoking tool
 `docker exec <container> bash -lc 'cd /workspaces/sadhana-pro && cargo test ...'`
 ## UI redesign (`redesign` branch, `app-react/`)
 
-`app-react/` is the React rewrite of the frontend. It is being redesigned again, screen by screen, from the claude.ai/design project "Sadhana Redesign" (`Sadhana Redesign.dc.html`). Spec and plan: `docs/superpowers/specs/2026-10-06-mobile-today-redesign-design.md`, `docs/superpowers/plans/2026-10-06-mobile-today-redesign.md`.
+`app-react/` is the React rewrite of the frontend. It is being redesigned again, screen by screen, from the claude.ai/design project "Sadhana Redesign" (`Sadhana Redesign.dc.html`): https://claude.ai/design/p/cccefa4d-5554-41b1-be47-2704b1233b68?file=Sadhana+Redesign.dc.html. Read the mockups through the `claude_design` MCP (`https://api.anthropic.com/v1/design/mcp`, auth via `/design-login`). Screens with no mockup (e.g. Settings) are derived from the Today screen's design language. Spec and plan: `docs/superpowers/specs/2026-10-06-mobile-today-redesign-design.md`, `docs/superpowers/plans/2026-10-06-mobile-today-redesign.md`.
 
 - **Three real layouts (mobile / tablet / desktop)**, each with its own component tree, not one layout with media queries. `useLayout()` + `<ByLayout mobile tablet desktop legacy>` pick per route. A layout with no new version yet falls back to the legacy page in the old dark `AppShell`.
 - **New code lives in** `src/ui` (tokens, primitives), `src/layouts` (shells) and `src/features/<screen>` (logic in hooks; components per layout). Don't extend legacy `pages/`, `components/layout/` or `theme/tokens.ts`; delete them as screens are replaced.
