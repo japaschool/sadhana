@@ -1,4 +1,4 @@
-import { apiClient } from './client'
+import { apiClient, authHeaders, handleUnauthorized } from './client'
 import type { UserPractice, DiaryEntry, PracticeDataType, PracticeValue } from '../types/api'
 
 export const practicesApi = {
@@ -27,7 +27,16 @@ export const practicesApi = {
     return res.data.diary_day
   },
   async saveDiaryEntry(date: string, practice: string, value: PracticeValue | null): Promise<void> {
-    await apiClient.put(`/diary/${date}/entry`, { entry: { practice, value } })
+    // keepalive: a home-screen app on iOS that is swiped away is killed before an
+    // XHR (axios) completes, losing the value. A keepalive fetch is still delivered.
+    const res = await fetch(`${apiClient.defaults.baseURL}/diary/${date}/entry`, {
+      method: 'PUT',
+      keepalive: true,
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ entry: { practice, value } }),
+    })
+    if (res.status === 401) handleUnauthorized()
+    if (!res.ok) throw new Error(`Saving ${practice} failed: ${res.status}`)
   },
   async getIncompleteDays(from: string, to: string): Promise<string[]> {
     const res = await apiClient.get<{ days: string[] }>('/diary/incomplete-days', {

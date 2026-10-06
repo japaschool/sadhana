@@ -7,19 +7,26 @@ export const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-apiClient.interceptors.request.use((config) => {
+export function authHeaders(): Record<string, string> {
   const token = localStorage.getItem(TOKEN_KEY)
-  if (token) config.headers.Authorization = `Token ${token}`
+  return token ? { Authorization: `Token ${token}` } : {}
+}
+
+/** A 401 means the session is gone: drop the token and go to the login page. */
+export function handleUnauthorized() {
+  localStorage.removeItem(TOKEN_KEY)
+  window.location.href = '/login'
+}
+
+apiClient.interceptors.request.use((config) => {
+  Object.assign(config.headers, authHeaders())
   return config
 })
 
 apiClient.interceptors.response.use(
   (res) => res,
   (error) => {
-    if (error.response?.status === 401 && !error.config?.url?.includes('/users/login')) {
-      localStorage.removeItem(TOKEN_KEY)
-      window.location.href = '/login'
-    }
+    if (error.response?.status === 401 && !error.config?.url?.includes('/users/login')) handleUnauthorized()
     return Promise.reject(error)
   }
 )
