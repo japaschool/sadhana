@@ -14,6 +14,7 @@ for (const [lng, path] of Object.entries(LANGS)) {
   const translation = JSON.parse(readFileSync(`public/locales/${lng}/translation.json`, 'utf8'))
   const { html, title, description, keywords } = await render(lng, translation)
   const url = SITE + path
+  const ogImage = `${SITE}/og-image-${lng}.jpg`
   const jsonLd = JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
@@ -23,7 +24,7 @@ for (const [lng, path] of Object.entries(LANGS)) {
     inLanguage: lng,
     applicationCategory: 'LifestyleApplication',
     operatingSystem: 'Web, iOS, Android',
-    image: `${SITE}/og-image.jpg`,
+    image: ogImage,
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
   }).replace(/</g, '\\u003c')
   const head = [
@@ -35,6 +36,9 @@ for (const [lng, path] of Object.entries(LANGS)) {
     `<meta property="og:description" content="${esc(description)}" />`,
     `<meta property="og:url" content="${url}" />`,
     `<meta property="og:locale" content="${OG_LOCALE[lng]}" />`,
+    `<meta property="og:image" content="${ogImage}" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
     `<script type="application/ld+json">${jsonLd}</script>`,
   ].join('\n  ')
 
