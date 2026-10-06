@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import heroBg from '../assets/crowded-scene-indian-city.jpg'
+import heroBg from '../assets/hero.webp'
 import shot1 from '../assets/shot-home.jpg'
 import PhoneFrame from './PhoneFrame'
 
@@ -26,6 +26,7 @@ export default function Hero() {
         src={heroBg}
         alt=""
         aria-hidden="true"
+        fetchPriority="high"
         className="absolute inset-0 w-full h-full object-cover select-none"
         draggable={false}
         style={{
