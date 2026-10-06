@@ -28,7 +28,7 @@ function TabBar() {
       {TABS.map((tab) => (
         <NavLink key={tab.to} to={tab.to} end={tab.to === '/'} aria-label={t(tab.key)} className="flex justify-center">
           {({ isActive }) => (
-            <span className={`flex h-11 w-16 items-center justify-center rounded-full ${isActive ? 'bg-ui-accent-pill text-ui-accent' : ''}`}>
+            <span className={`flex h-11 w-16 items-center justify-center ${isActive ? 'text-ui-accent' : ''}`}>
               <TabIcon d={isActive ? tab.activeIcon : tab.icon} />
             </span>
           )}
