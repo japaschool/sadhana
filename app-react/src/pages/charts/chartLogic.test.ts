@@ -3,8 +3,10 @@ import { describe, it, expect } from 'vitest'
 import {
   axisKindFor, valueToNumber, computeTimeOverflow,
   buildChartData, averageForType, formatMinutesAsHHMM,
-  chartUnitFor, groupTracesByUnit,
+  chartUnitFor, groupTracesByUnit, tracesFor, resolveAxisId,
 } from './chartLogic'
+import type { Report } from '../../api/charts'
+import type { UserPractice } from '../../types/api'
 
 describe('axisKindFor', () => {
   it('routes data types to axes', () => {
@@ -142,5 +144,52 @@ describe('groupTracesByUnit', () => {
     expect(groups.map((g) => g.unit)).toEqual(['duration', 'count', 'time', 'bool'])
     expect(groups[0].traces.map((t) => t.name)).toEqual(['Reading', 'Dishes'])
     expect(groups.some((g) => g.traces.some((t) => t.name === 'Journal'))).toBe(false)
+  })
+})
+
+const P: UserPractice[] = [
+  { id: 'p1', practice: 'Japa', data_type: 'Duration', is_active: true },
+  { id: 'p2', practice: 'Wake up', data_type: 'Time', is_active: true },
+  { id: 'p3', practice: 'Old', data_type: 'Int', is_active: false },
+]
+const COLORS = ['c1', 'c2']
+
+describe('tracesFor', () => {
+  it('All practices: every active practice as a regular line, no averages', () => {
+    expect(tracesFor(null, P, COLORS)).toEqual([
+      { name: 'Japa', dataType: 'Duration', type_: { Line: { style: 'Regular' } }, color: 'c1', showAverage: false, yAxis: null },
+      { name: 'Wake up', dataType: 'Time', type_: { Line: { style: 'Regular' } }, color: 'c2', showAverage: false, yAxis: null },
+    ])
+  })
+
+  it('Graph report: keeps type, average and axis, cycles colours, falls back for unknown practices', () => {
+    const report: Report = {
+      id: 'r1', name: 'R', definition: { Graph: { bar_layout: 'Stacked', traces: [
+        { label: null, type_: 'Bar', practice: 'p1', y_axis: null, show_average: true },
+        { label: null, type_: 'Dot', practice: 'p2', y_axis: 'Y2', show_average: false },
+        { label: null, type_: { Line: { style: 'Square' } }, practice: 'gone', y_axis: null, show_average: false },
+      ] } },
+    }
+    const t = tracesFor(report, P, COLORS)
+    expect(t.map((x) => [x.name, x.dataType, x.type_, x.color, x.showAverage, x.yAxis])).toEqual([
+      ['Japa', 'Duration', 'Bar', 'c1', true, null],
+      ['Wake up', 'Time', 'Dot', 'c2', false, 'Y2'],
+      ['gone', 'Int', { Line: { style: 'Square' } }, 'c1', false, null],
+    ])
+  })
+
+  it('Grid report: one regular line per practice', () => {
+    const grid: Report = { id: 'g', name: 'G', definition: { Grid: { practices: ['p2'] } } }
+    expect(tracesFor(grid, P, COLORS).map((x) => x.name)).toEqual(['Wake up'])
+  })
+})
+
+describe('resolveAxisId', () => {
+  it('puts Y2 numeric traces on the right axis only', () => {
+    expect(resolveAxisId(null, 'Duration')).toBe('num')
+    expect(resolveAxisId('Y2', 'Int')).toBe('num-right')
+    expect(resolveAxisId('Y2', 'Time')).toBe('time')
+    expect(resolveAxisId(null, 'Bool')).toBe('unit')
+    expect(resolveAxisId('Y2', 'Text')).toBe('unit')
   })
 })

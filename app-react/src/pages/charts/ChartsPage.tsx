@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { FaPlus, FaChartLine, FaTrash, FaTh } from 'react-icons/fa'
 import { LuCopy, LuCheck, LuChevronDown, LuChevronUp, LuX, LuChartLine, LuDownload } from 'react-icons/lu'
@@ -23,12 +23,13 @@ import { practicesApi } from '../../api/practices'
 import { Spinner } from '../../components/ui/Spinner'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import { useAuthStore } from '../../store/authStore'
-import type { UserPractice, PracticeDataType } from '../../types/api'
+import type { UserPractice } from '../../types/api'
 import {
   buildChartData,
-  axisKindFor,
   averageForType,
   formatMinutesAsHHMM,
+  tracesFor,
+  resolveAxisId,
   type ChartDataRow,
 } from './chartLogic'
 import { ACCENT, ACCENT_GRADIENT, BORDER, SURFACE_PANEL, TEXT, TEXT_MUTED } from '../../theme/tokens'
@@ -139,38 +140,7 @@ function ChartPanel({ report, practices, practiceMap, chartHeight = 290 }: Chart
   // Reset filter when switching reports
   useEffect(() => { setSelectedPractice(null) }, [report])
 
-  // Build traces for "all practices" (every active practice as a Line)
-  const activePractices = practices.filter(p => p.is_active)
-
-  const byId = new Map(practices.map((p) => [p.id, p]))
-
-  const traces: { name: string; type_: TraceType; color: string; dataType: PracticeDataType; showAverage: boolean; yAxis: string | null }[] =
-    report === null
-      ? activePractices.map((p, i) => ({
-          name: p.practice,
-          type_: { Line: { style: 'Regular' as const } },
-          color: TRACE_COLORS[i % TRACE_COLORS.length],
-          dataType: p.data_type,
-          showAverage: false,
-          yAxis: null,
-        }))
-      : isGrid(report.definition)
-        ? report.definition.Grid.practices.map((pid, i) => ({
-            name: practiceMap[pid] ?? pid,
-            type_: { Line: { style: 'Regular' as const } } as TraceType,
-            color: TRACE_COLORS[i % TRACE_COLORS.length],
-            dataType: byId.get(pid)?.data_type ?? 'Int',
-            showAverage: false,
-            yAxis: null,
-          }))
-        : report.definition.Graph.traces.map((t, i) => ({
-            name: practiceMap[t.practice] ?? t.practice,
-            type_: t.type_,
-            color: TRACE_COLORS[i % TRACE_COLORS.length],
-            dataType: byId.get(t.practice)?.data_type ?? 'Int',
-            showAverage: t.show_average,
-            yAxis: t.y_axis,
-          }))
+  const traces = tracesFor(report, practices, TRACE_COLORS)
 
   const visibleTraces = selectedPractice
     ? traces.filter(t => t.name === selectedPractice)
@@ -183,11 +153,6 @@ function ChartPanel({ report, practices, practiceMap, chartHeight = 290 }: Chart
     locale,
   )
   const isGridReport = report !== null && isGrid(report.definition)
-
-  function resolveAxisId(yAxis: string | null, dataType: PracticeDataType): string {
-    if (yAxis === 'Y2' && axisKindFor(dataType) === 'num') return 'num-right'
-    return axisKindFor(dataType)
-  }
 
   const usedAxes = new Set(visibleTraces.map((t) => resolveAxisId(t.yAxis, t.dataType)))
   const numAxisAllDuration =
@@ -202,7 +167,7 @@ function ChartPanel({ report, practices, practiceMap, chartHeight = 290 }: Chart
       const avg = averageForType(entries as { cob_date: string; value: unknown }[], t.dataType, todayCob)
       return avg === null ? null : { axis: resolveAxisId(t.yAxis, t.dataType), value: avg, color: t.color }
     })
-    .filter((a): a is { axis: string; value: number; color: string } => a !== null)
+    .filter((a) => a !== null)
 
   async function handleDownload() {
     const entries = await chartsApi.getReportData(todayCob, duration)
@@ -771,7 +736,8 @@ export function ChartsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const user = useAuthStore(s => s.user)
   const { data: reports = [], isLoading: reportsLoading } = useQuery({ queryKey: ['reports'], queryFn: chartsApi.getReports })
   const { data: practices = [] } = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices })
-  const [selectedId, setSelectedId] = useState(ALL_PRACTICES_ID)
+  const [searchParams] = useSearchParams()
+  const [selectedId, setSelectedId] = useState(() => searchParams.get('report') ?? ALL_PRACTICES_ID)
   const [shareCopied, setShareCopied] = useState(false)
   const [manageOpen, setManageOpen] = useState(false)
 

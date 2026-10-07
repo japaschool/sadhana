@@ -1,5 +1,6 @@
 // app-react/src/pages/charts/chartLogic.ts
-import type { PracticeDataType } from '../../types/api'
+import type { Report, TraceType } from '../../api/charts'
+import type { PracticeDataType, UserPractice } from '../../types/api'
 
 export type AxisKind = 'num' | 'time' | 'unit'
 
@@ -185,4 +186,36 @@ export function groupTracesByUnit<T extends { dataType: PracticeDataType }>(
     map.get(u)!.push(tr)
   }
   return UNIT_ORDER.filter((u) => map.has(u)).map((u) => ({ unit: u, traces: map.get(u)! }))
+}
+
+export type AxisId = 'num' | 'num-right' | 'time' | 'unit'
+
+export interface Trace extends TraceInput {
+  type_: TraceType
+  color: string
+  showAverage: boolean
+  yAxis: string | null
+}
+
+export function resolveAxisId(yAxis: string | null, dataType: PracticeDataType): AxisId {
+  if (yAxis === 'Y2' && axisKindFor(dataType) === 'num') return 'num-right'
+  return axisKindFor(dataType)
+}
+
+const REGULAR_LINE: TraceType = { Line: { style: 'Regular' } }
+
+/** Traces for a report; `null` = "All practices" (every active practice as a line). Colours go by index. */
+export function tracesFor(report: Report | null, practices: UserPractice[], colors: readonly string[]): Trace[] {
+  const byId = new Map(practices.map((p) => [p.id, p]))
+  const color = (i: number) => colors[i % colors.length]
+  const line = (pid: string, i: number): Trace => ({
+    name: byId.get(pid)?.practice ?? pid,
+    dataType: byId.get(pid)?.data_type ?? 'Int',
+    type_: REGULAR_LINE, color: color(i), showAverage: false, yAxis: null,
+  })
+  if (report === null) return practices.filter((p) => p.is_active).map((p, i) => line(p.id, i))
+  if ('Grid' in report.definition) return report.definition.Grid.practices.map(line)
+  return report.definition.Graph.traces.map((t, i) => ({
+    ...line(t.practice, i), type_: t.type_, showAverage: t.show_average, yAxis: t.y_axis,
+  }))
 }

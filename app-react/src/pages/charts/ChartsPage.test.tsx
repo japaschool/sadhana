@@ -215,3 +215,20 @@ describe('ChartsPage — Y-axis select', () => {
     })
   })
 })
+
+describe('ChartsPage ?report=', () => {
+  it('opens the report named in the query string', async () => {
+    vi.mocked(chartsApi.getReports).mockResolvedValueOnce([
+      { id: 'r1', name: 'Weekly', definition: { Graph: { bar_layout: 'Grouped', traces: [] } } },
+    ])
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={['/charts/manage?report=r1']}>
+          <Routes><Route path="/charts/manage" element={<ChartsPage />} /></Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+    expect(await screen.findByRole('button', { name: /Weekly/ })).toBeInTheDocument()
+  })
+})
