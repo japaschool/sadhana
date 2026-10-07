@@ -59,17 +59,17 @@ The rest of the API calls match the server: auth, confirmation, password reset, 
 
 ## P0: deployment and switching users over
 
-- [ ] **Docker:** the image only builds the Rust/Trunk frontend, so `app-react` is never shipped. Add a Node stage (`npm ci && npm run build`) and copy `app-react/dist` into the `dist/` the server serves. Keep the `GIT_SHA` substitution into the service worker. Remove trunk/wasm-bindgen/`wasm32` once the Rust UI is gone.
-- [ ] Add `**/node_modules` and `**/dist` to `.Dockerignore`.
-- [ ] **Service worker takeover:** installed apps are controlled by the Rust service worker, which serves the cached `/` before going to the network.
+- [x] **Docker:** the image only builds the Rust/Trunk frontend, so `app-react` is never shipped. Add a Node stage (`npm ci && npm run build`) and copy `app-react/dist` into the `dist/` the server serves. Keep the `GIT_SHA` substitution into the service worker. Remove trunk/wasm-bindgen/`wasm32` once the Rust UI is gone.
+- [x] Add `**/node_modules` and `**/dist` to `.Dockerignore`.
+- [x] **Service worker takeover:** installed apps are controlled by the Rust service worker, which serves the cached `/` before going to the network.
   - If the new build has no `/service_worker.js`, the update check gets a 404, the old service worker stays, and users keep running the cached Rust UI indefinitely.
   - The new service worker at the same path must first send the offline writes queued in IndexedDB (`SadhanaProPostDB` / `postrequest`), then delete the `static-v*`/`api-v*` caches, then take control (`skipWaiting` + `clients.claim()`).
-- [ ] **Login token:** main saves `yew.token` through gloo, which stores it as a JSON string with quotes. React reads it raw, so the server gets `Token "eyJ…"`, returns 401, and every existing user is logged out. Strip the quotes when reading.
-- [ ] **Language setting:** main stores it under `user_language`; React uses i18next's `i18nextLng`. Migrate the old key.
-- [ ] **Rollout through the preview channel:** deploy the React image to preview (`build_dockerhub.yml` with `deploy_channel=preview`); testers opt in with the `sadhana_release_channel` cookie. React has no preview-channel toggle, so testers can't switch back. Port it from main (`frontend/src/utils/release_channel.rs` + Settings).
-- [ ] Apply the 2 new `default_user_practices` migrations by hand on deploy. On prod, migrations only run when `RUN_DB_MIGRATIONS=1` is set.
-- [ ] **CI:** no workflow currently runs lint or tests. Add `npm ci && npm run lint && npm test && npm run build` for `app-react`, plus `cargo test`/clippy.
-- [ ] Add Node to the devcontainer and `app-react` targets to the `Makefile` (`run` and `frontend-build` still call trunk). Update the README and `CLAUDE.md`.
+- [x] **Login token:** main saves `yew.token` through gloo, which stores it as a JSON string with quotes. React reads it raw, so the server gets `Token "eyJ…"`, returns 401, and every existing user is logged out. Strip the quotes when reading.
+- [x] **Language setting:** main stores it under `user_language`; React uses i18next's `i18nextLng`. Migrate the old key.
+- [x] **Rollout through the preview channel:** deploy the React image to preview (`build_dockerhub.yml` with `deploy_channel=preview`); testers opt in with the `sadhana_release_channel` cookie. React has no preview-channel toggle, so testers can't switch back. Port it from main (`frontend/src/utils/release_channel.rs` + Settings).
+- [x] ~~Apply the 2 new `default_user_practices` migrations by hand on deploy.~~ Migrations removed from the branch.
+- [x] **CI:** no workflow currently runs lint or tests. Add `npm ci && npm run lint && npm test && npm run build` for `app-react`, plus `cargo test`/clippy.
+- [x] Add Node to the devcontainer and `app-react` targets to the `Makefile` (`run` and `frontend-build` still call trunk). Update the README and `CLAUDE.md`.
 
 ## P1: offline mode
 
@@ -151,7 +151,7 @@ React has none of this: the React Query cache is in memory only, and writes made
 
 **Settings / Help**
 - [ ] **Decision: dark only.** React hard-codes `data-theme="dark"` and uses inline white-alpha colours; main has automatic light/dark plus a toggle. The redesign's own spec excluded it "per user request". Confirm this is intended.
-- [ ] Preview-channel toggle (see the deployment section).
+- [x] Preview-channel toggle (see the deployment section).
 - [ ] **FAQ content regressed.** Main covered installing on iOS, registration, renaming practices, graph/table reports, bar layouts, averages, and yatra practice mapping with screenshots (`frontend/images/faq/*`), plus a Telegram link. React has 8 generic answers. Main's text is already translated in `frontend/i18n/*.json`.
 - [ ] `/help` is public on main but requires login in React. Decide which it should be.
 - [ ] Translate the hard-coded English strings: the error page ("Something went wrong", "Go home"), "report(s)", "Grid/Graph", "practice(s)" on the shared page, and the placeholders ("e.g. Morning run", "you@example.com", "Your name").
@@ -165,7 +165,6 @@ React has none of this: the React Query cache is in memory only, and writes made
   - the deleted `banner-narrow-01.png`, which main's manifest still references.
 - [ ] Split the landing-page redesign (`static-react`, 46 files, including a 5.4 MB `src/assets/2-2.jpg`) into its own PR, since it deploys separately (`build_static_site.yml`). Compress its images.
 - [ ] Decide whether `docs/superpowers/` (44 plan/spec files) stays. Replace the Vite template `app-react/README.md` with run/build notes.
-- [ ] The Yoga migration can't add Russian 'Йога' because `practice` is the only primary key of `default_user_practices`. Either change the primary key to (lang, practice) or accept it.
 - [ ] Server OAuth: reuse one `reqwest::Client` and cache Apple's signing keys (JWKS) instead of fetching them on every request.
 - [ ] Serve Vite's hashed `/assets/*` with `Cache-Control: public, max-age=31536000, immutable`. Drop the gzip/brotli step in the Dockerfile: nothing serves those files, and the new `Compress` middleware covers it.
 - [ ] Two older issues, already on main: confirmation email links are built from an address the client sends, which could be used for phishing; and emails are only in Russian while the app now defaults to English.

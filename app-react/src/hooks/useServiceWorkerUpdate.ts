@@ -6,7 +6,10 @@ export function useServiceWorkerUpdate(): { updateReady: boolean; applyUpdate: (
   useEffect(() => {
     const sw = navigator.serviceWorker
     if (!sw) return
-    const handler = () => setUpdateReady(true)
+    // A new release's worker takes control (skipWaiting + claim). The first install
+    // on a fresh client also fires this, but that isn't an update.
+    const hadController = !!sw.controller
+    const handler = () => { if (hadController) setUpdateReady(true) }
     sw.addEventListener('controllerchange', handler)
     return () => sw.removeEventListener('controllerchange', handler)
   }, [])

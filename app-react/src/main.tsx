@@ -37,6 +37,11 @@ async function hydrateAuth() {
 
 applyThemePref()
 
+// Replaces the Rust UI's worker on installed apps (see public/service_worker.js).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  void navigator.serviceWorker.register('/service_worker.js', { updateViaCache: 'none' })
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>

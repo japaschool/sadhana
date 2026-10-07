@@ -3,7 +3,7 @@ SHELL := /bin/bash
 db_url := postgres://postgres:postgres@192.168.68.102:5432/sadhana_pro
 
 frontend-build:
-	cd frontend && trunk build
+	cd app-react && npm ci && npm run build -- --outDir ../dist --emptyOutDir
 
 run_server:
 	DATABASE_URL=$(db_url) \
@@ -40,6 +40,7 @@ test:
 lint:
 	@rustup component add clippy 2> /dev/null
 	cargo clippy --all-targets --all-features -- -D warnings
+	cd app-react && npm run lint
 
 # non-file target for make
 .PHONY: run_server run frontend-build create_migration migrate redo_migrate reset_db gen_schema test lint

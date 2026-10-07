@@ -1,6 +1,5 @@
 import axios from 'axios'
-
-const TOKEN_KEY = 'yew.token'
+import { readToken, writeToken } from '../store/authStore'
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
@@ -8,13 +7,13 @@ export const apiClient = axios.create({
 })
 
 export function authHeaders(): Record<string, string> {
-  const token = localStorage.getItem(TOKEN_KEY)
+  const token = readToken()
   return token ? { Authorization: `Token ${token}` } : {}
 }
 
 /** A 401 means the session is gone: drop the token and go to the login page. */
 export function handleUnauthorized() {
-  localStorage.removeItem(TOKEN_KEY)
+  writeToken(null)
   window.location.href = '/login'
 }
 

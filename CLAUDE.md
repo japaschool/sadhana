@@ -4,11 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Sadhana Pro is a full-stack **Rust** PWA for tracking spiritual practice. A single Cargo workspace holds three crates:
+Sadhana Pro is a PWA for tracking spiritual practice: a **Rust** API and a **React** (Vite + TypeScript) frontend in `app-react/`. The Cargo workspace holds:
 
 - `server` — actix-web REST API + static file host (Diesel/Postgres). Default workspace member.
-- `frontend` — Yew (WASM) SPA compiled with Trunk, served as an installable iOS/Android PWA.
-- `common` — types shared by both, gated behind mutually exclusive `frontend` / `backend` cargo features (the backend feature pulls in actix/diesel/etc.; frontend stays dependency-light).
+- `common` — types used by the server (`backend` feature).
+
+The Rust/Yew UI (`frontend/`) was removed on this branch; it still lives on `main`, and is deployed only from there. Both UIs share the prod DB.
 
 The compiled frontend lands in `dist/`, which the server serves directly (see `server/src/routes.rs`).
 
@@ -16,18 +17,21 @@ The compiled frontend lands in `dist/`, which the server serves directly (see `s
 
 All common workflows go through the `Makefile`. It hardcodes a `db_url`; override `DATABASE_URL` in your env or edit the Makefile for local dev.
 
-- `make run` — build frontend (`trunk build`) then run the server. App at `localhost:8080`.
-- `make frontend-build` — `trunk build` only (writes to `dist/`).
+- `make run` — build the React app into `dist/`, then run the server. App at `localhost:8080`.
+- `make frontend-build` — `npm ci && npm run build` in `app-react/`, output to `dist/`.
+- In `app-react/`: `npm run dev` (Vite, proxies `/api` to `localhost:8080`), `npm test`, `npm run lint`.
 - `make run_server` — server only (assumes `dist/` already built).
 - `make test T=<name>` — run tests. **Tests hit a real Postgres DB** and require `--test-threads=1` (already in the target); `T` filters by name. `make test` runs all.
-- `make lint` — `cargo clippy --all-targets --all-features -D warnings`. Warnings are errors.
+- `make lint` — `cargo clippy --all-targets --all-features -D warnings` (warnings are errors), then `npm run lint`.
 - `make migrate` / `make undo_migrate` / `make redo_migrate` / `make reset_db` — Diesel migrations in `migrations/`.
 - `make create_migration name=<x>` — new migration.
 - `make gen_schema` — regenerate `server/src/schema.rs` from the live DB. **Do not hand-edit `schema.rs`.**
 
-First-time setup (from README): `cargo install trunk`, `rustup target add wasm32-unknown-unknown`, `cargo install diesel_cli --no-default-features --features postgres` (needs `libpq`).
+First-time setup (from README): Node 22, `cargo install diesel_cli --no-default-features --features postgres` (needs `libpq`).
 
-Docker: `docker build -t sadhanapro .` (multi-stage, uses cargo-chef for dep caching; builds frontend inside). Requires env vars `SERVER_ADDRESS`, `JWT_KEY`, `DATABASE_URL`.
+Docker: `docker build -t sadhanapro .` (multi-stage: a Node stage builds `app-react`, cargo-chef caches Rust deps). Requires env vars `SERVER_ADDRESS`, `JWT_KEY`, `DATABASE_URL`.
+
+CI (`.github/workflows/ci.yml`) runs React lint/test/build and clippy + `cargo test` against a Postgres service. Deploy: `build_dockerhub.yml` with `deploy_channel=preview`; testers opt in with the `sadhana_release_channel=preview` cookie (Settings → preview toggle), which nginx routes on.
 
 ## Architecture notes
 
@@ -39,15 +43,13 @@ Docker: `docker build -t sadhanapro .` (multi-stage, uses cargo-chef for dep cac
 
 **DB migrations are embedded** in the server binary (`embed_migrations!`) and run on startup when enabled via `vars::run_db_migrations_on_startup()`.
 
-**Frontend** (`frontend/src/`) is Yew function components + hooks. `main.rs` nests context providers (network status, app-update, user, session) around a `yew-router` switch. Routes live in `routes/`, shared UI in `components/`, cross-cutting state in `hooks/`. All API calls go through `services/requests.rs`, which handles the JWT (`yew.token` in LocalStorage) and an optional response cache. i18n strings are generated at build time via `i18n_codegen` (`i18n.rs`). Styling uses Tailwind classes merged with `tw_merge`.
+**Compatibility with the Rust UI** (users switch between the two via the preview cookie): the JWT stays in `yew.token`, JSON-quoted as gloo wrote it (`readToken`/`writeToken` in `store/authStore.ts`); the old `user_language` key is migrated once to `i18nextLng` (`legacyLanguage.ts`).
 
-**PWA / service worker:** the server generates a precache manifest and serves `service_worker.js` with no-cache headers; the SW cache is scoped by release SHA (`GIT_SHA` build arg → `frontend/src/utils/release_channel.rs`) so a new deploy invalidates stale assets. Touch this area carefully — it governs what clients cache across releases.
-
-Trunk proxies `/api/` to the running server during dev (`frontend/Trunk.toml`).
+**Service worker:** `app-react/public/service_worker.js` is served at the same path as the Rust UI's worker, with no-cache headers, and `__GIT_SHA__` is substituted at Docker build so each release is a new worker. For now it only takes over: sends the Rust worker's queued offline writes (IndexedDB `SadhanaProPostDB`/`postrequest`), deletes its `static-v*`/`api-v*` caches and claims the clients. It has no fetch handler, so no offline mode yet. Touch this area carefully — it governs what installed clients run.
 
 ## Local dev environment
 
-On this machine the dev environment runs inside a VS Code dev container(`.devcontainer/devcontainer.json`). The Rust toolchain (`cargo`, `trunk`, `rustc`, the `wasm32-unknown-unknown` target) lives inside the container, not on the host — the host has no cargo/trunk. The repo is mounted in the container at `/workspaces/sadhana-pro`.
+On this machine the dev environment runs inside a VS Code dev container(`.devcontainer/devcontainer.json`). The Rust toolchain and Node live inside the container, not on the host — the host has no cargo. (The host does have Node, but its v26 breaks jsdom's `localStorage` in tests; run `npm test` with Node 22.) The repo is mounted in the container at `/workspaces/sadhana-pro`.
 
 To build/test/run, exec into the running dev container rather than invoking tooling on the host, e.g.:
 

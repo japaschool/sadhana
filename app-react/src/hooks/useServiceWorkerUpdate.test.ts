@@ -13,6 +13,7 @@ describe('useServiceWorkerUpdate', () => {
         listeners[event].push(cb)
       }),
       removeEventListener: vi.fn(),
+      controller: {} as object | null,
     }
     Object.defineProperty(navigator, 'serviceWorker', {
       value: mockSW,
@@ -35,6 +36,15 @@ describe('useServiceWorkerUpdate', () => {
       listeners['controllerchange']?.forEach(cb => cb(new Event('controllerchange')))
     })
     expect(result.current.updateReady).toBe(true)
+  })
+
+  it('ignores the first worker taking control of a fresh client', () => {
+    ;(navigator.serviceWorker as unknown as { controller: null }).controller = null
+    const { result } = renderHook(() => useServiceWorkerUpdate())
+    act(() => {
+      listeners['controllerchange']?.forEach(cb => cb(new Event('controllerchange')))
+    })
+    expect(result.current.updateReady).toBe(false)
   })
 
   it('applyUpdate calls window.location.reload', () => {

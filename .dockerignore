@@ -1,0 +1,14 @@
+Dockerfile*
+docker-compose*
+.dockerignore
+.git
+.gitignore
+*/bin
+*/obj
+README.md
+LICENSE
+.vscode
+target
+**/node_modules
+**/dist
+target-mac

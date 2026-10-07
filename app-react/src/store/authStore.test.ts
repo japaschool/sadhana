@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { act } from '@testing-library/react'
-import { useAuthStore } from './authStore'
+import { readToken, useAuthStore } from './authStore'
 
 describe('authStore', () => {
   beforeEach(() => {
@@ -20,9 +20,16 @@ describe('authStore', () => {
         id: '1', email: 'a@b.com', token: 'tok', name: 'Alice',
       })
     })
-    expect(localStorage.getItem('yew.token')).toBe('tok')
+    expect(localStorage.getItem('yew.token')).toBe('"tok"')
     expect(useAuthStore.getState().token).toBe('tok')
     expect(useAuthStore.getState().user?.name).toBe('Alice')
+  })
+
+  it('reads the Rust UI token (JSON-quoted) and a raw one', () => {
+    localStorage.setItem('yew.token', '"eyJ.a.b"')
+    expect(readToken()).toBe('eyJ.a.b')
+    localStorage.setItem('yew.token', 'eyJ.a.b')
+    expect(readToken()).toBe('eyJ.a.b')
   })
 
   it('logout clears token from localStorage and state', () => {
