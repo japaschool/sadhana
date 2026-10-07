@@ -45,7 +45,9 @@ export function BottomSheet({ label, onClose, children }: BottomSheetProps) {
         aria-label={label}
         tabIndex={-1}
         onKeyDown={onKeyDown}
-        className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col gap-[18px] overflow-y-auto rounded-t-[28px] bg-ui-sheet px-5 pt-2.5 pb-[calc(30px+env(safe-area-inset-bottom))] outline-none"
+        // Tablet (useLayout's query; desktop has no sheets): one practice column wide — (content − 2·36px padding − 16px gap) / 2 —
+        // centred in the area right of the 88px rail; floored at a phone's width for the 640–767px single-column range.
+        className="fixed inset-x-0 bottom-0 z-50 [@media(min-width:640px)_and_(min-height:500px)]:left-[88px] [@media(min-width:640px)_and_(min-height:500px)]:mx-auto [@media(min-width:640px)_and_(min-height:500px)]:w-[max(375px,calc(50vw-88px))] flex max-h-[92dvh] flex-col gap-[18px] overflow-y-auto rounded-t-[28px] bg-ui-sheet px-5 pt-2.5 pb-[calc(30px+env(safe-area-inset-bottom))] outline-none"
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         transition={{ type: 'tween', duration: 0.22, ease: 'easeOut' }}
