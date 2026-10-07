@@ -384,5 +384,30 @@
     "tabInsights": "Аналитика",
     "tabYatra": "Ятра",
     "tabSettings": "Настройки"
+  },
+  "insights": {
+    "title": "Аналитика",
+    "reports": "Отчёты",
+    "range": "Период",
+    "range7d": "7д",
+    "range30d": "30д",
+    "range90d": "90д",
+    "range1y": "1г",
+    "endingToday": "По сегодня",
+    "endingOn": "По {{date}}",
+    "resetEnd": "Вернуться к сегодня",
+    "dailyAverage": "В среднем за день · {{range}}",
+    "average": "В среднем · {{range}}",
+    "vsPrev7d": "{{delta}} к предыдущим 7 дням",
+    "vsPrev30d": "{{delta}} к предыдущим 30 дням",
+    "vsPrev90d": "{{delta}} к предыдущим 90 дням",
+    "vsPrev1y": "{{delta}} к предыдущему году",
+    "noData": "Нет данных за этот период",
+    "loadFailed": "Не удалось загрузить данные",
+    "legend": "Средние",
+    "tickMin": "м",
+    "newChart": "Новый график",
+    "editReport": "Изменить «{{name}}»",
+    "deleteReport": "Удалить отчёт"
   }
 }

@@ -384,5 +384,30 @@
     "tabInsights": "Аналітика",
     "tabYatra": "Ятра",
     "tabSettings": "Налаштування"
+  },
+  "insights": {
+    "title": "Аналітика",
+    "reports": "Звіти",
+    "range": "Період",
+    "range7d": "7д",
+    "range30d": "30д",
+    "range90d": "90д",
+    "range1y": "1р",
+    "endingToday": "По сьогодні",
+    "endingOn": "По {{date}}",
+    "resetEnd": "Повернутися до сьогодні",
+    "dailyAverage": "У середньому за день · {{range}}",
+    "average": "У середньому · {{range}}",
+    "vsPrev7d": "{{delta}} до попередніх 7 днів",
+    "vsPrev30d": "{{delta}} до попередніх 30 днів",
+    "vsPrev90d": "{{delta}} до попередніх 90 днів",
+    "vsPrev1y": "{{delta}} до попереднього року",
+    "noData": "Немає даних за цей період",
+    "loadFailed": "Не вдалося завантажити дані",
+    "legend": "Середні",
+    "tickMin": "хв",
+    "newChart": "Новий графік",
+    "editReport": "Змінити «{{name}}»",
+    "deleteReport": "Видалити звіт"
   }
 }
