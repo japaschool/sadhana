@@ -30,6 +30,16 @@
   --ui-danger: #C2412D;
   --ui-primary: #1F1B16;
   --ui-on-primary: #F7F4EE;
+  --ui-good: #4F7A3A;
+  /* Chart series, in fixed order. Slots 1–4 from the 5a mockup; 5–8 checked with the dataviz validator. */
+  --ui-chart-1: #E2A24B;
+  --ui-chart-2: #D7867A;
+  --ui-chart-3: #9DB98A;
+  --ui-chart-4: #A99BD6;
+  --ui-chart-5: #0F9E95;
+  --ui-chart-6: #C77A3E;
+  --ui-chart-7: #5F82D6;
+  --ui-chart-8: #C2689A;
 
   color: var(--ui-ink);
   /* Literal, not var(--font-ui): Tailwind may tree-shake unused theme vars. */
@@ -67,6 +77,15 @@
   --ui-danger: #C2412D;
   --ui-primary: #F1ECE4;
   --ui-on-primary: #15121D;
+  --ui-good: #A9C996;
+  --ui-chart-1: #EDB45A;
+  --ui-chart-2: #E3978B;
+  --ui-chart-3: #A9C996;
+  --ui-chart-4: #B7AAE6;
+  --ui-chart-5: #22B89A;
+  --ui-chart-6: #E08A4C;
+  --ui-chart-7: #7C9DF0;
+  --ui-chart-8: #E07FB0;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -98,6 +117,15 @@
     --ui-danger: #C2412D;
     --ui-primary: #F1ECE4;
     --ui-on-primary: #15121D;
+    --ui-good: #A9C996;
+    --ui-chart-1: #EDB45A;
+    --ui-chart-2: #E3978B;
+    --ui-chart-3: #A9C996;
+    --ui-chart-4: #B7AAE6;
+    --ui-chart-5: #22B89A;
+    --ui-chart-6: #E08A4C;
+    --ui-chart-7: #7C9DF0;
+    --ui-chart-8: #E07FB0;
   }
 }
 
@@ -128,6 +156,7 @@
   --color-ui-danger: var(--ui-danger);
   --color-ui-primary: var(--ui-primary);
   --color-ui-on-primary: var(--ui-on-primary);
+  --color-ui-good: var(--ui-good);
   --font-ui: Manrope, ui-sans-serif, system-ui, sans-serif;
   --font-ui-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
