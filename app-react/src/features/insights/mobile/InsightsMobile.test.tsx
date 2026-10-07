@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { InsightsMobileScreen } from './InsightsMobile'
 import { setViewportWidth } from '../../../test/viewport'
 
@@ -16,6 +16,10 @@ import { practicesApi } from '../../../api/practices'
 const charts = vi.mocked(chartsApi)
 const practices = vi.mocked(practicesApi)
 
+function LocationProbe() {
+  const l = useLocation()
+  return <p data-testid="location">{l.pathname + l.search}</p>
+}
 const LONG = 'Morning sadhana with a very long report name'
 
 function renderScreen() {
@@ -110,5 +114,64 @@ describe('InsightsMobile', () => {
     charts.getReportData.mockRejectedValue(new Error('boom'))
     renderScreen()
     expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load data")
+  })
+
+  const openMore = async () => fireEvent.click(await screen.findByRole('button', { name: 'More' }))
+
+  it('hides Edit and Delete for All practices', async () => {
+    renderScreen()
+    await openMore()
+    const menu = screen.getByRole('menu', { name: 'More' })
+    expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
+      'New chart', 'Share reports link', 'Download data (CSV)',
+    ])
+  })
+
+  it('offers Edit and Delete for a report; Edit opens the legacy editor on it', async () => {
+    localStorage.setItem('insights-report', 'r1')
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={['/charts']}>
+          <Routes>
+            <Route path="/charts" element={<InsightsMobileScreen />} />
+            <Route path="/charts/manage" element={<LocationProbe />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+    await screen.findByRole('button', { name: LONG })
+    await openMore()
+    expect(screen.getByRole('menuitem', { name: 'Delete report' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('menuitem', { name: `Edit “${LONG}”` }))
+    expect(screen.getByTestId('location')).toHaveTextContent('/charts/manage?report=r1')
+  })
+
+  it('deletes the report after confirming and falls back to All practices', async () => {
+    localStorage.setItem('insights-report', 'r1')
+    charts.deleteReport.mockImplementation(async () => {
+      charts.getReports.mockResolvedValue([])
+    })
+    renderScreen()
+    await screen.findByRole('button', { name: LONG })
+    await openMore()
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Delete report' }))
+    const sheet = screen.getByRole('dialog', { name: 'Delete report' })
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Delete' }))
+    await waitFor(() => expect(charts.deleteReport).toHaveBeenCalledWith('r1'))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(await screen.findByRole('button', { name: 'All practices' })).toBeInTheDocument()
+  })
+
+  it('keeps the sheet open and shows an error when delete fails', async () => {
+    localStorage.setItem('insights-report', 'r1')
+    charts.deleteReport.mockRejectedValue(new Error('boom'))
+    renderScreen()
+    await screen.findByRole('button', { name: LONG })
+    await openMore()
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Delete report' }))
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Delete report' })).getByRole('button', { name: 'Delete' }))
+    expect(await screen.findByText('Something went wrong')).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Delete report' })).toBeInTheDocument()
   })
 })

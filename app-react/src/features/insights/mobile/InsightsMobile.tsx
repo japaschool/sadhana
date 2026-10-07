@@ -7,6 +7,7 @@ import { formatDelta, formatHeadline, traceAverageLabel, windowLabel } from '../
 import { RANGES, useInsights } from '../useInsights'
 import { EndDateControl } from './EndDateControl'
 import { InsightsChart } from './InsightsChart'
+import { useMoreMenu } from './MoreMenu'
 import { ReportMenu } from './ReportMenu'
 
 const CARD = 'rounded-[22px] border border-ui-hairline bg-ui-surface'
@@ -14,6 +15,7 @@ const CARD = 'rounded-[22px] border border-ui-hairline bg-ui-surface'
 export function InsightsMobile() {
   const { t, i18n } = useTranslation()
   const ins = useInsights()
+  const more = useMoreMenu(ins.report)
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const h = ins.headline
@@ -21,7 +23,7 @@ export function InsightsMobile() {
 
   return (
     <>
-      <AppBar title={<h1 className="text-[28px] font-extrabold tracking-[-0.02em] text-ui-ink">{t('insights.title')}</h1>} />
+      <AppBar title={<h1 className="text-[28px] font-extrabold tracking-[-0.02em] text-ui-ink">{t('insights.title')}</h1>} actions={more.actions} />
       <div className="flex flex-col gap-3 px-4 pb-6">
         <button type="button" aria-haspopup="menu" onClick={(e) => setMenuAnchor(e.currentTarget)}
           className="flex min-h-9 max-w-full items-center gap-1 self-start text-[17px] font-bold text-ui-accent">
@@ -83,6 +85,7 @@ export function InsightsMobile() {
         <ReportMenu anchor={menuAnchor} reports={ins.reports} selectedId={ins.selectedId}
           onSelect={(id) => { ins.select(id); setMenuAnchor(null) }} onClose={() => setMenuAnchor(null)} />
       )}
+      {more.sheet}
     </>
   )
 }
