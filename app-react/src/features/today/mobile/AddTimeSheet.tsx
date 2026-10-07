@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BottomSheet } from '../../../ui/primitives/BottomSheet'
+import { PanelPopover } from '../../../ui/primitives/PanelPopover'
 import { Keypad, type KeypadKey } from '../../../ui/primitives/Keypad'
 import { SegmentedControl } from '../../../ui/primitives/SegmentedControl'
 import type { PracticeValue } from '../../../types/api'
@@ -36,6 +37,8 @@ function reducer(s: Amount, a: Action): Amount {
 }
 
 interface AddTimeSheetProps {
+  /** The ＋ that opened it: inside the desktop log panel the pad pops over the panel next to it, elsewhere it's a bottom sheet. */
+  anchor?: HTMLElement | null
   practice: string
   current: number
   initialMode: TimeMode
@@ -43,7 +46,7 @@ interface AddTimeSheetProps {
   onClose: () => void
 }
 
-export function AddTimeSheet({ practice, current, initialMode, onSave, onClose }: AddTimeSheetProps) {
+export function AddTimeSheet({ anchor, practice, current, initialMode, onSave, onClose }: AddTimeSheetProps) {
   const { t } = useTranslation()
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const [s, dispatch] = useReducer(reducer, init(initialMode, current))
@@ -80,8 +83,8 @@ export function AddTimeSheet({ practice, current, initialMode, onSave, onClose }
     return () => window.removeEventListener('keydown', listener)
   }, [])
 
-  return (
-    <BottomSheet label={practice} onClose={onClose}>
+  const body = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-0.5">
           <h2 className="truncate text-xl font-extrabold">{practice}</h2>
@@ -128,6 +131,9 @@ export function AddTimeSheet({ practice, current, initialMode, onSave, onClose }
           {label}
         </button>
       </div>
-    </BottomSheet>
+    </>
   )
+  return anchor?.closest('[data-popover-bounds]')
+    ? <PanelPopover anchor={anchor} label={practice} onClose={onClose}>{body}</PanelPopover>
+    : <BottomSheet label={practice} onClose={onClose}>{body}</BottomSheet>
 }

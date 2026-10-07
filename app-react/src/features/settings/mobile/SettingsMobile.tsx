@@ -8,12 +8,22 @@ import { LogoutSheet } from './LogoutSheet'
 
 export function SettingsMobile() {
   const { t } = useTranslation()
+  return (
+    <>
+      <AppBar title={<h1 className="text-[28px] font-extrabold tracking-[-0.02em] text-ui-ink">{t('nav.settings')}</h1>} />
+      <div className="px-4 pt-2 pb-4"><SettingsList /></div>
+    </>
+  )
+}
+
+/** Profile card, the three sections and log out, stacked (mobile and desktop). */
+export function SettingsList() {
+  const { t } = useTranslation()
   const [logoutOpen, setLogoutOpen] = useState(false)
 
   return (
     <>
-      <AppBar title={<h1 className="text-[28px] font-extrabold tracking-[-0.02em] text-ui-ink">{t('nav.settings')}</h1>} />
-      <div className="flex flex-col gap-[18px] px-4 pt-2 pb-4">
+      <div className="flex flex-col gap-[18px]">
         <ProfileCard />
         <ListGroup label={t('settings.preferences')}><PreferencesRows /></ListGroup>
         <ListGroup label={t('settings.accountData')}><AccountRows /></ListGroup>

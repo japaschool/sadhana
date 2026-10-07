@@ -19,6 +19,12 @@ describe('ByLayout', () => {
     expect(screen.getByText('legacy')).toBeInTheDocument()
   })
 
+  it('keeps a landscape phone on the mobile element', () => {
+    render(ui)
+    act(() => setViewportWidth(844, 390))
+    expect(screen.getByText('mobile')).toBeInTheDocument()
+  })
+
   it('renders the desktop element at 1024px and above', () => {
     setViewportWidth(1280)
     render(ui)

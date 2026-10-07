@@ -14,6 +14,16 @@ const SQUARE = 'flex h-10 w-10 items-center justify-center rounded-xl border bor
 interface CalendarSheetProps { date: Date; onSelect: (d: Date) => void; onClose: () => void }
 
 export function CalendarSheet({ date, onSelect, onClose }: CalendarSheetProps) {
+  const { t } = useTranslation()
+  return (
+    <BottomSheet label={t('today.calendar')} onClose={onClose}>
+      <CalendarMonth date={date} onPick={(d) => { onSelect(d); onClose() }} />
+    </BottomSheet>
+  )
+}
+
+/** The month grid with its pickers and footer; the bottom sheet and the desktop log popover both wrap it. */
+export function CalendarMonth({ date, onPick: pick }: { date: Date; onPick: (d: Date) => void }) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const [view, setView] = useState({ y: date.getFullYear(), m: date.getMonth() })
@@ -35,10 +45,9 @@ export function CalendarSheet({ date, onSelect, onClose }: CalendarSheetProps) {
     const d = new Date(v.y, v.m + n, 1)
     return { y: d.getFullYear(), m: d.getMonth() }
   })
-  const pick = (d: Date) => { onSelect(d); onClose() }
 
   return (
-    <BottomSheet label={t('today.calendar')} onClose={onClose}>
+    <>
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
           <button type="button" aria-haspopup="menu" className={PILL}
@@ -100,6 +109,6 @@ export function CalendarSheet({ date, onSelect, onClose }: CalendarSheetProps) {
               ))}
         </AnchoredMenu>
       )}
-    </BottomSheet>
+    </>
   )
 }

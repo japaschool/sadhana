@@ -8,15 +8,16 @@ import { fromDateStr } from '../../today/date'
 import { parseOptions } from '../../today/values'
 import { cellText, formatDay, traceAverageLabel } from '../insightsLogic'
 
-interface InsightsTableProps { traces: TraceInput[]; entries: ReportDataEntry[]; todayCob: string; onOpenDay: (cob: string) => void }
-
-// The tab bar is 61px tall (plus the safe area); the table stops 12px above it.
-const ABOVE_TAB_BAR = 73
+interface InsightsTableProps {
+  traces: TraceInput[]; entries: ReportDataEntry[]; todayCob: string; onOpenDay: (cob: string) => void
+  /** Space kept below the table. Mobile: the 61px tab bar plus 12px. */
+  bottomGap?: number
+}
 
 const DATE_COL = 'sticky left-0 z-10 w-[72px] min-w-[72px] border-r border-ui-hairline px-3'
 
 // ponytail: every day is rendered; virtualise if the All range on years of data gets slow.
-export function InsightsTable({ traces, entries, todayCob, onOpenDay }: InsightsTableProps) {
+export function InsightsTable({ traces, entries, todayCob, onOpenDay, bottomGap = 73 }: InsightsTableProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
@@ -42,7 +43,7 @@ export function InsightsTable({ traces, entries, todayCob, onOpenDay }: Insights
   })
 
   return (
-    <div ref={ref} style={{ maxHeight: `calc(100dvh - ${top + ABOVE_TAB_BAR}px - env(safe-area-inset-bottom))` }}
+    <div ref={ref} style={{ maxHeight: `calc(100dvh - ${top + bottomGap}px - env(safe-area-inset-bottom))` }}
       className="overflow-auto rounded-[20px] border border-ui-hairline bg-ui-surface">
       <table className="min-w-full border-separate border-spacing-0">
         <thead className="sticky top-0 z-20 bg-ui-surface">

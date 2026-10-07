@@ -7,11 +7,11 @@ import { barPlacement, formatDurationTick, seriesRows, formatTick, spansYears, t
 const TICK = { fontSize: 11, fontFamily: "'IBM Plex Mono', ui-monospace, monospace", fill: 'var(--ui-muted)' }
 const AXIS = { tick: TICK, tickLine: false, axisLine: false } as const
 
-interface InsightsChartProps { rows: ChartDataRow[]; traces: Trace[]; barLayout: BarLayout; averages: AverageLine[] }
+interface InsightsChartProps { rows: ChartDataRow[]; traces: Trace[]; barLayout: BarLayout; averages: AverageLine[]; height?: number }
 
 // Colours are var(--ui-chart-n) strings in SVG attributes. If iOS Safari ignores them (Task 8 check),
 // resolve them with getComputedStyle on the .ui-root ancestor instead.
-export function InsightsChart({ rows, traces, barLayout, averages }: InsightsChartProps) {
+export function InsightsChart({ rows, traces, barLayout, averages, height = 170 }: InsightsChartProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const units = { h: t('today.unitH'), min: t('insights.tickMin') }
@@ -33,7 +33,7 @@ export function InsightsChart({ rows, traces, barLayout, averages }: InsightsCha
   const overlayAxes = placement.flatMap((p) => (p?.xAxisId ? [p.xAxisId] : []))
 
   return (
-    <ResponsiveContainer width="100%" height={170}>
+    <ResponsiveContainer width="100%" height={height}>
       {/* Without a Y axis on a side, leave room for the end date ticks there. */}
       <ComposedChart data={data} barGap={1} margin={{ top: 6, right: hasRight ? 0 : 16, bottom: 0, left: hasLeft ? 0 : 16 }}>
         <CartesianGrid vertical={false} stroke="var(--ui-hairline)" />

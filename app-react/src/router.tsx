@@ -1,5 +1,5 @@
 import { lazy } from 'react'
-import { createBrowserRouter, isRouteErrorResponse, useRouteError } from 'react-router-dom'
+import { createBrowserRouter, isRouteErrorResponse, Navigate, useRouteError } from 'react-router-dom'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { GuestRoute } from './components/layout/GuestRoute'
 import { ByLayout } from './layouts/ByLayout'
@@ -12,7 +12,10 @@ const TodayMobileScreen = lazy(() => import('./features/today/mobile/TodayMobile
 const InsightsMobileScreen = lazy(() => import('./features/insights/mobile/InsightsMobile').then((m) => ({ default: m.InsightsMobileScreen })))
 const SettingsMobileScreen = lazy(() => import('./features/settings/mobile/SettingsMobile').then((m) => ({ default: m.SettingsMobileScreen })))
 const TodayTabletScreen = lazy(() => import('./features/today/tablet/TodayTablet').then((m) => ({ default: m.TodayTabletScreen })))
+const InsightsTabletScreen = lazy(() => import('./features/insights/tablet/InsightsTablet').then((m) => ({ default: m.InsightsTabletScreen })))
 const SettingsTabletScreen = lazy(() => import('./features/settings/tablet/SettingsTablet').then((m) => ({ default: m.SettingsTabletScreen })))
+const InsightsDesktopScreen = lazy(() => import('./features/insights/desktop/InsightsDesktop').then((m) => ({ default: m.InsightsDesktopScreen })))
+const SettingsDesktopScreen = lazy(() => import('./features/settings/desktop/SettingsDesktop').then((m) => ({ default: m.SettingsDesktopScreen })))
 
 function RootError() {
   const error = useRouteError()
@@ -91,18 +94,19 @@ export const router = createBrowserRouter([
     children: [
       {
         // Redesigned layouts render their own shell; the rest fall back to the legacy AppShell.
+        // Desktop has no Log screen: the log is a panel beside every screen.
         path: '/',
-        element: <ByLayout mobile={<TodayMobileScreen />} tablet={<TodayTabletScreen />} legacy={<AppShell />} />,
+        element: <ByLayout mobile={<TodayMobileScreen />} tablet={<TodayTabletScreen />} desktop={<Navigate to="/charts" replace />} legacy={<AppShell />} />,
         children: [{ index: true, element: <HomePage /> }],
       },
       {
         path: '/settings',
-        element: <ByLayout mobile={<SettingsMobileScreen />} tablet={<SettingsTabletScreen />} legacy={<AppShell />} />,
+        element: <ByLayout mobile={<SettingsMobileScreen />} tablet={<SettingsTabletScreen />} desktop={<SettingsDesktopScreen />} legacy={<AppShell />} />,
         children: [{ index: true, element: <SettingsPage /> }],
       },
       {
         path: '/charts',
-        element: <ByLayout mobile={<InsightsMobileScreen />} legacy={<AppShell />} />,
+        element: <ByLayout mobile={<InsightsMobileScreen />} tablet={<InsightsTabletScreen />} desktop={<InsightsDesktopScreen />} legacy={<AppShell />} />,
         children: [{ index: true, element: <ChartsPage /> }],
       },
       {

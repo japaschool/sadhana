@@ -2,8 +2,8 @@ import { useSyncExternalStore } from 'react'
 
 export type Layout = 'mobile' | 'tablet' | 'desktop'
 
-// Tailwind's sm / lg breakpoints.
-const TABLET = '(min-width: 640px)'
+// Tailwind's sm / lg breakpoints. A phone on its side is wide but short: it stays mobile.
+const TABLET = '(min-width: 640px) and (min-height: 500px)'
 const DESKTOP = '(min-width: 1024px)'
 
 function current(): Layout {

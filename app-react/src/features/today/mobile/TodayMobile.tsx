@@ -10,6 +10,7 @@ import { copyShareLink, downloadCsv } from '../actions'
 import { toDateStr } from '../date'
 import { NoPractices } from '../NoPractices'
 import { useToday } from '../useToday'
+import { useLogDate } from '../useLogDate'
 import { CalendarSheet } from './CalendarSheet'
 import { DateHeader } from './DateHeader'
 import { DayStrip9 } from './DayStrip9'
@@ -20,7 +21,7 @@ export function TodayMobile() {
   const navigate = useNavigate()
   const { showToast } = useToast()
   const isOnline = useNetworkStatus()
-  const [date, setDate] = useState(() => new Date())
+  const [date, setDate] = useLogDate()
   const [calendarOpen, setCalendarOpen] = useState(false)
   const today = useToday(date)
   const dateStr = toDateStr(date)

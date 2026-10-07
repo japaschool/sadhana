@@ -10,6 +10,7 @@ import { copyShareLink, downloadCsv } from '../actions'
 import { toDateStr } from '../date'
 import { NoPractices } from '../NoPractices'
 import { useToday } from '../useToday'
+import { useLogDate } from '../useLogDate'
 import { capitalize } from '../values'
 import { CalendarSheet } from '../mobile/CalendarSheet'
 import { DayStrip9 } from '../mobile/DayStrip9'
@@ -23,7 +24,7 @@ export function TodayTablet() {
   const navigate = useNavigate()
   const { showToast } = useToast()
   const isOnline = useNetworkStatus()
-  const [date, setDate] = useState(() => new Date())
+  const [date, setDate] = useLogDate()
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null)
   const today = useToday(date)

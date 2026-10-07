@@ -63,7 +63,7 @@ function InlineInputRow({ practice, value, failed, onSave }: PracticeRowProps) {
     : value && 'Duration' in value ? String(value.Duration) : ''
   const shown = value && 'Duration' in value ? formatDuration(minutes, units) : editText
   const [draft, setDraft] = useState<string | null>(null) // null = not editing
-  const [adding, setAdding] = useState(false)
+  const [adding, setAdding] = useState<HTMLElement | null>(null) // the ＋ that opened the add pad
 
   function change(raw: string) {
     if (!isTime) return setDraft(raw.replace(/\D/g, ''))
@@ -111,7 +111,7 @@ function InlineInputRow({ practice, value, failed, onSave }: PracticeRowProps) {
             {shown}
           </button>
           {kind === 'Duration' && (
-            <button type="button" aria-label={t('today.addTimeFor', { name: practice.practice })} onClick={() => setAdding(true)}
+            <button type="button" aria-label={t('today.addTimeFor', { name: practice.practice })} onClick={(e) => setAdding(e.currentTarget)}
               className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-ui-accent-soft text-xl leading-none font-semibold text-ui-accent">
               +
             </button>
@@ -121,7 +121,7 @@ function InlineInputRow({ practice, value, failed, onSave }: PracticeRowProps) {
         <EmptyValue required={!!practice.is_required} name={practice.practice} onClick={() => setDraft('')} />
       )}
       {adding && (
-        <AddTimeSheet practice={practice.practice} current={minutes} initialMode="add" onSave={onSave} onClose={() => setAdding(false)} />
+        <AddTimeSheet anchor={adding} practice={practice.practice} current={minutes} initialMode="add" onSave={onSave} onClose={() => setAdding(null)} />
       )}
     </RowShell>
   )

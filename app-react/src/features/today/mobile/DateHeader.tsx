@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import type { TodaySummary } from '../useToday'
 import { capitalize } from '../values'
 
-interface DateHeaderProps { date: Date; summary: TodaySummary; onOpenCalendar: () => void }
+interface DateHeaderProps { date: Date; summary: TodaySummary; onOpenCalendar: (anchor: HTMLElement) => void }
 
 export function DateHeader({ date, summary, onOpenCalendar }: DateHeaderProps) {
   const { t, i18n } = useTranslation()
@@ -11,7 +11,7 @@ export function DateHeader({ date, summary, onOpenCalendar }: DateHeaderProps) {
   const line = t('today.filledOf', { filled: summary.filled, total: summary.total })
     + (summary.requiredLeft ? ` · ${t('today.requiredLeft', { count: summary.requiredLeft })}` : '')
   return (
-    <button type="button" aria-haspopup="dialog" title={t('today.openCalendar')} onClick={onOpenCalendar}
+    <button type="button" aria-haspopup="dialog" title={t('today.openCalendar')} onClick={(e) => onOpenCalendar(e.currentTarget)}
       className="flex flex-col gap-px text-left">
       <span className="flex items-center gap-1.5 text-xl font-extrabold tracking-[-0.01em]">
         <span>{title}</span>
