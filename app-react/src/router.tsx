@@ -9,6 +9,7 @@ import { ByLayout } from './layouts/ByLayout'
 // SettingsModal/HeaderMenu) and framer-motion via PageTransition.
 const AppShell = lazy(() => import('./components/layout/AppShell').then((m) => ({ default: m.AppShell })))
 const TodayMobileScreen = lazy(() => import('./features/today/mobile/TodayMobile').then((m) => ({ default: m.TodayMobileScreen })))
+const InsightsMobileScreen = lazy(() => import('./features/insights/mobile/InsightsMobile').then((m) => ({ default: m.InsightsMobileScreen })))
 const SettingsMobileScreen = lazy(() => import('./features/settings/mobile/SettingsMobile').then((m) => ({ default: m.SettingsMobileScreen })))
 const TodayTabletScreen = lazy(() => import('./features/today/tablet/TodayTablet').then((m) => ({ default: m.TodayTabletScreen })))
 const SettingsTabletScreen = lazy(() => import('./features/settings/tablet/SettingsTablet').then((m) => ({ default: m.SettingsTabletScreen })))
@@ -100,9 +101,14 @@ export const router = createBrowserRouter([
         children: [{ index: true, element: <SettingsPage /> }],
       },
       {
+        path: '/charts',
+        element: <ByLayout mobile={<InsightsMobileScreen />} legacy={<AppShell />} />,
+        children: [{ index: true, element: <ChartsPage /> }],
+      },
+      {
         element: <AppShell />,
         children: [
-          { path: '/charts', element: <ChartsPage /> },
+          { path: '/charts/manage', element: <ChartsPage /> },
           { path: '/charts/new', element: <NewChartPage /> },
           { path: '/yatras', element: <YatrasPage /> },
           { path: '/yatra/:id/join', element: <YatraJoinPage /> },
