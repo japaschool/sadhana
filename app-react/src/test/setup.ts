@@ -14,6 +14,9 @@ if (!i18n.isInitialized) {
         translation: {
           nav: { home: 'Home', charts: 'Charts', yatras: 'Yatras', settings: 'Settings' },
           yatras: {
+            settings: 'Yatra settings',
+            stability14: 'Stability · 14 days',
+            trend7d: '7d',
             createNewYatra: 'Create new yatra',
             shareInvite: 'Share invite link',
             copyInvite: 'Copy invite link',

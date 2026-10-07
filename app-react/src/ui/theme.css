@@ -40,6 +40,12 @@
   --ui-chart-6: #C77A3E;
   --ui-chart-7: #5F82D6;
   --ui-chart-8: #C2689A;
+  /* Yatra colour zones (ZoneColour), worst → best; ink text sits on them. */
+  --ui-zone-muted-red: #E8A797;
+  --ui-zone-red: #F5D2C7;
+  --ui-zone-yellow: #F3D9A6;
+  --ui-zone-green: #D3E4C3;
+  --ui-zone-dark-green: #A6C690;
 
   color: var(--ui-ink);
   /* Literal, not var(--font-ui): Tailwind may tree-shake unused theme vars. */
@@ -86,6 +92,11 @@
   --ui-chart-6: #E08A4C;
   --ui-chart-7: #7C9DF0;
   --ui-chart-8: #E07FB0;
+  --ui-zone-muted-red: #74322C;
+  --ui-zone-red: #55302F;
+  --ui-zone-yellow: #5A4A2E;
+  --ui-zone-green: #34493A;
+  --ui-zone-dark-green: #437039;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -126,6 +137,11 @@
     --ui-chart-6: #E08A4C;
     --ui-chart-7: #7C9DF0;
     --ui-chart-8: #E07FB0;
+    --ui-zone-muted-red: #74322C;
+    --ui-zone-red: #55302F;
+    --ui-zone-yellow: #5A4A2E;
+    --ui-zone-green: #34493A;
+    --ui-zone-dark-green: #437039;
   }
 }
 

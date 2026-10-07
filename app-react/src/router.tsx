@@ -16,6 +16,7 @@ const InsightsTabletScreen = lazy(() => import('./features/insights/tablet/Insig
 const SettingsTabletScreen = lazy(() => import('./features/settings/tablet/SettingsTablet').then((m) => ({ default: m.SettingsTabletScreen })))
 const InsightsDesktopScreen = lazy(() => import('./features/insights/desktop/InsightsDesktop').then((m) => ({ default: m.InsightsDesktopScreen })))
 const SettingsDesktopScreen = lazy(() => import('./features/settings/desktop/SettingsDesktop').then((m) => ({ default: m.SettingsDesktopScreen })))
+const YatrasMobileScreen = lazy(() => import('./features/yatras/mobile/YatrasMobile').then((m) => ({ default: m.YatrasMobileScreen })))
 
 function RootError() {
   const error = useRouteError()
@@ -110,11 +111,15 @@ export const router = createBrowserRouter([
         children: [{ index: true, element: <ChartsPage /> }],
       },
       {
+        path: '/yatras',
+        element: <ByLayout mobile={<YatrasMobileScreen />} legacy={<AppShell />} />,
+        children: [{ index: true, element: <YatrasPage /> }],
+      },
+      {
         element: <AppShell />,
         children: [
           { path: '/charts/manage', element: <ChartsPage /> },
           { path: '/charts/new', element: <NewChartPage /> },
-          { path: '/yatras', element: <YatrasPage /> },
           { path: '/yatra/:id/join', element: <YatraJoinPage /> },
           { path: '/yatra/:id/settings', element: <YatraSettingsPage /> },
           { path: '/yatra/:id/admin/settings', element: <YatraAdminSettingsPage /> },

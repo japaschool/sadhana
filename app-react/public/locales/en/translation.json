@@ -164,6 +164,9 @@
     "yAxisRight": "Right axis"
   },
   "yatras": {
+    "settings": "Yatra settings",
+    "stability14": "Stability · 14 days",
+    "trend7d": "7d",
     "empty": "No yatras found",
     "noYet": "No yatras yet",
     "createCircle": "Join or create a group practice circle",
