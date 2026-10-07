@@ -10,6 +10,8 @@ import { ByLayout } from './layouts/ByLayout'
 const AppShell = lazy(() => import('./components/layout/AppShell').then((m) => ({ default: m.AppShell })))
 const TodayMobileScreen = lazy(() => import('./features/today/mobile/TodayMobile').then((m) => ({ default: m.TodayMobileScreen })))
 const SettingsMobileScreen = lazy(() => import('./features/settings/mobile/SettingsMobile').then((m) => ({ default: m.SettingsMobileScreen })))
+const TodayTabletScreen = lazy(() => import('./features/today/tablet/TodayTablet').then((m) => ({ default: m.TodayTabletScreen })))
+const SettingsTabletScreen = lazy(() => import('./features/settings/tablet/SettingsTablet').then((m) => ({ default: m.SettingsTabletScreen })))
 
 function RootError() {
   const error = useRouteError()
@@ -89,12 +91,12 @@ export const router = createBrowserRouter([
       {
         // Redesigned layouts render their own shell; the rest fall back to the legacy AppShell.
         path: '/',
-        element: <ByLayout mobile={<TodayMobileScreen />} legacy={<AppShell />} />,
+        element: <ByLayout mobile={<TodayMobileScreen />} tablet={<TodayTabletScreen />} legacy={<AppShell />} />,
         children: [{ index: true, element: <HomePage /> }],
       },
       {
         path: '/settings',
-        element: <ByLayout mobile={<SettingsMobileScreen />} legacy={<AppShell />} />,
+        element: <ByLayout mobile={<SettingsMobileScreen />} tablet={<SettingsTabletScreen />} legacy={<AppShell />} />,
         children: [{ index: true, element: <SettingsPage /> }],
       },
       {

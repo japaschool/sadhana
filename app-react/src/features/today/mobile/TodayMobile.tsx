@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import useNetworkStatus from '../../../hooks/useNetworkStatus'
 import { useToast } from '../../../hooks/useToast'
@@ -8,6 +8,7 @@ import { MobileShell } from '../../../layouts/mobile/MobileShell'
 import { ListGroup } from '../../../ui/primitives/ListGroup'
 import { copyShareLink, downloadCsv } from '../actions'
 import { toDateStr } from '../date'
+import { NoPractices } from '../NoPractices'
 import { useToday } from '../useToday'
 import { CalendarSheet } from './CalendarSheet'
 import { DateHeader } from './DateHeader'
@@ -55,14 +56,7 @@ export function TodayMobile() {
         ) : today.isError ? (
           <p role="alert" className="rounded-2xl bg-ui-surface px-4 py-3 text-sm text-ui-danger">{t('common.error')}</p>
         ) : today.practices.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 py-12 text-center">
-            <p className="text-sm text-ui-muted">{t('home.noPractices')}</p>
-            <button type="button" onClick={today.seedStarters} disabled={today.isSeeding}
-              className="h-11 rounded-full bg-ui-primary px-6 text-sm font-semibold text-ui-on-primary disabled:opacity-60">
-              {t('home.addStarters')}
-            </button>
-            <Link to="/user/practice/new" className="text-sm font-semibold text-ui-accent">{t('home.addCustom')}</Link>
-          </div>
+          <NoPractices onSeed={today.seedStarters} seeding={today.isSeeding} />
         ) : (
           <ListGroup label={t('today.group')}>
             {today.practices.map((p) => (
