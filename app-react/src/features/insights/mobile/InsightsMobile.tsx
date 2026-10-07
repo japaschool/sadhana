@@ -32,7 +32,7 @@ export function InsightsMobile() {
         </button>
 
         <div className="flex items-center justify-between gap-2">
-          <div className="font-ui-mono [&_button]:text-xs">
+          <div className="font-ui-mono [&_button]:px-2.5 [&_button]:text-xs">
             <SegmentedControl label={t('insights.range')} value={ins.range} onChange={ins.setRange}
               options={RANGES.map((r) => ({ value: r, label: t(`insights.range${r}`) }))} />
           </div>

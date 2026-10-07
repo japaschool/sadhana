@@ -393,6 +393,7 @@
     "range30d": "30д",
     "range90d": "90д",
     "range1y": "1г",
+    "rangeall": "Все",
     "endingToday": "По сегодня",
     "endingOn": "По {{date}}",
     "resetEnd": "Вернуться к сегодня",

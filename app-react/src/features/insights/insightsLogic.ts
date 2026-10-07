@@ -83,13 +83,24 @@ export function traceAverageLabel(trace: TraceInput, rows: ReportDataEntry[], to
   return String(avg)
 }
 
-export function formatDay(cob: string, locale: string): string {
-  return fromDateStr(cob).toLocaleDateString(locale, { day: 'numeric', month: 'short' })
+export function formatDay(cob: string, locale: string, withYear = false): string {
+  return fromDateStr(cob).toLocaleDateString(locale, { day: 'numeric', month: 'short', ...(withYear && { year: 'numeric' }) })
 }
+
+/** X-axis tick: 'Oct 4', or '01/24' (numeric month/year, short in every language) when the chart spans years. */
+export function formatTick(cob: string, locale: string, spansYears: boolean): string {
+  if (!spansYears) return formatDay(cob, locale)
+  return fromDateStr(cob).toLocaleDateString(locale, { month: '2-digit', year: '2-digit' })
+}
+
+export const spansYears = (first: string, last: string) => first.slice(0, 4) !== last.slice(0, 4)
 
 export function windowLabel(rows: ReportDataEntry[], locale: string): string {
   if (!rows.length) return ''
-  return `${formatDay(rows[0].cob_date, locale)} – ${formatDay(rows[rows.length - 1].cob_date, locale)}`
+  const first = rows[0].cob_date
+  const last = rows[rows.length - 1].cob_date
+  const y = spansYears(first, last)
+  return `${formatDay(first, locale, y)} – ${formatDay(last, locale, y)}`
 }
 
 export function formatDurationTick(min: number, u: DurationUnits): string {

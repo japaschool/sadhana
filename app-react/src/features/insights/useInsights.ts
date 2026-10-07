@@ -12,9 +12,9 @@ export const ALL = '__all__'
 const KEY = 'insights-report'
 const COLORS = Array.from({ length: 8 }, (_, i) => `var(--ui-chart-${i + 1})`)
 
-export type Range = '7d' | '30d' | '90d' | '1y'
-export const RANGES: Range[] = ['7d', '30d', '90d', '1y']
-const DURATION: Record<Range, ReportDuration> = { '7d': 'Week', '30d': 'Month', '90d': 'Quarter', '1y': 'Year' }
+export type Range = '7d' | '30d' | '90d' | '1y' | 'all'
+export const RANGES: Range[] = ['7d', '30d', '90d', '1y', 'all']
+const DURATION: Record<Range, ReportDuration> = { '7d': 'Week', '30d': 'Month', '90d': 'Quarter', '1y': 'Year', all: 'AllData' }
 
 export type GraphReportRow = Report & { definition: { Graph: GraphReport } }
 const isGraph = (r: Report): r is GraphReportRow => 'Graph' in r.definition
@@ -47,8 +47,8 @@ export function useInsights() {
     queryKey: ['report-data', endCob, duration],
     queryFn: () => chartsApi.getReportData(endCob, duration),
   })
-  // From the response, so it matches the server's calendar-month/-year arithmetic.
-  const first = current.data?.[0]?.cob_date
+  // From the response, so it matches the server's calendar-month/-year arithmetic. All data has no previous window.
+  const first = range === 'all' ? undefined : current.data?.[0]?.cob_date
   const prevEnd = first ? toDateStr(addDays(fromDateStr(first), -1)) : null
   const previous = useQuery({
     queryKey: ['report-data', prevEnd, duration],

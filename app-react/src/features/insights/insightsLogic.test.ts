@@ -3,7 +3,7 @@ import type { ReportDataEntry } from '../../api/charts'
 import type { Trace } from '../../pages/charts/chartLogic'
 import {
   averageDailyTotal, headline, formatHeadline, formatDelta, averageLines,
-  traceAverageLabel, formatDay, windowLabel, formatDurationTick,
+  traceAverageLabel, formatDay, formatTick, windowLabel, formatDurationTick,
 } from './insightsLogic'
 
 const TODAY = '2026-10-06'
@@ -88,6 +88,11 @@ describe('formatting', () => {
     expect(formatDay('2026-09-07', 'en')).toBe('Sep 7')
     expect(windowLabel([e('2026-09-07', 'A', null), e('2026-10-06', 'A', null)], 'en')).toBe('Sep 7 – Oct 6')
     expect(windowLabel([], 'en')).toBe('')
+  })
+  it('adds the year when the window spans years', () => {
+    expect(windowLabel([e('2024-01-01', 'A', null), e('2026-10-04', 'A', null)], 'en')).toBe('Jan 1, 2024 – Oct 4, 2026')
+    expect(formatTick('2024-01-01', 'en', true)).toBe('01/24')
+    expect(formatTick('2026-10-04', 'en', false)).toBe('Oct 4')
   })
 })
 

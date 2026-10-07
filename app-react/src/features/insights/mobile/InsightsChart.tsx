@@ -2,7 +2,7 @@ import { Bar, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveConta
 import { useTranslation } from 'react-i18next'
 import type { BarLayout } from '../../../api/charts'
 import { formatMinutesAsHHMM, resolveAxisId, type AxisId, type ChartDataRow, type Trace } from '../../../pages/charts/chartLogic'
-import { formatDay, formatDurationTick, type AverageLine } from '../insightsLogic'
+import { formatDurationTick, formatTick, spansYears, type AverageLine } from '../insightsLogic'
 
 const TICK = { fontSize: 11, fontFamily: "'IBM Plex Mono', ui-monospace, monospace", fill: 'var(--ui-muted)' }
 const AXIS = { tick: TICK, tickLine: false, axisLine: false } as const
@@ -27,6 +27,7 @@ export function InsightsChart({ rows, traces, barLayout, averages }: InsightsCha
   const timeLeft = used.has('time') && !used.has('num')
   const hasLeft = used.has('num') || timeLeft
   const hasRight = used.has('num-right') || (used.has('time') && !timeLeft)
+  const multiYear = rows.length > 0 && spansYears(rows[0].cob, rows[rows.length - 1].cob)
   const stacked = barLayout === 'Stacked'
   const topBar = traces.filter((tr) => tr.type_ === 'Bar').at(-1)
 
@@ -35,7 +36,7 @@ export function InsightsChart({ rows, traces, barLayout, averages }: InsightsCha
       {/* Without a Y axis on a side, leave room for the end date ticks there. */}
       <ComposedChart data={rows} margin={{ top: 6, right: hasRight ? 0 : 16, bottom: 0, left: hasLeft ? 0 : 16 }}>
         <CartesianGrid vertical={false} stroke="var(--ui-hairline)" />
-        <XAxis dataKey="cob" ticks={xTicks} interval={0} tickFormatter={(c: string) => formatDay(c, locale)} {...AXIS} />
+        <XAxis dataKey="cob" ticks={xTicks} interval={0} tickFormatter={(c: string) => formatTick(c, locale, multiYear)} {...AXIS} />
         {used.has('num') && <YAxis yAxisId="num" orientation="left" width={40} domain={[0, 'auto']} tickFormatter={numTick('num')} {...AXIS} />}
         {used.has('num-right') && <YAxis yAxisId="num-right" orientation="right" width={40} domain={[0, 'auto']} tickFormatter={numTick('num-right')} {...AXIS} />}
         {used.has('time') && (

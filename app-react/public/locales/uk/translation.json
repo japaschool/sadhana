@@ -393,6 +393,7 @@
     "range30d": "30д",
     "range90d": "90д",
     "range1y": "1р",
+    "rangeall": "Усі",
     "endingToday": "По сьогодні",
     "endingOn": "По {{date}}",
     "resetEnd": "Повернутися до сьогодні",

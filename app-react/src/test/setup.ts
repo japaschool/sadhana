@@ -142,6 +142,7 @@ if (!i18n.isInitialized) {
             range30d: '30d',
             range90d: '90d',
             range1y: '1y',
+            rangeall: 'All',
             endingToday: 'Ending today',
             endingOn: 'Ending {{date}}',
             resetEnd: 'Back to today',
