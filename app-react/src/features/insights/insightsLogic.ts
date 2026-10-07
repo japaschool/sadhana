@@ -58,8 +58,10 @@ export function averageLines(traces: Trace[], rows: ReportDataEntry[], barLayout
   if (!traces.some((t) => t.showAverage)) return []
   const bars = traces.filter((t) => t.type_ === 'Bar')
   if (barLayout === 'Stacked' && bars.length) {
-    const value = averageDailyTotal(rows, bars, todayCob)
-    return value === null ? [] : [{ axis: resolveAxisId(bars[0].yAxis, bars[0].dataType), value, color: 'var(--ui-accent)' }]
+    const axis = resolveAxisId(bars[0].yAxis, bars[0].dataType)
+    const stack = bars.filter((t) => resolveAxisId(t.yAxis, t.dataType) === axis)
+    const value = averageDailyTotal(rows, stack, todayCob)
+    return value === null ? [] : [{ axis, value, color: 'var(--ui-accent)' }]
   }
   return traces.filter((t) => t.showAverage).flatMap((t) => {
     const value = averageForType(forTrace(rows, t.name), t.dataType, todayCob)

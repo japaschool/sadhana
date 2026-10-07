@@ -117,6 +117,15 @@ describe('averageLines', () => {
     const traces = [tr('A', 'Duration', { type_: 'Bar', showAverage: true }), tr('B', 'Duration', { type_: 'Bar' })]
     expect(averageLines(traces, rows, 'Stacked', TODAY)).toEqual([{ axis: 'num', value: 50, color: 'var(--ui-accent)' }])
   })
+  it('stacked: only sums bars on the first bar axis, never mixing units', () => {
+    const mixed = [...rows, e('2026-10-05', 'Y', { Bool: true })]
+    const traces = [
+      tr('A', 'Duration', { type_: 'Bar', showAverage: true }),
+      tr('Y', 'Bool', { type_: 'Bar' }),
+      tr('B', 'Duration', { type_: 'Bar' }),
+    ]
+    expect(averageLines(traces, mixed, 'Stacked', TODAY)).toEqual([{ axis: 'num', value: 50, color: 'var(--ui-accent)' }])
+  })
   it('none when no trace asks for one', () => {
     expect(averageLines([tr('A', 'Duration', { type_: 'Bar' })], rows, 'Stacked', TODAY)).toEqual([])
   })
