@@ -1,10 +1,11 @@
 import { useTranslation } from 'react-i18next'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
-import { ALL, type GraphReportRow } from '../useInsights'
+import type { Report } from '../../../api/charts'
+import { ALL } from '../useInsights'
 
 interface ReportMenuProps {
   anchor: HTMLElement
-  reports: GraphReportRow[]
+  reports: Report[]
   selectedId: string
   onSelect: (id: string) => void
   onClose: () => void

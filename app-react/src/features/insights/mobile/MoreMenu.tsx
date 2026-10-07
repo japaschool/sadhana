@@ -8,9 +8,9 @@ import { useToast } from '../../../hooks/useToast'
 import type { AppBarAction } from '../../../layouts/mobile/AppBar'
 import { BottomSheet } from '../../../ui/primitives/BottomSheet'
 import { copyShareLink, downloadCsv } from '../../today/actions'
-import type { GraphReportRow } from '../useInsights'
+import type { Report } from '../../../api/charts'
 
-export function useMoreMenu(report: GraphReportRow | null): { actions: AppBarAction[]; sheet: ReactNode } {
+export function useMoreMenu(report: Report | null): { actions: AppBarAction[]; sheet: ReactNode } {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const qc = useQueryClient()

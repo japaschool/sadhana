@@ -409,6 +409,11 @@
     "tickMin": "м",
     "newChart": "Новый график",
     "editReport": "Изменить «{{name}}»",
-    "deleteReport": "Удалить отчёт"
+    "deleteReport": "Удалить отчёт",
+    "date": "Дата",
+    "days_one": "{{count}} день",
+    "days_few": "{{count}} дня",
+    "days_many": "{{count}} дней",
+    "days_other": "{{count}} дня"
   }
 }

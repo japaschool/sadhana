@@ -409,6 +409,11 @@
     "tickMin": "хв",
     "newChart": "Новий графік",
     "editReport": "Змінити «{{name}}»",
-    "deleteReport": "Видалити звіт"
+    "deleteReport": "Видалити звіт",
+    "date": "Дата",
+    "days_one": "{{count}} день",
+    "days_few": "{{count}} дні",
+    "days_many": "{{count}} днів",
+    "days_other": "{{count}} дня"
   }
 }

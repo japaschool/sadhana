@@ -7,7 +7,7 @@ const KEYS = [
   'title', 'reports', 'range', 'range7d', 'range30d', 'range90d', 'range1y', 'rangeall',
   'endingToday', 'endingOn', 'resetEnd', 'dailyAverage', 'average',
   'vsPrev7d', 'vsPrev30d', 'vsPrev90d', 'vsPrev1y', 'noData', 'loadFailed',
-  'legend', 'tickMin', 'newChart', 'editReport', 'deleteReport',
+  'legend', 'tickMin', 'newChart', 'editReport', 'deleteReport', 'date', 'days_one', 'days_other',
 ]
 
 describe('insights.* translations', () => {

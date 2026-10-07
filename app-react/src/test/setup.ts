@@ -159,6 +159,9 @@ if (!i18n.isInitialized) {
             newChart: 'New chart',
             editReport: 'Edit “{{name}}”',
             deleteReport: 'Delete report',
+            date: 'Date',
+            days_one: '{{count}} day',
+            days_other: '{{count}} days',
           },
           today: {
             group: 'Practices',

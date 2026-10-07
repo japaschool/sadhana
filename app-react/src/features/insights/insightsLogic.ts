@@ -139,3 +139,17 @@ export function barPlacement(traces: Trace[], barLayout: BarLayout): (BarPlaceme
 export function seriesRows(rows: ChartDataRow[], traces: TraceInput[]): Record<string, string | number | null>[] {
   return rows.map((r) => ({ cob: r.cob, ...Object.fromEntries(traces.map((t, i) => [`t${i}`, r[t.name] ?? null])) }))
 }
+
+/** A table cell's text; '' when nothing was logged (a Bool that is off counts as nothing). */
+export function cellText(raw: unknown, dt: TraceInput['dataType'], u: DurationUnits): string {
+  if (dt === 'Text') {
+    const s = typeof raw === 'string' ? raw : (raw as { Text?: unknown } | null)?.Text
+    return typeof s === 'string' ? s : ''
+  }
+  const n = valueToNumber(raw, dt)
+  if (n === null) return ''
+  if (dt === 'Bool') return '✓'
+  if (dt === 'Duration') return formatDuration(n, u)
+  if (dt === 'Time') return formatMinutesAsHHMM(n)
+  return String(n)
+}

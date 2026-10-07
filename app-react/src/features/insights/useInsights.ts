@@ -16,8 +16,9 @@ export type Range = '7d' | '30d' | '90d' | '1y' | 'all'
 export const RANGES: Range[] = ['7d', '30d', '90d', '1y', 'all']
 const DURATION: Record<Range, ReportDuration> = { '7d': 'Week', '30d': 'Month', '90d': 'Quarter', '1y': 'Year', all: 'AllData' }
 
-export type GraphReportRow = Report & { definition: { Graph: GraphReport } }
+type GraphReportRow = Report & { definition: { Graph: GraphReport } }
 const isGraph = (r: Report): r is GraphReportRow => 'Graph' in r.definition
+export const isTable = (r: Report | null) => !!r && 'Grid' in r.definition
 
 function readStored(): string {
   try { return localStorage.getItem(KEY) ?? ALL } catch { return ALL }
@@ -27,7 +28,9 @@ function writeStored(id: string) {
   try { localStorage.setItem(KEY, id) } catch { /* blocked storage: the choice lasts for this visit */ }
 }
 
-export function useInsights() {
+/** `logDate` (desktop) pins the window's end to the log panel's day instead of the screen's own end date.
+ *  `withTables` also lists Grid (table) reports; layouts without a table view leave them out. */
+export function useInsights(logDate?: Date, withTables = false) {
   const { i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const reportsQ = useQuery({ queryKey: ['reports'], queryFn: chartsApi.getReports })
@@ -36,12 +39,12 @@ export function useInsights() {
   const [range, setRange] = useState<Range>('30d')
   const [end, setEndState] = useState<Date | null>(null)
 
-  const reports = (reportsQ.data ?? []).filter(isGraph)
-  // An unknown, deleted or Grid id simply isn't found, so the screen shows All practices.
+  const reports = (reportsQ.data ?? []).filter((r) => withTables || isGraph(r))
+  // An unknown or deleted id (or a Grid one, without tables) simply isn't found, so the screen shows All practices.
   const report = reports.find((r) => r.id === stored) ?? null
   const duration = DURATION[range]
   const todayCob = toDateStr(new Date())
-  const endCob = end ? toDateStr(end) : todayCob
+  const endCob = toDateStr(logDate ?? end ?? new Date())
 
   const current = useQuery({
     queryKey: ['report-data', endCob, duration],
@@ -59,7 +62,7 @@ export function useInsights() {
   const traces = tracesFor(report, practicesQ.data ?? [], COLORS)
   const entries = current.data ?? []
   const names = new Set(traces.map((t) => t.name))
-  const barLayout = report?.definition.Graph.bar_layout ?? 'Grouped'
+  const barLayout = report && isGraph(report) ? report.definition.Graph.bar_layout : 'Grouped'
 
   return {
     reports,

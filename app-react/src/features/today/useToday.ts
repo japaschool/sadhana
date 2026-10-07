@@ -74,6 +74,7 @@ export function useToday(date: Date) {
     onSettled: (_data, _err, { date }) => {
       qc.invalidateQueries({ queryKey: ['diary', date] })
       qc.invalidateQueries({ queryKey: ['incomplete-days'] })
+      qc.invalidateQueries({ queryKey: ['report-data'] })
     },
   })
 

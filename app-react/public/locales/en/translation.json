@@ -403,6 +403,9 @@
     "tickMin": "m",
     "newChart": "New chart",
     "editReport": "Edit “{{name}}”",
-    "deleteReport": "Delete report"
+    "deleteReport": "Delete report",
+    "date": "Date",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days"
   }
 }

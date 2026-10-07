@@ -3,7 +3,7 @@ import type { ReportDataEntry } from '../../api/charts'
 import type { Trace } from '../../pages/charts/chartLogic'
 import {
   averageDailyTotal, headline, formatHeadline, formatDelta, averageLines,
-  traceAverageLabel, barPlacement, seriesRows, formatDay, formatTick, windowLabel, formatDurationTick,
+  traceAverageLabel, barPlacement, seriesRows, formatDay, formatTick, windowLabel, formatDurationTick, cellText,
 } from './insightsLogic'
 
 const TODAY = '2026-10-06'
@@ -182,5 +182,18 @@ describe('seriesRows', () => {
     const rows = [{ date: 'Oct 5', cob: '2026-10-05', A: 3, B: null }]
     const traces = [tr('A', 'Int', { type_: 'Bar' }), tr('A', 'Int', { type_: 'Bar' }), tr('B', 'Int')]
     expect(seriesRows(rows, traces)).toEqual([{ cob: '2026-10-05', t0: 3, t1: 3, t2: null }])
+  })
+})
+
+describe('cellText', () => {
+  it('formats each type and leaves missing values empty', () => {
+    expect(cellText({ Duration: 90 }, 'Duration', U)).toBe('1 h 30 min')
+    expect(cellText({ Time: { h: 4, m: 5 } }, 'Time', U)).toBe('04:05')
+    expect(cellText({ Int: 16 }, 'Int', U)).toBe('16')
+    expect(cellText({ Bool: true }, 'Bool', U)).toBe('✓')
+    expect(cellText({ Bool: false }, 'Bool', U)).toBe('')
+    expect(cellText({ Text: 'Calm' }, 'Text', U)).toBe('Calm')
+    expect(cellText(null, 'Text', U)).toBe('')
+    expect(cellText(undefined, 'Int', U)).toBe('')
   })
 })

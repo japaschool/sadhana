@@ -9,7 +9,7 @@ vi.mock('../../../api/charts', () => ({
   chartsApi: { getReports: vi.fn(), getReportData: vi.fn(), deleteReport: vi.fn() },
 }))
 vi.mock('../../../api/practices', () => ({
-  practicesApi: { getUserPractices: vi.fn(), getIncompleteDays: vi.fn() },
+  practicesApi: { getUserPractices: vi.fn(), getIncompleteDays: vi.fn(), getDiaryEntries: vi.fn(), saveDiaryEntry: vi.fn() },
 }))
 import { chartsApi } from '../../../api/charts'
 import { practicesApi } from '../../../api/practices'
@@ -42,14 +42,14 @@ describe('InsightsMobile', () => {
     vi.setSystemTime(new Date(2026, 9, 6, 9))
     practices.getUserPractices.mockResolvedValue([
       { id: 'p1', practice: 'Japa', data_type: 'Duration', is_active: true },
-      { id: 'p2', practice: 'Reading', data_type: 'Duration', is_active: true },
+      { id: 'p2', practice: 'Reading', data_type: 'Duration', is_active: true, is_required: true },
     ])
     practices.getIncompleteDays.mockResolvedValue([])
     charts.getReports.mockResolvedValue([
       { id: 'r1', name: LONG, definition: { Graph: { bar_layout: 'Stacked', traces: [
         { label: null, type_: 'Bar', practice: 'p1', y_axis: null, show_average: true },
       ] } } },
-      { id: 'g1', name: 'Grid one', definition: { Grid: { practices: ['p1'] } } },
+      { id: 'g1', name: 'Grid one', definition: { Grid: { practices: ['p1', 'p2'] } } },
     ])
     charts.getReportData.mockImplementation(async (cob) =>
       cob === '2026-10-04'
@@ -73,12 +73,12 @@ describe('InsightsMobile', () => {
     expect(within(legend).getByText('Reading').parentElement).toHaveTextContent('—')
   })
 
-  it('switches reports through the menu; Grid reports are not listed', async () => {
+  it('switches reports through the menu; Grid reports are listed too', async () => {
     renderScreen()
     fireEvent.click(await reportLink())
     const menu = screen.getByRole('menu', { name: 'Reports' })
     expect(within(menu).getByRole('menuitemradio', { name: 'All practices' })).toHaveAttribute('aria-checked', 'true')
-    expect(within(menu).queryByText('Grid one')).toBeNull()
+    expect(within(menu).getByRole('menuitemradio', { name: 'Grid one' })).toBeInTheDocument()
     fireEvent.click(within(menu).getByRole('menuitemradio', { name: LONG }))
     expect(screen.queryByRole('menu')).toBeNull()
     expect(await reportLink()).toHaveTextContent(LONG)
@@ -173,5 +173,30 @@ describe('InsightsMobile', () => {
     fireEvent.click(within(screen.getByRole('dialog', { name: 'Delete report' })).getByRole('button', { name: 'Delete' }))
     expect(await screen.findByText('Something went wrong')).toBeInTheDocument()
     expect(screen.getByRole('dialog', { name: 'Delete report' })).toBeInTheDocument()
+  })
+
+  it('shows a Grid report as a table with averages; a row opens the day, editable', async () => {
+    localStorage.setItem('insights-report', 'g1')
+    practices.getDiaryEntries.mockResolvedValue([{ practice: 'Japa', data_type: 'Duration', value: { Duration: 60 } }])
+    practices.saveDiaryEntry.mockResolvedValue(undefined)
+    renderScreen()
+    const table = await screen.findByRole('table')
+    const rows = within(table).getAllByRole('row')
+    // Group band, header, Oct 6, Oct 5 (newest first), footer.
+    expect(rows.map((r) => r.textContent)).toEqual([
+      'Practices', 'DateJapaReading', 'TueOct 630 min—', 'MonOct 51 h—', '2 days1 h—',
+    ])
+    expect(within(table).getAllByTestId('required-missing')).toHaveLength(2)
+    expect(screen.queryByRole('list', { name: 'Averages' })).toBeNull()
+
+    fireEvent.click(within(table).getByRole('button', { name: 'Monday, October 5' }))
+    const editJapa = await screen.findByRole('button', { name: 'Edit Japa' })
+    const sheet = screen.getByRole('dialog', { name: 'Monday, October 5' })
+    expect(within(sheet).getByText('1 required left')).toBeInTheDocument() // Reading
+    fireEvent.click(editJapa)
+    const input = within(sheet).getByRole('textbox', { name: 'Japa' })
+    fireEvent.change(input, { target: { value: '90' } })
+    fireEvent.blur(input)
+    await waitFor(() => expect(practices.saveDiaryEntry).toHaveBeenCalledWith('2026-10-05', 'Japa', { Duration: 90 }))
   })
 })
