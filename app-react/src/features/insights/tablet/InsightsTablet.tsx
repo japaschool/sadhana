@@ -52,7 +52,7 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300 }: Insigh
         </button>
       </header>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-3">
         <div className="font-ui-mono [&_button]:px-3.5 [&_button]:text-[13px]">
           <SegmentedControl label={t('insights.range')} value={ins.range} onChange={ins.setRange}
             options={RANGES.map((r) => ({ value: r, label: t(`insights.range${r}`) }))} />
