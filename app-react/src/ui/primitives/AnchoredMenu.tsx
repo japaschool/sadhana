@@ -23,9 +23,14 @@ export function AnchoredMenu({ anchor, onClose, label, children }: AnchoredMenuP
       ...(fitsRightAligned ? { right: Math.max(8, window.innerWidth - r.right) } : { left: Math.max(8, r.left) }),
       ...(fitsBelow ? { top: r.bottom + GAP } : { bottom: window.innerHeight - r.top + GAP }),
     })
+  }, [anchor])
+
+  // Focus (and so scroll to) the checked item once placed: a visibility:hidden element can't take focus.
+  useEffect(() => {
+    if (pos.visibility === 'hidden') return
     const target = ref.current?.querySelector<HTMLElement>('[aria-checked="true"]') ?? ref.current?.querySelector<HTMLElement>(ITEM)
     target?.focus()
-  }, [anchor])
+  }, [pos])
 
   useEffect(() => () => anchor.focus(), [anchor])
 

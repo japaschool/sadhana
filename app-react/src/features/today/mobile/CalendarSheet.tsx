@@ -87,11 +87,13 @@ export function CalendarMonth({ date, onPick: pick }: { date: Date; onPick: (d: 
       </div>
 
       <div className="flex items-center justify-between border-t border-ui-control pt-3">
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-ui-muted">
-          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ui-danger" />
-          {t('today.legendMissing')}
-        </span>
-        <button type="button" onClick={() => pick(new Date())} className="text-sm font-bold text-ui-accent">{t('today.goToday')}</button>
+        {incomplete.size > 0 && (
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-ui-muted">
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ui-danger" />
+            {t('today.legendMissing')}
+          </span>
+        )}
+        <button type="button" onClick={() => pick(new Date())} className="ml-auto text-sm font-bold text-ui-accent">{t('today.goToday')}</button>
       </div>
 
       {picker && (
