@@ -72,10 +72,10 @@ export function MenuItem({ children, onSelect, selected, muted }: MenuItemProps)
       role={radio ? 'menuitemradio' : 'menuitem'}
       aria-checked={radio ? selected : undefined}
       onClick={onSelect}
-      className={`flex h-11 shrink-0 items-center justify-between rounded-[10px] px-3 text-left text-[15px] outline-none focus-visible:bg-ui-accent-soft ${tone}`}
+      className={`flex min-h-11 shrink-0 items-center justify-between gap-2 rounded-[10px] px-3 py-2.5 text-left text-[15px] outline-none focus-visible:bg-ui-accent-soft ${tone}`}
     >
       {children}
-      {selected && <span aria-hidden className="text-ui-accent">✓</span>}
+      {selected && <span aria-hidden className="shrink-0 text-ui-accent">✓</span>}
     </button>
   )
 }
