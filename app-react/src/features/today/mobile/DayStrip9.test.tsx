@@ -47,18 +47,23 @@ describe('DayStrip9', () => {
     expect(toDateStr(onSelect.mock.calls[0][0])).toBe('2026-10-05')
   })
 
-  it('swipes a week forward and back, ignoring short or vertical moves', () => {
+  it('swipes a week forward and back past one day, springing back on short or vertical moves', () => {
     const onSelect = vi.fn()
     render(<DayStrip9 date={date} incomplete={new Set()} onSelect={onSelect} />)
     const strip = screen.getByTestId('day-strip')
+    Object.defineProperty(strip, 'clientWidth', { value: 376 }) // one day = 40px
+    const track = screen.getByTestId('day-track')
     const swipe = (dx: number, dy = 0) => {
       fireEvent.touchStart(strip, { touches: [{ clientX: 200, clientY: 100 }] })
+      fireEvent.touchMove(strip, { touches: [{ clientX: 200 + dx, clientY: 100 + dy }] })
       fireEvent.touchEnd(strip, { changedTouches: [{ clientX: 200 + dx, clientY: 100 + dy }] })
+      fireEvent.transitionEnd(track)
     }
     swipe(-100)
     swipe(100)
     swipe(30)
     swipe(-80, 200)
     expect(onSelect.mock.calls.map((c) => toDateStr(c[0]))).toEqual(['2026-10-13', '2026-09-29'])
+    expect(track.style.transform).toContain('+ 0px')
   })
 })
