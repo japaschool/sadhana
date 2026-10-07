@@ -24,18 +24,22 @@ export function InsightsChart({ rows, traces, barLayout, averages }: InsightsCha
   const xTicks = rows.length
     ? [...new Set([rows[0], rows[Math.floor((rows.length - 1) / 2)], rows[rows.length - 1]].map((r) => r.cob))]
     : []
+  const timeLeft = used.has('time') && !used.has('num')
+  const hasLeft = used.has('num') || timeLeft
+  const hasRight = used.has('num-right') || (used.has('time') && !timeLeft)
   const stacked = barLayout === 'Stacked'
   const topBar = traces.filter((tr) => tr.type_ === 'Bar').at(-1)
 
   return (
     <ResponsiveContainer width="100%" height={170}>
-      <ComposedChart data={rows} margin={{ top: 6, right: 0, bottom: 0, left: 0 }}>
+      {/* Without a Y axis on a side, leave room for the end date ticks there. */}
+      <ComposedChart data={rows} margin={{ top: 6, right: hasRight ? 0 : 16, bottom: 0, left: hasLeft ? 0 : 16 }}>
         <CartesianGrid vertical={false} stroke="var(--ui-hairline)" />
         <XAxis dataKey="cob" ticks={xTicks} interval={0} tickFormatter={(c: string) => formatDay(c, locale)} {...AXIS} />
         {used.has('num') && <YAxis yAxisId="num" orientation="left" width={40} domain={[0, 'auto']} tickFormatter={numTick('num')} {...AXIS} />}
         {used.has('num-right') && <YAxis yAxisId="num-right" orientation="right" width={40} domain={[0, 'auto']} tickFormatter={numTick('num-right')} {...AXIS} />}
         {used.has('time') && (
-          <YAxis yAxisId="time" orientation={used.has('num') ? 'right' : 'left'} width={44} domain={['auto', 'auto']}
+          <YAxis yAxisId="time" orientation={timeLeft ? 'left' : 'right'} width={44} domain={['auto', 'auto']}
             tickFormatter={formatMinutesAsHHMM} {...AXIS} />
         )}
         {used.has('unit') && <YAxis yAxisId="unit" hide domain={[0, 1.1]} />}
