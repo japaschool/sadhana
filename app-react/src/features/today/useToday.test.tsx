@@ -63,6 +63,21 @@ describe('useToday', () => {
     await waitFor(() => expect(api.saveDiaryEntry).toHaveBeenCalledWith('2026-10-06', 'C', null))
   })
 
+  it('sends saves one at a time, in order', async () => {
+    let resolveFirst!: () => void
+    api.saveDiaryEntry.mockReturnValueOnce(new Promise<void>((r) => { resolveFirst = r }))
+    const { result } = setup()
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    act(() => result.current.save(B, { Int: 4 }))
+    act(() => result.current.save(B, { Int: 45 }))
+    await waitFor(() => expect(api.saveDiaryEntry).toHaveBeenCalledTimes(1))
+    await new Promise((r) => setTimeout(r, 20))
+    expect(api.saveDiaryEntry).toHaveBeenCalledTimes(1)
+    act(() => resolveFirst())
+    await waitFor(() => expect(api.saveDiaryEntry).toHaveBeenLastCalledWith('2026-10-06', 'B', { Int: 45 }))
+    expect(api.saveDiaryEntry).toHaveBeenCalledTimes(2)
+  })
+
   it('rolls back and flags the practice when a save fails', async () => {
     api.saveDiaryEntry.mockRejectedValue(new Error('boom'))
     const { result } = setup()

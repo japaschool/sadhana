@@ -45,6 +45,23 @@ describe('PracticeRow', () => {
     expect(onSave).toHaveBeenCalledWith({ Int: 16 })
   })
 
+  it('saves while typing, without waiting for a blur; a half-typed time waits', () => {
+    vi.useFakeTimers()
+    try {
+      const onSave = setup({ practice: 'Wake up', data_type: 'Time' })
+      fireEvent.click(screen.getByRole('button', { name: 'Edit Wake up' }))
+      const input = screen.getByRole('textbox', { name: 'Wake up' })
+      fireEvent.change(input, { target: { value: '041' } })
+      act(() => vi.advanceTimersByTime(1000))
+      expect(onSave).not.toHaveBeenCalled()
+      fireEvent.change(input, { target: { value: '0410' } })
+      act(() => vi.advanceTimersByTime(1000))
+      expect(onSave).toHaveBeenCalledWith({ Time: { h: 4, m: 10 } })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('Int: shows the value; clearing saves null', () => {
     const onSave = setup({ practice: 'Rounds', data_type: 'Int' }, { Int: 17 })
     fireEvent.click(screen.getByRole('button', { name: 'Edit Rounds' }))

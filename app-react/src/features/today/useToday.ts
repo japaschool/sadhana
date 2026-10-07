@@ -53,7 +53,10 @@ export function useToday(date: Date) {
 
   // The date travels in the mutation variables so callbacks always target the
   // day the value was entered on, even if the user has moved to another day.
+  // One scope runs saves one at a time, in order: values saved while typing ("4" then "45")
+  // would otherwise race, and the server could keep the older one.
   const mutation = useMutation({
+    scope: { id: 'diary-save' },
     mutationFn: ({ date, practice, value }: SaveVars) => practicesApi.saveDiaryEntry(date, practice.practice, value),
     onMutate: async ({ date, practice, value }) => {
       await qc.cancelQueries({ queryKey: ['diary', date] })

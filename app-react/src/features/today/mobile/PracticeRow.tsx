@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PracticeValue, UserPractice } from '../../../types/api'
@@ -51,6 +51,8 @@ function RowShell({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
+const SAVE_DEBOUNCE_MS = 300
+
 /** Time, Int and Duration (in minutes) edit inline; a set Duration also gets a ＋ that opens the add sheet. */
 function InlineInputRow({ practice, value, failed, onSave }: PracticeRowProps) {
   const { t } = useTranslation()
@@ -65,18 +67,31 @@ function InlineInputRow({ practice, value, failed, onSave }: PracticeRowProps) {
   const [draft, setDraft] = useState<string | null>(null) // null = not editing
   const [adding, setAdding] = useState<HTMLElement | null>(null) // the ＋ that opened the add pad
 
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
+
   function change(raw: string) {
-    if (!isTime) return setDraft(raw.replace(/\D/g, ''))
-    const next = formatTimeInput(raw)
-    // Backspace over the auto-inserted ':' would just re-add it; drop the hour digit instead.
-    const deleting = raw.length < (draft ?? '').length
-    setDraft(deleting && next === draft ? formatTimeInput(raw.replace(/\D/g, '').slice(0, -1)) : next)
+    let next = raw.replace(/\D/g, '')
+    if (isTime) {
+      next = formatTimeInput(raw)
+      // Backspace over the auto-inserted ':' would just re-add it; drop the hour digit instead.
+      const deleting = raw.length < (draft ?? '').length
+      if (deleting && next === draft) next = formatTimeInput(raw.replace(/\D/g, '').slice(0, -1))
+    }
+    setDraft(next)
+    // Save while typing: a closed home-screen app often never gets to send the commit's save.
+    // Empty or half-typed times ("07:") wait for the commit.
+    clearTimeout(timer.current)
+    if (next && (!isTime || next.length === 5)) timer.current = setTimeout(() => save(next), SAVE_DEBOUNCE_MS)
   }
 
   function commit() {
+    clearTimeout(timer.current)
     if (draft === null) return
-    const text = draft.trim()
     setDraft(null)
+    save(draft.trim())
+  }
+
+  function save(text: string) {
     if (!text) return onSave(null)
     if (isTime) {
       const time = parseTime(text)
