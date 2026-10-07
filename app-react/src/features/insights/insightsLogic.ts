@@ -1,7 +1,7 @@
 import type { BarLayout, ReportDataEntry } from '../../api/charts'
 import {
   averageForType, formatMinutesAsHHMM, resolveAxisId, valueToNumber,
-  type AxisId, type Trace, type TraceInput,
+  type AxisId, type ChartDataRow, type Trace, type TraceInput,
 } from '../../pages/charts/chartLogic'
 import { fromDateStr } from '../today/date'
 import { formatDuration, type DurationUnits } from '../today/values'
@@ -108,4 +108,34 @@ export function formatDurationTick(min: number, u: DurationUnits): string {
   const m = Math.round(min % 60)
   if (h === 0) return `${m}${u.min}`
   return m === 0 ? `${h}${u.h}` : `${h}${u.h}${String(m).padStart(2, '0')}`
+}
+
+export interface BarPlacement { stackId?: string; xAxisId?: string; rounded: boolean; fillOpacity: number }
+
+/** How each trace is drawn as a bar for a report's bar layout (null for non-bars), by position.
+ *  Mirrors Plotly's group / relative / overlay bar modes in the old Yew chart. */
+export function barPlacement(traces: Trace[], barLayout: BarLayout): (BarPlacement | null)[] {
+  const axisOf = (t: Trace) => resolveAxisId(t.yAxis, t.dataType)
+  let nthBar = 0
+  return traces.map((t, i) => {
+    if (t.type_ !== 'Bar') return null
+    const n = nthBar++
+    if (barLayout === 'Stacked') {
+      const stackId = axisOf(t)
+      // ponytail: the top trace is rounded even on days it is 0, leaving a square top there.
+      const top = !traces.slice(i + 1).some((b) => b.type_ === 'Bar' && axisOf(b) === stackId)
+      return { stackId, rounded: top, fillOpacity: 1 }
+    }
+    if (barLayout === 'Overlaid') {
+      // Recharts lays bars sharing an x axis side by side; a hidden x axis each makes them overlap.
+      return { ...(n > 0 && { xAxisId: `overlay-${n}` }), rounded: true, fillOpacity: 0.6 }
+    }
+    return { rounded: true, fillOpacity: 1 }
+  })
+}
+
+/** Chart data with one column per trace (t0, t1, …). A report may chart the same practice twice,
+ *  and Recharts keys its series by dataKey, so shared keys made it loop and freeze the page. */
+export function seriesRows(rows: ChartDataRow[], traces: TraceInput[]): Record<string, string | number | null>[] {
+  return rows.map((r) => ({ cob: r.cob, ...Object.fromEntries(traces.map((t, i) => [`t${i}`, r[t.name] ?? null])) }))
 }

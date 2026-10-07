@@ -64,15 +64,16 @@ export function InsightsMobile() {
                   )}
                 </div>
               )}
-              <InsightsChart rows={ins.rows} traces={ins.traces} barLayout={ins.barLayout} averages={ins.averages} />
+              {/* Remount per report: Recharts hangs updating in place when the series layout changes. */}
+              <InsightsChart key={ins.selectedId} rows={ins.rows} traces={ins.traces} barLayout={ins.barLayout} averages={ins.averages} />
             </>
           )}
         </section>
 
         {ready && (
           <ul aria-label={t('insights.legend')} className={`${CARD} px-4 py-1`}>
-            {ins.traces.map((tr) => (
-              <li key={tr.name} className="flex min-h-11 items-center gap-3 border-b border-ui-hairline last:border-0">
+            {ins.traces.map((tr, i) => (
+              <li key={i} className="flex min-h-11 items-center gap-3 border-b border-ui-hairline last:border-0">
                 <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: tr.color }} />
                 <span className="min-w-0 flex-1 truncate text-[15px] text-ui-ink2">{tr.name}</span>
                 <span className="font-ui-mono text-sm text-ui-ink">{traceAverageLabel(tr, ins.entries, ins.todayCob, units)}</span>

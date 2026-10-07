@@ -3,7 +3,7 @@ import type { ReportDataEntry } from '../../api/charts'
 import type { Trace } from '../../pages/charts/chartLogic'
 import {
   averageDailyTotal, headline, formatHeadline, formatDelta, averageLines,
-  traceAverageLabel, formatDay, formatTick, windowLabel, formatDurationTick,
+  traceAverageLabel, barPlacement, seriesRows, formatDay, formatTick, windowLabel, formatDurationTick,
 } from './insightsLogic'
 
 const TODAY = '2026-10-06'
@@ -133,5 +133,54 @@ describe('averageLines', () => {
   })
   it('none when no trace asks for one', () => {
     expect(averageLines([tr('A', 'Duration', { type_: 'Bar' })], rows, 'Stacked', TODAY)).toEqual([])
+  })
+})
+
+describe('barPlacement', () => {
+  const bars = [
+    tr('A', 'Duration', { type_: 'Bar' }),
+    tr('L', 'Duration'),
+    tr('B', 'Duration', { type_: 'Bar' }),
+    tr('C', 'Int', { type_: 'Bar', yAxis: 'Y2' }),
+  ]
+
+  it('Grouped: bars side by side on the shared x axis, all rounded', () => {
+    expect(barPlacement(bars, 'Grouped')).toEqual([
+      { rounded: true, fillOpacity: 1 },
+      null,
+      { rounded: true, fillOpacity: 1 },
+      { rounded: true, fillOpacity: 1 },
+    ])
+  })
+
+  it('Stacked: one stack per Y axis, only the top bar of each stack is rounded', () => {
+    expect(barPlacement(bars, 'Stacked')).toEqual([
+      { stackId: 'num', rounded: false, fillOpacity: 1 },
+      null,
+      { stackId: 'num', rounded: true, fillOpacity: 1 },
+      { stackId: 'num-right', rounded: true, fillOpacity: 1 },
+    ])
+  })
+
+  it('Overlaid: each later bar gets its own hidden x axis so bars overlap full width, translucent', () => {
+    expect(barPlacement(bars, 'Overlaid')).toEqual([
+      { rounded: true, fillOpacity: 0.6 },
+      null,
+      { xAxisId: 'overlay-1', rounded: true, fillOpacity: 0.6 },
+      { xAxisId: 'overlay-2', rounded: true, fillOpacity: 0.6 },
+    ])
+  })
+
+  it('handles the same practice twice (positions, not names)', () => {
+    const twice = [tr('A', 'Duration', { type_: 'Bar' }), tr('A', 'Duration', { type_: 'Bar' })]
+    expect(barPlacement(twice, 'Stacked').map((p) => p?.rounded)).toEqual([false, true])
+  })
+})
+
+describe('seriesRows', () => {
+  it('gives every trace its own column, even when a report charts the same practice twice', () => {
+    const rows = [{ date: 'Oct 5', cob: '2026-10-05', A: 3, B: null }]
+    const traces = [tr('A', 'Int', { type_: 'Bar' }), tr('A', 'Int', { type_: 'Bar' }), tr('B', 'Int')]
+    expect(seriesRows(rows, traces)).toEqual([{ cob: '2026-10-05', t0: 3, t1: 3, t2: null }])
   })
 })
