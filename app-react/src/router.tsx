@@ -17,6 +17,8 @@ const SettingsTabletScreen = lazy(() => import('./features/settings/tablet/Setti
 const InsightsDesktopScreen = lazy(() => import('./features/insights/desktop/InsightsDesktop').then((m) => ({ default: m.InsightsDesktopScreen })))
 const SettingsDesktopScreen = lazy(() => import('./features/settings/desktop/SettingsDesktop').then((m) => ({ default: m.SettingsDesktopScreen })))
 const YatrasMobileScreen = lazy(() => import('./features/yatras/mobile/YatrasMobile').then((m) => ({ default: m.YatrasMobileScreen })))
+const YatrasTabletScreen = lazy(() => import('./features/yatras/tablet/YatrasTablet').then((m) => ({ default: m.YatrasTabletScreen })))
+const YatrasDesktopScreen = lazy(() => import('./features/yatras/desktop/YatrasDesktop').then((m) => ({ default: m.YatrasDesktopScreen })))
 
 function RootError() {
   const error = useRouteError()
@@ -112,7 +114,7 @@ export const router = createBrowserRouter([
       },
       {
         path: '/yatras',
-        element: <ByLayout mobile={<YatrasMobileScreen />} legacy={<AppShell />} />,
+        element: <ByLayout mobile={<YatrasMobileScreen />} tablet={<YatrasTabletScreen />} desktop={<YatrasDesktopScreen />} legacy={<AppShell />} />,
         children: [{ index: true, element: <YatrasPage /> }],
       },
       {

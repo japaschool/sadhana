@@ -14,7 +14,7 @@ import { useYatras } from '../useYatras'
 import type { UserYatraDataRow } from '../../../types/api'
 
 const CARD = 'rounded-[18px] border border-ui-hairline bg-ui-surface'
-const TREND = { Up: '↗', Down: '↘', Flat: '→' } as const
+export const TREND = { Up: '↗', Down: '↘', Flat: '→' } as const
 
 export function YatrasMobile() {
   const { t, i18n } = useTranslation()
@@ -141,7 +141,7 @@ function MemberCard({ row, stability, cells }: { row: UserYatraDataRow; stabilit
   )
 }
 
-function CreateSheet({ onClose, create, pending }: { onClose: () => void; create: (name: string) => void; pending: boolean }) {
+export function CreateSheet({ onClose, create, pending }: { onClose: () => void; create: (name: string) => void; pending: boolean }) {
   const { t } = useTranslation()
   const [name, setName] = useState('')
   const submit = () => { if (name.trim()) create(name.trim()) }
