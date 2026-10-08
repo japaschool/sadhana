@@ -45,6 +45,41 @@ describe('PracticeEditorMobile', () => {
     expect(await screen.findByText('Must be more than 7, the Red bound')).toBeInTheDocument()
   })
 
+  it('clearing a field and typing a new value is one save, not two', async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const yellow = await screen.findByLabelText('Yellow up to')
+    fireEvent.focus(yellow)
+    fireEvent.change(yellow, { target: { value: '' } })
+    await new Promise((r) => setTimeout(r, 700))
+    expect(api.updateYatraPractice).not.toHaveBeenCalled()
+    fireEvent.change(yellow, { target: { value: '14' } })
+    fireEvent.blur(yellow)
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledOnce())
+    expect(sent().colour_zones!.bounds[1].to).toEqual({ Int: 14 })
+  })
+
+  it('a field left empty is saved as no value', async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const yellow = await screen.findByLabelText('Yellow up to')
+    fireEvent.focus(yellow)
+    fireEvent.change(yellow, { target: { value: '' } })
+    fireEvent.blur(yellow)
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledOnce())
+    expect(sent().colour_zones!.bounds[1].to).toBeNull()
+  })
+
+  it('on a Duration practice the score follows the colours to Lower', async () => {
+    renderAdmin('/yatra/y1/practice/p3/edit')
+    const done = await screen.findByLabelText('✓ Done at · +1 point')
+    fireEvent.focus(done)
+    fireEvent.change(done, { target: { value: '60' } })
+    fireEvent.blur(done)
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledOnce())
+    fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Better when the value is' })).getByRole('radio', { name: 'Lower' }))
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledTimes(2))
+    expect(sent().daily_score!.better_direction).toBe('Lower')
+  })
+
   it('saves a valid bound and keeps its colours', async () => {
     renderAdmin('/yatra/y1/practice/p1/edit')
     const yellow = await screen.findByLabelText('Yellow up to')

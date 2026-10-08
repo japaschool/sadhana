@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -108,6 +108,8 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
 
   const [drafts, setDrafts] = useState(() => draftsOf(p, dt))
   const [editing, setEditing] = useState(false)
+  // The field with focus, read when saving: blur's save must already see it as left.
+  const focused = useRef<'done' | 'bonus' | number | null>(null)
   // Errors wait for a pause in typing (or leaving the field), so they aren't announced on every keystroke.
   const [settled, setSettled] = useState(true)
   const [seen, setSeen] = useState(p)
@@ -119,15 +121,27 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
     else if (drafts.bounds.length !== (p.colour_zones?.bounds.length ?? 0)) setDrafts((d) => ({ ...d, bounds: draftsOf(p, dt).bounds }))
   }
 
-  const bounds = checkBounds(drafts.bounds, zones?.bounds.map((b) => b.colour) ?? [], dt)
-  const thresholds = checkScore(drafts.done, drafts.bonus, scoreDir, dt)
+  /** Clearing a field you're still in is unfinished typing: it keeps the saved value until you leave it empty. */
+  const checks = () => {
+    const f = focused.current
+    const saved = draftsOf(p, dt)
+    const keep = (text: string, key: 'done' | 'bonus' | number, was: string) => (f === key && !text.trim() ? was : text)
+    return {
+      bounds: checkBounds(drafts.bounds.map((x, i) => keep(x, i, saved.bounds[i] ?? '')), zones?.bounds.map((b) => b.colour) ?? [], dt),
+      thresholds: checkScore(keep(drafts.done, 'done', saved.done), keep(drafts.bonus, 'bonus', saved.bonus), scoreDir, dt),
+    }
+  }
+  const { bounds, thresholds } = checks()
 
   /** The saved practice with every valid draft applied; invalid drafts keep what's saved. */
-  const fromDrafts = (): YatraPractice => ({
-    ...p,
-    colour_zones: zones && bounds.ok ? { ...zones, bounds: zones.bounds.map((b, i) => ({ ...b, to: bounds.values[i] })) } : p.colour_zones,
-    daily_score: thresholds.ok ? scoreConfig(scoreDir, thresholds.values[0], thresholds.values[1]) : p.daily_score,
-  })
+  const fromDrafts = (): YatraPractice => {
+    const c = checks()
+    return {
+      ...p,
+      colour_zones: zones && c.bounds.ok ? { ...zones, bounds: zones.bounds.map((b, i) => ({ ...b, to: c.bounds.values[i] })) } : p.colour_zones,
+      daily_score: c.thresholds.ok ? scoreConfig(scoreDir, c.thresholds.values[0], c.thresholds.values[1]) : p.daily_score,
+    }
+  }
   const { schedule, flush } = useDebouncedCommit(() => {
     setSettled(true)
     const next = fromDrafts()
@@ -142,7 +156,7 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
   const setZoneDir = (d: BetterDirection) => saveNow((b) => {
     const sc = b.daily_score
     // The score follows the colours unless its thresholds would then be the wrong way round.
-    const move = follows && sc && checkScore(formatValue(sc.mandatory_threshold, dt), formatValue(bonusOf(sc), dt), d, dt).ok
+    const move = follows && sc && checkScore(editText(sc.mandatory_threshold, dt), editText(bonusOf(sc), dt), d, dt).ok
     return { ...b, colour_zones: paletteZones(count as 2 | 3, d, b.colour_zones), daily_score: move ? { ...sc, better_direction: d } : sc }
   })
   const setEmpty = (c: ZoneColour) => saveNow((b) => ({ ...b, colour_zones: { ...b.colour_zones!, no_value_colour: c } }))
@@ -165,8 +179,9 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
   }
   const field = (key: 'done' | 'bonus' | number) => ({
     value: typeof key === 'number' ? drafts.bounds[key] ?? '' : drafts[key],
-    onFocus: () => setEditing(true),
+    onFocus: () => { focused.current = key; setEditing(true) },
     onBlur: () => {
+      focused.current = null
       setEditing(false)
       // Show what was typed the way it's stored, e.g. a half-typed 05 → 05:00.
       setDrafts((d) => (typeof key === 'number' ? { ...d, bounds: d.bounds.map((x, j) => (j === key ? tidy(x) : x)) } : { ...d, [key]: tidy(d[key]) }))
