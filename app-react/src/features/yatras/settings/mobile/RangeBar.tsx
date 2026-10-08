@@ -12,10 +12,20 @@ function Marker({ at, label, stem }: { at: number; label: string; stem: string }
 }
 
 /** Colour zones, bound handles and the ✓ done / ★ bonus thresholds on one scale. Decorative: the text around it says the same. */
-export function RangeBar({ bar, dt }: { bar: Bar; dt: ScoredType }) {
+export function RangeBar({ bar, dt }: { bar: Bar | null; dt: ScoredType }) {
+  // Nothing set yet: an empty track of the same height, so the fields below don't jump when the first value lands.
+  if (!bar) {
+    return (
+      <div aria-hidden data-range-bar="empty" className="flex flex-col gap-0.5 px-3">
+        <div className="h-[50px]" />
+        <div className="flex h-7 items-center"><div className="h-3.5 w-full rounded-[7px] bg-ui-chip" /></div>
+        <div className="h-[18px]" />
+      </div>
+    )
+  }
   const end = (n: number) => formatValue(fromNumber(n, dt), dt)
   return (
-    <div aria-hidden className="flex flex-col gap-0.5 px-3">
+    <div aria-hidden data-range-bar className="flex flex-col gap-0.5 px-3">
       <div className="relative h-[50px]">
         {bar.done && <Marker at={bar.done.at} label={`✓ ${formatValue(bar.done.value, dt)}`} stem="h-2" />}
         {bar.bonus && <Marker at={bar.bonus.at} label={`★ ${formatValue(bar.bonus.value, dt)}`} stem="h-7" />}

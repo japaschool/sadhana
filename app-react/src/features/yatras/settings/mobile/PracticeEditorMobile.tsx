@@ -194,7 +194,7 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
               <SegmentedControl label={t('yatraSettings.betterWhen')} value={zones.better_direction} options={dirOptions}
                 onChange={(d) => setZoneDir(d as BetterDirection)} />
             </Row>
-            {bar && <RangeBar bar={bar} dt={dt} />}
+            <RangeBar bar={bar} dt={dt} />
             <div className="grid grid-cols-2 gap-2.5">
               {zones.bounds.map((b, i) => (
                 <ValueField key={i} id={`bound-${i}`} dt={dt} {...field(i)} error={settled && bounds.errors[i] && errorText(bounds.errors[i]!, dt, t)}
@@ -236,7 +236,7 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
           <h2 className={SECTION_TITLE}>{t('yatraSettings.scoreTitle')}</h2>
           <p className={HINT}>{t('yatraSettings.scoreHint')}</p>
         </div>
-        {!zones && bar && <RangeBar bar={bar} dt={dt} />}
+        {!zones && <RangeBar bar={bar} dt={dt} />}
         <p className="text-sm font-semibold text-ui-ink2">{summary}</p>
         <Row label={t('yatraSettings.betterWhen')}>
           <SegmentedControl label={t('yatraSettings.scoreBetterWhen')} value={follows ? 'same' : scoreDir} onChange={setScoreDir}

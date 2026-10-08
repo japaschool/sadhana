@@ -159,6 +159,13 @@ describe('PracticeEditorMobile', () => {
     expect(api.updateYatraPractice).not.toHaveBeenCalled()
   })
 
+  it("keeps the bar's space before any value is set, so fields don't jump", async () => {
+    renderAdmin('/yatra/y1/practice/p3/edit')
+    fireEvent.click(await screen.findByRole('radio', { name: 'Off' }))
+    await waitFor(() => expect(screen.queryByLabelText('Red up to')).toBeNull())
+    expect(document.querySelectorAll('[data-range-bar="empty"]')).toHaveLength(1)
+  })
+
   it('a Yes / No practice explains why it has no colours or score', async () => {
     renderAdmin('/yatra/y1/practice/p4/edit')
     expect(await screen.findByText(/Yes \/ No practices show ✓ in the table/)).toBeInTheDocument()
