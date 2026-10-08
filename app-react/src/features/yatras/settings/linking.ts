@@ -15,22 +15,25 @@ function nameScore(yatraName: string, mine: string): number {
 const linkedNames = (items: YatraUserPracticeItem[]) =>
   new Set(items.flatMap((i) => (i.user_practice ? [i.user_practice] : [])))
 
-/** Yatra practice id → one matching, active, same-type practice not linked anywhere in this yatra. */
+/** Yatra practice id → one matching, active, same-type practice not linked anywhere in this yatra. Exact names are paired first. */
 export function suggestions(items: YatraUserPracticeItem[], practices: UserPractice[]): Map<string, UserPractice> {
   const taken = linkedNames(items)
-  const out = new Map<string, UserPractice>()
-  for (const { yatra_practice: y, user_practice } of items) {
-    if (user_practice) continue
-    let best: UserPractice | undefined
-    let bestScore = 0
-    for (const p of practices) {
-      if (!p.is_active || p.data_type !== y.data_type || taken.has(p.practice)) continue
-      const s = nameScore(y.practice, p.practice)
-      if (s > bestScore) { best = p; bestScore = s }
+  const found = new Map<string, UserPractice>()
+  for (const min of [2, 1]) {
+    for (const { yatra_practice: y, user_practice } of items) {
+      if (user_practice || found.has(y.id)) continue
+      let best: UserPractice | undefined
+      let bestScore = min - 1
+      for (const p of practices) {
+        if (!p.is_active || p.data_type !== y.data_type || taken.has(p.practice)) continue
+        const s = nameScore(y.practice, p.practice)
+        if (s > bestScore) { best = p; bestScore = s }
+      }
+      if (best) { found.set(y.id, best); taken.add(best.practice) }
     }
-    if (best) { out.set(y.id, best); taken.add(best.practice) }
   }
-  return out
+  // In table order, as the rows show them.
+  return new Map(items.flatMap((i) => (found.has(i.yatra_practice.id) ? [[i.yatra_practice.id, found.get(i.yatra_practice.id)!] as const] : [])))
 }
 
 /** Links `name` to one yatra practice; any other row holding it is unlinked (a move). */

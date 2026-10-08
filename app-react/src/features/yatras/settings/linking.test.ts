@@ -17,6 +17,13 @@ describe('suggestions', () => {
     expect(s.has('c')).toBe(false) // same name, wrong type
   })
 
+  it('gives exact matches first, so a looser row earlier on cannot take them', () => {
+    const items = [yp('a', 'Japa', 'Int'), yp('b', 'Japa rounds', 'Int')]
+    const s = suggestions(items, [up('Japa rounds', 'Int')])
+    expect(s.get('b')?.practice).toBe('Japa rounds')
+    expect(s.has('a')).toBe(false)
+  })
+
   it('skips practices already linked in this yatra and rows already linked', () => {
     const items = [yp('a', 'Reading', 'Duration', 'Book reading'), yp('b', 'Book reading', 'Duration')]
     expect(suggestions(items, [up('Book reading', 'Duration')]).size).toBe(0)
