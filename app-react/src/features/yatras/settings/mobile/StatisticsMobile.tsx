@@ -133,13 +133,20 @@ function StatisticSheet({ initial, isNew, practices, units, raw, onChange, onDel
         confirm={t('yatraSettings.deleteStat')} onConfirm={onDelete} onClose={() => setConfirming(false)} />
     )
   }
+  // Today's value was worked out for the statistic as it was opened; after a change it would mislead.
+  const measured = draft.practice_id === initial.practice_id && draft.aggregation === initial.aggregation && draft.time_range === initial.time_range
+  // Done keeps what the preview shows, even untouched; × on a new statistic adds nothing.
+  const done = () => {
+    if (isNew && draft.label.trim()) onChange(draft)
+    onClose()
+  }
   const title = t(isNew ? 'yatraSettings.newStatistic' : 'yatraSettings.editStatistic')
   return (
     <BottomSheet label={title} onClose={onClose}>
       <SheetHeader title={title} onClose={onClose} />
       <div className="flex flex-col gap-2">
         <span className="text-[13px] font-bold text-ui-muted">{t('yatraSettings.tilePreview')}</span>
-        <Tile stat={draft} dt={dt} raw={raw} units={units} />
+        <Tile stat={draft} dt={dt} raw={measured ? raw : undefined} units={units} />
       </div>
       <AutosaveText id="stat-label" label={t('yatraSettings.label')} value={draft.label}
         validate={(v) => (v.trim() ? null : t('yatraSettings.labelEmpty'))} onCommit={(v) => change({ ...draft, label: v.trim() })} />
@@ -161,7 +168,7 @@ function StatisticSheet({ initial, isNew, practices, units, raw, onChange, onDel
             {t('yatraSettings.deleteStat')}
           </button>
         )}
-        <button type="button" onClick={onClose} className={`${BTN} flex-1 bg-ui-primary text-ui-on-primary`}>{t('yatraSettings.done')}</button>
+        <button type="button" onClick={done} className={`${BTN} flex-1 bg-ui-primary text-ui-on-primary`}>{t('yatraSettings.done')}</button>
       </div>
     </BottomSheet>
   )

@@ -62,12 +62,29 @@ describe('StatisticsMobile', () => {
     expect(sentStats().statistics[2]).toEqual({ label: 'Japa rounds', practice_id: 'p1', aggregation: 'Avg', time_range: 'ThisWeek' })
   })
 
-  it('closing a new statistic untouched adds nothing', async () => {
+  it('Done adds a new statistic as previewed, even untouched', async () => {
     renderAdmin('/yatra/y1/admin/statistics')
     fireEvent.click(await screen.findByRole('button', { name: '+ Add statistic' }))
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Done' }))
     expect(screen.queryByRole('dialog')).toBeNull()
+    await waitFor(() => expect(sentStats().statistics).toHaveLength(3))
+    expect(sentStats().statistics[2]).toEqual({ label: 'Japa rounds', practice_id: 'p1', aggregation: 'Avg', time_range: 'Last30Days' })
+  })
+
+  it('closing a new statistic with × adds nothing', async () => {
+    renderAdmin('/yatra/y1/admin/statistics')
+    fireEvent.click(await screen.findByRole('button', { name: '+ Add statistic' }))
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
     expect(api.updateYatra).not.toHaveBeenCalled()
+  })
+
+  it("the sheet's tile drops the value once the statistic changes", async () => {
+    renderAdmin('/yatra/y1/admin/statistics')
+    const sheet = await openStat('Average japa')
+    expect(within(sheet).getByText('15.8')).toBeInTheDocument()
+    fireEvent.click(within(sheet).getByRole('radio', { name: 'Sum' }))
+    expect(within(sheet).queryByText('15.8')).toBeNull()
   })
 
   it('deletes a statistic after asking', async () => {
