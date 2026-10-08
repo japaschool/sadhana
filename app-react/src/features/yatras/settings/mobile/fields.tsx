@@ -7,9 +7,11 @@ import { useDebouncedCommit } from '../useDebouncedCommit'
 import { BTN, FIELD, HINT } from './AdminPage'
 
 /** A text field that saves while you type (after a pause) and on blur; invalid text stays local and says why. */
-export function AutosaveText({ id, label, hint, value, validate, onCommit, placeholder }: {
+export function AutosaveText({ id, label, hint, value, validate, onCommit, onDraft, placeholder }: {
   id: string; label: string; hint?: string; value: string; placeholder?: string
   validate?: (v: string) => string | null; onCommit: (v: string) => void
+  /** Every keystroke, for a parent that must know what's typed (e.g. to disable Done). */
+  onDraft?: (v: string) => void
 }) {
   const [draft, setDraft] = useState(value)
   const [focused, setFocused] = useState(false)
@@ -40,7 +42,7 @@ export function AutosaveText({ id, label, hint, value, validate, onCommit, place
           // What's saved is trimmed; show it that way.
           if (!error) setDraft((d) => d.trim())
         }}
-        onChange={(e) => { setDraft(e.target.value); setSettled(false); schedule() }} />
+        onChange={(e) => { setDraft(e.target.value); onDraft?.(e.target.value); setSettled(false); schedule() }} />
       {shown
         ? <p id={msgId} role="alert" className="text-xs font-semibold text-ui-danger">{shown}</p>
         : hint && <p id={msgId} className={HINT}>{hint}</p>}

@@ -61,12 +61,14 @@ export function RenamePracticeSheet({ practice, others, onRename, onClose }: {
 }) {
   const { t } = useTranslation()
   const title = t('yatraSettings.renameTitle')
+  const [draft, setDraft] = useState(practice.practice)
+  const invalid = !!practiceNameError(t, draft, others)
   return (
     <BottomSheet label={title} onClose={onClose}>
       <SheetHeader title={title} onClose={onClose} />
       <AutosaveText id="rename-practice" label={t('yatraSettings.name')} value={practice.practice}
-        validate={(v) => practiceNameError(t, v, others)} onCommit={(v) => onRename(v.trim())} />
-      <button type="button" onClick={onClose} className={`${BTN} bg-ui-primary text-ui-on-primary`}>{t('yatraSettings.done')}</button>
+        validate={(v) => practiceNameError(t, v, others)} onCommit={(v) => onRename(v.trim())} onDraft={setDraft} />
+      <button type="button" disabled={invalid} onClick={onClose} className={`${BTN} bg-ui-primary text-ui-on-primary disabled:opacity-50`}>{t('yatraSettings.done')}</button>
     </BottomSheet>
   )
 }

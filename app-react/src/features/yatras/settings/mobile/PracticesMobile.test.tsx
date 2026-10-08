@@ -77,6 +77,9 @@ describe('PracticesMobile', () => {
     fireEvent.blur(name)
     expect(within(rename).getByRole('alert')).toHaveTextContent('This yatra already has a practice with this name')
     expect(api.updateYatraPractice).not.toHaveBeenCalled()
+    expect(within(rename).getByRole('button', { name: 'Done' })).toBeDisabled()
+    fireEvent.change(name, { target: { value: 'Study' } })
+    expect(within(rename).getByRole('button', { name: 'Done' })).toBeEnabled()
   })
 
   it('renames from the row menu', async () => {
