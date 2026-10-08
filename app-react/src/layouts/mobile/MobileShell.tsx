@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ToastContainer } from '../../components/ui/Toast'
+import { UiToastContainer } from '../../ui/primitives/Toast'
 import { TabIcon } from '../TabIcon'
 import { TABS } from '../tabIcons'
 import { useShellBackground } from '../useShellBackground'
@@ -32,7 +32,7 @@ export function MobileShell({ children }: { children: ReactNode }) {
     <div ref={ref} className="ui-root min-h-dvh bg-ui-bg pb-[calc(72px+env(safe-area-inset-bottom))]">
       {children}
       <TabBar />
-      <ToastContainer />
+      <UiToastContainer />
     </div>
   )
 }

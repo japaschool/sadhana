@@ -47,7 +47,8 @@
     "add": "Add",
     "failedSave": "Failed to save",
     "failedLeave": "Failed to leave",
-    "saved": "Saved"
+    "saved": "Saved",
+    "undo": "Undo"
   },
   "notFound": {
     "title": "Page not found",
