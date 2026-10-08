@@ -31,4 +31,10 @@ describe('ManageYatraMobile', () => {
     renderAdmin('/yatra/y1/admin/members')
     expect(await screen.findByText('Link page')).toBeInTheDocument()
   })
+  it('says there are no practices yet instead of a 0 count', async () => {
+    mockAdmin(api)
+    api.getYatraPractices.mockResolvedValue([])
+    renderAdmin('/yatra/y1/admin/settings')
+    expect(await screen.findByText('None yet · add the first')).toBeInTheDocument()
+  })
 })

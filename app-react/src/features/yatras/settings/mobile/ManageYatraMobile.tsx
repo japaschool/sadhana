@@ -17,7 +17,7 @@ export function ManageYatraMobile() {
         return (
           <div className={LIST}>
             <SettingsRow label={t('yatraSettings.general')} hint={t('yatraSettings.generalHint')} to={`${base}/general`} />
-            <SettingsRow label={t('yatraSettings.practices')} hint={t('yatraSettings.practicesHint', { count: a.practices.length })} to={`${base}/practices`} />
+            <SettingsRow label={t('yatraSettings.practices')} hint={a.practices.length ? t('yatraSettings.practicesHint', { count: a.practices.length }) : t('yatraSettings.practicesHintEmpty')} to={`${base}/practices`} />
             <SettingsRow label={t('yatraSettings.membersTitle')} hint={membersLine(t, a.users)} to={`${base}/members`} />
             <SettingsRow label={t('yatraSettings.statistics')} to={`${base}/statistics`}
               hint={t(stats?.visible_to_all ? 'yatraSettings.statsHintAll' : 'yatraSettings.statsHintAdmins', { count: stats?.statistics.length ?? 0 })} />

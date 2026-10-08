@@ -62,6 +62,14 @@ describe('LinkPracticesMobile', () => {
     expect(screen.getByRole('link', { name: 'Add one in My practices ›' })).toHaveAttribute('href', '/user/practices')
   })
 
+  it('says so when the yatra has no practices yet', async () => {
+    api.getYatraUserPractices.mockResolvedValue([])
+    renderLinkScreen()
+    expect(await screen.findByText('No practices yet')).toBeInTheDocument()
+    expect(screen.getByText("Once the yatra has practices, you'll link yours here.")).toBeInTheDocument()
+    expect(screen.queryByText(/All 0 linked/)).toBeNull()
+  })
+
   it('links a suggestion from its row and offers Undo', async () => {
     renderLinkScreen()
     const row = (await screen.findByText('Hearing lectures')).closest('li')!

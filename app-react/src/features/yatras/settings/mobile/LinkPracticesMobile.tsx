@@ -60,7 +60,7 @@ export function LinkPracticesMobile() {
           <section className={`${CARD} flex flex-col gap-3 p-4`}>
             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
               <span className="text-[22px] font-extrabold tracking-[-0.01em] text-ui-ink">
-                {missing.length ? t('yatraSettings.countLinked', { linked, total }) : t('yatraSettings.allLinked', { total })}
+                {!total ? t('yatraSettings.noPracticesYet') : missing.length ? t('yatraSettings.countLinked', { linked, total }) : t('yatraSettings.allLinked', { total })}
               </span>
               <span className="flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap text-ui-muted">
                 <span className="h-[7px] w-[7px] rounded-full bg-ui-good" />{t('yatraSettings.savesAsYouGo')}
@@ -73,9 +73,10 @@ export function LinkPracticesMobile() {
               ))}
             </div>
             <p className="text-sm leading-normal text-ui-ink2">
-              {missing.length
-                ? t('yatraSettings.wontAppear', { names: joinNames(missing.map((p) => p.practice), i18n.language || 'en') })
-                : t('yatraSettings.allAppear')}
+              {!total ? t('yatraSettings.noPracticesText')
+                : missing.length
+                  ? t('yatraSettings.wontAppear', { names: joinNames(missing.map((p) => p.practice), i18n.language || 'en') })
+                  : t('yatraSettings.allAppear')}
             </p>
             {suggested.size > 0 && (
               <button type="button" onClick={() => s.linkAll(suggested)}
