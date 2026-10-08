@@ -3,12 +3,14 @@ import { Navigate, useParams } from 'react-router-dom'
 import { GeneralMobile } from './GeneralMobile'
 import { MembersMobile } from './MembersMobile'
 import { PracticesMobile } from './PracticesMobile'
+import { StatisticsMobile } from './StatisticsMobile'
 
 // Tasks 6–11 add: general, practices, members, statistics, invite, danger.
 const SECTIONS: Record<string, ReactNode> = {
   general: <GeneralMobile />,
   practices: <PracticesMobile />,
   members: <MembersMobile />,
+  statistics: <StatisticsMobile />,
 }
 
 /** /yatra/:id/admin/:section on mobile; unknown sections go to the hub. */

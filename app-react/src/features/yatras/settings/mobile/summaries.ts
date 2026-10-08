@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import type { YatraPractice, YatraUser, ZoneColour } from '../../../../types/api'
+import type { Aggregation, PracticeDataType, YatraPractice, YatraUser, ZoneColour } from '../../../../types/api'
 import { bonusOf, formatValue, isScored, zoneCount } from '../zones'
 
 /** The existing colour names: yatras.zoneRed, yatras.zoneGreen, … */
@@ -28,3 +28,7 @@ export function practiceSummary(p: YatraPractice, t: TFunction): string {
   const colours = n ? t('yatraSettings.nColours', { count: n }) : t('yatraSettings.noColours')
   return `${colours} · ${scoreSummary(p, t) ?? t('yatraSettings.notInScore')}`
 }
+
+/** For times of day, Min and Max read "earliest" and "latest". */
+export const aggLabel = (t: TFunction, agg: Aggregation, dt?: PracticeDataType) =>
+  t(dt === 'Time' && (agg === 'Min' || agg === 'Max') ? `yatraSettings.agg${agg}Time` : `yatraSettings.agg${agg}`)

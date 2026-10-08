@@ -62,3 +62,22 @@ export function ConfirmSheet({ title, text, confirm, busy, disabled, onConfirm, 
     </BottomSheet>
   )
 }
+
+/** A wrapping set of chips; picks one. */
+export function ChoiceChips<T extends string>({ label, value, options, onChange }: {
+  label: string; value: T; options: { value: T; label: string }[]; onChange: (v: T) => void
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span aria-hidden className="text-[13px] font-bold text-ui-muted">{label}</span>
+      <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
+        {options.map((o) => (
+          <button key={o.value} type="button" role="radio" aria-checked={o.value === value} onClick={() => onChange(o.value)}
+            className={`min-h-9 rounded-full px-3.5 text-[13px] font-bold ${o.value === value ? 'bg-ui-selected text-ui-on-selected' : 'bg-ui-chip text-ui-ink2'}`}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
