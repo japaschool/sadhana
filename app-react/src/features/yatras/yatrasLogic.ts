@@ -1,7 +1,7 @@
 import type { ColourZonesConfig, ZoneColour } from '../../types/api'
 
 /** A value as a number to compare against zone bounds; null when nothing was logged. */
-function zoneNumber(raw: unknown): number | null {
+export function zoneNumber(raw: unknown): number | null {
   if (raw === null || raw === undefined) return null
   if (typeof raw === 'number') return raw
   const o = raw as Record<string, unknown>
