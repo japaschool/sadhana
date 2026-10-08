@@ -166,6 +166,23 @@ describe('PracticeEditorMobile', () => {
     expect(document.querySelectorAll('[data-range-bar="empty"]')).toHaveLength(1)
   })
 
+  it('time fields use the decimal keypad and show a dot as a colon once you leave', async () => {
+    renderAdmin('/yatra/y1/practice/p2/edit')
+    const done = await screen.findByLabelText('✓ Done at · +1 point')
+    expect(done).toHaveAttribute('inputmode', 'decimal')
+    expect(done).toHaveAttribute('autocomplete', 'off')
+    fireEvent.focus(done)
+    fireEvent.change(done, { target: { value: '5.15' } })
+    fireEvent.blur(done)
+    expect(done).toHaveValue('05:15')
+    await waitFor(() => expect(sent().daily_score!.mandatory_threshold).toEqual({ Time: { h: 5, m: 15 } }))
+  })
+
+  it("names don't invite autofill", async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    expect(await screen.findByLabelText('Name')).toHaveAttribute('autocomplete', 'off')
+  })
+
   it('a Yes / No practice explains why it has no colours or score', async () => {
     renderAdmin('/yatra/y1/practice/p4/edit')
     expect(await screen.findByText(/Yes \/ No practices show ✓ in the table/)).toBeInTheDocument()

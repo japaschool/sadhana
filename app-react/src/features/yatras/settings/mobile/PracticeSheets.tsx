@@ -27,7 +27,7 @@ export function AddPracticeSheet({ others, busy, onAdd, onClose }: {
       <SheetHeader title={title} onClose={onClose} />
       <div className="flex flex-col gap-1.5">
         <label htmlFor="new-practice" className="text-[13px] font-bold text-ui-muted">{t('yatraSettings.name')}</label>
-        <input id="new-practice" value={name} onChange={(e) => setName(e.target.value)} aria-invalid={!!error} className={FIELD} />
+        <input id="new-practice" value={name} autoComplete="off" onChange={(e) => setName(e.target.value)} aria-invalid={!!error} className={FIELD} />
         {error && <p role="alert" className="text-xs font-semibold text-ui-danger">{error}</p>}
       </div>
       <div className="flex flex-col gap-2">

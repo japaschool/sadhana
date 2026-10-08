@@ -10,7 +10,7 @@ import { useDebouncedCommit } from '../useDebouncedCommit'
 import { useYatraAdmin } from '../useYatraAdmin'
 import type { FieldError, ScoredType } from '../zones'
 import {
-  aboveColour, barGeometry, bonusOf, checkBounds, checkScore, formatValue, greenStart, isScored, paletteZones, scoreConfig, zoneCount, zoneSamples,
+  aboveColour, barGeometry, bonusOf, checkBounds, checkScore, formatValue, greenStart, isScored, paletteZones, parseValue, scoreConfig, zoneCount, zoneSamples,
 } from '../zones'
 import { AdminPage, BTN, CARD, FIELD, HINT, SECTION_TITLE } from './AdminPage'
 import { AutosaveText } from './fields'
@@ -154,10 +154,20 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
     if (checkScore(text, drafts.bonus, scoreDir, dt).ok) saveNow((b) => ({ ...b, daily_score: scoreConfig(scoreDir, green, bonusOf(b.daily_score)) }))
   }
 
+  const tidy = (text: string) => {
+    const v = parseValue(text, dt)
+    return v && v !== 'invalid' ? formatValue(v, dt) : text
+  }
   const field = (key: 'done' | 'bonus' | number) => ({
     value: typeof key === 'number' ? drafts.bounds[key] ?? '' : drafts[key],
     onFocus: () => setEditing(true),
-    onBlur: () => { setEditing(false); flush(); setSettled(true) },
+    onBlur: () => {
+      setEditing(false)
+      // Show what was typed the way it's stored: 5.30 → 05:30, 45 → 0:45.
+      setDrafts((d) => (typeof key === 'number' ? { ...d, bounds: d.bounds.map((x, j) => (j === key ? tidy(x) : x)) } : { ...d, [key]: tidy(d[key]) }))
+      flush()
+      setSettled(true)
+    },
     onChange: (v: string) => {
       setSettled(false)
       setDrafts((d) => (typeof key === 'number' ? { ...d, bounds: d.bounds.map((x, j) => (j === key ? v : x)) } : { ...d, [key]: v }))
@@ -279,7 +289,7 @@ function ValueField({ id, label, dt, value, error, onChange, onFocus, onBlur }: 
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
       <label htmlFor={id} className="flex items-center gap-1.5 text-xs font-bold leading-[1.35] text-ui-muted">{label}</label>
-      <input id={id} value={value} inputMode={dt === 'Int' ? 'numeric' : 'text'} placeholder={PLACEHOLDER[dt]} aria-invalid={!!error}
+      <input id={id} value={value} inputMode={dt === 'Int' ? 'numeric' : 'decimal'} autoComplete="off" placeholder={PLACEHOLDER[dt]} aria-invalid={!!error}
         aria-describedby={error ? `${id}-error` : undefined}
         className={`${FIELD} font-ui-mono`} onFocus={onFocus} onBlur={onBlur} onChange={(e) => onChange(e.target.value)} />
       {error && <p id={`${id}-error`} role="alert" className="text-xs font-semibold text-ui-danger">{error}</p>}

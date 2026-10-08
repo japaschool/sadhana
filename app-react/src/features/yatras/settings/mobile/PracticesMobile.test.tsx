@@ -28,6 +28,13 @@ describe('PracticesMobile', () => {
     expect(screen.getByRole('link', { name: /Japa rounds/ })).toHaveAttribute('href', '/yatra/y1/practice/p1/edit')
   })
 
+  it('rows block text selection and the iOS long-press callout, so dragging is clean', async () => {
+    renderAdmin('/yatra/y1/admin/practices')
+    const row = (await screen.findByRole('link', { name: /Japa rounds/ })).closest('li')!
+    expect(row.className).toContain('select-none')
+    expect(row.className).toContain('[-webkit-touch-callout:none]')
+  })
+
   it('removes the statistics that use a practice, then deletes it', async () => {
     renderAdmin('/yatra/y1/admin/practices')
     await openMenu('Japa rounds')

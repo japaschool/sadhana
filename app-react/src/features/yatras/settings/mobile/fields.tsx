@@ -33,7 +33,7 @@ export function AutosaveText({ id, label, hint, value, validate, onCommit, onDra
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-[13px] font-bold text-ui-muted">{label}</label>
-      <input id={id} value={draft} placeholder={placeholder} aria-invalid={!!shown} aria-describedby={shown || hint ? msgId : undefined} className={FIELD}
+      <input id={id} value={draft} placeholder={placeholder} autoComplete="off" aria-invalid={!!shown} aria-describedby={shown || hint ? msgId : undefined} className={FIELD}
         onFocus={() => setFocused(true)}
         onBlur={() => {
           setFocused(false)

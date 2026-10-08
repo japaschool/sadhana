@@ -89,7 +89,7 @@ function PracticeRow({ p, to, onMenu }: { p: YatraPractice; to: string; onMenu: 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id })
   return (
     <li ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`flex min-h-[60px] items-center gap-1 bg-ui-surface pr-1 ${isDragging ? 'relative z-10 shadow-lg' : ''}`}>
+      className={`flex min-h-[60px] items-center gap-1 bg-ui-surface pr-1 select-none [-webkit-touch-callout:none] ${isDragging ? 'relative z-10 shadow-lg' : ''}`}>
       <button type="button" {...attributes} {...listeners} aria-label={t('yatraSettings.dragHandle', { name: p.practice })}
         className="flex h-11 w-9 shrink-0 cursor-grab touch-none items-center justify-center text-ui-faint2">
         <span aria-hidden className="text-lg leading-none">⋮⋮</span>
