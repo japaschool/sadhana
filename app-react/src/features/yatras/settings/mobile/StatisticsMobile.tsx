@@ -3,12 +3,13 @@ import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { yatrasApi } from '../../../../api/yatras'
-import type { PracticeDataType, YatraPractice, YatraStatisticConfig } from '../../../../types/api'
+import type { YatraPractice, YatraStatisticConfig } from '../../../../types/api'
 import { BottomSheet } from '../../../../ui/primitives/BottomSheet'
 import { SegmentedControl } from '../../../../ui/primitives/SegmentedControl'
 import { toDateStr } from '../../../today/date'
 import type { DurationUnits } from '../../../today/values'
-import { aggregationsFor, newStatistic, statValue, TIME_RANGES, withPractice } from '../statistics'
+import { aggregationsFor, newStatistic, TIME_RANGES, withPractice } from '../statistics'
+import { Tile } from '../../StatTiles'
 import { useYatraAdmin } from '../useYatraAdmin'
 import { AdminPage, BTN, CARD, FIELD, HINT, LIST } from './AdminPage'
 import { AutosaveText, ChoiceChips, ConfirmSheet, SheetHeader } from './fields'
@@ -98,20 +99,6 @@ export function StatisticsMobile() {
         )
       }}
     </AdminPage>
-  )
-}
-
-function Tile({ stat, dt, raw, units }: { stat: YatraStatisticConfig; dt?: PracticeDataType; raw: unknown; units: DurationUnits }) {
-  const { t } = useTranslation()
-  return (
-    <div className={`${CARD} flex min-w-0 flex-col gap-1 p-3.5`}>
-      <span className="truncate text-xs font-bold text-ui-muted">{stat.label}</span>
-      <span className="flex items-baseline gap-1">
-        <span className="text-[22px] font-extrabold tracking-[-0.01em] text-ui-ink">{statValue(raw, stat.aggregation, dt ?? 'Int', units)}</span>
-        {stat.aggregation === 'Count' && <span className="text-xs text-ui-muted">{t('yatraSettings.times')}</span>}
-      </span>
-      <span className="text-[11px] text-ui-muted">{`${aggLabel(t, stat.aggregation, dt)} · ${t(`yatraSettings.range${stat.time_range}`)}`}</span>
-    </div>
   )
 }
 

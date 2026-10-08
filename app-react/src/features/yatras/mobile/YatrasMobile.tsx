@@ -11,6 +11,7 @@ import { initials } from '../../../ui/initials'
 import { cellText, formatDay } from '../../insights/insightsLogic'
 import { CalendarSheet } from '../../today/mobile/CalendarSheet'
 import { toDateStr } from '../../today/date'
+import { StatTiles } from '../StatTiles'
 import { findZone, heatmapWindow, heatmapZone, ZONE_BG } from '../yatrasLogic'
 import { useYatras } from '../useYatras'
 import { YatraSwitcherSheet } from './YatraSwitcherSheet'
@@ -103,6 +104,7 @@ export function YatrasMobile() {
           <p className="py-10 text-center text-sm text-ui-muted">{t('yatras.noEntries')}</p>
         ) : data && (
           <>
+            {y.yatra && <StatTiles yatra={y.yatra} data={data} />}
             <ul className="flex flex-col gap-2">
               {data.data.map((row) => (
                 <MemberCard key={row.user_id} row={row} stability={stability}

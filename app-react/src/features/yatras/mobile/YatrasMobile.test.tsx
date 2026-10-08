@@ -86,4 +86,16 @@ describe('YatrasMobile', () => {
     await waitFor(() => expect(api.createYatra).toHaveBeenCalled())
     expect(api.createYatra.mock.calls[0][0]).toBe('Kartika 2026')
   })
+  it('shows the statistic tiles the server sends, above the members', async () => {
+    api.getYatras.mockResolvedValue([{
+      id: 'y1', name: "Lord Balarama's League", show_stability_metrics: true,
+      statistics: { visible_to_all: true, statistics: [{ label: 'Average rounds', practice_id: 'p1', aggregation: 'Avg', time_range: 'Last30Days' }] },
+    }])
+    api.getYatraData.mockResolvedValue({ ...(await api.getYatraData('y1', '')), statistics: [{ label: 'Average rounds', value: { Int: 15.83 } }] })
+    renderScreen()
+    const tile = (await screen.findByText('Average rounds')).parentElement!
+    expect(tile).toHaveTextContent('15.8')
+    expect(tile).toHaveTextContent('Average · Last 30 days')
+    expect(tile.compareDocumentPosition(screen.getByText('Alex das')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
 })

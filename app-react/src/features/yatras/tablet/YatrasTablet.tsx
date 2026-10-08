@@ -7,6 +7,7 @@ import { initials } from '../../../ui/initials'
 import { cellText, formatDay } from '../../insights/insightsLogic'
 import { CalendarSheet } from '../../today/mobile/CalendarSheet'
 import { toDateStr } from '../../today/date'
+import { StatTiles } from '../StatTiles'
 import { findZone, heatmapWindow, heatmapZone, ZONE_BG } from '../yatrasLogic'
 import { useYatras } from '../useYatras'
 import { CreateSheet, TREND } from '../mobile/YatrasMobile'
@@ -82,6 +83,7 @@ export function YatrasTablet({ fixedDate = false }: { fixedDate?: boolean }) {
         <p className="py-10 text-center text-sm text-ui-muted">{t('yatras.noEntries')}</p>
       ) : data && (
         <>
+          {y.yatra && <StatTiles yatra={y.yatra} data={data} />}
           <div className={`${CARD} overflow-x-auto`}>
             <table className="min-w-full border-separate border-spacing-0">
               <thead>
