@@ -32,7 +32,8 @@ export function MembersMobile() {
   const a = useYatraAdmin(id)
   const [openId, setOpenId] = useState<string | null>(null)
   const [removing, setRemoving] = useState(false)
-  const close = () => { setOpenId(null); setRemoving(false) }
+  const [dropping, setDropping] = useState(false)
+  const close = () => { setOpenId(null); setRemoving(false); setDropping(false) }
   return (
     <AdminPage admin={a} title={t('yatraSettings.membersTitle')}>
       {() => {
@@ -54,15 +55,16 @@ export function MembersMobile() {
                 </li>
               ))}
             </ul>
-            {member && !removing && (
+            {member && !removing && !dropping && (
               <BottomSheet label={member.user_name} onClose={close}>
                 <SheetHeader title={member.user_name} onClose={close}><Avatar name={member.user_name} /></SheetHeader>
                 <div className={`${CARD} flex items-start gap-3 p-4`}>
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="text-[15px] font-bold text-ui-ink">{t('yatraSettings.admin')}</span>
-                    <span className={HINT}>{lastAdmin ? t('yatraSettings.lastAdminToggle') : t('yatraSettings.adminHint')}</span>
+                    <span id="admin-hint" className={HINT}>{lastAdmin ? t('yatraSettings.lastAdminToggle') : t('yatraSettings.adminHint')}</span>
                   </div>
-                  <Toggle checked={member.is_admin} disabled={lastAdmin} label={t('yatraSettings.admin')} onChange={() => a.toggleAdmin(member)} />
+                  <Toggle checked={member.is_admin} disabled={lastAdmin} label={t('yatraSettings.admin')} describedBy="admin-hint"
+                    onChange={() => (isMe && member.is_admin ? setDropping(true) : a.toggleAdmin(member))} />
                 </div>
                 {!isMe && (
                   <button type="button" onClick={() => setRemoving(true)} className={`${BTN} border border-ui-control text-ui-danger`}>
@@ -70,6 +72,11 @@ export function MembersMobile() {
                   </button>
                 )}
               </BottomSheet>
+            )}
+            {member && dropping && (
+              <ConfirmSheet title={t('yatraSettings.dropAdminTitle')} text={t('yatraSettings.dropAdminText')}
+                confirm={t('yatraSettings.dropAdminConfirm')} busy={a.dropOwnAdmin.isPending} onClose={close}
+                onConfirm={() => a.dropOwnAdmin.mutate(undefined, { onSettled: close })} />
             )}
             {member && removing && (
               <ConfirmSheet title={t('yatraSettings.removeTitle', { name: member.user_name })} text={t('yatraSettings.removeText')}

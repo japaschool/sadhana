@@ -1,12 +1,13 @@
-interface ToggleProps { checked: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean }
+interface ToggleProps { checked: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean; describedBy?: string }
 
-export function Toggle({ checked, onChange, label, disabled }: ToggleProps) {
+export function Toggle({ checked, onChange, label, disabled, describedBy }: ToggleProps) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
       aria-label={label}
+      aria-describedby={describedBy}
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`w-11 h-[26px] shrink-0 rounded-full p-[3px] flex transition-colors disabled:opacity-50 ${checked ? 'bg-ui-accent-fill justify-end' : 'bg-ui-toggle-off justify-start'}`}

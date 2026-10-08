@@ -652,6 +652,10 @@
     "typeName": "Type the yatra name to confirm",
     "typeNameHint": "The button turns on when the name matches.",
     "deleteForever": "Delete forever",
-    "yatraDeleted": "Deleted {{name}}"
+    "yatraDeleted": "Deleted {{name}}",
+    "dropAdminTitle": "Stop being an admin?",
+    "dropAdminText": "You'll lose access to this yatra's settings straight away. Only another admin can make you admin again.",
+    "dropAdminConfirm": "Stop being an admin",
+    "ownAdminDropped": "You're no longer an admin"
   }
 }
