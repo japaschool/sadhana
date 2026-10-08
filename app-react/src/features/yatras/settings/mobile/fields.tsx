@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BottomSheet } from '../../../../ui/primitives/BottomSheet'
+import { onRadioKeys, radioTabIndex } from '../../../../ui/radioKeys'
 import { useDebouncedCommit } from '../useDebouncedCommit'
 import { BTN, FIELD, HINT } from './AdminPage'
 
@@ -67,12 +68,14 @@ export function ConfirmSheet({ title, text, confirm, busy, disabled, onConfirm, 
 export function ChoiceChips<T extends string>({ label, value, options, onChange }: {
   label: string; value: T; options: { value: T; label: string }[]; onChange: (v: T) => void
 }) {
+  const values = options.map((o) => o.value)
   return (
     <div className="flex flex-col gap-2">
       <span aria-hidden className="text-[13px] font-bold text-ui-muted">{label}</span>
-      <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
+      <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2" onKeyDown={(e) => onRadioKeys(e, values, value, onChange)}>
         {options.map((o) => (
-          <button key={o.value} type="button" role="radio" aria-checked={o.value === value} onClick={() => onChange(o.value)}
+          <button key={o.value} type="button" role="radio" aria-checked={o.value === value} tabIndex={radioTabIndex(values, value, o.value)}
+            onClick={() => onChange(o.value)}
             className={`min-h-9 rounded-full px-3.5 text-[13px] font-bold ${o.value === value ? 'bg-ui-selected text-ui-on-selected' : 'bg-ui-chip text-ui-ink2'}`}>
             {o.label}
           </button>

@@ -45,4 +45,18 @@ describe('SegmentedControl', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Set total' }))
     expect(onChange).toHaveBeenCalledWith('set')
   })
+
+  it('is one tab stop; arrow keys choose and move focus, wrapping', () => {
+    const onChange = vi.fn()
+    render(<SegmentedControl label="Mode" value="add" onChange={onChange}
+      options={[{ value: 'add', label: 'Add' }, { value: 'set', label: 'Set total' }]} />)
+    const add = screen.getByRole('radio', { name: 'Add' })
+    expect(add).toHaveAttribute('tabindex', '0')
+    expect(screen.getByRole('radio', { name: 'Set total' })).toHaveAttribute('tabindex', '-1')
+    fireEvent.keyDown(add, { key: 'ArrowRight' })
+    expect(onChange).toHaveBeenLastCalledWith('set')
+    expect(screen.getByRole('radio', { name: 'Set total' })).toHaveFocus()
+    fireEvent.keyDown(add, { key: 'ArrowLeft' })
+    expect(onChange).toHaveBeenLastCalledWith('set')
+  })
 })

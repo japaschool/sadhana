@@ -1,3 +1,5 @@
+import { onRadioKeys, radioTabIndex } from '../radioKeys'
+
 interface SegmentedControlProps<T extends string> {
   options: { value: T; label: string }[]
   value: T
@@ -6,14 +8,16 @@ interface SegmentedControlProps<T extends string> {
 }
 
 export function SegmentedControl<T extends string>({ options, value, onChange, label }: SegmentedControlProps<T>) {
+  const values = options.map((o) => o.value)
   return (
-    <div role="radiogroup" aria-label={label} className="flex shrink-0 rounded-xl bg-ui-chip p-[3px] text-[13px] font-bold">
+    <div role="radiogroup" aria-label={label} onKeyDown={(e) => onRadioKeys(e, values, value, onChange)} className="flex shrink-0 rounded-xl bg-ui-chip p-[3px] text-[13px] font-bold">
       {options.map((o) => (
         <button
           key={o.value}
           type="button"
           role="radio"
           aria-checked={o.value === value}
+          tabIndex={radioTabIndex(values, value, o.value)}
           onClick={() => onChange(o.value)}
           className={`rounded-[9px] px-3 py-2 ${o.value === value ? 'bg-ui-surface shadow-[0_1px_2px_rgba(0,0,0,.08)]' : 'text-ui-muted'}`}
         >

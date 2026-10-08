@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PracticeDataType, YatraPractice } from '../../../../types/api'
 import { BottomSheet } from '../../../../ui/primitives/BottomSheet'
+import { onRadioKeys, radioTabIndex } from '../../../../ui/radioKeys'
 import { BTN, FIELD, HINT } from './AdminPage'
 import { AutosaveText, ConfirmSheet, SheetHeader } from './fields'
 import { practiceNameError } from './summaries'
@@ -11,6 +12,7 @@ const TYPES: { type: PracticeDataType; example: string }[] = [
   { type: 'Int', example: '16' }, { type: 'Bool', example: '' }, { type: 'Time', example: '05:30' },
   { type: 'Duration', example: '1:30' }, { type: 'Text', example: 'Aa' },
 ]
+const TYPE_VALUES = TYPES.map((x) => x.type)
 
 export function AddPracticeSheet({ others, busy, onAdd, onClose }: {
   others: YatraPractice[]; busy: boolean; onAdd: (name: string, type: PracticeDataType) => void; onClose: () => void
@@ -30,9 +32,10 @@ export function AddPracticeSheet({ others, busy, onAdd, onClose }: {
       </div>
       <div className="flex flex-col gap-2">
         <span id="new-practice-kind" className="text-[13px] font-bold text-ui-muted">{t('yatraSettings.whatKind')}</span>
-        <div role="radiogroup" aria-labelledby="new-practice-kind" className="flex flex-col gap-2">
+        <div role="radiogroup" aria-labelledby="new-practice-kind" className="flex flex-col gap-2"
+          onKeyDown={(e) => onRadioKeys(e, TYPE_VALUES, type, setType)}>
           {TYPES.map(({ type: ty, example }) => (
-            <button key={ty} type="button" role="radio" aria-checked={type === ty} onClick={() => setType(ty)}
+            <button key={ty} type="button" role="radio" aria-checked={type === ty} tabIndex={radioTabIndex(TYPE_VALUES, type, ty)} onClick={() => setType(ty)}
               className={`flex min-h-14 items-center gap-3 rounded-[14px] border bg-ui-surface px-3.5 py-2 text-left ${type === ty ? 'border-ui-ink' : 'border-ui-control'}`}>
               <TypeIcon type={ty} />
               <span className="flex min-w-0 flex-1 flex-col">

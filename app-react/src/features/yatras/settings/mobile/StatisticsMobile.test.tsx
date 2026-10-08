@@ -45,6 +45,14 @@ describe('StatisticsMobile', () => {
     await waitFor(() => expect(sentStats().statistics[1].aggregation).toBe('Count'))
   })
 
+  it('chips take arrow keys', async () => {
+    renderAdmin('/yatra/y1/admin/statistics')
+    const sheet = await openStat('Earliest wake-up')
+    fireEvent.keyDown(within(sheet).getByRole('radio', { name: 'Min (earliest)' }), { key: 'ArrowRight' })
+    await waitFor(() => expect(sentStats().statistics[1].aggregation).toBe('Max'))
+    expect(within(sheet).getByRole('radio', { name: 'Max (latest)' })).toHaveFocus()
+  })
+
   it('switches to Count when the new practice cannot take the aggregation', async () => {
     renderAdmin('/yatra/y1/admin/statistics')
     const sheet = await openStat('Average japa')
