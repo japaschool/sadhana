@@ -1,6 +1,9 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { yatrasApi } from '../../../api/yatras'
+import { useAuthStore } from '../../../store/authStore'
 import { AppBar } from '../../../layouts/mobile/AppBar'
 import { MobileShell } from '../../../layouts/mobile/MobileShell'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
@@ -11,6 +14,8 @@ import { CalendarSheet } from '../../today/mobile/CalendarSheet'
 import { toDateStr } from '../../today/date'
 import { findZone, heatmapWindow, heatmapZone, ZONE_BG } from '../yatrasLogic'
 import { useYatras } from '../useYatras'
+import { dismissLater, laterDismissed, unlinked } from '../settings/linking'
+import { joinNames } from '../settings/mobile/LinkPracticesMobile'
 import type { UserYatraDataRow } from '../../../types/api'
 
 const CARD = 'rounded-[18px] border border-ui-hairline bg-ui-surface'
@@ -18,7 +23,6 @@ export const TREND = { Up: '↗', Down: '↘', Flat: '→' } as const
 
 export function YatrasMobile() {
   const { t, i18n } = useTranslation()
-  const navigate = useNavigate()
   const y = useYatras()
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
@@ -26,11 +30,18 @@ export function YatrasMobile() {
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const stability = y.yatra?.show_stability_metrics ?? false
   const data = y.data
+  const userId = useAuthStore((s) => s.user?.id)
+  const linksQ = useQuery({
+    queryKey: ['yatra-user-practices', y.yatra?.id],
+    queryFn: () => yatrasApi.getYatraUserPractices(y.yatra!.id),
+    enabled: !!y.yatra,
+  })
+  const missing = unlinked(linksQ.data ?? [])
+  const missingIds = missing.map((p) => p.id)
+  const [, rerender] = useState(0) // Later writes localStorage; re-render to re-read it
+  const showBanner = !!y.yatra && missing.length > 0 && !laterDismissed(y.yatra.id, missingIds)
 
-  const actions = [
-    ...(y.yatra ? [{ label: t('yatras.settings'), onSelect: () => navigate(`/yatra/${y.yatra!.id}/settings`) }] : []),
-    { label: t('yatras.createNewYatra'), onSelect: () => setCreating(true) },
-  ]
+  const actions = [{ label: t('yatras.createNewYatra'), onSelect: () => setCreating(true) }]
 
   return (
     <>
@@ -43,11 +54,34 @@ export function YatrasMobile() {
               <span className="truncate">{y.yatra.name}</span>
               <span aria-hidden className="shrink-0">▾</span>
             </button>
-            <button type="button" onClick={() => setCalendarOpen(true)}
-              className="flex min-h-9 shrink-0 items-center gap-1 text-[13px] font-bold text-ui-muted">
-              {y.isToday ? t('today.goToday') : formatDay(toDateStr(y.date), i18n.language || 'en')} <span aria-hidden>⌄</span>
-            </button>
+            <div className="flex items-center gap-3">
+              <Link to={`/yatra/${y.yatra.id}/settings`} className="flex min-h-9 shrink-0 items-center text-[13px] font-bold text-ui-accent">
+                {t('nav.settings')}
+              </Link>
+              <button type="button" onClick={() => setCalendarOpen(true)}
+                className="flex min-h-9 shrink-0 items-center gap-1 text-[13px] font-bold text-ui-muted">
+                {y.isToday ? t('today.goToday') : formatDay(toDateStr(y.date), i18n.language || 'en')} <span aria-hidden>⌄</span>
+              </button>
+            </div>
           </div>
+        )}
+        {showBanner && (
+          <section className="flex flex-col gap-2.5 rounded-[18px] border border-ui-accent-pill bg-ui-accent-soft p-4">
+            <h2 className="text-[15px] font-extrabold text-ui-ink">{t('yatraSettings.bannerTitle', { count: missing.length })}</h2>
+            <p className="text-sm leading-normal text-ui-ink2">
+              {t('yatraSettings.bannerText', { names: joinNames(missing.map((p) => p.practice), i18n.language || 'en') })}
+            </p>
+            <div className="flex gap-2.5">
+              <Link to={`/yatra/${y.yatra!.id}/settings`}
+                className="flex h-11 items-center rounded-xl bg-ui-primary px-4 text-sm font-bold text-ui-on-primary">
+                {t('yatraSettings.linkPractices')}
+              </Link>
+              <button type="button" onClick={() => { dismissLater(y.yatra!.id, missingIds); rerender((n) => n + 1) }}
+                className="h-11 rounded-xl px-4 text-sm font-bold text-ui-ink">
+                {t('yatraSettings.later')}
+              </button>
+            </div>
+          </section>
         )}
 
         {y.isLoading ? (
@@ -73,11 +107,15 @@ export function YatrasMobile() {
             <ul className="flex flex-col gap-2">
               {data.data.map((row) => (
                 <MemberCard key={row.user_id} row={row} stability={stability}
-                  cells={data.practices.map((p, j) => ({
-                    name: p.practice,
-                    text: cellText(row.row[j], p.data_type, units) || '—',
-                    bg: p.colour_zones ? ZONE_BG[findZone(row.row[j], p.colour_zones)] : '',
-                  }))} />
+                  cells={data.practices.map((p, j) => {
+                    const notLinked = row.user_id === userId && missingIds.includes(p.id)
+                    return {
+                      name: p.practice,
+                      text: notLinked ? t('yatraSettings.notLinkedCell') : cellText(row.row[j], p.data_type, units) || '—',
+                      bg: !notLinked && p.colour_zones ? ZONE_BG[findZone(row.row[j], p.colour_zones)] : '',
+                      muted: notLinked,
+                    }
+                  })} />
               ))}
             </ul>
             {stability && (
@@ -116,7 +154,7 @@ export function YatrasMobile() {
   )
 }
 
-interface Cell { name: string; text: string; bg: string }
+interface Cell { name: string; text: string; bg: string; muted?: boolean }
 
 function MemberCard({ row, stability, cells }: { row: UserYatraDataRow; stability: boolean; cells: Cell[] }) {
   const { t } = useTranslation()
@@ -133,7 +171,7 @@ function MemberCard({ row, stability, cells }: { row: UserYatraDataRow; stabilit
         {cells.map((c, i) => (
           <div key={i} className={`flex min-w-0 flex-col rounded-lg ${c.bg ? `${c.bg} px-1.5 py-0.5` : 'py-0.5'}`}>
             <dt className="truncate text-[10px] font-bold tracking-[.06em] text-ui-muted uppercase">{c.name}</dt>
-            <dd className="truncate font-ui-mono text-[15px] font-semibold text-ui-ink">{c.text}</dd>
+            <dd className={`truncate font-ui-mono font-semibold ${c.muted ? 'text-[11px] text-ui-faint2' : 'text-[15px] text-ui-ink'}`}>{c.text}</dd>
           </div>
         ))}
       </dl>

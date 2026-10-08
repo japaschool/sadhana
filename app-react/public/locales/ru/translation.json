@@ -483,6 +483,14 @@
     "lastAdminTitle": "Вы последний админ",
     "lastAdminText": "Последний админ не может покинуть ятру. Назначьте другого админа или удалите ятру.",
     "chooseAdmin": "Выбрать другого админа",
-    "deleteYatra": "Удалить ятру…"
+    "deleteYatra": "Удалить ятру…",
+    "bannerTitle_one": "{{count}} ваша практика не связана",
+    "bannerTitle_few": "{{count}} ваших практик не связаны",
+    "bannerTitle_many": "{{count}} ваших практик не связаны",
+    "bannerTitle_other": "{{count}} ваших практик не связаны",
+    "bannerText": "{{names}}: ваши записи не попадут в эту таблицу.",
+    "linkPractices": "Связать практики",
+    "later": "Позже",
+    "notLinkedCell": "не связано"
   }
 }

@@ -473,6 +473,12 @@
     "lastAdminTitle": "You're the last admin",
     "lastAdminText": "Last yatra admin can't leave. Add another admin or delete the yatra instead.",
     "chooseAdmin": "Choose another admin",
-    "deleteYatra": "Delete yatra…"
+    "deleteYatra": "Delete yatra…",
+    "bannerTitle_one": "{{count}} of your practices isn't linked",
+    "bannerTitle_other": "{{count}} of your practices aren't linked",
+    "bannerText": "What you log for {{names}} won't appear in this table.",
+    "linkPractices": "Link practices",
+    "later": "Later",
+    "notLinkedCell": "not linked"
   }
 }

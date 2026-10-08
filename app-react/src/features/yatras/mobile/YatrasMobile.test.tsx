@@ -1,12 +1,13 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { YatrasMobileScreen } from './YatrasMobile'
 import { setViewportWidth } from '../../../test/viewport'
+import { useAuthStore } from '../../../store/authStore'
 
 vi.mock('../../../api/yatras', () => ({
-  yatrasApi: { getYatras: vi.fn(), getYatraData: vi.fn(), createYatra: vi.fn() },
+  yatrasApi: { getYatras: vi.fn(), getYatraData: vi.fn(), createYatra: vi.fn(), getYatraUserPractices: vi.fn(), getYatraUsers: vi.fn() },
 }))
 import { yatrasApi } from '../../../api/yatras'
 const api = vi.mocked(yatrasApi)
@@ -24,6 +25,10 @@ describe('YatrasMobile', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     setViewportWidth(390)
+    localStorage.clear()
+    useAuthStore.setState({ user: { id: 'u1', email: '', token: 't', name: 'Alex das' }, token: 't' })
+    api.getYatraUserPractices.mockResolvedValue([{ yatra_practice: { id: 'p1', practice: 'Rounds', data_type: 'Int' }, user_practice: null }])
+    api.getYatraUsers.mockResolvedValue([])
     api.getYatras.mockResolvedValue([{ id: 'y1', name: "Lord Balarama's League", show_stability_metrics: true }])
     api.getYatraData.mockResolvedValue({
       practices: [{
@@ -37,6 +42,7 @@ describe('YatrasMobile', () => {
   })
 
   it('shows the yatra and day pickers, a card per member and the heatmap', async () => {
+    api.getYatraUserPractices.mockResolvedValue([{ yatra_practice: { id: 'p1', practice: 'Rounds', data_type: 'Int' }, user_practice: 'Rounds' }])
     renderScreen()
     expect(await screen.findByRole('button', { name: "Lord Balarama's League" })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Today' })).toBeTruthy()
@@ -45,5 +51,27 @@ describe('YatrasMobile', () => {
     expect(screen.getByText('16').parentElement!.className).toContain('--ui-zone-green')
     expect(screen.getByText('7d ↗')).toBeTruthy()
     expect(screen.getByText('Stability · 14 days').parentElement!.querySelectorAll('[class*="--ui-zone-green"]')).toHaveLength(14)
+  })
+
+  it('shows the unlinked banner; Later hides it until the set changes', async () => {
+    renderScreen()
+    expect(await screen.findByText('1 of your practices isn\'t linked')).toBeInTheDocument()
+    expect(screen.getByText("What you log for Rounds won't appear in this table.")).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Link practices' })).toHaveAttribute('href', '/yatra/y1/settings')
+    fireEvent.click(screen.getByRole('button', { name: 'Later' }))
+    expect(screen.queryByText('1 of your practices isn\'t linked')).toBeNull()
+    expect(localStorage.getItem('yatra_link_later_y1')).toBe('p1')
+  })
+
+  it("marks the user's own unlinked cells", async () => {
+    renderScreen()
+    expect(await screen.findByText('not linked')).toBeInTheDocument()
+  })
+
+  it('has a Settings action to the link page', async () => {
+    renderScreen()
+    await screen.findByRole('button', { name: "Lord Balarama's League" })
+    // The tab bar has a Settings link too (to /settings).
+    expect(screen.getAllByRole('link', { name: 'Settings' }).map((l) => l.getAttribute('href'))).toContain('/yatra/y1/settings')
   })
 })

@@ -483,6 +483,14 @@
     "lastAdminTitle": "Ви останній адмін",
     "lastAdminText": "Останній адмін не може покинути ятру. Призначте іншого адміна або видаліть ятру.",
     "chooseAdmin": "Обрати іншого адміна",
-    "deleteYatra": "Видалити ятру…"
+    "deleteYatra": "Видалити ятру…",
+    "bannerTitle_one": "{{count}} ваша практика не зв’язана",
+    "bannerTitle_few": "{{count}} ваших практик не зв’язані",
+    "bannerTitle_many": "{{count}} ваших практик не зв’язані",
+    "bannerTitle_other": "{{count}} ваших практик не зв’язані",
+    "bannerText": "{{names}}: ваші записи не потраплять у цю таблицю.",
+    "linkPractices": "Зв’язати практики",
+    "later": "Пізніше",
+    "notLinkedCell": "не зв’язано"
   }
 }
