@@ -112,7 +112,7 @@ export interface YatraPractice {
   practice: string
   data_type: PracticeDataType
   colour_zones?: ColourZonesConfig | null
-  daily_score_config?: DailyScoreConfig | null
+  daily_score?: DailyScoreConfig | null // the server's name; Rust UI uses the same
 }
 
 export interface UserYatraDataRow {

@@ -177,7 +177,7 @@ export function YatraPracticeEditPage() {
     if (p.colour_zones) {
       setZones(p.colour_zones)
     }
-    if (p.daily_score_config) setDailyScore(p.daily_score_config)
+    if (p.daily_score) setDailyScore(p.daily_score)
   }, [practiceQuery.data])
 
   // ── Save ──────────────────────────────────────────────────────────────────
@@ -188,7 +188,7 @@ export function YatraPracticeEditPage() {
         ...practiceQuery.data!,
         practice: name,
         colour_zones: zones.bounds.length > 0 ? zones : null,
-        daily_score_config: (dailyScore.mandatory_threshold !== null || dailyScore.bonus_rules.length > 0) ? dailyScore : null,
+        daily_score: (dailyScore.mandatory_threshold !== null || dailyScore.bonus_rules.length > 0) ? dailyScore : null,
       }
       return yatrasApi.updateYatraPractice(yatraId!, p)
     },
