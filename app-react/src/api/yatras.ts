@@ -45,7 +45,7 @@ export const yatrasApi = {
     await apiClient.delete(`/yatra/${id}`)
   },
   async toggleAdmin(yatraId: string, userId: string): Promise<void> {
-    await apiClient.put(`/yatra/${yatraId}/users/${userId}/toggle_admin`)
+    await apiClient.put(`/yatra/${yatraId}/users/${userId}/is_admin`)
   },
   async reorderPractices(yatraId: string, practiceIds: string[]): Promise<void> {
     await apiClient.put(`/yatra/${yatraId}/practices/reorder`, { practices: practiceIds })
