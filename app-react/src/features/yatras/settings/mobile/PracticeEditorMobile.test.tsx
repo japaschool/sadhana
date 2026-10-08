@@ -66,12 +66,48 @@ describe('PracticeEditorMobile', () => {
 
   it('Lower re-colours the zones and the score follows', async () => {
     renderAdmin('/yatra/y1/practice/p1/edit')
-    const colourDir = await screen.findByRole('radiogroup', { name: 'Better when the value is' })
-    fireEvent.click(within(colourDir).getByRole('radio', { name: 'Lower' }))
+    const bonus = await screen.findByLabelText('★ Bonus at · +1 more')
+    fireEvent.change(bonus, { target: { value: '' } })
+    fireEvent.blur(bonus)
     await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledOnce())
+    const colourDir = screen.getByRole('radiogroup', { name: 'Better when the value is' })
+    fireEvent.click(within(colourDir).getByRole('radio', { name: 'Lower' }))
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledTimes(2))
     expect(sent().colour_zones!.bounds.map((b) => b.colour)).toEqual(['Green', 'Yellow'])
     expect(sent().colour_zones!.best_colour).toBe('Red')
     expect(sent().daily_score!.better_direction).toBe('Lower')
+  })
+
+  it("the score keeps its direction when following would put the bonus on the wrong side", async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const colourDir = await screen.findByRole('radiogroup', { name: 'Better when the value is' })
+    fireEvent.click(within(colourDir).getByRole('radio', { name: 'Lower' }))
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledOnce())
+    expect(sent().colour_zones!.better_direction).toBe('Lower')
+    expect(sent().daily_score!.better_direction).toBe('Higher')
+  })
+
+  it("Done where Green starts doesn't save a done value past the bonus", async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const done = await screen.findByLabelText('✓ Done at · +1 point')
+    const bonus = screen.getByLabelText('★ Bonus at · +1 more')
+    fireEvent.change(done, { target: { value: '12' } })
+    fireEvent.change(bonus, { target: { value: '14' } })
+    fireEvent.blur(bonus)
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledOnce())
+    fireEvent.click(await screen.findByRole('button', { name: 'Done starts where Green starts' }))
+    expect(await screen.findByText('Must be at least the done value, 16')).toBeInTheDocument()
+    expect(done).toHaveValue('16')
+    expect(api.updateYatraPractice).toHaveBeenCalledOnce()
+  })
+
+  it('new bound fields take input after the colour count changes', async () => {
+    renderAdmin('/yatra/y1/practice/p3/edit')
+    fireEvent.focus(await screen.findByLabelText('Red up to'))
+    fireEvent.click(screen.getByRole('radio', { name: '3 colours' }))
+    const yellow = await screen.findByLabelText('Yellow up to')
+    fireEvent.change(yellow, { target: { value: '1:00' } })
+    expect(yellow).toHaveValue('1:00')
   })
 
   it('clearing both thresholds removes the daily score', async () => {

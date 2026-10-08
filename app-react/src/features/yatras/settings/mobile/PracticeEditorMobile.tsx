@@ -108,6 +108,8 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
   if (p !== seen) {
     setSeen(p)
     if (!editing) setDrafts(draftsOf(p, dt))
+    // A new colour count brings new bound fields, even while one keeps focus.
+    else if (drafts.bounds.length !== (p.colour_zones?.bounds.length ?? 0)) setDrafts((d) => ({ ...d, bounds: draftsOf(p, dt).bounds }))
   }
 
   const bounds = checkBounds(drafts.bounds, zones?.bounds.map((b) => b.colour) ?? [], dt)
@@ -129,11 +131,12 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
   const setCount = (c: string) => saveNow((b) => ({
     ...b, colour_zones: c === '0' ? null : paletteZones(Number(c) as 2 | 3, b.colour_zones?.better_direction ?? scoreDir, b.colour_zones),
   }))
-  const setZoneDir = (d: BetterDirection) => saveNow((b) => ({
-    ...b,
-    colour_zones: paletteZones(count as 2 | 3, d, b.colour_zones),
-    daily_score: follows && b.daily_score ? { ...b.daily_score, better_direction: d } : b.daily_score,
-  }))
+  const setZoneDir = (d: BetterDirection) => saveNow((b) => {
+    const sc = b.daily_score
+    // The score follows the colours unless its thresholds would then be the wrong way round.
+    const move = follows && sc && checkScore(formatValue(sc.mandatory_threshold, dt), formatValue(bonusOf(sc), dt), d, dt).ok
+    return { ...b, colour_zones: paletteZones(count as 2 | 3, d, b.colour_zones), daily_score: move ? { ...sc, better_direction: d } : sc }
+  })
   const setEmpty = (c: ZoneColour) => saveNow((b) => ({ ...b, colour_zones: { ...b.colour_zones!, no_value_colour: c } }))
   function setScoreDir(choice: string) {
     const d = (choice === 'same' ? zones!.better_direction : choice) as BetterDirection
@@ -142,8 +145,10 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
   }
   const green = zones && follows ? greenStart(zones, dt) : null
   function doneAtGreen() {
-    setDrafts((d) => ({ ...d, done: formatValue(green, dt) }))
-    saveNow((b) => ({ ...b, daily_score: scoreConfig(scoreDir, green, bonusOf(b.daily_score)) }))
+    const text = formatValue(green, dt)
+    setDrafts((d) => ({ ...d, done: text }))
+    // Past the bonus, it stays a draft and the bonus field says why.
+    if (checkScore(text, drafts.bonus, scoreDir, dt).ok) saveNow((b) => ({ ...b, daily_score: scoreConfig(scoreDir, green, bonusOf(b.daily_score)) }))
   }
 
   const field = (key: 'done' | 'bonus' | number) => ({
