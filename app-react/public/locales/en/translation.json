@@ -505,6 +505,20 @@
     "invite": "Invite",
     "inviteHint": "Share the join link",
     "danger": "Danger zone",
-    "dangerHint": "Delete yatra"
+    "dangerHint": "Delete yatra",
+    "yatraName": "Yatra name",
+    "yatraNameHint": "Shown at the top of the table and in invites.",
+    "nameEmpty": "Name can't be empty",
+    "renamed": "Name saved",
+    "metrics": "Show daily score metrics",
+    "metricsHint": "Adds a 7-day trend column and a 2-week stability heatmap. Both use a 7-day moving average of each member's daily score.",
+    "metricsOn": "Daily score metrics on",
+    "metricsOff": "Daily score metrics off",
+    "thresholdsCount_one": "{{k}} of {{count}} practice has score thresholds",
+    "thresholdsCount_other": "{{k}} of {{count}} practices have score thresholds",
+    "doneValue": "done {{value}}",
+    "bonusValue": "bonus {{value}}",
+    "setThreshold": "Set threshold ›",
+    "thresholdsNote": "Practices without a threshold add nothing to the score. Yes / No and Text practices can't have one."
   }
 }
