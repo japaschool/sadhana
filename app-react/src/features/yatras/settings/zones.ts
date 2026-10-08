@@ -1,6 +1,7 @@
 import type {
   BetterDirection, ColourBound, ColourZonesConfig, DailyScoreConfig, PracticeDataType, PracticeValue, ZoneColour,
 } from '../../../types/api'
+import i18n from '../../../i18n'
 import { findZone, zoneNumber } from '../yatrasLogic'
 
 export type ScoredType = 'Int' | 'Time' | 'Duration'
@@ -12,25 +13,23 @@ export function fromNumber(n: number, dt: ScoredType): PracticeValue {
   return { Time: { h: Math.floor(n / 60), m: n % 60 } }
 }
 
-/** As typed in a field: 16, 1:30 (h:mm), 05:30. */
+/** How settings show a value: 16, 90 min (durations in minutes only, as they're typed), 05:30. */
 export function formatValue(v: PracticeValue | null | undefined, dt: ScoredType): string {
   const n = zoneNumber(v)
   if (n === null) return ''
   if (dt === 'Int') return String(n)
-  const h = Math.floor(n / 60)
-  const m = String(n % 60).padStart(2, '0')
-  return dt === 'Time' ? `${String(h).padStart(2, '0')}:${m}` : `${h}:${m}`
+  if (dt === 'Duration') return `${n} ${i18n.t('today.unitMin')}`
+  return `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`
 }
 
-/** Empty → null; anything that isn't a value of this type → 'invalid'. Durations also take plain minutes. */
+/** Empty → null; anything that isn't a value of this type → 'invalid'. Durations are plain minutes. */
 export function parseValue(text: string, dt: ScoredType): PracticeValue | null | 'invalid' {
   const s = text.trim()
   if (!s) return null
   if (dt === 'Int') return /^\d+$/.test(s) ? { Int: Number(s) } : 'invalid'
   const hm = /^(\d{1,2}):([0-5]\d)$/.exec(s)
   if (dt === 'Time') return hm && Number(hm[1]) < 24 ? fromNumber(Number(hm[1]) * 60 + Number(hm[2]), 'Time') : 'invalid'
-  if (/^\d+$/.test(s)) return { Duration: Number(s) }
-  return hm ? { Duration: Number(hm[1]) * 60 + Number(hm[2]) } : 'invalid'
+  return /^\d+$/.test(s) ? { Duration: Number(s) } : 'invalid'
 }
 
 export type ZoneCount = 0 | 2 | 3

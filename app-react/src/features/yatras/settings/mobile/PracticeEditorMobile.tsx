@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import type { BetterDirection, PracticeValue, YatraPractice, ZoneColour } from '../../../../types/api'
 import { SegmentedControl } from '../../../../ui/primitives/SegmentedControl'
-import { formatDuration, typeTime } from '../../../today/values'
+import { typeTime } from '../../../today/values'
 import { ZONE_BG } from '../../yatrasLogic'
 import { useDebouncedCommit } from '../useDebouncedCommit'
 import { useYatraAdmin } from '../useYatraAdmin'
@@ -291,12 +291,9 @@ function ValueField({ id, label, dt, value, error, onChange, onFocus, onBlur }: 
   id: string; label: ReactNode; dt: ScoredType; value: string; error?: string | null | false
   onChange: (v: string) => void; onFocus: () => void; onBlur: () => void
 }) {
-  const { t } = useTranslation()
   const [focused, setFocused] = useState(false)
-  // Like the Log: a duration is typed in minutes and read as hours and minutes.
-  const shown = dt === 'Duration' && !focused && /^\d+$/.test(value)
-    ? formatDuration(Number(value), { h: t('today.unitH'), min: t('today.unitMin') })
-    : value
+  // Like the Log: a duration is typed in plain minutes, and reads "90 min" at rest.
+  const shown = dt === 'Duration' && !focused && /^\d+$/.test(value) ? formatValue({ Duration: Number(value) }, dt) : value
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
       <label htmlFor={id} className="flex items-center gap-1.5 text-xs font-bold leading-[1.35] text-ui-muted">{label}</label>

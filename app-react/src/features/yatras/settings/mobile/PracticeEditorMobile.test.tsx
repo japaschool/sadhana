@@ -180,7 +180,7 @@ describe('PracticeEditorMobile', () => {
     await waitFor(() => expect(sent().daily_score!.mandatory_threshold).toEqual({ Time: { h: 5, m: 15 } }))
   })
 
-  it('duration fields take minutes and show hours and minutes when you leave them', async () => {
+  it('duration fields take minutes and read as minutes when you leave them', async () => {
     renderAdmin('/yatra/y1/practice/p3/edit')
     const red = await screen.findByLabelText('Red up to')
     expect(red).toHaveAttribute('inputmode', 'numeric')
@@ -189,7 +189,8 @@ describe('PracticeEditorMobile', () => {
     expect(red).toHaveValue('30')
     fireEvent.change(red, { target: { value: '90' } })
     fireEvent.blur(red)
-    expect(red).toHaveValue('1 h 30 min')
+    expect(red).toHaveValue('90 min')
+    expect(await screen.findByText('Above 90 min: Green')).toBeInTheDocument()
     await waitFor(() => expect(sent().colour_zones!.bounds[0].to).toEqual({ Duration: 90 }))
   })
 
