@@ -95,6 +95,22 @@ describe('StatisticsMobile', () => {
     expect(within(sheet).queryByText('15.8')).toBeNull()
   })
 
+  it("a label that's still the practice's name follows a new practice", async () => {
+    renderAdmin('/yatra/y1/admin/statistics')
+    fireEvent.click(await screen.findByRole('button', { name: '+ Add statistic' }))
+    const sheet = screen.getByRole('dialog', { name: 'New statistic' })
+    fireEvent.change(within(sheet).getByLabelText('Practice'), { target: { value: 'p3' } })
+    await waitFor(() => expect(sentStats().statistics[2]).toMatchObject({ label: 'Reading', practice_id: 'p3' }))
+    expect(within(screen.getByRole('dialog')).getByLabelText('Label')).toHaveValue('Reading')
+  })
+
+  it('a label someone wrote stays when the practice changes', async () => {
+    renderAdmin('/yatra/y1/admin/statistics')
+    const sheet = await openStat('Average japa')
+    fireEvent.change(within(sheet).getByLabelText('Practice'), { target: { value: 'p3' } })
+    await waitFor(() => expect(sentStats().statistics[0]).toMatchObject({ label: 'Average japa', practice_id: 'p3' }))
+  })
+
   it('deletes a statistic after asking', async () => {
     renderAdmin('/yatra/y1/admin/statistics')
     const sheet = await openStat('Average japa')

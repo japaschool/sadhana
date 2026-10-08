@@ -140,7 +140,12 @@ function StatisticSheet({ initial, isNew, practices, units, raw, onChange, onDel
       <div className="flex flex-col gap-1.5">
         <label htmlFor="stat-practice" className="text-[13px] font-bold text-ui-muted">{t('yatraSettings.practice')}</label>
         <select id="stat-practice" className={FIELD} value={draft.practice_id}
-          onChange={(e) => change(withPractice(draft, practices.find((p) => p.id === e.target.value)!))}>
+          onChange={(e) => {
+            const next = practices.find((p) => p.id === e.target.value)!
+            // A label that's still the old practice's name names the new one; one someone wrote stays.
+            const named = draft.label === practices.find((p) => p.id === draft.practice_id)?.practice
+            change({ ...withPractice(draft, next), label: named ? next.practice : draft.label })
+          }}>
           {practices.map((p) => <option key={p.id} value={p.id}>{`${p.practice} · ${t(typeLabelKey(p.data_type))}`}</option>)}
         </select>
       </div>
