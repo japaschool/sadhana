@@ -21,6 +21,7 @@ const YatrasTabletScreen = lazy(() => import('./features/yatras/tablet/YatrasTab
 const LinkPracticesMobileScreen = lazy(() => import('./features/yatras/settings/mobile/LinkPracticesMobile').then((m) => ({ default: m.LinkPracticesMobileScreen })))
 const ManageYatraMobile = lazy(() => import('./features/yatras/settings/mobile/ManageYatraMobile').then((m) => ({ default: m.ManageYatraMobile })))
 const AdminSectionMobile = lazy(() => import('./features/yatras/settings/mobile/AdminSectionMobile').then((m) => ({ default: m.AdminSectionMobile })))
+const PracticeEditorMobile = lazy(() => import('./features/yatras/settings/mobile/PracticeEditorMobile').then((m) => ({ default: m.PracticeEditorMobile })))
 
 /** The admin sub-pages exist on mobile only; the legacy admin page has every section. */
 function ToAdminHub() {
@@ -138,13 +139,17 @@ export const router = createBrowserRouter([
       },
       { path: '/yatra/:id/admin/:section', element: <ByLayout mobile={<AdminSectionMobile />} legacy={<ToAdminHub />} /> },
       {
+        path: '/yatra/:id/practice/:practice_id/edit',
+        element: <ByLayout mobile={<PracticeEditorMobile />} legacy={<AppShell />} />,
+        children: [{ index: true, element: <YatraPracticeEditPage /> }],
+      },
+      {
         element: <AppShell />,
         children: [
           { path: '/charts/manage', element: <ChartsPage /> },
           { path: '/charts/new', element: <NewChartPage /> },
           { path: '/yatra/:id/join', element: <YatraJoinPage /> },
           { path: '/yatra/:id/practice/new', element: <YatraPracticeNewPage /> },
-          { path: '/yatra/:id/practice/:practice_id/edit', element: <YatraPracticeEditPage /> },
           { path: '/settings/edit-user', element: <EditUserPage /> },
           { path: '/settings/edit-password', element: <EditPasswordPage /> },
           { path: '/settings/language', element: <LanguagePage /> },

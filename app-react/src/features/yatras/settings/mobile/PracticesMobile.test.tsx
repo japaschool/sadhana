@@ -83,7 +83,7 @@ describe('PracticesMobile', () => {
     fireEvent.change(within(sheet).getByLabelText('Name'), { target: { value: 'Seva' } })
     fireEvent.click(within(sheet).getByRole('radio', { name: /Yes \/ No/ }))
     fireEvent.click(add)
-    expect(await screen.findByText('Editor')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Seva' })).toBeInTheDocument()
     expect(api.createYatraPractice).toHaveBeenCalledWith('y1', { practice: 'Seva', data_type: 'Bool' })
   })
 })

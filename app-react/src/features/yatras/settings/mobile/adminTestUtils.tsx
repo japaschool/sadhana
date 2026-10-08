@@ -7,6 +7,7 @@ import { useAuthStore } from '../../../../store/authStore'
 import type { Yatra, YatraPractice, YatraUser } from '../../../../types/api'
 import { AdminSectionMobile } from './AdminSectionMobile'
 import { ManageYatraMobile } from './ManageYatraMobile'
+import { PracticeEditorMobile } from './PracticeEditorMobile'
 
 export const PRACTICES: YatraPractice[] = [
   {
@@ -66,7 +67,7 @@ export function renderAdmin(url: string) {
         <Routes>
           <Route path="/yatra/:id/admin/settings" element={<ManageYatraMobile />} />
           <Route path="/yatra/:id/admin/:section" element={<AdminSectionMobile />} />
-          <Route path="/yatra/:id/practice/:practice_id/edit" element={<p>Editor</p>} />
+          <Route path="/yatra/:id/practice/:practice_id/edit" element={<PracticeEditorMobile />} />
           <Route path="/yatra/:id/settings" element={<p>Link page</p>} />
           <Route path="/yatras" element={<p>Yatras page</p>} />
         </Routes>
