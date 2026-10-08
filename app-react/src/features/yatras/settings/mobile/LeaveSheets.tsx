@@ -18,9 +18,8 @@ export function LeaveSheets({ yatraId, yatraName, lastAdmin, leaving, onLeave, o
         <h2 className="text-xl font-extrabold text-ui-ink">{title}</h2>
         <p className="text-sm leading-normal text-ui-ink2">{t('yatraSettings.lastAdminText')}</p>
         <div className="flex flex-col gap-2.5">
-          {/* ponytail: phase 2 points these at /admin/members and /admin/danger */}
-          <Link to={`/yatra/${yatraId}/admin/settings`} className={`${BTN} bg-ui-primary text-ui-on-primary`}>{t('yatraSettings.chooseAdmin')}</Link>
-          <Link to={`/yatra/${yatraId}/admin/settings`} className={`${BTN} border border-ui-control text-ui-danger`}>{t('yatraSettings.deleteYatra')}</Link>
+          <Link to={`/yatra/${yatraId}/admin/members`} className={`${BTN} bg-ui-primary text-ui-on-primary`}>{t('yatraSettings.chooseAdmin')}</Link>
+          <Link to={`/yatra/${yatraId}/admin/danger`} className={`${BTN} border border-ui-control text-ui-danger`}>{t('yatraSettings.deleteYatra')}</Link>
           {cancel}
         </div>
       </BottomSheet>

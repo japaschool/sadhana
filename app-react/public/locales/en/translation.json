@@ -489,6 +489,22 @@
     "newYatra": "New yatra",
     "newName": "Name",
     "newHint": "You'll be its admin. Add practices and invite devotees next.",
-    "createYatra": "Create yatra"
+    "createYatra": "Create yatra",
+    "general": "General",
+    "generalHint": "Name, daily score metrics",
+    "practices": "Practices",
+    "practicesHint": "{{count}} · order, colours, score",
+    "membersTitle": "Members",
+    "adminsCount_one": "{{count}} admin",
+    "adminsCount_other": "{{count}} admins",
+    "statistics": "Statistics",
+    "statsHintAll_one": "{{count}} tile · visible to everyone",
+    "statsHintAll_other": "{{count}} tiles · visible to everyone",
+    "statsHintAdmins_one": "{{count}} tile · visible to admins",
+    "statsHintAdmins_other": "{{count}} tiles · visible to admins",
+    "invite": "Invite",
+    "inviteHint": "Share the join link",
+    "danger": "Danger zone",
+    "dangerHint": "Delete yatra"
   }
 }

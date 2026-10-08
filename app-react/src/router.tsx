@@ -1,5 +1,5 @@
 import { lazy } from 'react'
-import { createBrowserRouter, isRouteErrorResponse, Navigate, useRouteError } from 'react-router-dom'
+import { createBrowserRouter, isRouteErrorResponse, Navigate, useParams, useRouteError } from 'react-router-dom'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { GuestRoute } from './components/layout/GuestRoute'
 import { ByLayout } from './layouts/ByLayout'
@@ -19,6 +19,14 @@ const SettingsDesktopScreen = lazy(() => import('./features/settings/desktop/Set
 const YatrasMobileScreen = lazy(() => import('./features/yatras/mobile/YatrasMobile').then((m) => ({ default: m.YatrasMobileScreen })))
 const YatrasTabletScreen = lazy(() => import('./features/yatras/tablet/YatrasTablet').then((m) => ({ default: m.YatrasTabletScreen })))
 const LinkPracticesMobileScreen = lazy(() => import('./features/yatras/settings/mobile/LinkPracticesMobile').then((m) => ({ default: m.LinkPracticesMobileScreen })))
+const ManageYatraMobile = lazy(() => import('./features/yatras/settings/mobile/ManageYatraMobile').then((m) => ({ default: m.ManageYatraMobile })))
+const AdminSectionMobile = lazy(() => import('./features/yatras/settings/mobile/AdminSectionMobile').then((m) => ({ default: m.AdminSectionMobile })))
+
+/** The admin sub-pages exist on mobile only; the legacy admin page has every section. */
+function ToAdminHub() {
+  const { id } = useParams()
+  return <Navigate to={`/yatra/${id}/admin/settings`} replace />
+}
 const YatrasDesktopScreen = lazy(() => import('./features/yatras/desktop/YatrasDesktop').then((m) => ({ default: m.YatrasDesktopScreen })))
 
 function RootError() {
@@ -124,12 +132,17 @@ export const router = createBrowserRouter([
         children: [{ index: true, element: <YatraSettingsPage /> }],
       },
       {
+        path: '/yatra/:id/admin/settings',
+        element: <ByLayout mobile={<ManageYatraMobile />} legacy={<AppShell />} />,
+        children: [{ index: true, element: <YatraAdminSettingsPage /> }],
+      },
+      { path: '/yatra/:id/admin/:section', element: <ByLayout mobile={<AdminSectionMobile />} legacy={<ToAdminHub />} /> },
+      {
         element: <AppShell />,
         children: [
           { path: '/charts/manage', element: <ChartsPage /> },
           { path: '/charts/new', element: <NewChartPage /> },
           { path: '/yatra/:id/join', element: <YatraJoinPage /> },
-          { path: '/yatra/:id/admin/settings', element: <YatraAdminSettingsPage /> },
           { path: '/yatra/:id/practice/new', element: <YatraPracticeNewPage /> },
           { path: '/yatra/:id/practice/:practice_id/edit', element: <YatraPracticeEditPage /> },
           { path: '/settings/edit-user', element: <EditUserPage /> },
