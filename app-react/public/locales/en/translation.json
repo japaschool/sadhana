@@ -638,6 +638,20 @@
     "deleteStatTitle": "Delete “{{label}}”?",
     "deleteStatText": "The tile is removed for everyone.",
     "statAdded": "Statistic added",
-    "statDeleted": "Statistic deleted"
+    "statDeleted": "Statistic deleted",
+    "deleteYatraText_one": "This deletes the yatra for its {{count}} member and can't be undone.",
+    "deleteYatraText_other": "This deletes the yatra for all {{count}} members and can't be undone.",
+    "inviteTitle": "Invite devotees",
+    "inviteText": "Anyone with this link can join {{name}}. After joining they link their own practices.",
+    "share": "Share link",
+    "copy": "Copy",
+    "copied": "Link copied",
+    "shareHint": "Share opens your phone's share sheet.",
+    "dangerText": "Removes the table, practices, colours, statistics and member list for everyone. Members keep their own practices and entries. This can't be undone.",
+    "deleteYatraTitle": "Delete {{name}}?",
+    "typeName": "Type the yatra name to confirm",
+    "typeNameHint": "The button turns on when the name matches.",
+    "deleteForever": "Delete forever",
+    "yatraDeleted": "Deleted {{name}}"
   }
 }
