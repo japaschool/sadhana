@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, within } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import i18n from 'i18next'
@@ -8,19 +9,24 @@ import { useAuthStore } from '../../../store/authStore'
 import { useServiceWorkerUpdate } from '../../../hooks/useServiceWorkerUpdate'
 
 vi.mock('../../../hooks/useServiceWorkerUpdate', () => ({ useServiceWorkerUpdate: vi.fn() }))
+vi.mock('../../../api/yatras', () => ({ yatrasApi: { getYatras: vi.fn(), getYatraUsers: vi.fn() } }))
+import { yatrasApi } from '../../../api/yatras'
 const swUpdate = vi.mocked(useServiceWorkerUpdate)
 
 const realLocation = window.location
 
 function renderScreen(name = 'Test User') {
   useAuthStore.setState({ user: { id: '1', email: 't@e.st', token: 'tok', name }, token: 'tok' })
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
-    <MemoryRouter initialEntries={['/settings']}>
-      <Routes>
-        <Route path="/settings" element={<SettingsMobileScreen />} />
-        <Route path="/login" element={<p>Login page</p>} />
-      </Routes>
-    </MemoryRouter>,
+    <QueryClientProvider client={qc}>
+      <MemoryRouter initialEntries={['/settings']}>
+        <Routes>
+          <Route path="/settings" element={<SettingsMobileScreen />} />
+          <Route path="/login" element={<p>Login page</p>} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
   )
 }
 
@@ -28,6 +34,7 @@ describe('SettingsMobile', () => {
   beforeEach(() => {
     setViewportWidth(390)
     swUpdate.mockReturnValue({ updateReady: false, applyUpdate: vi.fn() })
+    vi.mocked(yatrasApi.getYatras).mockResolvedValue([])
   })
   afterEach(() => {
     vi.restoreAllMocks()
@@ -138,5 +145,20 @@ describe('SettingsMobile', () => {
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
     expect(screen.queryByRole('dialog')).toBeNull()
     expect(useAuthStore.getState().token).toBe('tok')
+  })
+
+  it('lists yatras with the role, each linking to its settings', async () => {
+    vi.mocked(yatrasApi.getYatras).mockResolvedValue([{ id: 'y1', name: 'League', show_stability_metrics: false }])
+    vi.mocked(yatrasApi.getYatraUsers).mockResolvedValue([{ user_id: '1', user_name: 'Test User', is_admin: true }])
+    renderScreen()
+    const row = await screen.findByRole('link', { name: /League/ })
+    expect(row).toHaveAttribute('href', '/yatra/y1/settings')
+    expect(await within(row).findByText('Admin')).toBeInTheDocument()
+  })
+
+  it('hides the section without yatras', async () => {
+    renderScreen()
+    await waitFor(() => expect(yatrasApi.getYatras).toHaveBeenCalled())
+    expect(screen.queryByRole('region', { name: 'Yatras' })).toBeNull()
   })
 })

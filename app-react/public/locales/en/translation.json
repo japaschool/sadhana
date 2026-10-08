@@ -290,7 +290,8 @@
     "helpSupport": "Help and support",
     "aboutShort": "About",
     "updateAvailable": "Update available — tap to reload",
-    "logout": "Logout"
+    "logout": "Logout",
+    "yatras": "Yatras"
   },
   "help": {
     "title": "Help",
