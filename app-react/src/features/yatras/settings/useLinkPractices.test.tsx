@@ -39,7 +39,7 @@ describe('useLinkPractices', () => {
     vi.mocked(practicesApi.getUserPractices).mockResolvedValue([])
   })
 
-  it('sends quick successive links in order, each including the previous', async () => {
+  it('sends quick successive links in order, each carrying the links on screen', async () => {
     let release!: () => void
     api.updateYatraUserPractices.mockImplementationOnce(() => new Promise<void>((r) => { release = r })).mockResolvedValue()
     const { result } = setup()
@@ -48,10 +48,10 @@ describe('useLinkPractices', () => {
     await waitFor(() => expect(result.current.items.map((i) => i.user_practice)).toEqual(['Book reading', 'Lecture listening']))
     expect(api.updateYatraUserPractices).toHaveBeenCalledTimes(1)
     await act(async () => { release() })
-    await waitFor(() => expect(sent()).toEqual([['Book reading', null], ['Book reading', 'Lecture listening']]))
+    await waitFor(() => expect(sent()).toEqual([['Book reading', 'Lecture listening'], ['Book reading', 'Lecture listening']]))
   })
 
-  it('Undo restores the snapshot from before that change', async () => {
+  it('Undo puts back the rows that change touched', async () => {
     api.updateYatraUserPractices.mockResolvedValue()
     const { result } = setup()
     await waitFor(() => expect(result.current.items).toHaveLength(2))

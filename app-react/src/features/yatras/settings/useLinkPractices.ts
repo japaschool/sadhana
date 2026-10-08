@@ -8,7 +8,7 @@ import type { UserPractice, YatraUserPracticeItem } from '../../../types/api'
 import { withLink, withLinks } from './linking'
 import { useQueuedSave } from './useQueuedSave'
 
-/** The member's links for one yatra. Each change is shown at once and saved in order; Undo resends the snapshot from before it. */
+/** The member's links for one yatra. Each change is shown at once and saved in order; Undo puts back only the rows it changed. */
 export function useLinkPractices(yatraId: string) {
   const qc = useQueryClient()
   const { t } = useTranslation()
@@ -24,8 +24,14 @@ export function useLinkPractices(yatraId: string) {
   const saveQueued = useQueuedSave<YatraUserPracticeItem[]>(key, () => { void qc.invalidateQueries({ queryKey: ['yatra-data', yatraId] }) })
   const send = (next: YatraUserPracticeItem[]) => yatrasApi.updateYatraUserPractices(yatraId, next)
 
-  function save(next: YatraUserPracticeItem[], message: string, undoable: boolean) {
-    saveQueued(next, send, message, undoable)
+  /** Undo puts back only the rows this change touched. */
+  function save(change: (items: YatraUserPracticeItem[]) => YatraUserPracticeItem[], message: string) {
+    const before = current()
+    const after = change(before)
+    const was = new Map(before.filter((r, i) => r !== after[i]).map((r) => [r.yatra_practice.id, r.user_practice]))
+    const revert = (items: YatraUserPracticeItem[]) =>
+      items.map((r) => (was.has(r.yatra_practice.id) ? { ...r, user_practice: was.get(r.yatra_practice.id)! } : r))
+    void saveQueued({ apply: change, revert }, send, message)
   }
 
   const current = () => qc.getQueryData<YatraUserPracticeItem[]>(key) ?? []
@@ -36,11 +42,11 @@ export function useLinkPractices(yatraId: string) {
     const message = name
       ? t('yatraSettings.linked', { mine: name, yatra: row.yatra_practice.practice })
       : t('yatraSettings.unlinkedToast', { yatra: row.yatra_practice.practice })
-    save(withLink(items, yatraPracticeId, name), message, true)
+    save((list) => withLink(list, yatraPracticeId, name), message)
   }
 
   function linkAll(links: Map<string, UserPractice>) {
-    save(withLinks(current(), links), t('yatraSettings.linkedMany', { count: links.size }), true)
+    save((list) => withLinks(list, links), t('yatraSettings.linkedMany', { count: links.size }))
   }
 
   const leave = useMutation({
