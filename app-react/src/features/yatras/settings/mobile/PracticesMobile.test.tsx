@@ -61,6 +61,24 @@ describe('PracticesMobile', () => {
     expect(api.updateYatra).not.toHaveBeenCalled()
   })
 
+  it("won't add or rename to a name the yatra already has", async () => {
+    renderAdmin('/yatra/y1/admin/practices')
+    fireEvent.click(await screen.findByRole('button', { name: '+ Add practice' }))
+    const add = screen.getByRole('dialog', { name: 'New practice' })
+    fireEvent.change(within(add).getByLabelText('Name'), { target: { value: ' japa ROUNDS ' } })
+    expect(within(add).getByRole('alert')).toHaveTextContent('This yatra already has a practice with this name')
+    expect(within(add).getByRole('button', { name: 'Add practice' })).toBeDisabled()
+    fireEvent.click(within(add).getByRole('button', { name: 'Close' }))
+    await openMenu('Japa rounds')
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Rename' }))
+    const rename = screen.getByRole('dialog', { name: 'Rename practice' })
+    const name = within(rename).getByLabelText('Name')
+    fireEvent.change(name, { target: { value: 'Reading' } })
+    fireEvent.blur(name)
+    expect(within(rename).getByRole('alert')).toHaveTextContent('This yatra already has a practice with this name')
+    expect(api.updateYatraPractice).not.toHaveBeenCalled()
+  })
+
   it('renames from the row menu', async () => {
     renderAdmin('/yatra/y1/admin/practices')
     await openMenu('Japa rounds')

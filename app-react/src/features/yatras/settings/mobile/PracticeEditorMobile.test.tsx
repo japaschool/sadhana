@@ -141,6 +141,15 @@ describe('PracticeEditorMobile', () => {
     expect(done).toHaveValue('16')
   })
 
+  it("won't rename to another practice's name", async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const name = await screen.findByLabelText('Name')
+    fireEvent.change(name, { target: { value: 'Wake up' } })
+    fireEvent.blur(name)
+    expect(screen.getByText('This yatra already has a practice with this name')).toBeInTheDocument()
+    expect(api.updateYatraPractice).not.toHaveBeenCalled()
+  })
+
   it('a Yes / No practice explains why it has no colours or score', async () => {
     renderAdmin('/yatra/y1/practice/p4/edit')
     expect(await screen.findByText(/Yes \/ No practices show ✓ in the table/)).toBeInTheDocument()

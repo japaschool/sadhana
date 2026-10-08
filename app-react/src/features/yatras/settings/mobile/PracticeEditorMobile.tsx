@@ -16,7 +16,7 @@ import { AdminPage, BTN, CARD, FIELD, HINT, SECTION_TITLE } from './AdminPage'
 import { AutosaveText } from './fields'
 import { DeletePracticeSheet } from './PracticeSheets'
 import { RangeBar } from './RangeBar'
-import { zoneKey } from './summaries'
+import { practiceNameError, zoneKey } from './summaries'
 import { TypeChip } from './TypeChip'
 
 const EMPTY_COLOURS: ZoneColour[] = ['Neutral', 'Red', 'Yellow', 'Green']
@@ -37,7 +37,7 @@ export function PracticeEditorMobile() {
         <>
           <section className={`${CARD} flex flex-col gap-4 p-4`}>
             <AutosaveText id="practice-name" label={t('yatraSettings.name')} value={p.practice}
-              validate={(v) => (v.trim() ? null : t('yatraSettings.nameEmpty'))}
+              validate={(v) => practiceNameError(t, v, a.practices.filter((x) => x.id !== p.id))}
               onCommit={(v) => a.savePractice({ ...p, practice: v.trim() }, t('yatraSettings.renamed'))} />
             <div className="flex flex-col gap-1.5">
               <span className={LABEL}>{t('yatraSettings.type')}</span>

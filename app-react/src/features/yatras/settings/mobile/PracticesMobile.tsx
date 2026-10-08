@@ -64,7 +64,7 @@ export function PracticesMobile() {
               </AnchoredMenu>
             )}
             {renaming && (
-              <RenamePracticeSheet practice={renaming} onClose={() => setRenamingId(null)}
+              <RenamePracticeSheet practice={renaming} others={a.practices.filter((x) => x.id !== renaming.id)} onClose={() => setRenamingId(null)}
                 onRename={(name) => a.savePractice({ ...renaming, practice: name }, t('yatraSettings.renamed'))} />
             )}
             {deleting && (
@@ -72,7 +72,7 @@ export function PracticesMobile() {
                 onClose={() => setDeletingId(null)} onConfirm={() => a.deletePractice.mutate(deleting, { onSettled: () => setDeletingId(null) })} />
             )}
             {adding && (
-              <AddPracticeSheet busy={a.createPractice.isPending} onClose={() => setAdding(false)}
+              <AddPracticeSheet others={a.practices} busy={a.createPractice.isPending} onClose={() => setAdding(false)}
                 onAdd={(name, type) => a.createPractice.mutate({ name, type }, {
                   onSuccess: (p) => { setAdding(false); if (p) navigate(`/yatra/${id}/practice/${p.id}/edit`) },
                 })} />

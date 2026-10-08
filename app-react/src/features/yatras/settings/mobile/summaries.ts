@@ -32,3 +32,10 @@ export function practiceSummary(p: YatraPractice, t: TFunction): string {
 /** For times of day, Min and Max read "earliest" and "latest". */
 export const aggLabel = (t: TFunction, agg: Aggregation, dt?: PracticeDataType) =>
   t(dt === 'Time' && (agg === 'Min' || agg === 'Max') ? `yatraSettings.agg${agg}Time` : `yatraSettings.agg${agg}`)
+
+/** Members link practices by name, so two practices of one yatra can't share one. */
+export function practiceNameError(t: TFunction, name: string, others: YatraPractice[]): string | null {
+  const n = name.trim().toLowerCase()
+  if (!n) return t('yatraSettings.nameEmpty')
+  return others.some((p) => p.practice.trim().toLowerCase() === n) ? t('yatraSettings.nameTaken') : null
+}
