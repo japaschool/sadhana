@@ -74,7 +74,7 @@ describe('LinkPracticesMobile', () => {
 
   it('"Link N suggested matches" links them all in one request', async () => {
     renderLinkScreen()
-    fireEvent.click(await screen.findByRole('button', { name: 'Link 1 suggested matches' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Link 1 suggested match' }))
     await waitFor(() => expect(api.updateYatraUserPractices).toHaveBeenCalledOnce())
     expect(api.updateYatraUserPractices.mock.calls[0][1].map((i) => i.user_practice)).toEqual(['Japa rounds', 'Lecture listening', null])
   })
