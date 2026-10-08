@@ -98,4 +98,13 @@ describe('YatrasMobile', () => {
     expect(tile).toHaveTextContent('Average · Last 30 days')
     expect(tile.compareDocumentPosition(screen.getByText('Alex das')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
+  it('a count tile says "time" for one', async () => {
+    api.getYatras.mockResolvedValue([{
+      id: 'y1', name: "Lord Balarama's League", show_stability_metrics: true,
+      statistics: { visible_to_all: true, statistics: [{ label: 'Arati', practice_id: 'p1', aggregation: 'Count', time_range: 'Last7Days' }] },
+    }])
+    api.getYatraData.mockResolvedValue({ ...(await api.getYatraData('y1', '')), statistics: [{ label: 'Arati', value: { Int: 1 } }] })
+    renderScreen()
+    expect((await screen.findByText('Arati')).parentElement).toHaveTextContent(/1time(?!s)/)
+  })
 })

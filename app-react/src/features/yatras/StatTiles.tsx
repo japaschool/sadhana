@@ -7,12 +7,13 @@ import { aggLabel } from './settings/mobile/summaries'
 /** One statistic as 12m20 draws it: label, value (with "times" for counts), aggregation · range. */
 export function Tile({ stat, dt, raw, units }: { stat: YatraStatisticConfig; dt?: PracticeDataType; raw: unknown; units: DurationUnits }) {
   const { t } = useTranslation()
+  const value = statValue(raw, stat.aggregation, dt ?? 'Int', units)
   return (
     <div className="flex min-w-0 flex-col gap-1 rounded-[18px] border border-ui-hairline bg-ui-surface p-3.5">
       <span className="truncate text-xs font-bold text-ui-muted">{stat.label}</span>
       <span className="flex items-baseline gap-1">
-        <span className="text-[22px] font-extrabold tracking-[-0.01em] text-ui-ink">{statValue(raw, stat.aggregation, dt ?? 'Int', units)}</span>
-        {stat.aggregation === 'Count' && <span className="text-xs text-ui-muted">{t('yatraSettings.times')}</span>}
+        <span className="text-[22px] font-extrabold tracking-[-0.01em] text-ui-ink">{value}</span>
+        {stat.aggregation === 'Count' && <span className="text-xs text-ui-muted">{t('yatraSettings.times', { count: Number(value) || 0 })}</span>}
       </span>
       <span className="text-[11px] text-ui-muted">{`${aggLabel(t, stat.aggregation, dt)} · ${t(`yatraSettings.range${stat.time_range}`)}`}</span>
     </div>
