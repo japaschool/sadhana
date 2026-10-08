@@ -415,5 +415,12 @@
     "date": "Date",
     "days_one": "{{count}} day",
     "days_other": "{{count}} days"
+  },
+  "yatraSettings": {
+    "linked": "Linked {{mine}} → {{yatra}}",
+    "unlinkedToast": "Unlinked {{yatra}}",
+    "linkedMany_one": "Linked {{count}} practice",
+    "linkedMany_other": "Linked {{count}} practices",
+    "undone": "Undone"
   }
 }

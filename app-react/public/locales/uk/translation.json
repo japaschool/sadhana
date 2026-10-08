@@ -423,5 +423,14 @@
     "days_few": "{{count}} дні",
     "days_many": "{{count}} днів",
     "days_other": "{{count}} дня"
+  },
+  "yatraSettings": {
+    "linked": "Зв’язано: {{mine}} → {{yatra}}",
+    "unlinkedToast": "Зв’язок із «{{yatra}}» знято",
+    "linkedMany_one": "Зв’язано практик: {{count}}",
+    "linkedMany_few": "Зв’язано практик: {{count}}",
+    "linkedMany_many": "Зв’язано практик: {{count}}",
+    "linkedMany_other": "Зв’язано практик: {{count}}",
+    "undone": "Скасовано"
   }
 }
