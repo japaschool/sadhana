@@ -3,8 +3,9 @@ import type { ReactNode } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import type { BetterDirection, YatraPractice, ZoneColour } from '../../../../types/api'
+import type { BetterDirection, PracticeValue, YatraPractice, ZoneColour } from '../../../../types/api'
 import { SegmentedControl } from '../../../../ui/primitives/SegmentedControl'
+import { formatDuration, typeTime } from '../../../today/values'
 import { ZONE_BG } from '../../yatrasLogic'
 import { useDebouncedCommit } from '../useDebouncedCommit'
 import { useYatraAdmin } from '../useYatraAdmin'
@@ -20,7 +21,7 @@ import { practiceNameError, zoneKey } from './summaries'
 import { TypeChip } from './TypeChip'
 
 const EMPTY_COLOURS: ZoneColour[] = ['Neutral', 'Red', 'Yellow', 'Green']
-const PLACEHOLDER: Record<ScoredType, string> = { Int: '', Duration: '1:30', Time: '05:30' }
+const PLACEHOLDER: Record<ScoredType, string> = { Int: '', Duration: '90', Time: 'HH:MM' }
 const LABEL = 'text-[13px] font-bold text-ui-muted'
 
 export function PracticeEditorMobile() {
@@ -75,10 +76,14 @@ export function PracticeEditorMobile() {
 
 interface Drafts { bounds: string[]; done: string; bonus: string }
 
+/** As typed in the field, like the Log: durations in plain minutes, times as hh:mm. */
+const editText = (v: PracticeValue | null | undefined, dt: ScoredType) =>
+  dt === 'Duration' ? (v && 'Duration' in v ? String(v.Duration) : '') : formatValue(v, dt)
+
 const draftsOf = (p: YatraPractice, dt: ScoredType): Drafts => ({
-  bounds: (p.colour_zones?.bounds ?? []).map((b) => formatValue(b.to, dt)),
-  done: formatValue(p.daily_score?.mandatory_threshold, dt),
-  bonus: formatValue(bonusOf(p.daily_score), dt),
+  bounds: (p.colour_zones?.bounds ?? []).map((b) => editText(b.to, dt)),
+  done: editText(p.daily_score?.mandatory_threshold, dt),
+  bonus: editText(bonusOf(p.daily_score), dt),
 })
 
 /** A missing field and null are the same config. */
@@ -148,7 +153,7 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
   }
   const green = zones && follows ? greenStart(zones, dt) : null
   function doneAtGreen() {
-    const text = formatValue(green, dt)
+    const text = editText(green, dt)
     setDrafts((d) => ({ ...d, done: text }))
     // Past the bonus, it stays a draft and the bonus field says why.
     if (checkScore(text, drafts.bonus, scoreDir, dt).ok) saveNow((b) => ({ ...b, daily_score: scoreConfig(scoreDir, green, bonusOf(b.daily_score)) }))
@@ -156,14 +161,14 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
 
   const tidy = (text: string) => {
     const v = parseValue(text, dt)
-    return v && v !== 'invalid' ? formatValue(v, dt) : text
+    return v && v !== 'invalid' ? editText(v, dt) : text
   }
   const field = (key: 'done' | 'bonus' | number) => ({
     value: typeof key === 'number' ? drafts.bounds[key] ?? '' : drafts[key],
     onFocus: () => setEditing(true),
     onBlur: () => {
       setEditing(false)
-      // Show what was typed the way it's stored: 5.30 → 05:30, 45 → 0:45.
+      // Show what was typed the way it's stored, e.g. a half-typed 05 → 05:00.
       setDrafts((d) => (typeof key === 'number' ? { ...d, bounds: d.bounds.map((x, j) => (j === key ? tidy(x) : x)) } : { ...d, [key]: tidy(d[key]) }))
       flush()
       setSettled(true)
@@ -258,7 +263,7 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
           <ValueField id="score-bonus" dt={dt} label={t('yatraSettings.bonusAt')} {...field('bonus')}
             error={settled && thresholds.errors[1] && errorText(thresholds.errors[1]!, dt, t)} />
         </div>
-        {green && formatValue(green, dt) !== drafts.done && (
+        {green && editText(green, dt) !== drafts.done && (
           <button type="button" onClick={doneAtGreen} className="self-start rounded-full bg-ui-accent-soft px-3 py-1.5 text-[13px] font-bold text-ui-accent">
             {t('yatraSettings.doneWhereGreen', { colour: t(zoneKey('Green')) })}
           </button>
@@ -286,12 +291,21 @@ function ValueField({ id, label, dt, value, error, onChange, onFocus, onBlur }: 
   id: string; label: ReactNode; dt: ScoredType; value: string; error?: string | null | false
   onChange: (v: string) => void; onFocus: () => void; onBlur: () => void
 }) {
+  const { t } = useTranslation()
+  const [focused, setFocused] = useState(false)
+  // Like the Log: a duration is typed in minutes and read as hours and minutes.
+  const shown = dt === 'Duration' && !focused && /^\d+$/.test(value)
+    ? formatDuration(Number(value), { h: t('today.unitH'), min: t('today.unitMin') })
+    : value
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
       <label htmlFor={id} className="flex items-center gap-1.5 text-xs font-bold leading-[1.35] text-ui-muted">{label}</label>
-      <input id={id} value={value} inputMode={dt === 'Int' ? 'numeric' : 'decimal'} autoComplete="off" placeholder={PLACEHOLDER[dt]} aria-invalid={!!error}
+      <input id={id} value={shown} inputMode="numeric" autoComplete="off" placeholder={PLACEHOLDER[dt]} aria-invalid={!!error}
         aria-describedby={error ? `${id}-error` : undefined}
-        className={`${FIELD} font-ui-mono`} onFocus={onFocus} onBlur={onBlur} onChange={(e) => onChange(e.target.value)} />
+        className={`${FIELD} font-ui-mono`}
+        onFocus={() => { setFocused(true); onFocus() }}
+        onBlur={() => { setFocused(false); onBlur() }}
+        onChange={(e) => onChange(dt === 'Time' ? typeTime(e.target.value, value) : e.target.value.replace(/\D/g, ''))} />
       {error && <p id={`${id}-error`} role="alert" className="text-xs font-semibold text-ui-danger">{error}</p>}
     </div>
   )

@@ -28,10 +28,6 @@ describe('values', () => {
     expect(parseValue('1:75', 'Duration')).toBe('invalid')
     expect(parseValue('5:30', 'Time')).toEqual({ Time: { h: 5, m: 30 } })
     expect(parseValue('24:00', 'Time')).toBe('invalid')
-    // The iOS decimal keypad has no colon: a dot or comma stands in for it.
-    expect(parseValue('5.30', 'Time')).toEqual({ Time: { h: 5, m: 30 } })
-    expect(parseValue('5,30', 'Time')).toEqual({ Time: { h: 5, m: 30 } })
-    expect(parseValue('1.30', 'Duration')).toEqual({ Duration: 90 })
   })
 })
 

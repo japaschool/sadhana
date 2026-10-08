@@ -572,7 +572,7 @@
     "notSavedYet": "Not saved yet. The bar keeps the last valid bounds until this is fixed.",
     "mustBeAbove": "Must be more than {{value}}, the {{colour}} bound",
     "formatInt": "Enter a whole number",
-    "formatDuration": "Enter h:mm, e.g. 1:30",
+    "formatDuration": "Enter minutes, e.g. 90",
     "formatTime": "Enter hh:mm, e.g. 05:30",
     "bonusAtLeast": "Must be at least the done value, {{value}}",
     "bonusAtMost": "Must be at most the done value, {{value}}",

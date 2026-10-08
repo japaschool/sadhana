@@ -1,4 +1,5 @@
 import type { PracticeValue } from '../../types/api'
+import { formatTimeInput } from '../../pages/home/inputFormat'
 
 export interface DurationUnits { h: string; min: string }
 
@@ -25,4 +26,11 @@ export function sameValue(a?: PracticeValue | null, b?: PracticeValue | null): b
 
 export function capitalize(s: string, locale: string): string {
   return s.charAt(0).toLocaleUpperCase(locale) + s.slice(1)
+}
+
+/** A time field's next text as you type: digits only, the colon added for you, and Backspace over it removes a digit instead. */
+export function typeTime(raw: string, prev: string): string {
+  const next = formatTimeInput(raw)
+  const deleting = raw.length < prev.length
+  return deleting && next === prev ? formatTimeInput(raw.replace(/\D/g, '').slice(0, -1)) : next
 }

@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next'
 import type { PracticeValue, UserPractice } from '../../../types/api'
 import { Toggle } from '../../../ui/primitives/Toggle'
 import { AnchoredMenu, MenuDivider, MenuItem } from '../../../ui/primitives/AnchoredMenu'
-import { formatTimeInput, parseTime } from '../../../pages/home/inputFormat'
-import { formatDuration, formatTime, parseOptions } from '../values'
+import { parseTime } from '../../../pages/home/inputFormat'
+import { formatDuration, formatTime, parseOptions, typeTime } from '../values'
 import { useOnAppHidden } from '../useOnAppHidden'
 import { AddTimeSheet } from './AddTimeSheet'
 import { TextRow } from './TextRow'
@@ -71,12 +71,7 @@ function InlineInputRow({ practice, value, failed, onSave }: PracticeRowProps) {
 
   function change(raw: string) {
     let next = raw.replace(/\D/g, '')
-    if (isTime) {
-      next = formatTimeInput(raw)
-      // Backspace over the auto-inserted ':' would just re-add it; drop the hour digit instead.
-      const deleting = raw.length < (draft ?? '').length
-      if (deleting && next === draft) next = formatTimeInput(raw.replace(/\D/g, '').slice(0, -1))
-    }
+    if (isTime) next = typeTime(raw, draft ?? '')
     setDraft(next)
     // Save while typing: a closed home-screen app often never gets to send the commit's save.
     // Empty or half-typed times ("07:") wait for the commit.

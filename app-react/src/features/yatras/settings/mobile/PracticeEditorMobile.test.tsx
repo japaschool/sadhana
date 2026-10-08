@@ -57,7 +57,6 @@ describe('PracticeEditorMobile', () => {
   it('keeps what is typed in a focused field when its save lands', async () => {
     renderAdmin('/yatra/y1/practice/p3/edit')
     const red = await screen.findByLabelText('Red up to')
-    expect(red).toHaveValue('0:30')
     fireEvent.focus(red)
     fireEvent.change(red, { target: { value: '45' } })
     await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledOnce())
@@ -115,8 +114,9 @@ describe('PracticeEditorMobile', () => {
     fireEvent.focus(await screen.findByLabelText('Red up to'))
     fireEvent.click(screen.getByRole('radio', { name: '3 colours' }))
     const yellow = await screen.findByLabelText('Yellow up to')
-    fireEvent.change(yellow, { target: { value: '1:00' } })
-    expect(yellow).toHaveValue('1:00')
+    fireEvent.focus(yellow)
+    fireEvent.change(yellow, { target: { value: '60' } })
+    expect(yellow).toHaveValue('60')
   })
 
   it('clearing both thresholds removes the daily score', async () => {
@@ -166,16 +166,31 @@ describe('PracticeEditorMobile', () => {
     expect(document.querySelectorAll('[data-range-bar="empty"]')).toHaveLength(1)
   })
 
-  it('time fields use the decimal keypad and show a dot as a colon once you leave', async () => {
+  it('time fields type like the Log: numeric keypad, the colon comes by itself', async () => {
     renderAdmin('/yatra/y1/practice/p2/edit')
     const done = await screen.findByLabelText('✓ Done at · +1 point')
-    expect(done).toHaveAttribute('inputmode', 'decimal')
+    expect(done).toHaveAttribute('inputmode', 'numeric')
     expect(done).toHaveAttribute('autocomplete', 'off')
     fireEvent.focus(done)
-    fireEvent.change(done, { target: { value: '5.15' } })
+    fireEvent.change(done, { target: { value: '' } })
+    fireEvent.change(done, { target: { value: '5' } })
+    expect(done).toHaveValue('05:')
+    fireEvent.change(done, { target: { value: '05:15' } })
     fireEvent.blur(done)
-    expect(done).toHaveValue('05:15')
     await waitFor(() => expect(sent().daily_score!.mandatory_threshold).toEqual({ Time: { h: 5, m: 15 } }))
+  })
+
+  it('duration fields take minutes and show hours and minutes when you leave them', async () => {
+    renderAdmin('/yatra/y1/practice/p3/edit')
+    const red = await screen.findByLabelText('Red up to')
+    expect(red).toHaveAttribute('inputmode', 'numeric')
+    expect(red).toHaveValue('30 min')
+    fireEvent.focus(red)
+    expect(red).toHaveValue('30')
+    fireEvent.change(red, { target: { value: '90' } })
+    fireEvent.blur(red)
+    expect(red).toHaveValue('1 h 30 min')
+    await waitFor(() => expect(sent().colour_zones!.bounds[0].to).toEqual({ Duration: 90 }))
   })
 
   it("names don't invite autofill", async () => {

@@ -22,10 +22,9 @@ export function formatValue(v: PracticeValue | null | undefined, dt: ScoredType)
   return dt === 'Time' ? `${String(h).padStart(2, '0')}:${m}` : `${h}:${m}`
 }
 
-/** Empty → null; anything that isn't a value of this type → 'invalid'. Durations also take plain minutes; `.` or `,` may stand for `:`. */
+/** Empty → null; anything that isn't a value of this type → 'invalid'. Durations also take plain minutes. */
 export function parseValue(text: string, dt: ScoredType): PracticeValue | null | 'invalid' {
-  // The iOS decimal keypad has no colon, so a dot or comma stands in for it.
-  const s = text.trim().replace(/[.,]/, ':')
+  const s = text.trim()
   if (!s) return null
   if (dt === 'Int') return /^\d+$/.test(s) ? { Int: Number(s) } : 'invalid'
   const hm = /^(\d{1,2}):([0-5]\d)$/.exec(s)
