@@ -1,6 +1,6 @@
 import type { TFunction } from 'i18next'
 import type { YatraPractice, YatraUser, ZoneColour } from '../../../../types/api'
-import { bonusOf, formatValue, isScored } from '../zones'
+import { bonusOf, formatValue, isScored, zoneCount } from '../zones'
 
 /** The existing colour names: yatras.zoneRed, yatras.zoneGreen, … */
 export const zoneKey = (c: ZoneColour) => `yatras.zone${c}`
@@ -19,4 +19,12 @@ export function scoreSummary(p: YatraPractice, t: TFunction): string | null {
     bonus && t('yatraSettings.bonusValue', { value: formatValue(bonus, dt) }),
   ].filter(Boolean)
   return parts.length ? parts.join(' · ') : null
+}
+
+export function practiceSummary(p: YatraPractice, t: TFunction): string {
+  if (p.data_type === 'Bool') return t('yatraSettings.shownAsCheck')
+  if (p.data_type === 'Text') return t('yatraSettings.shownAsWritten')
+  const n = zoneCount(p.colour_zones)
+  const colours = n ? t('yatraSettings.nColours', { count: n }) : t('yatraSettings.noColours')
+  return `${colours} · ${scoreSummary(p, t) ?? t('yatraSettings.notInScore')}`
 }

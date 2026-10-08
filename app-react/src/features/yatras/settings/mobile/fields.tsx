@@ -1,6 +1,9 @@
 import { useState } from 'react'
+import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+import { BottomSheet } from '../../../../ui/primitives/BottomSheet'
 import { useDebouncedCommit } from '../useDebouncedCommit'
-import { FIELD, HINT } from './AdminPage'
+import { BTN, FIELD, HINT } from './AdminPage'
 
 /** A text field that saves while you type (after a pause) and on blur; invalid text stays local and says why. */
 export function AutosaveText({ id, label, hint, value, validate, onCommit, placeholder }: {
@@ -26,5 +29,36 @@ export function AutosaveText({ id, label, hint, value, validate, onCommit, place
         onChange={(e) => { setDraft(e.target.value); schedule() }} />
       {error ? <p role="alert" className="text-xs font-semibold text-ui-danger">{error}</p> : hint && <p className={HINT}>{hint}</p>}
     </div>
+  )
+}
+
+export function SheetHeader({ title, onClose, children }: { title: string; onClose: () => void; children?: ReactNode }) {
+  const { t } = useTranslation()
+  return (
+    <div className="flex items-center gap-3">
+      {children}
+      <h2 className="min-w-0 flex-1 text-xl font-extrabold break-words text-ui-ink">{title}</h2>
+      <button type="button" aria-label={t('yatraSettings.close')} onClick={onClose}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ui-chip text-lg text-ui-muted">×</button>
+    </div>
+  )
+}
+
+/** Asks before something that can't be undone. */
+export function ConfirmSheet({ title, text, confirm, busy, disabled, onConfirm, onClose, children }: {
+  title: string; text: string; confirm: string; busy?: boolean; disabled?: boolean
+  onConfirm: () => void; onClose: () => void; children?: ReactNode
+}) {
+  const { t } = useTranslation()
+  return (
+    <BottomSheet label={title} onClose={onClose}>
+      <h2 className="text-xl font-extrabold break-words text-ui-ink">{title}</h2>
+      <p className="text-sm leading-normal text-ui-ink2">{text}</p>
+      {children}
+      <div className="flex flex-col gap-2.5">
+        <button type="button" disabled={busy || disabled} onClick={onConfirm} className={`${BTN} bg-ui-danger text-white disabled:opacity-50`}>{confirm}</button>
+        <button type="button" onClick={onClose} className={`${BTN} border border-ui-control text-ui-ink`}>{t('common.cancel')}</button>
+      </div>
+    </BottomSheet>
   )
 }
