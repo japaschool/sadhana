@@ -25,4 +25,13 @@ describe('UiToastContainer', () => {
     act(() => { vi.advanceTimersByTime(2000) })
     expect(useToastStore.getState().toasts).toHaveLength(0)
   })
+  it('sits at the top of the screen, newest first, clear of sheets and fields below', () => {
+    render(<UiToastContainer />)
+    const { showToast } = useToastStore.getState()
+    act(() => { showToast({ message: 'first', variant: 'success' }); showToast({ message: 'second', variant: 'success' }) })
+    const box = screen.getByText('first').closest('[aria-live]')!
+    expect(box.className).toMatch(/\btop-/)
+    expect(box.className).not.toMatch(/\bbottom-/)
+    expect([...box.querySelectorAll('span')].map((s) => s.textContent)).toEqual(['second', 'first'])
+  })
 })
