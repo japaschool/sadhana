@@ -591,6 +591,17 @@
     "savedAsYouEdit": "Saved as you edit",
     "noZonesTitle": "Colours and daily score",
     "noZonesBool": "Yes / No practices show ✓ in the table. Colours and the daily score only apply to Number, Time of day and Duration practices.",
-    "noZonesText": "Text practices show what was written. Colours and the daily score only apply to Number, Time of day and Duration practices."
+    "noZonesText": "Text practices show what was written. Colours and the daily score only apply to Number, Time of day and Duration practices.",
+    "oneAdminRule": "A yatra always keeps at least one admin.",
+    "you": "You",
+    "adminHint": "Can edit practices, members, statistics and yatra settings",
+    "lastAdminToggle": "The only admin. Make someone else admin first.",
+    "removeMember": "Remove from yatra",
+    "removeTitle": "Remove {{name}}?",
+    "removeText": "They'll lose access to this yatra's table. Their own practices and entries stay with them, and they can rejoin with an invite link.",
+    "remove": "Remove",
+    "memberRemoved": "Removed {{name}}",
+    "adminAdded": "{{name}} is now an admin",
+    "adminRemoved": "{{name}} is no longer an admin"
   }
 }
