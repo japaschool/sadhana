@@ -101,7 +101,7 @@ The Yatra screen changes (12m1, 12m8) go into the existing `features/yatras/mobi
 
 A user practice is a **suggested match** for a yatra practice when it has the same data type, is active, isn't linked to another practice in this yatra, and its name matches:
 1. exactly, ignoring case and surrounding spaces; otherwise
-2. one name contains the other, or they share a whole word of at least 4 letters (case-insensitive).
+2. one name contains the other, or a word of one (at least 4 letters) starts a word of the other, so plurals pair up ("lectures" ~ "lecture"; case-insensitive, Unicode letters).
 
 The first rule wins over the second. Each user practice is suggested for at most one yatra practice, and each yatra practice gets at most one suggestion.
 
