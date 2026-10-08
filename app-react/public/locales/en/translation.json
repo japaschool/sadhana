@@ -479,6 +479,15 @@
     "bannerText": "What you log for {{names}} won't appear in this table.",
     "linkPractices": "Link practices",
     "later": "Later",
-    "notLinkedCell": "not linked"
+    "notLinkedCell": "not linked",
+    "yourYatras": "Your yatras",
+    "roleAdmin": "Admin",
+    "roleMember": "Member",
+    "members_one": "{{count}} member",
+    "members_other": "{{count}} members",
+    "newYatra": "New yatra",
+    "newName": "Name",
+    "newHint": "You'll be its admin. Add practices and invite devotees next.",
+    "createYatra": "Create yatra"
   }
 }

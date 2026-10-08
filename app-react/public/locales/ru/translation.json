@@ -491,6 +491,17 @@
     "bannerText": "{{names}}: ваши записи не попадут в эту таблицу.",
     "linkPractices": "Связать практики",
     "later": "Позже",
-    "notLinkedCell": "не связано"
+    "notLinkedCell": "не связано",
+    "yourYatras": "Ваши ятры",
+    "roleAdmin": "Админ",
+    "roleMember": "Участник",
+    "members_one": "{{count}} участник",
+    "members_few": "{{count}} участника",
+    "members_many": "{{count}} участников",
+    "members_other": "{{count}} участника",
+    "newYatra": "Новая ятра",
+    "newName": "Название",
+    "newHint": "Вы станете её админом. Затем добавьте практики и пригласите преданных.",
+    "createYatra": "Создать ятру"
   }
 }

@@ -5,11 +5,14 @@
  */
 import React from 'react'
 
+// One component per tag: a fresh one on every access would remount the element on every render.
+const cache = new Map<string, unknown>()
+
 export const motion = new Proxy(
   {},
   {
     get: (_target, tag: string) => {
-      return React.forwardRef(
+      if (!cache.has(tag)) cache.set(tag, React.forwardRef(
         (
           {
             children,
@@ -38,7 +41,8 @@ export const motion = new Proxy(
           },
           ref: React.Ref<HTMLElement>,
         ) => React.createElement(tag, { ...rest, ref }, children),
-      )
+      ))
+      return cache.get(tag)
     },
   },
 ) as unknown as typeof import('framer-motion').motion

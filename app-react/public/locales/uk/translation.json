@@ -491,6 +491,17 @@
     "bannerText": "{{names}}: ваші записи не потраплять у цю таблицю.",
     "linkPractices": "Зв’язати практики",
     "later": "Пізніше",
-    "notLinkedCell": "не зв’язано"
+    "notLinkedCell": "не зв’язано",
+    "yourYatras": "Ваші ятри",
+    "roleAdmin": "Адмін",
+    "roleMember": "Учасник",
+    "members_one": "{{count}} учасник",
+    "members_few": "{{count}} учасники",
+    "members_many": "{{count}} учасників",
+    "members_other": "{{count}} учасника",
+    "newYatra": "Нова ятра",
+    "newName": "Назва",
+    "newHint": "Ви станете її адміном. Потім додайте практики й запросіть відданих.",
+    "createYatra": "Створити ятру"
   }
 }

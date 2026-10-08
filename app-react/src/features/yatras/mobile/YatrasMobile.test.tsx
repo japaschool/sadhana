@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
@@ -28,7 +28,7 @@ describe('YatrasMobile', () => {
     localStorage.clear()
     useAuthStore.setState({ user: { id: 'u1', email: '', token: 't', name: 'Alex das' }, token: 't' })
     api.getYatraUserPractices.mockResolvedValue([{ yatra_practice: { id: 'p1', practice: 'Rounds', data_type: 'Int' }, user_practice: null }])
-    api.getYatraUsers.mockResolvedValue([])
+    api.getYatraUsers.mockResolvedValue([{ user_id: 'u1', user_name: 'Me', is_admin: true }, { user_id: 'u2', user_name: 'B', is_admin: false }])
     api.getYatras.mockResolvedValue([{ id: 'y1', name: "Lord Balarama's League", show_stability_metrics: true }])
     api.getYatraData.mockResolvedValue({
       practices: [{
@@ -73,5 +73,17 @@ describe('YatrasMobile', () => {
     await screen.findByRole('button', { name: "Lord Balarama's League" })
     // The tab bar has a Settings link too (to /settings).
     expect(screen.getAllByRole('link', { name: 'Settings' }).map((l) => l.getAttribute('href'))).toContain('/yatra/y1/settings')
+  })
+
+  it('switcher lists yatras with role and members, and creates a new one', async () => {
+    api.createYatra.mockResolvedValue({ id: 'y2', name: 'Kartika 2026', show_stability_metrics: false })
+    renderScreen()
+    fireEvent.click(await screen.findByRole('button', { name: "Lord Balarama's League" }))
+    const sheet = screen.getByRole('dialog', { name: 'Your yatras' })
+    expect(await within(sheet).findByText('Admin · 2 members')).toBeInTheDocument()
+    fireEvent.change(within(sheet).getByLabelText('Name'), { target: { value: 'Kartika 2026' } })
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Create yatra' }))
+    await waitFor(() => expect(api.createYatra).toHaveBeenCalled())
+    expect(api.createYatra.mock.calls[0][0]).toBe('Kartika 2026')
   })
 })

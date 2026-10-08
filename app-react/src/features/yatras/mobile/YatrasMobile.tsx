@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { yatrasApi } from '../../../api/yatras'
 import { useAuthStore } from '../../../store/authStore'
 import { AppBar } from '../../../layouts/mobile/AppBar'
 import { MobileShell } from '../../../layouts/mobile/MobileShell'
-import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import { BottomSheet } from '../../../ui/primitives/BottomSheet'
 import { initials } from '../../../ui/initials'
 import { cellText, formatDay } from '../../insights/insightsLogic'
@@ -14,6 +13,7 @@ import { CalendarSheet } from '../../today/mobile/CalendarSheet'
 import { toDateStr } from '../../today/date'
 import { findZone, heatmapWindow, heatmapZone, ZONE_BG } from '../yatrasLogic'
 import { useYatras } from '../useYatras'
+import { YatraSwitcherSheet } from './YatraSwitcherSheet'
 import { dismissLater, laterDismissed, unlinked } from '../settings/linking'
 import { joinNames } from '../settings/mobile/LinkPracticesMobile'
 import type { UserYatraDataRow } from '../../../types/api'
@@ -23,8 +23,9 @@ export const TREND = { Up: '↗', Down: '↘', Flat: '→' } as const
 
 export function YatrasMobile() {
   const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
   const y = useYatras()
-  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
+  const [switching, setSwitching] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
@@ -41,15 +42,13 @@ export function YatrasMobile() {
   const [, rerender] = useState(0) // Later writes localStorage; re-render to re-read it
   const showBanner = !!y.yatra && missing.length > 0 && !laterDismissed(y.yatra.id, missingIds)
 
-  const actions = [{ label: t('yatras.createNewYatra'), onSelect: () => setCreating(true) }]
-
   return (
     <>
-      <AppBar title={<h1 className="text-[28px] font-extrabold tracking-[-0.02em] text-ui-ink">{t('nav.yatras')}</h1>} actions={actions} />
+      <AppBar title={<h1 className="text-[28px] font-extrabold tracking-[-0.02em] text-ui-ink">{t('nav.yatras')}</h1>} />
       <div className="flex flex-col gap-2 px-4 pb-6">
         {y.yatra && (
           <div className="flex items-center justify-between gap-2">
-            <button type="button" aria-haspopup="menu" onClick={(e) => setMenuAnchor(e.currentTarget)}
+            <button type="button" aria-haspopup="dialog" onClick={() => setSwitching(true)}
               className="flex min-h-9 min-w-0 items-center gap-1 text-[17px] font-bold text-ui-accent">
               <span className="truncate">{y.yatra.name}</span>
               <span aria-hidden className="shrink-0">▾</span>
@@ -141,12 +140,10 @@ export function YatrasMobile() {
         )}
       </div>
 
-      {menuAnchor && (
-        <AnchoredMenu anchor={menuAnchor} label={t('nav.yatras')} onClose={() => setMenuAnchor(null)}>
-          {y.yatras.map((it) => (
-            <MenuItem key={it.id} selected={it.id === y.yatra?.id} onSelect={() => { y.select(it.id); setMenuAnchor(null) }}>{it.name}</MenuItem>
-          ))}
-        </AnchoredMenu>
+      {switching && (
+        <YatraSwitcherSheet yatras={y.yatras} currentId={y.yatra?.id} onSelect={y.select} onClose={() => setSwitching(false)}
+          pending={y.create.isPending}
+          create={(name) => y.create.mutate(name, { onSuccess: (created) => { setSwitching(false); navigate(`/yatra/${created.id}/settings`) } })} />
       )}
       {calendarOpen && <CalendarSheet date={y.date} onSelect={y.setDate} onClose={() => setCalendarOpen(false)} />}
       {creating && <CreateSheet onClose={() => setCreating(false)} create={(name) => y.create.mutate(name, { onSuccess: () => setCreating(false) })} pending={y.create.isPending} />}
