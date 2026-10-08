@@ -36,6 +36,15 @@ describe('PracticeEditorMobile', () => {
     expect(api.updateYatraPractice).not.toHaveBeenCalled()
   })
 
+  it('says a bound is out of order once typing pauses', async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const yellow = await screen.findByLabelText('Yellow up to')
+    fireEvent.focus(yellow)
+    fireEvent.change(yellow, { target: { value: '6' } })
+    expect(screen.queryByText('Must be more than 7, the Red bound')).toBeNull()
+    expect(await screen.findByText('Must be more than 7, the Red bound')).toBeInTheDocument()
+  })
+
   it('saves a valid bound and keeps its colours', async () => {
     renderAdmin('/yatra/y1/practice/p1/edit')
     const yellow = await screen.findByLabelText('Yellow up to')

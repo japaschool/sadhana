@@ -32,6 +32,25 @@ describe('GeneralMobile', () => {
     expect(api.updateYatra).not.toHaveBeenCalled()
   })
 
+  it('says what is wrong once typing pauses, not on every keystroke', async () => {
+    renderAdmin('/yatra/y1/admin/general')
+    const name = await screen.findByLabelText('Yatra name')
+    fireEvent.change(name, { target: { value: '' } })
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(await screen.findByRole('alert')).toHaveTextContent("Name can't be empty")
+    expect(name).toHaveAccessibleDescription("Name can't be empty")
+  })
+
+  it('tidies the spaces around a saved name when you leave the field', async () => {
+    renderAdmin('/yatra/y1/admin/general')
+    const name = await screen.findByLabelText('Yatra name')
+    fireEvent.focus(name)
+    fireEvent.change(name, { target: { value: 'New name  ' } })
+    fireEvent.blur(name)
+    expect(name).toHaveValue('New name')
+    await waitFor(() => expect(api.updateYatra).toHaveBeenCalledOnce())
+  })
+
   it('a toggle right after a rename keeps the new name', async () => {
     let release!: () => void
     api.updateYatra.mockImplementationOnce(() => new Promise<void>((r) => { release = r }))

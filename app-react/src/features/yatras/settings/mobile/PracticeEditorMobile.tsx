@@ -103,6 +103,8 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
 
   const [drafts, setDrafts] = useState(() => draftsOf(p, dt))
   const [editing, setEditing] = useState(false)
+  // Errors wait for a pause in typing (or leaving the field), so they aren't announced on every keystroke.
+  const [settled, setSettled] = useState(true)
   const [seen, setSeen] = useState(p)
   // Follow saves, Undo and refetches, but never rewrite the field being typed in.
   if (p !== seen) {
@@ -122,6 +124,7 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
     daily_score: thresholds.ok ? scoreConfig(scoreDir, thresholds.values[0], thresholds.values[1]) : p.daily_score,
   })
   const { schedule, flush } = useDebouncedCommit(() => {
+    setSettled(true)
     const next = fromDrafts()
     if (!sameConfig(next, p)) save(next)
   })
@@ -154,8 +157,9 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
   const field = (key: 'done' | 'bonus' | number) => ({
     value: typeof key === 'number' ? drafts.bounds[key] ?? '' : drafts[key],
     onFocus: () => setEditing(true),
-    onBlur: () => { setEditing(false); flush() },
+    onBlur: () => { setEditing(false); flush(); setSettled(true) },
     onChange: (v: string) => {
+      setSettled(false)
       setDrafts((d) => (typeof key === 'number' ? { ...d, bounds: d.bounds.map((x, j) => (j === key ? v : x)) } : { ...d, [key]: v }))
       schedule()
     },
@@ -193,7 +197,7 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
             {bar && <RangeBar bar={bar} dt={dt} />}
             <div className="grid grid-cols-2 gap-2.5">
               {zones.bounds.map((b, i) => (
-                <ValueField key={i} id={`bound-${i}`} dt={dt} {...field(i)} error={bounds.errors[i] && errorText(bounds.errors[i]!, dt, t)}
+                <ValueField key={i} id={`bound-${i}`} dt={dt} {...field(i)} error={settled && bounds.errors[i] && errorText(bounds.errors[i]!, dt, t)}
                   label={<><Swatch colour={b.colour} />{t('yatraSettings.upTo', { colour: t(zoneKey(b.colour)) })}</>} />
               ))}
             </div>
@@ -202,7 +206,7 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
                 {t('yatraSettings.aboveBest', { value: formatValue(lastBound.to, dt), colour: t(zoneKey(aboveColour(zones))) })}
               </p>
             )}
-            {!bounds.ok && <p className="text-xs font-semibold text-ui-danger">{t('yatraSettings.notSavedYet')}</p>}
+            {settled && !bounds.ok && <p className="text-xs font-semibold text-ui-danger">{t('yatraSettings.notSavedYet')}</p>}
             <div className="flex flex-col gap-2">
               <span className={LABEL}>{t('yatraSettings.emptyCell')}</span>
               <div className="overflow-x-auto">
@@ -240,9 +244,9 @@ function ColoursAndScore({ p, dt, save }: { p: YatraPractice; dt: ScoredType; sa
         </Row>
         <div className="grid grid-cols-2 gap-2.5">
           <ValueField id="score-done" dt={dt} label={t('yatraSettings.doneAt')} {...field('done')}
-            error={thresholds.errors[0] && errorText(thresholds.errors[0]!, dt, t)} />
+            error={settled && thresholds.errors[0] && errorText(thresholds.errors[0]!, dt, t)} />
           <ValueField id="score-bonus" dt={dt} label={t('yatraSettings.bonusAt')} {...field('bonus')}
-            error={thresholds.errors[1] && errorText(thresholds.errors[1]!, dt, t)} />
+            error={settled && thresholds.errors[1] && errorText(thresholds.errors[1]!, dt, t)} />
         </div>
         {green && formatValue(green, dt) !== drafts.done && (
           <button type="button" onClick={doneAtGreen} className="self-start rounded-full bg-ui-accent-soft px-3 py-1.5 text-[13px] font-bold text-ui-accent">
@@ -276,8 +280,9 @@ function ValueField({ id, label, dt, value, error, onChange, onFocus, onBlur }: 
     <div className="flex min-w-0 flex-col gap-1.5">
       <label htmlFor={id} className="flex items-center gap-1.5 text-xs font-bold leading-[1.35] text-ui-muted">{label}</label>
       <input id={id} value={value} inputMode={dt === 'Int' ? 'numeric' : 'text'} placeholder={PLACEHOLDER[dt]} aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : undefined}
         className={`${FIELD} font-ui-mono`} onFocus={onFocus} onBlur={onBlur} onChange={(e) => onChange(e.target.value)} />
-      {error && <p role="alert" className="text-xs font-semibold text-ui-danger">{error}</p>}
+      {error && <p id={`${id}-error`} role="alert" className="text-xs font-semibold text-ui-danger">{error}</p>}
     </div>
   )
 }
