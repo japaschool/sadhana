@@ -1,3 +1,4 @@
+import { lazy } from 'react'
 import { render, screen, act } from '@testing-library/react'
 import { describe, it, expect, beforeEach } from 'vitest'
 import { ByLayout } from './ByLayout'
@@ -29,5 +30,10 @@ describe('ByLayout', () => {
     setViewportWidth(1280)
     render(ui)
     expect(screen.getByText('desktop')).toBeInTheDocument()
+  })
+  it('shows a loader in the new design while a new screen loads, not the old dark one', () => {
+    const Never = lazy(() => new Promise<{ default: () => null }>(() => {}))
+    render(<ByLayout mobile={<Never />} legacy={<p>legacy</p>} />)
+    expect(screen.getByRole('status').closest('.ui-root')).not.toBeNull()
   })
 })
