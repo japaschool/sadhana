@@ -96,3 +96,53 @@ describe('LinkPracticesMobile', () => {
     expect(await screen.findByRole('link', { name: /Manage yatra/ })).toHaveAttribute('href', '/yatra/y1/admin/settings')
   })
 })
+describe('LinkPickerSheet', () => {
+  beforeEach(() => {
+    vi.clearAllMocks(); setViewportWidth(390); useToastStore.setState({ toasts: [] }); mockLinkApi()
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([
+      { id: '1', practice: 'Japa rounds', data_type: 'Int', is_active: true },
+      { id: '2', practice: 'Lecture listening', data_type: 'Duration', is_active: true },
+      { id: '3', practice: 'Book reading', data_type: 'Duration', is_active: true },
+      { id: '4', practice: 'Wake-up time', data_type: 'Time', is_active: true },
+      { id: '5', practice: 'Exercise', data_type: 'Duration', is_active: false },
+    ])
+    api.getYatraUserPractices.mockResolvedValue([
+      { yatra_practice: { id: 'a', practice: 'Reading', data_type: 'Duration' }, user_practice: 'Book reading' },
+      { yatra_practice: { id: 'b', practice: 'Hearing lectures', data_type: 'Duration' }, user_practice: null },
+    ])
+  })
+
+  async function openPicker() {
+    renderLinkScreen()
+    const row = (await screen.findByText('Hearing lectures')).closest('li')!
+    fireEvent.click(within(row).getByText('Lecture listening'))
+    return screen.getByRole('dialog', { name: 'Link to “Hearing lectures”' })
+  }
+
+  it('lists every practice in its group, with reasons', async () => {
+    const sheet = await openPicker()
+    expect(within(sheet).getByText('Only Duration practices can fill it')).toBeInTheDocument()
+    expect(within(sheet).getByRole('button', { name: /Lecture listening/ })).toBeInTheDocument()
+    expect(within(sheet).getByText('Linked to Reading · moving unlinks it there')).toBeInTheDocument()
+    expect(within(sheet).getByText('Time of day · this needs a Duration')).toBeInTheDocument()
+    expect(within(sheet).getByText('Number · this needs a Duration')).toBeInTheDocument()
+    expect(within(sheet).getByText('Inactive · turn it on in My practices')).toBeInTheDocument()
+    expect(within(sheet).getByText('Time of day or Duration?')).toBeInTheDocument()
+  })
+
+  it('Move here sends one request with the link moved', async () => {
+    const sheet = await openPicker()
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Move here' }))
+    await waitFor(() => expect(api.updateYatraUserPractices).toHaveBeenCalledOnce())
+    expect(api.updateYatraUserPractices.mock.calls[0][1].map((i) => i.user_practice)).toEqual([null, 'Book reading'])
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it("Don't link unlinks a linked row", async () => {
+    renderLinkScreen()
+    const row = (await screen.findByText('Reading')).closest('li')!
+    fireEvent.click(within(row).getByText('Book reading'))
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: /Don't link/ }))
+    await waitFor(() => expect(api.updateYatraUserPractices.mock.calls[0][1].map((i) => i.user_practice)).toEqual([null, null]))
+  })
+})

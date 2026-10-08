@@ -3,8 +3,9 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { MobileShell } from '../../../../layouts/mobile/MobileShell'
 import type { UserPractice, YatraUserPracticeItem } from '../../../../types/api'
-import { suggestions, unlinked } from '../linking'
+import { pickerGroups, suggestions, unlinked } from '../linking'
 import { useLinkPractices } from '../useLinkPractices'
+import { LinkPickerSheet } from './LinkPickerSheet'
 import { TypeChip, TypeIcon, typeLabelKey } from './TypeChip'
 
 const CARD = 'rounded-[18px] border border-ui-hairline bg-ui-surface'
@@ -110,8 +111,15 @@ export function LinkPracticesMobile() {
           </div>
         </div>
       )}
-      {/* Task 5 renders LinkPickerSheet for pickerFor; Task 6 renders LeaveSheets for leaving. */}
-      {pickerFor && leaving && null}
+      {pickerFor && (() => {
+        const item = s.items.find((i) => i.yatra_practice.id === pickerFor)
+        return item && (
+          <LinkPickerSheet item={item} groups={pickerGroups(s.items, s.practices, pickerFor)}
+            onPick={(name) => s.link(pickerFor, name)} onClose={() => setPickerFor(null)} />
+        )
+      })()}
+      {/* Task 6 renders LeaveSheets for leaving. */}
+      {leaving && null}
     </>
   )
 }

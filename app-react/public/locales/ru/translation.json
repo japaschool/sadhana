@@ -460,6 +460,23 @@
     "typeBool": "Да / Нет",
     "typeTime": "Время суток",
     "typeDuration": "Длительность",
-    "typeText": "Текст"
+    "typeText": "Текст",
+    "pickerTitle": "Связать с «{{name}}»",
+    "pickerOnly": "Подойдёт только практика типа «{{type}}»",
+    "close": "Закрыть",
+    "groupSuggested": "Предлагаем",
+    "groupOther": "Ваши практики типа «{{type}}»",
+    "dontLink": "Не связывать",
+    "dontLinkHint": "Ваши записи не попадут в таблицу",
+    "groupLinkedHere": "Уже связано в этой ятре",
+    "linkedTo": "Связано с «{{name}}» · там связь исчезнет",
+    "moveHere": "Перенести сюда",
+    "groupCant": "Здесь не подходит",
+    "needsType": "{{has}} · здесь нужна «{{needs}}»",
+    "inactive": "Неактивна · включите в «Моих практиках»",
+    "timeOrDuration": "Время суток или длительность?",
+    "timeHint": "когда это было",
+    "durationHint": "сколько это длилось",
+    "current": "Сейчас"
   }
 }

@@ -450,6 +450,23 @@
     "typeBool": "Yes / No",
     "typeTime": "Time of day",
     "typeDuration": "Duration",
-    "typeText": "Text"
+    "typeText": "Text",
+    "pickerTitle": "Link to “{{name}}”",
+    "pickerOnly": "Only {{type}} practices can fill it",
+    "close": "Close",
+    "groupSuggested": "Suggested",
+    "groupOther": "Your {{type}} practices",
+    "dontLink": "Don't link",
+    "dontLinkHint": "Your entries won't appear",
+    "groupLinkedHere": "Already linked in this yatra",
+    "linkedTo": "Linked to {{name}} · moving unlinks it there",
+    "moveHere": "Move here",
+    "groupCant": "Can't link here",
+    "needsType": "{{has}} · this needs a {{needs}}",
+    "inactive": "Inactive · turn it on in My practices",
+    "timeOrDuration": "Time of day or Duration?",
+    "timeHint": "when it happened",
+    "durationHint": "how long it took",
+    "current": "Current"
   }
 }

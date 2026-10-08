@@ -460,6 +460,23 @@
     "typeBool": "Так / Ні",
     "typeTime": "Час доби",
     "typeDuration": "Тривалість",
-    "typeText": "Текст"
+    "typeText": "Текст",
+    "pickerTitle": "Зв’язати з «{{name}}»",
+    "pickerOnly": "Підійде лише практика типу «{{type}}»",
+    "close": "Закрити",
+    "groupSuggested": "Пропонуємо",
+    "groupOther": "Ваші практики типу «{{type}}»",
+    "dontLink": "Не зв’язувати",
+    "dontLinkHint": "Ваші записи не потраплять у таблицю",
+    "groupLinkedHere": "Уже зв’язано в цій ятрі",
+    "linkedTo": "Зв’язано з «{{name}}» · там зв’язок зникне",
+    "moveHere": "Перенести сюди",
+    "groupCant": "Тут не підходить",
+    "needsType": "{{has}} · тут потрібна «{{needs}}»",
+    "inactive": "Неактивна · увімкніть у «Моїх практиках»",
+    "timeOrDuration": "Час доби чи тривалість?",
+    "timeHint": "коли це сталося",
+    "durationHint": "скільки це тривало",
+    "current": "Зараз"
   }
 }
