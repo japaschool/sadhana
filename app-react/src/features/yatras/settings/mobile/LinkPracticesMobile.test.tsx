@@ -146,3 +146,28 @@ describe('LinkPickerSheet', () => {
     await waitFor(() => expect(api.updateYatraUserPractices.mock.calls[0][1].map((i) => i.user_practice)).toEqual([null, null]))
   })
 })
+describe('Leave yatra', () => {
+  beforeEach(() => { vi.clearAllMocks(); setViewportWidth(390); useToastStore.setState({ toasts: [] }) })
+
+  it('asks first, then leaves and goes to the Yatras screen', async () => {
+    mockLinkApi(false)
+    api.leaveYatra.mockResolvedValue()
+    renderLinkScreen()
+    fireEvent.click(await screen.findByRole('button', { name: 'Leave yatra' }))
+    const sheet = screen.getByRole('dialog', { name: "Leave Balarama's League?" })
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Leave yatra' }))
+    expect(await screen.findByText('Yatras page')).toBeInTheDocument()
+    expect(api.leaveYatra).toHaveBeenCalledWith('y1')
+  })
+
+  it('the last admin gets the explanation and nothing is sent', async () => {
+    mockLinkApi(true) // u1 is the only admin
+    renderLinkScreen()
+    fireEvent.click(await screen.findByRole('button', { name: 'Leave yatra' }))
+    const sheet = screen.getByRole('dialog', { name: "You're the last admin" })
+    expect(within(sheet).getByRole('link', { name: 'Choose another admin' })).toBeInTheDocument()
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(api.leaveYatra).not.toHaveBeenCalled()
+  })
+})

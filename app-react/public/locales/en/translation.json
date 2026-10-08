@@ -467,6 +467,12 @@
     "timeOrDuration": "Time of day or Duration?",
     "timeHint": "when it happened",
     "durationHint": "how long it took",
-    "current": "Current"
+    "current": "Current",
+    "leaveTitle": "Leave {{name}}?",
+    "leaveText": "You'll disappear from its table. Your practices and entries stay in your account. To come back you'll need a new invite.",
+    "lastAdminTitle": "You're the last admin",
+    "lastAdminText": "Last yatra admin can't leave. Add another admin or delete the yatra instead.",
+    "chooseAdmin": "Choose another admin",
+    "deleteYatra": "Delete yatra…"
   }
 }

@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { MobileShell } from '../../../../layouts/mobile/MobileShell'
 import type { UserPractice, YatraUserPracticeItem } from '../../../../types/api'
 import { pickerGroups, suggestions, unlinked } from '../linking'
 import { useLinkPractices } from '../useLinkPractices'
+import { LeaveSheets } from './LeaveSheets'
 import { LinkPickerSheet } from './LinkPickerSheet'
 import { TypeChip, TypeIcon, typeLabelKey } from './TypeChip'
 
@@ -20,6 +21,7 @@ export function LinkPracticesMobile() {
   const { t, i18n } = useTranslation()
   const { id = '' } = useParams()
   const [params] = useSearchParams()
+  const navigate = useNavigate()
   const s = useLinkPractices(id)
   const [pickerFor, setPickerFor] = useState<string | null>(null)
   const [leaving, setLeaving] = useState(false)
@@ -118,8 +120,12 @@ export function LinkPracticesMobile() {
             onPick={(name) => s.link(pickerFor, name)} onClose={() => setPickerFor(null)} />
         )
       })()}
-      {/* Task 6 renders LeaveSheets for leaving. */}
-      {leaving && null}
+      {leaving && s.yatra && (
+        <LeaveSheets yatraId={id} yatraName={s.yatra.name}
+          lastAdmin={!!s.me?.is_admin && s.users.filter((u) => u.is_admin).length === 1}
+          leaving={s.leave.isPending} onClose={() => setLeaving(false)}
+          onLeave={() => s.leave.mutate(undefined, { onSuccess: () => navigate('/yatras', { replace: true }) })} />
+      )}
     </>
   )
 }
