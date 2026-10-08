@@ -85,6 +85,15 @@ describe('PracticeEditorMobile', () => {
     expect(sent().daily_score).toBeNull()
   })
 
+  it("doesn't save a bonus without a done value", async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const done = await screen.findByLabelText('✓ Done at · +1 point')
+    fireEvent.change(done, { target: { value: '' } })
+    fireEvent.blur(done)
+    expect(screen.getByText('Set “Done at” first: the bonus only adds to a done day')).toBeInTheDocument()
+    expect(api.updateYatraPractice).not.toHaveBeenCalled()
+  })
+
   it('offers to start done where Green starts', async () => {
     renderAdmin('/yatra/y1/practice/p1/edit')
     const done = await screen.findByLabelText('✓ Done at · +1 point')

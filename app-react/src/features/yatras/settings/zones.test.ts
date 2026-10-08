@@ -70,6 +70,11 @@ describe('validation', () => {
     expect(checkScore('05:00', '05:30', 'Lower', 'Time').ok).toBe(false)
   })
 
+  it('a bonus needs a done value', () => {
+    expect(checkScore('', '20', 'Higher', 'Int').errors[1]).toEqual({ kind: 'needsDone' })
+    expect(checkScore('', '', 'Higher', 'Int').ok).toBe(true)
+  })
+
   it('both thresholds empty means no daily score', () => {
     expect(scoreConfig('Higher', null, null)).toBeNull()
     expect(scoreConfig('Lower', null, { Int: 3 })).toEqual({ better_direction: 'Lower', mandatory_threshold: null, bonus_rules: [{ threshold: { Int: 3 }, points: 1 }] })

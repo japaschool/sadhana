@@ -54,6 +54,7 @@ export type FieldError =
   | { kind: 'format' }
   | { kind: 'order'; than: PracticeValue; colour: ZoneColour }
   | { kind: 'bonus'; done: PracticeValue; dir: BetterDirection }
+  | { kind: 'needsDone' }
 
 export interface Checked { values: (PracticeValue | null)[]; errors: (FieldError | null)[]; ok: boolean }
 
@@ -73,11 +74,13 @@ export function checkBounds(texts: string[], colours: ZoneColour[], dt: ScoredTy
   return { values, errors, ok: errors.every((e) => !e) }
 }
 
-/** Done and bonus must parse; bonus is at least done (Higher) or at most done (Lower). */
+/** Done and bonus must parse; a bonus needs a done value and is at least done (Higher) or at most done (Lower). */
 export function checkScore(doneText: string, bonusText: string, dir: BetterDirection, dt: ScoredType): Checked {
   const done = parseValue(doneText, dt)
   const bonus = parseValue(bonusText, dt)
   const errors: (FieldError | null)[] = [done === 'invalid' ? { kind: 'format' } : null, bonus === 'invalid' ? { kind: 'format' } : null]
+  // The server counts a bonus only on top of a done threshold; without one, every day's bonus is lost.
+  if (done === null && bonus && bonus !== 'invalid') errors[1] = { kind: 'needsDone' }
   if (done && done !== 'invalid' && bonus && bonus !== 'invalid') {
     const d = zoneNumber(done)!
     const b = zoneNumber(bonus)!

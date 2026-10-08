@@ -87,6 +87,7 @@ const sameConfig = (x: YatraPractice, y: YatraPractice) =>
 
 function errorText(e: FieldError, dt: ScoredType, t: TFunction): string {
   if (e.kind === 'format') return t(`yatraSettings.format${dt}`)
+  if (e.kind === 'needsDone') return t('yatraSettings.bonusNeedsDone')
   if (e.kind === 'order') return t('yatraSettings.mustBeAbove', { value: formatValue(e.than, dt), colour: t(zoneKey(e.colour)) })
   return t(e.dir === 'Higher' ? 'yatraSettings.bonusAtLeast' : 'yatraSettings.bonusAtMost', { value: formatValue(e.done, dt) })
 }
