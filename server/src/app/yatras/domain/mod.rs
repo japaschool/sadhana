@@ -305,14 +305,22 @@ impl YatraPractice {
     ) -> Result<(), AppError> {
         Yatra::ensure_admin_user(conn, user_id, yatra_id)?;
 
-        diesel::update(yatra_practices::table.find(practice.id))
-            .set((
-                yatra_practices::practice.eq(&practice.practice),
-                yatra_practices::colour_zones.eq(&practice.colour_zones),
-                yatra_practices::daily_score.eq(&practice.daily_score),
-            ))
-            .execute(conn)?;
+        // Admin rights are checked for `yatra_id`, so only a practice of that yatra may change.
+        let updated = diesel::update(
+            yatra_practices::table
+                .find(practice.id)
+                .filter(yatra_practices::yatra_id.eq(yatra_id)),
+        )
+        .set((
+            yatra_practices::practice.eq(&practice.practice),
+            yatra_practices::colour_zones.eq(&practice.colour_zones),
+            yatra_practices::daily_score.eq(&practice.daily_score),
+        ))
+        .execute(conn)?;
 
+        if updated == 0 {
+            return Err(AppError::NotFound);
+        }
         Ok(())
     }
 
@@ -749,7 +757,8 @@ impl DailyScore {
             else 0
             end as bonus_score,
             case
-                when nullif(yp.daily_score->'mandatory_threshold', '{}') is not null then 1
+                -- A stored JSON null is no threshold, the same as a missing one.
+                when nullif(nullif(yp.daily_score->'mandatory_threshold', '{}'), 'null') is not null then 1
                 else 0
             end as has_mandatory
         from days d
@@ -787,5 +796,128 @@ impl DailyScore {
         .load::<Self>(conn)?;
 
         Ok(data)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utils::db;
+    use serde_json::json;
+
+    fn user(conn: &mut PgConnection, name: &str) -> Uuid {
+        diesel::insert_into(users::table)
+            .values((
+                users::email.eq(format!("{name}-{}@yatra.test", Uuid::new_v4())),
+                users::hash.eq(""),
+                users::name.eq(name),
+            ))
+            .returning(users::id)
+            .get_result(conn)
+            .unwrap()
+    }
+
+    /// A new yatra with one Int practice, created by `admin`.
+    fn yatra_with_practice(conn: &mut PgConnection, admin: &Uuid) -> (Yatra, YatraPractice) {
+        let yatra = Yatra::create(conn, "Test yatra".into(), admin).unwrap();
+        let record = NewYatraPractice {
+            yatra_id: yatra.id,
+            practice: "Japa".into(),
+            data_type: PracticeDataType::Int,
+        };
+        YatraPractice::create(conn, admin, &record).unwrap();
+        let practice = YatraPractice::get_ordered_yatra_practices(conn, &yatra.id)
+            .unwrap()
+            .remove(0);
+        (yatra, practice)
+    }
+
+    fn in_test_transaction(f: impl FnOnce(&mut PgConnection)) {
+        let mut conn = db::establish_connection().get().unwrap();
+        conn.test_transaction::<_, AppError, _>(|conn| {
+            f(conn);
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn update_practice_only_touches_a_practice_of_that_yatra() {
+        in_test_transaction(|conn| {
+            let a = user(conn, "a");
+            let b = user(conn, "b");
+            let (mine, _) = yatra_with_practice(conn, &a);
+            let (_, theirs) = yatra_with_practice(conn, &b);
+
+            let renamed = YatraPractice {
+                practice: "Hijacked".into(),
+                ..theirs.clone()
+            };
+            let res = YatraPractice::update(conn, &a, &mine.id, &renamed);
+
+            assert!(matches!(res, Err(AppError::NotFound)));
+            let name: String = yatra_practices::table
+                .find(theirs.id)
+                .select(yatra_practices::practice)
+                .first(conn)
+                .unwrap();
+            assert_eq!(name, "Japa");
+        });
+    }
+
+    #[test]
+    fn a_null_done_threshold_is_not_counted_as_one() {
+        in_test_transaction(|conn| {
+            let a = user(conn, "a");
+            let (yatra, practice) = yatra_with_practice(conn, &a);
+            let bonus_only = json!({ "better_direction": "Higher", "mandatory_threshold": null, "bonus_rules": [{ "threshold": { "Int": 5 }, "points": 1 }] });
+            YatraPractice::update(
+                conn,
+                &a,
+                &yatra.id,
+                &YatraPractice {
+                    daily_score: Some(bonus_only),
+                    ..practice
+                },
+            )
+            .unwrap();
+
+            let scores =
+                DailyScore::get_raw_scores(conn, &yatra.id, &chrono::Local::now().date_naive())
+                    .unwrap();
+
+            assert!(!scores.is_empty());
+            assert!(scores.iter().all(|s| s.mandatory_total == 0));
+        });
+    }
+
+    #[test]
+    fn a_statistic_whose_practice_is_gone_has_no_value_and_keeps_its_place() {
+        in_test_transaction(|conn| {
+            let a = user(conn, "a");
+            let (yatra, practice) = yatra_with_practice(conn, &a);
+            let stat = |label: &str, id: Uuid| json!({ "label": label, "practice_id": id, "aggregation": "Count", "time_range": "Last7Days" });
+            let stats = json!({ "visible_to_all": true, "statistics": [stat("Ghost", Uuid::new_v4()), stat("Japa", practice.id)] });
+            let yatra_id = yatra.id;
+            Yatra {
+                statistics: Some(stats),
+                ..yatra
+            }
+            .update(conn, &a)
+            .unwrap();
+
+            let res = YatraStatisticResult::get_stats(
+                conn,
+                &a,
+                &yatra_id,
+                &chrono::Local::now().date_naive(),
+            )
+            .unwrap();
+
+            assert_eq!(
+                res.iter().map(|r| r.label.as_str()).collect::<Vec<_>>(),
+                ["Ghost", "Japa"]
+            );
+            assert!(res[0].value.is_none());
+        });
     }
 }
