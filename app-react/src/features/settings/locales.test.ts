@@ -17,3 +17,18 @@ describe('settings.* translations', () => {
     }
   })
 })
+
+/** Every key of a namespace, nested ones dotted, plural forms folded into their base key. */
+const keysOf = (o: object, prefix = ''): string[] => [...new Set(Object.entries(o).flatMap(([k, v]) =>
+  typeof v === 'object' ? keysOf(v, `${prefix}${k}.`) : [`${prefix}${k.replace(/_(one|few|many|other)$/, '')}`]))].sort()
+
+describe('settings sub-page translations', () => {
+  it('has the same keys in en, ru and uk', () => {
+    const dicts = Object.values(files) as unknown as Record<string, object>[]
+    for (const ns of ['userDetails', 'password', 'help', 'support', 'import', 'auth', 'shared', 'yatraJoin', 'notFound']) {
+      const [en, ...rest] = dicts.map((d) => keysOf(d[ns]))
+      expect(en.length, ns).toBeGreaterThan(0)
+      for (const other of rest) expect(other, ns).toEqual(en)
+    }
+  })
+})

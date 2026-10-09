@@ -165,11 +165,3 @@ export interface YatraUserPracticeItem {
   user_practice: string | null
 }
 
-export interface ImportPreview {
-  columns: string[]
-  sample_rows: string[][]
-}
-
-export interface ImportResult {
-  imported_count: number
-}

@@ -4,7 +4,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { ByLayout } from './ByLayout'
 import { setViewportWidth } from '../test/viewport'
 
-const ui = <ByLayout mobile={<p>mobile</p>} desktop={<p>desktop</p>} legacy={<p>legacy</p>} />
+const ui = <ByLayout mobile={<p>mobile</p>} tablet={<p>tablet</p>} desktop={<p>desktop</p>} />
 
 describe('ByLayout', () => {
   beforeEach(() => setViewportWidth(390))
@@ -14,10 +14,10 @@ describe('ByLayout', () => {
     expect(screen.getByText('mobile')).toBeInTheDocument()
   })
 
-  it('falls back to legacy for a layout without an element (tablet)', () => {
+  it('switches to the tablet element when the viewport widens', () => {
     render(ui)
     act(() => setViewportWidth(800))
-    expect(screen.getByText('legacy')).toBeInTheDocument()
+    expect(screen.getByText('tablet')).toBeInTheDocument()
   })
 
   it('keeps a landscape phone on the mobile element', () => {
@@ -31,9 +31,9 @@ describe('ByLayout', () => {
     render(ui)
     expect(screen.getByText('desktop')).toBeInTheDocument()
   })
-  it('shows a loader in the new design while a new screen loads, not the old dark one', () => {
+  it('shows a loader in the new design while a screen loads', () => {
     const Never = lazy(() => new Promise<{ default: () => null }>(() => {}))
-    render(<ByLayout mobile={<Never />} legacy={<p>legacy</p>} />)
+    render(<ByLayout mobile={<Never />} tablet={null} desktop={null} />)
     expect(screen.getByRole('status').closest('.ui-root')).not.toBeNull()
   })
 })

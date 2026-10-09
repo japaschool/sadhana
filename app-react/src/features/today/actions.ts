@@ -1,6 +1,6 @@
 import { chartsApi } from '../../api/charts'
 import { practicesApi } from '../../api/practices'
-import { toCSV, triggerCSVDownload } from '../../pages/charts/csv'
+import { toCSV, triggerCSVDownload } from '../insights/csv'
 import { useAuthStore } from '../../store/authStore'
 import { toDateStr } from './date'
 

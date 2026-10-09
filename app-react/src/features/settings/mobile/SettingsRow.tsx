@@ -1,5 +1,6 @@
 import type { MouseEvent, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { openInBrowser } from '../../../ui/openInBrowser'
 
 interface SettingsRowProps {
   label: string
@@ -24,14 +25,15 @@ export function SettingsRow({ label, hint, value, to, href, onClick, control, ac
       {control ?? (
         <span className="flex shrink-0 items-center gap-1.5">
           {value && <span className="text-[15px] font-medium text-ui-muted">{value}</span>}
-          <span aria-hidden className="text-lg leading-none text-ui-faint2">›</span>
+          {/* ↗: opens outside the app, in the browser. */}
+          <span aria-hidden className={href ? 'text-[15px] leading-none text-ui-faint2' : 'text-lg leading-none text-ui-faint2'}>{href ? '↗' : '›'}</span>
         </span>
       )}
     </>
   )
   const cls = `flex min-h-[52px] w-full items-center gap-3 bg-ui-surface px-4 text-left ${hint ? 'py-3' : 'py-2'}`
   if (to) return <Link to={to} className={cls}>{body}</Link>
-  if (href) return <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>{body}</a>
+  if (href) return <a href={href} target="_blank" rel="noopener noreferrer" onClick={openInBrowser} className={cls}>{body}</a>
   if (onClick) return <button type="button" onClick={onClick} className={cls}>{body}</button>
   return <div className={cls}>{body}</div>
 }

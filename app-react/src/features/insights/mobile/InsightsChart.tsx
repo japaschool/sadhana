@@ -1,7 +1,7 @@
 import { Bar, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, XAxis, YAxis } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import type { BarLayout } from '../../../api/charts'
-import { formatMinutesAsHHMM, type ChartDataRow, type Trace } from '../../../pages/charts/chartLogic'
+import { formatMinutesAsHHMM, type ChartDataRow, type Trace } from '../chartLogic'
 import { assignAxes, AXES, isLeft, type Axis } from '../axes'
 import { barPlacement, formatDurationTick, seriesRows, formatTick, spansYears, type AverageLine } from '../insightsLogic'
 

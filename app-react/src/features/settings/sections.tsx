@@ -17,7 +17,7 @@ import { isPreview, setPreview } from './releaseChannel'
 import { SettingsRow } from './mobile/SettingsRow'
 
 // Native names on purpose: a user stuck in the wrong language can still find theirs.
-const LANGS = [
+export const LANGS = [
   { code: 'en', name: 'English' },
   { code: 'ru', name: 'Русский' },
   { code: 'uk', name: 'Українська' },

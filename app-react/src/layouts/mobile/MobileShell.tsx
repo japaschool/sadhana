@@ -29,13 +29,14 @@ function TabBar() {
   )
 }
 
-export function MobileShell({ children }: { children: ReactNode }) {
+/** `tabBar={false}`: a page with its own bar at the bottom (a form's Save). */
+export function MobileShell({ children, tabBar = true }: { children: ReactNode; tabBar?: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   useShellBackground(ref)
   return (
-    <div ref={ref} className="ui-root min-h-dvh bg-ui-bg pb-[calc(72px+env(safe-area-inset-bottom))]">
+    <div ref={ref} className={`ui-root min-h-dvh bg-ui-bg ${tabBar ? 'pb-[calc(72px+env(safe-area-inset-bottom))]' : ''}`}>
       {children}
-      <TabBar />
+      {tabBar && <TabBar />}
       <UiToastContainer />
     </div>
   )

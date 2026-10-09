@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { PracticeDataType, UserPractice } from '../../../types/api'
 import { BottomSheet } from '../../../ui/primitives/BottomSheet'
@@ -36,7 +37,9 @@ export function PracticeSheet({ practice, others, busy, onSave, onClose, onDelet
 }) {
   const { t } = useTranslation()
   const saved = parseOptions(practice?.dropdown_variants)
-  const [name, setName] = useState(practice?.practice ?? '')
+  // ?name= pre-fills a new practice (Import CSV's "+" on an unmatched column).
+  const [params] = useSearchParams()
+  const [name, setName] = useState(practice?.practice ?? params.get('name') ?? '')
   const [type, setType] = useState<PracticeDataType | null>(practice?.data_type ?? null)
   const [required, setRequired] = useState(!!practice?.is_required)
   // Hide and Show wait for Save, like every other field here.

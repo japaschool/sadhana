@@ -38,6 +38,10 @@ export const practicesApi = {
     if (res.status === 401) handleUnauthorized()
     if (!res.ok) throw new Error(`Saving ${practice} failed: ${res.status}`)
   },
+  /** Upserts the given practices' values for one day (null clears); others are left alone. */
+  async saveDiaryDay(date: string, entries: { practice: string; value: PracticeValue | null }[]): Promise<void> {
+    await apiClient.put(`/diary/${date}`, { diary_day: entries })
+  },
   async getIncompleteDays(from: string, to: string): Promise<string[]> {
     const res = await apiClient.get<{ days: string[] }>('/diary/incomplete-days', {
       params: { from, to },

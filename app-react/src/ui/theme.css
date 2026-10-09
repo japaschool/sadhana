@@ -1,5 +1,5 @@
-/* New design system (Sadhana Redesign, Turn 3). Tokens are scoped to .ui-root
-   so the legacy DaisyUI dark shell is untouched. Anything portalled must render
+/* Design system (Sadhana Redesign, Turn 3). Tokens are scoped to .ui-root.
+   Anything portalled must render
    inside a .ui-root element too (see ui/primitives/UiPortal.tsx). Light values
    come from frame 3a; dark values only from frame 1a-dark (+ #C2412D danger). */
 .ui-root {
@@ -46,6 +46,15 @@
   --ui-zone-yellow: #F3D9A6;
   --ui-zone-green: #D3E4C3;
   --ui-zone-dark-green: #A6C690;
+  /* Auth & shared reports (Turns 13–14). Error tint, the 4-step "days done" scale, the desktop side panel. */
+  --ui-danger-soft: #FBEAE6;
+  --ui-danger-text: #C2412D;
+  --ui-heat-0: #E3DCCF;
+  --ui-heat-1: #F3D9A6;
+  --ui-heat-2: #E8A93A;
+  --ui-heat-3: #B57A14;
+  --ui-on-heat-3: #FFFFFF;
+  --ui-panel: #EFE7D9;
 
   color: var(--ui-ink);
   /* Literal, not var(--font-ui): Tailwind may tree-shake unused theme vars. */
@@ -97,6 +106,14 @@
   --ui-zone-yellow: #5A4A2E;
   --ui-zone-green: #34493A;
   --ui-zone-dark-green: #437039;
+  --ui-danger-soft: #3A2226;
+  --ui-danger-text: #F08A74;
+  --ui-heat-0: #2C2738;
+  --ui-heat-1: #5A4A2E;
+  --ui-heat-2: #A57A2F;
+  --ui-heat-3: #F0B54A;
+  --ui-on-heat-3: #15121D;
+  --ui-panel: #211D2C;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -142,6 +159,14 @@
     --ui-zone-yellow: #5A4A2E;
     --ui-zone-green: #34493A;
     --ui-zone-dark-green: #437039;
+    --ui-danger-soft: #3A2226;
+    --ui-danger-text: #F08A74;
+    --ui-heat-0: #2C2738;
+    --ui-heat-1: #5A4A2E;
+    --ui-heat-2: #A57A2F;
+    --ui-heat-3: #F0B54A;
+    --ui-on-heat-3: #15121D;
+    --ui-panel: #211D2C;
   }
 }
 
@@ -173,6 +198,14 @@
   --color-ui-primary: var(--ui-primary);
   --color-ui-on-primary: var(--ui-on-primary);
   --color-ui-good: var(--ui-good);
+  --color-ui-danger-soft: var(--ui-danger-soft);
+  --color-ui-danger-text: var(--ui-danger-text);
+  --color-ui-heat-0: var(--ui-heat-0);
+  --color-ui-heat-1: var(--ui-heat-1);
+  --color-ui-heat-2: var(--ui-heat-2);
+  --color-ui-heat-3: var(--ui-heat-3);
+  --color-ui-on-heat-3: var(--ui-on-heat-3);
+  --color-ui-panel: var(--ui-panel);
   --font-ui: Manrope, ui-sans-serif, system-ui, sans-serif;
   --font-ui-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }

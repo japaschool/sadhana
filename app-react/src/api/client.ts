@@ -25,7 +25,9 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (res) => res,
   (error) => {
-    if (error.response?.status === 401 && !error.config?.url?.includes('/users/login')) handleUnauthorized()
+    // Signing in and changing the password answer 401 for a wrong password, not a lost session.
+    const url = error.config?.url ?? ''
+    if (error.response?.status === 401 && !url.includes('/users/login') && !url.includes('/user/password')) handleUnauthorized()
     return Promise.reject(error)
   }
 )

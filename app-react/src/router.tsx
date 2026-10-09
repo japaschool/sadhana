@@ -1,14 +1,10 @@
 import { lazy, Suspense } from 'react'
 import type { ReactNode } from 'react'
 import { createBrowserRouter, isRouteErrorResponse, Navigate, useParams, useRouteError } from 'react-router-dom'
-import { ProtectedRoute } from './components/layout/ProtectedRoute'
-import { GuestRoute } from './components/layout/GuestRoute'
+import { ProtectedRoute } from './layouts/ProtectedRoute'
+import { GuestRoute } from './layouts/GuestRoute'
 import { ByLayout, UiLoading } from './layouts/ByLayout'
 
-// AppShell is the authenticated layout; lazy-load it so the guest/login
-// bundle doesn't pull in the whole nav subtree (TopBar/BottomNav/
-// SettingsModal/HeaderMenu) and framer-motion via PageTransition.
-const AppShell = lazy(() => import('./components/layout/AppShell').then((m) => ({ default: m.AppShell })))
 const TodayMobileScreen = lazy(() => import('./features/today/mobile/TodayMobile').then((m) => ({ default: m.TodayMobileScreen })))
 const InsightsMobileScreen = lazy(() => import('./features/insights/mobile/InsightsMobile').then((m) => ({ default: m.InsightsMobileScreen })))
 const SettingsMobileScreen = lazy(() => import('./features/settings/mobile/SettingsMobile').then((m) => ({ default: m.SettingsMobileScreen })))
@@ -30,7 +26,7 @@ const ChartsSettings = lazy(() => import('./features/settings/SettingsLists').th
 const YatrasSettings = lazy(() => import('./features/settings/SettingsLists').then((m) => ({ default: m.YatrasSettings })))
 const PracticeEditorMobile = lazy(() => import('./features/yatras/settings/mobile/PracticeEditorMobile').then((m) => ({ default: m.PracticeEditorMobile })))
 
-/** Redesigned on every layout: no legacy fallback, just the loading state while the code arrives. */
+/** One screen for every layout: just the loading state while the code arrives. */
 const ui = (element: ReactNode) => <Suspense fallback={<UiLoading />}>{element}</Suspense>
 
 /** The chart editor's old URL: it lives under Settings now. */
@@ -60,49 +56,32 @@ function RootError() {
     ? error.message
     : 'Something went wrong'
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 text-center">
+    <div className="ui-root flex min-h-dvh items-center justify-center bg-ui-bg p-8 text-center text-ui-ink">
       <div>
-        <p className="text-lg font-semibold text-error mb-2">Something went wrong</p>
-        <p className="text-sm text-base-content/70">{message}</p>
-        <button className="btn btn-sm mt-4" onClick={() => window.location.href = '/'}>Go home</button>
+        <p className="mb-2 text-lg font-semibold text-ui-danger">Something went wrong</p>
+        <p className="text-sm text-ui-ink2">{message}</p>
+        <button className="mt-4 rounded-xl bg-ui-control px-4 py-2 text-sm font-semibold" onClick={() => window.location.href = '/'}>Go home</button>
       </div>
     </div>
   )
 }
 
-// Auth pages
-const LoginPage = lazy(() => import('./pages/auth/LoginPage').then(m => ({ default: m.LoginPage })))
-const RegisterPage = lazy(() => import('./pages/auth/RegisterPage').then(m => ({ default: m.RegisterPage })))
-const ConfirmationPage = lazy(() => import('./pages/auth/ConfirmationPage').then(m => ({ default: m.ConfirmationPage })))
-const PwdResetRequestPage = lazy(() => import('./pages/auth/PwdResetRequestPage').then(m => ({ default: m.PwdResetRequestPage })))
-const PwdResetPage = lazy(() => import('./pages/auth/PwdResetPage').then(m => ({ default: m.PwdResetPage })))
-
-// Home
-const HomePage = lazy(() => import('./pages/home/HomePage').then(m => ({ default: m.HomePage })))
-
-// Charts
-const ChartsPage = lazy(() => import('./pages/charts/ChartsPage').then(m => ({ default: m.ChartsPage })))
-const SharedChartPage = lazy(() => import('./pages/charts/SharedChartPage').then(m => ({ default: m.SharedChartPage })))
-
-// Yatras
-const YatrasPage = lazy(() => import('./pages/yatras/YatrasPage').then(m => ({ default: m.YatrasPage })))
-const YatraJoinPage = lazy(() => import('./pages/yatras/YatraJoinPage').then(m => ({ default: m.YatraJoinPage })))
-
-// Settings
-const SettingsPage = lazy(() => import('./pages/settings/SettingsPage').then(m => ({ default: m.SettingsPage })))
-const EditUserPage = lazy(() => import('./pages/settings/EditUserPage').then(m => ({ default: m.EditUserPage })))
-const EditPasswordPage = lazy(() => import('./pages/settings/EditPasswordPage').then(m => ({ default: m.EditPasswordPage })))
-const MyPracticesPage = lazy(() => import('./pages/settings/MyPracticesPage').then(m => ({ default: m.MyPracticesPage })))
-const PracticeNewPage = lazy(() => import('./pages/settings/PracticeNewPage').then(m => ({ default: m.PracticeNewPage })))
-const PracticeEditPage = lazy(() => import('./pages/settings/PracticeEditPage').then(m => ({ default: m.PracticeEditPage })))
-const ImportPage = lazy(() => import('./pages/settings/ImportPage').then(m => ({ default: m.ImportPage })))
-
-// Help
-const HelpPage = lazy(() => import('./pages/help/HelpPage').then(m => ({ default: m.HelpPage })))
-const SupportPage = lazy(() => import('./pages/help/SupportPage').then(m => ({ default: m.SupportPage })))
-
-// Misc
-const NotFoundPage = lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })))
+// Auth pages, the 404 and the yatra invite share one form kit and frame (features/auth).
+const Login = lazy(() => import('./features/auth/Login').then((m) => ({ default: m.Login })))
+const Register = lazy(() => import('./features/auth/Register').then((m) => ({ default: m.Register })))
+const ConfirmRegistration = lazy(() => import('./features/auth/Register').then((m) => ({ default: m.ConfirmRegistration })))
+const ResetRequest = lazy(() => import('./features/auth/Reset').then((m) => ({ default: m.ResetRequest })))
+const ResetPassword = lazy(() => import('./features/auth/Reset').then((m) => ({ default: m.ResetPassword })))
+const YatraJoin = lazy(() => import('./features/auth/YatraJoin').then((m) => ({ default: m.YatraJoin })))
+const NotFound = lazy(() => import('./features/auth/NotFound').then((m) => ({ default: m.NotFound })))
+const SharedMobile = lazy(() => import('./features/shared/SharedReports').then((m) => ({ default: m.SharedMobile })))
+const SharedTablet = lazy(() => import('./features/shared/SharedReports').then((m) => ({ default: m.SharedTablet })))
+const SharedDesktop = lazy(() => import('./features/shared/SharedReports').then((m) => ({ default: m.SharedDesktop })))
+const UserDetails = lazy(() => import('./features/settings/UserDetails').then((m) => ({ default: m.UserDetails })))
+const ChangePassword = lazy(() => import('./features/settings/ChangePassword').then((m) => ({ default: m.ChangePassword })))
+const ImportCsv = lazy(() => import('./features/settings/ImportCsv').then((m) => ({ default: m.ImportCsv })))
+const Help = lazy(() => import('./features/settings/Help').then((m) => ({ default: m.Help })))
+const SendMessage = lazy(() => import('./features/settings/SendMessage').then((m) => ({ default: m.SendMessage })))
 
 export const router = createBrowserRouter([
   // Guest-only routes
@@ -110,69 +89,47 @@ export const router = createBrowserRouter([
     errorElement: <RootError />,
     element: <GuestRoute />,
     children: [
-      { path: '/login', element: <LoginPage /> },
-      { path: '/register', element: <RegisterPage /> },
-      { path: '/register/:id', element: <ConfirmationPage /> },
-      { path: '/reset', element: <PwdResetRequestPage /> },
-      { path: '/reset/:id', element: <PwdResetPage /> },
+      { path: '/login', element: ui(<Login />) },
+      { path: '/register', element: ui(<Register />) },
+      { path: '/register/:id', element: ui(<ConfirmRegistration />) },
+      { path: '/reset', element: ui(<ResetRequest />) },
+      { path: '/reset/:id', element: ui(<ResetPassword />) },
     ],
   },
   // Authenticated routes
   {
     element: <ProtectedRoute />,
     children: [
-      {
-        // Redesigned layouts render their own shell; the rest fall back to the legacy AppShell.
-        // Desktop has no Log screen: the log is a panel beside every screen.
-        path: '/',
-        element: <ByLayout mobile={<TodayMobileScreen />} tablet={<TodayTabletScreen />} desktop={<Navigate to="/charts" replace />} legacy={<AppShell />} />,
-        children: [{ index: true, element: <HomePage /> }],
-      },
-      {
-        path: '/settings',
-        element: <ByLayout mobile={<SettingsMobileScreen />} tablet={<SettingsTabletScreen />} desktop={<SettingsDesktopScreen />} legacy={<AppShell />} />,
-        children: [{ index: true, element: <SettingsPage /> }],
-      },
-      {
-        path: '/charts',
-        element: <ByLayout mobile={<InsightsMobileScreen />} tablet={<InsightsTabletScreen />} desktop={<InsightsDesktopScreen />} legacy={<AppShell />} />,
-        children: [{ index: true, element: <ChartsPage /> }],
-      },
-      {
-        path: '/yatras',
-        element: <ByLayout mobile={<YatrasMobileScreen />} tablet={<YatrasTabletScreen />} desktop={<YatrasDesktopScreen />} legacy={<AppShell />} />,
-        children: [{ index: true, element: <YatrasPage /> }],
-      },
+      // Each layout renders its own shell. Desktop has no Log screen: the log is a panel beside every screen.
+      { path: '/', element: <ByLayout mobile={<TodayMobileScreen />} tablet={<TodayTabletScreen />} desktop={<Navigate to="/charts" replace />} /> },
+      { path: '/settings', element: <ByLayout mobile={<SettingsMobileScreen />} tablet={<SettingsTabletScreen />} desktop={<SettingsDesktopScreen />} /> },
+      { path: '/charts', element: <ByLayout mobile={<InsightsMobileScreen />} tablet={<InsightsTabletScreen />} desktop={<InsightsDesktopScreen />} /> },
+      { path: '/yatras', element: <ByLayout mobile={<YatrasMobileScreen />} tablet={<YatrasTabletScreen />} desktop={<YatrasDesktopScreen />} /> },
       // One screen per layout; Add and Edit are sheets over the list on mobile, a panel beside it on tablet and desktop.
-      { path: '/settings/practices', element: <ByLayout mobile={<PracticesMobileScreen />} tablet={<PracticesWide />} desktop={<PracticesWide />} legacy={<AppShell />} />, children: [{ index: true, element: <MyPracticesPage /> }] },
-      { path: '/settings/practices/new', element: <ByLayout mobile={<PracticesMobileScreen />} tablet={<PracticesWide />} desktop={<PracticesWide />} legacy={<AppShell />} />, children: [{ index: true, element: <PracticeNewPage /> }] },
-      { path: '/settings/practices/:id', element: <ByLayout mobile={<PracticesMobileScreen />} tablet={<PracticesWide />} desktop={<PracticesWide />} legacy={<AppShell />} />, children: [{ index: true, element: <PracticeEditPage /> }] },
+      { path: '/settings/practices', element: <ByLayout mobile={<PracticesMobileScreen />} tablet={<PracticesWide />} desktop={<PracticesWide />} /> },
+      { path: '/settings/practices/new', element: <ByLayout mobile={<PracticesMobileScreen />} tablet={<PracticesWide />} desktop={<PracticesWide />} /> },
+      { path: '/settings/practices/:id', element: <ByLayout mobile={<PracticesMobileScreen />} tablet={<PracticesWide />} desktop={<PracticesWide />} /> },
       { path: '/user/practices', element: <Navigate to="/settings/practices" replace /> },
       { path: '/user/practice/new', element: <Navigate to="/settings/practices/new" replace /> },
       { path: '/user/practice/:id/edit', element: <ToPracticeSettings /> },
       { path: '/settings/charts', element: ui(<ChartsSettings />) },
       { path: '/settings/yatras', element: ui(<YatrasSettings />) },
       { path: '/charts/:id/edit', element: <ToChartSettings /> },
-      { path: '/settings/charts/:id', element: <ByLayout mobile={<ChartEditorMobileScreen />} tablet={<ChartEditorWide />} desktop={<ChartEditorWide />} legacy={null} /> },
+      { path: '/settings/charts/:id', element: <ByLayout mobile={<ChartEditorMobileScreen />} tablet={<ChartEditorWide />} desktop={<ChartEditorWide />} /> },
       { path: '/yatra/:id/settings', element: ui(<YatraSettingsHome />) },
       { path: '/yatra/:id/links', element: ui(<LinkPracticesScreen />) },
       { path: '/yatra/:id/admin/settings', element: <ToSettingsHub /> },
       { path: '/yatra/:id/admin/:section', element: ui(<AdminSectionMobile />) },
       { path: '/yatra/:id/practice/:practice_id/edit', element: ui(<PracticeEditorMobile />) },
-      {
-        element: <AppShell />,
-        children: [
-          { path: '/yatra/:id/join', element: <YatraJoinPage /> },
-          { path: '/settings/edit-user', element: <EditUserPage /> },
-          { path: '/settings/edit-password', element: <EditPasswordPage /> },
-          { path: '/settings/import', element: <ImportPage /> },
-          { path: '/help', element: <HelpPage /> },
-          { path: '/help/support-form', element: <SupportPage /> },
-        ],
-      },
+      { path: '/settings/edit-user', element: ui(<UserDetails />) },
+      { path: '/settings/edit-password', element: ui(<ChangePassword />) },
+      { path: '/settings/import', element: ui(<ImportCsv />) },
+      { path: '/help', element: ui(<Help />) },
+      { path: '/help/support-form', element: ui(<SendMessage />) },
+      { path: '/yatra/:id/join', element: ui(<YatraJoin />) },
     ],
   },
   // Public routes
-  { path: '/shared/:id', element: <SharedChartPage /> },
-  { path: '*', element: <NotFoundPage /> },
+  { path: '/shared/:id', element: <ByLayout mobile={<SharedMobile />} tablet={<SharedTablet />} desktop={<SharedDesktop />} /> },
+  { path: '*', element: ui(<NotFound />) },
 ])

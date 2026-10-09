@@ -2,7 +2,7 @@ import type { BarLayout, ReportDataEntry } from '../../api/charts'
 import {
   averageForType, formatMinutesAsHHMM, valueToNumber,
   type ChartDataRow, type Trace, type TraceInput,
-} from '../../pages/charts/chartLogic'
+} from './chartLogic'
 import { assignAxes, type Axis } from './axes'
 import { fromDateStr } from '../today/date'
 import { formatDuration, type DurationUnits } from '../today/values'

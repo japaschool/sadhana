@@ -1,5 +1,5 @@
 import type { PracticeValue } from '../../types/api'
-import { formatTimeInput } from '../../pages/home/inputFormat'
+import { formatTimeInput } from './inputFormat'
 
 export interface DurationUnits { h: string; min: string }
 

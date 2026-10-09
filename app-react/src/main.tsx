@@ -6,9 +6,9 @@ import './i18n'
 import './index.css'
 import { router } from './router'
 import { useAuthStore } from './store/authStore'
-import { Spinner } from './components/ui/Spinner'
 import { authApi } from './api/auth'
 import { applyThemePref } from './ui/theme'
+import { UiLoading } from './layouts/ByLayout'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,7 +45,7 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <Suspense fallback={<Spinner />}><RouterProvider router={router} /></Suspense>
+      <Suspense fallback={<UiLoading />}><RouterProvider router={router} /></Suspense>
     </QueryClientProvider>
   </React.StrictMode>
 )

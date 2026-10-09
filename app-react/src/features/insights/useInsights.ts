@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { chartsApi } from '../../api/charts'
 import type { GraphReport, Report, ReportDuration } from '../../api/charts'
 import { practicesApi } from '../../api/practices'
-import { buildChartData, tracesFor } from '../../pages/charts/chartLogic'
+import { buildChartData, tracesFor } from './chartLogic'
 import { addDays, fromDateStr, toDateStr } from '../today/date'
 import { averageLines, headline } from './insightsLogic'
 
@@ -29,33 +29,42 @@ export function writeStored(id: string) {
 }
 
 /** `logDate` (desktop) pins the window's end to the log panel's day instead of the screen's own end date.
- *  `withTables` also lists Grid (table) reports; layouts without a table view leave them out. */
-export function useInsights(logDate?: Date, withTables = false) {
+ *  `withTables` also lists Grid (table) reports; layouts without a table view leave them out.
+ *  `sharedUser` reads that user's shared reports (/shared/:userId) instead: there's no All practices, the first report is the default. */
+export function useInsights(logDate?: Date, withTables = false, sharedUser?: string) {
   const { i18n } = useTranslation()
   const locale = i18n.language || 'en'
-  const reportsQ = useQuery({ queryKey: ['reports'], queryFn: chartsApi.getReports })
-  const practicesQ = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices })
-  const [stored, setStored] = useState(readStored)
+  const src = sharedUser
+    ? {
+      key: ['shared', sharedUser],
+      reports: () => chartsApi.getSharedReports(sharedUser),
+      practices: () => chartsApi.getSharedPractices(sharedUser),
+      data: (cob: string, d: ReportDuration) => chartsApi.getSharedReportData(sharedUser, cob, d),
+    }
+    : { key: [], reports: chartsApi.getReports, practices: practicesApi.getUserPractices, data: chartsApi.getReportData }
+  const reportsQ = useQuery({ queryKey: [...src.key, 'reports'], queryFn: src.reports, retry: !sharedUser })
+  const practicesQ = useQuery({ queryKey: [...src.key, 'practices'], queryFn: src.practices })
+  const [stored, setStored] = useState(sharedUser ? '' : readStored)
   const [range, setRange] = useState<Range>('30d')
   const [end, setEndState] = useState<Date | null>(null)
 
   const reports = (reportsQ.data ?? []).filter((r) => withTables || isGraph(r))
   // An unknown or deleted id (or a Grid one, without tables) simply isn't found, so the screen shows All practices.
-  const report = reports.find((r) => r.id === stored) ?? null
+  const report = reports.find((r) => r.id === stored) ?? (sharedUser ? reports[0] ?? null : null)
   const duration = DURATION[range]
   const todayCob = toDateStr(new Date())
   const endCob = toDateStr(logDate ?? end ?? new Date())
 
   const current = useQuery({
-    queryKey: ['report-data', endCob, duration],
-    queryFn: () => chartsApi.getReportData(endCob, duration),
+    queryKey: [...src.key, 'report-data', endCob, duration],
+    queryFn: () => src.data(endCob, duration),
   })
   // From the response, so it matches the server's calendar-month/-year arithmetic. All data has no previous window.
   const first = range === 'all' ? undefined : current.data?.[0]?.cob_date
   const prevEnd = first ? toDateStr(addDays(fromDateStr(first), -1)) : null
   const previous = useQuery({
-    queryKey: ['report-data', prevEnd, duration],
-    queryFn: () => chartsApi.getReportData(prevEnd!, duration),
+    queryKey: [...src.key, 'report-data', prevEnd, duration],
+    queryFn: () => src.data(prevEnd!, duration),
     enabled: prevEnd !== null,
   })
 
@@ -68,7 +77,7 @@ export function useInsights(logDate?: Date, withTables = false) {
     reports,
     report,
     selectedId: report?.id ?? ALL,
-    select: (id: string) => { setStored(id); writeStored(id) },
+    select: (id: string) => { setStored(id); if (!sharedUser) writeStored(id) },
     range,
     setRange,
     end,
@@ -83,5 +92,6 @@ export function useInsights(logDate?: Date, withTables = false) {
     hasData: entries.some((e) => names.has(e.practice) && e.value !== null && e.value !== undefined),
     isLoading: reportsQ.isLoading || practicesQ.isLoading || current.isLoading,
     isError: current.isError,
+    reportsError: reportsQ.isError,
   }
 }

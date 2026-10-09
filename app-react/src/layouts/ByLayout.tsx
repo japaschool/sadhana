@@ -4,13 +4,12 @@ import { useTranslation } from 'react-i18next'
 import { useLayout } from './useLayout'
 
 interface ByLayoutProps {
-  mobile?: ReactNode
-  tablet?: ReactNode
-  desktop?: ReactNode
-  legacy: ReactNode
+  mobile: ReactNode
+  tablet: ReactNode
+  desktop: ReactNode
 }
 
-/** While a redesigned screen's code loads: the new palette, so there's no flash of the old dark theme. */
+/** While a screen's code loads. */
 export function UiLoading() {
   const { t } = useTranslation()
   return (
@@ -21,8 +20,7 @@ export function UiLoading() {
   )
 }
 
-/** Renders the current layout's element, or `legacy` until that layout is redesigned. */
-export function ByLayout({ legacy, ...layouts }: ByLayoutProps) {
-  const element = layouts[useLayout()]
-  return element ? <Suspense fallback={<UiLoading />}>{element}</Suspense> : <>{legacy}</>
+/** Renders the current layout's element. */
+export function ByLayout(layouts: ByLayoutProps) {
+  return <Suspense fallback={<UiLoading />}>{layouts[useLayout()]}</Suspense>
 }

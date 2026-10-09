@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { ReportDataEntry } from '../../api/charts'
-import type { Trace } from '../../pages/charts/chartLogic'
+import type { Trace } from './chartLogic'
 import {
   averageDailyTotal, headline, formatHeadline, formatDelta, averageLines,
   traceAverageLabel, barPlacement, seriesRows, formatDay, formatTick, windowLabel, formatDurationTick, cellText,
