@@ -16,8 +16,9 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 60_000,
-      // At least the saved cache's maxAge: a query collected from memory is also dropped from the next save.
-      gcTime: CACHE_MAX_AGE,
+      // Never collect from memory: a collected query is also dropped from the next save. CACHE_MAX_AGE would overflow
+      // setTimeout (max 2^31-1 ms) and collect at once; restore is still bounded by the persister's maxAge.
+      gcTime: Infinity,
       retry: 1,
       refetchOnWindowFocus: true,
       networkMode: 'offlineFirst',
