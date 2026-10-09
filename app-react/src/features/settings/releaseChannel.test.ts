@@ -62,6 +62,7 @@ describe('switchChannel', () => {
     const done = switchChannel()
     await vi.advanceTimersByTimeAsync(0)
     expect(update).toHaveBeenCalledOnce()
+    expect(reload).not.toHaveBeenCalled()
     onChange!()
     await done
     expect(reload).toHaveBeenCalledOnce()
@@ -69,8 +70,19 @@ describe('switchChannel', () => {
 
   it('reloads anyway after 10 s', async () => {
     const done = switchChannel()
-    await vi.advanceTimersByTimeAsync(10_000)
+    await vi.advanceTimersByTimeAsync(9_999)
+    expect(reload).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(1)
     await done
+    expect(reload).toHaveBeenCalledOnce()
+  })
+
+  it('reloads when getRegistration rejects', async () => {
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: { getRegistration: () => Promise.reject(new Error('no sw')), addEventListener: () => {} },
+    })
+    await switchChannel()
     expect(reload).toHaveBeenCalledOnce()
   })
 

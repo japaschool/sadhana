@@ -17,7 +17,7 @@ export function setPreview(on: boolean): void {
  *  Fetch the other channel's worker (it takes over at once) and reload on the takeover, or after 10 s anyway. */
 export async function switchChannel(timeoutMs = 10_000): Promise<void> {
   const sw = navigator.serviceWorker
-  const reg = await sw?.getRegistration()
+  const reg = await sw?.getRegistration().catch(() => undefined)
   if (reg) {
     await new Promise<void>((resolve) => {
       sw.addEventListener('controllerchange', () => resolve(), { once: true })
