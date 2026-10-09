@@ -2,7 +2,7 @@
 
 Status as of `redesign` @ `2ea6e9f` (2026-10-09), checked by reading the code against the previous version of this list. The React app was not built and its tests were not run for this review.
 
-**Summary:** the Docker build, service worker takeover, token/language compatibility, preview toggle, CI and the API mismatches are done. Still open before merge: the iOS device check, the API smoke test, offline mode/PWA, and cleanup.
+**Summary:** the Docker build, service worker takeover, token/language compatibility, preview toggle, CI and the API mismatches are done. Offline mode is implemented (preview device check pending). Still open before merge: the iOS device check, the API smoke test, PWA, and cleanup.
 
 Paths below refer to the `redesign` branch.
 
@@ -19,13 +19,14 @@ Done: the Apple endpoint is deleted, Google sign-in checks `aud` via tokeninfo a
 
 ## P1: offline mode
 
-Spec: `docs/superpowers/specs/2026-10-09-offline-mode-design.md`. The browser/device checks (spec §3 manual checklist, including the Rust-UI takeover) have not been run yet.
+Spec: `docs/superpowers/specs/2026-10-09-offline-mode-design.md`. The Rust-UI takeover was verified locally in Chrome (2026-10-09): queued Rust writes are moved and sent (newest value wins), `UPDATE_READY` reaches the Rust page, the reload lands on React, and offline saves queue (202 + `X-Queued`) and sync. The rest of the spec §3 checklist is still to run on preview.
 
 - [x] Takeover queue: done: the worker moves the Rust worker's `SadhanaProPostDB` queue into the outbox.
 - [x] Precache manifest and fonts: done: the shell is precached from `/precache-manifest.js` into `static-vr-<sha>`, fonts included.
 - [x] Opening the app offline leaves `user` empty: done: the user is saved locally and restored offline.
 - [x] Update handshake: done: the page updates via the waiting worker and applies it when the app goes to the background.
 - [x] `#reset` switch: done: wipes all caches except the outbox.
+- [x] Rust-UI takeover, checked locally in Chrome: done.
 - [ ] Device check (spec §3 manual checklist) on the preview channel.
 
 ## P1: loading and app open
