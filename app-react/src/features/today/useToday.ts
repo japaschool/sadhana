@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { practicesApi } from '../../api/practices'
+import { failedWithoutData } from '../../api/queryState'
 import { useToast } from '../../hooks/useToast'
 import type { DiaryEntry, PracticeDataType, PracticeValue, UserPractice } from '../../types/api'
 import { fromDateStr, nineDayWindow, toDateStr } from './date'
@@ -118,8 +119,12 @@ export function useToday(date: Date) {
     incomplete: new Set(incompleteQ.data ?? []),
     save,
     failed,
-    isLoading: practicesQ.isLoading || diaryQ.isLoading,
-    isError: practicesQ.isError || diaryQ.isError,
+    // The day never blocks the screen: rows render from the practices; an unloaded day is blank and still editable
+    // (each PUT sets one practice, so entering a value never touches the others on the server).
+    isLoading: practicesQ.isLoading,
+    isError: failedWithoutData(practicesQ),
+    dayLoading: diaryQ.isLoading,
+    dayFailed: failedWithoutData(diaryQ),
     seedStarters: () => seed.mutate(),
     isSeeding: seed.isPending,
   }

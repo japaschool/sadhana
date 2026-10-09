@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { failedWithoutData } from '../../api/queryState'
 import { chartsApi } from '../../api/charts'
 import type { GraphReport, Report, ReportDuration } from '../../api/charts'
 import { practicesApi } from '../../api/practices'
@@ -91,7 +92,7 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     averages: averageLines(traces, entries, barLayout, todayCob),
     hasData: entries.some((e) => names.has(e.practice) && e.value !== null && e.value !== undefined),
     isLoading: reportsQ.isLoading || practicesQ.isLoading || current.isLoading,
-    isError: current.isError,
-    reportsError: reportsQ.isError,
+    isError: failedWithoutData(current),
+    reportsError: failedWithoutData(reportsQ),
   }
 }

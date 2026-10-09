@@ -2,9 +2,9 @@ import { useTranslation } from 'react-i18next'
 import type { TodaySummary } from '../useToday'
 import { capitalize } from '../values'
 
-interface DateHeaderProps { date: Date; summary: TodaySummary; onOpenCalendar: (anchor: HTMLElement) => void }
+interface DateHeaderProps { date: Date; summary: TodaySummary; onOpenCalendar: (anchor: HTMLElement) => void; dayLoading?: boolean }
 
-export function DateHeader({ date, summary, onOpenCalendar }: DateHeaderProps) {
+export function DateHeader({ date, summary, onOpenCalendar, dayLoading }: DateHeaderProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const title = capitalize(new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'long' }).format(date), locale)
@@ -17,7 +17,7 @@ export function DateHeader({ date, summary, onOpenCalendar }: DateHeaderProps) {
         <span>{title}</span>
         <span aria-hidden className="-mt-1 ml-1 h-[7px] w-[7px] rotate-45 border-r-2 border-b-2 border-ui-accent" />
       </span>
-      <span className="text-xs text-ui-muted">{line}</span>
+      <span aria-busy={dayLoading || undefined} className={`text-xs text-ui-muted transition-opacity ${dayLoading ? 'opacity-40' : ''}`}>{line}</span>
     </button>
   )
 }

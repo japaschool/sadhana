@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { failedWithoutData } from '../../api/queryState'
 import { yatrasApi } from '../../api/yatras'
 import { isSameDay, toDateStr } from '../today/date'
 import { useLogDate } from '../today/useLogDate'
@@ -42,6 +43,6 @@ export function useYatras() {
     date, setDate, isToday: isSameDay(date, new Date()),
     data: dataQ.data,
     isLoading: listQ.isLoading || dataQ.isLoading,
-    isError: listQ.isError || dataQ.isError,
+    isError: failedWithoutData(listQ) || (!!yatra && failedWithoutData(dataQ)),
   }
 }

@@ -77,4 +77,12 @@ describe('TodayMobile', () => {
     renderScreen()
     expect(await screen.findByRole('button', { name: 'Add starter practices' })).toBeInTheDocument()
   })
+
+  it('shows the rows and a note when the day cannot be loaded', async () => {
+    api.getDiaryEntries.mockRejectedValue(new Error('offline'))
+    renderScreen()
+    expect(await screen.findByText(/Couldn't load this day/)).toBeInTheDocument()
+    expect(screen.getByText('Wake up')).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: 'Reading' })).toBeInTheDocument()
+  })
 })

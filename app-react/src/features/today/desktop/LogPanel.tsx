@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { SyncBanner } from '../SyncBanner'
+import { DayFailedNote, SyncBanner } from '../SyncBanner'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import { ListGroup } from '../../../ui/primitives/ListGroup'
 import { PanelPopover } from '../../../ui/primitives/PanelPopover'
@@ -49,7 +49,7 @@ export function LogPanel({ date, onDate }: { date: Date; onDate: (d: Date) => vo
       className="sticky top-0 flex h-dvh w-[360px] shrink-0 flex-col border-l border-ui-control bg-ui-surface xl:w-[400px]">
       <div className="flex flex-col gap-2 border-b border-ui-hairline px-3 pt-[22px]">
         <div className="flex items-start justify-between gap-3 pl-3">
-          <DateHeader date={date} summary={today.summary} onOpenCalendar={setCalendarAnchor} />
+          <DateHeader date={date} summary={today.summary} dayLoading={today.dayLoading} onOpenCalendar={setCalendarAnchor} />
           <div className="flex shrink-0 items-center">
             <button type="button" aria-label={t('today.prevWeek')} onClick={() => onDate(addDays(date, -7))} className={STEP}>‹</button>
             <button type="button" aria-label={t('today.nextWeek')} onClick={() => onDate(addDays(date, 7))} className={STEP}>›</button>
@@ -77,12 +77,15 @@ export function LogPanel({ date, onDate }: { date: Date; onDate: (d: Date) => vo
         ) : today.practices.length === 0 ? (
           <NoPractices onSeed={today.seedStarters} seeding={today.isSeeding} />
         ) : (
-          <ListGroup label={t('today.group')}>
-            {today.practices.map((p) => (
-              <PracticeRow key={`${p.id}-${dateStr}`} practice={p} value={today.values[p.practice]}
-                failed={today.failed === p.practice} onSave={(v) => today.save(p, v)} />
-            ))}
-          </ListGroup>
+          <>
+            {today.dayFailed && <DayFailedNote />}
+            <ListGroup label={t('today.group')}>
+              {today.practices.map((p) => (
+                <PracticeRow key={`${p.id}-${dateStr}`} practice={p} value={today.values[p.practice]}
+                  failed={today.failed === p.practice} onSave={(v) => today.save(p, v)} />
+              ))}
+            </ListGroup>
+          </>
         )}
       </div>
 

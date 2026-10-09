@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { SyncBanner } from '../SyncBanner'
+import { DayFailedNote, SyncBanner } from '../SyncBanner'
 import { AppBar, type AppBarAction } from '../../../layouts/mobile/AppBar'
 import { MobileShell } from '../../../layouts/mobile/MobileShell'
 import { ListGroup } from '../../../ui/primitives/ListGroup'
@@ -29,7 +29,7 @@ export function TodayMobile() {
 
   return (
     <>
-      <AppBar title={<DateHeader date={date} summary={today.summary} onOpenCalendar={() => setCalendarOpen(true)} />} actions={actions} />
+      <AppBar title={<DateHeader date={date} summary={today.summary} dayLoading={today.dayLoading} onOpenCalendar={() => setCalendarOpen(true)} />} actions={actions} />
       <SyncBanner className="mx-4 mb-2" />
       <DayStrip9 date={date} incomplete={today.incomplete} onSelect={setDate} />
       <div className="flex flex-col gap-4 px-4 pb-6">
@@ -46,12 +46,15 @@ export function TodayMobile() {
         ) : today.practices.length === 0 ? (
           <NoPractices onSeed={today.seedStarters} seeding={today.isSeeding} />
         ) : (
-          <ListGroup label={t('today.group')}>
-            {today.practices.map((p) => (
-              <PracticeRow key={`${p.id}-${dateStr}`} practice={p} value={today.values[p.practice]}
-                failed={today.failed === p.practice} onSave={(v) => today.save(p, v)} />
-            ))}
-          </ListGroup>
+          <>
+            {today.dayFailed && <DayFailedNote />}
+            <ListGroup label={t('today.group')}>
+              {today.practices.map((p) => (
+                <PracticeRow key={`${p.id}-${dateStr}`} practice={p} value={today.values[p.practice]}
+                  failed={today.failed === p.practice} onSave={(v) => today.save(p, v)} />
+              ))}
+            </ListGroup>
+          </>
         )}
       </div>
       {calendarOpen && <CalendarSheet date={date} onSelect={setDate} onClose={() => setCalendarOpen(false)} />}

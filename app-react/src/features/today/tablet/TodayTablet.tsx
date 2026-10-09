@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { SyncBanner } from '../SyncBanner'
+import { DayFailedNote, SyncBanner } from '../SyncBanner'
 import { TabletShell } from '../../../layouts/tablet/TabletShell'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import type { UserPractice } from '../../../types/api'
@@ -56,7 +56,7 @@ export function TodayTablet() {
               {title}
             </button>
           </h1>
-          <span className="text-sm text-ui-muted">{line}</span>
+          <span aria-busy={today.dayLoading || undefined} className={`text-sm text-ui-muted transition-opacity ${today.dayLoading ? 'opacity-40' : ''}`}>{line}</span>
         </div>
         <button type="button" aria-label={t('today.more')} aria-haspopup="menu" onClick={(e) => setMoreAnchor(e.currentTarget)}
           className="flex h-11 w-11 shrink-0 items-center justify-center gap-[3px] rounded-full border border-ui-hairline bg-ui-surface">
@@ -84,6 +84,7 @@ export function TodayTablet() {
         <NoPractices onSeed={today.seedStarters} seeding={today.isSeeding} />
       ) : (
         <section aria-label={t('today.group')} className="flex flex-col gap-2">
+          {today.dayFailed && <DayFailedNote />}
           <h2 className="px-1.5 text-[11px] font-bold uppercase tracking-[.1em] text-ui-muted">{t('today.group')}</h2>
           {/* Two columns only from 768px: at the 640px tablet minimum inline inputs need the full width. */}
           <div className="grid items-start gap-4 md:grid-cols-2">
