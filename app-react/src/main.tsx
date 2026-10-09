@@ -1,7 +1,9 @@
 import React, { Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient } from '@tanstack/react-query'
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
+import { CACHE_MAX_AGE, CACHE_VERSION, persister, shouldPersist } from './api/persister'
 import './i18n'
 import './index.css'
 import { router } from './router'
@@ -14,16 +16,21 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 60_000,
-      gcTime: 5 * 60_000,
+      // At least the saved cache's maxAge: a query collected from memory is also dropped from the next save.
+      gcTime: CACHE_MAX_AGE,
       retry: 1,
       refetchOnWindowFocus: true,
       networkMode: 'offlineFirst',
     },
+    // Send writes even when the browser says offline: the worker queues diary entries; other writes fail as usual.
+    mutations: { networkMode: 'always' },
   },
 })
 
-// A different user (or none) must not see the last one's cached practices and diary.
-useAuthStore.subscribe((s, prev) => { if (s.token !== prev.token) queryClient.clear() })
+// A different user (or none) must not see the last one's cached practices and diary, in memory or on disk.
+useAuthStore.subscribe((s, prev) => {
+  if (s.token !== prev.token) { queryClient.clear(); void persister.removeClient() }
+})
 
 async function hydrateAuth() {
   const { setAuth, setLoading, token } = useAuthStore.getState()
@@ -47,9 +54,14 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider client={queryClient} persistOptions={{
+      persister,
+      maxAge: CACHE_MAX_AGE,
+      buster: CACHE_VERSION,
+      dehydrateOptions: { shouldDehydrateQuery: shouldPersist, shouldDehydrateMutation: () => false },
+    }}>
       <Suspense fallback={<UiLoading />}><RouterProvider router={router} /></Suspense>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   </React.StrictMode>
 )
 hydrateAuth()
