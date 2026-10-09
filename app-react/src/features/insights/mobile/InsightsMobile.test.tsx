@@ -127,7 +127,7 @@ describe('InsightsMobile', () => {
     ])
   })
 
-  it('offers Edit and Delete for a report; Edit opens the legacy editor on it', async () => {
+  it('offers Edit and Delete for a report; Edit opens its chart settings', async () => {
     localStorage.setItem('insights-report', 'r1')
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(
@@ -135,7 +135,7 @@ describe('InsightsMobile', () => {
         <MemoryRouter initialEntries={['/charts']}>
           <Routes>
             <Route path="/charts" element={<InsightsMobileScreen />} />
-            <Route path="/charts/manage" element={<LocationProbe />} />
+            <Route path="/charts/:id/edit" element={<LocationProbe />} />
           </Routes>
         </MemoryRouter>
       </QueryClientProvider>,
@@ -144,7 +144,7 @@ describe('InsightsMobile', () => {
     await openMore()
     expect(screen.getByRole('menuitem', { name: 'Delete report' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('menuitem', { name: `Edit “${LONG}”` }))
-    expect(screen.getByTestId('location')).toHaveTextContent('/charts/manage?report=r1')
+    expect(screen.getByTestId('location')).toHaveTextContent('/charts/r1/edit')
   })
 
   it('deletes the report after confirming and falls back to All practices', async () => {

@@ -22,10 +22,18 @@ const YatrasTabletScreen = lazy(() => import('./features/yatras/tablet/YatrasTab
 const YatraSettingsHome = lazy(() => import('./features/yatras/settings/SettingsFrame').then((m) => ({ default: m.YatraSettingsHome })))
 const LinkPracticesScreen = lazy(() => import('./features/yatras/settings/mobile/LinkPracticesMobile').then((m) => ({ default: m.LinkPracticesMobile })))
 const AdminSectionMobile = lazy(() => import('./features/yatras/settings/mobile/AdminSectionMobile').then((m) => ({ default: m.AdminSectionMobile })))
+const ChartEditorMobileScreen = lazy(() => import('./features/insights/settings/mobile/ChartEditorMobile').then((m) => ({ default: m.ChartEditorMobileScreen })))
+const ChartEditorWide = lazy(() => import('./features/insights/settings/wide/ChartEditorWide').then((m) => ({ default: m.ChartEditorWide })))
 const PracticeEditorMobile = lazy(() => import('./features/yatras/settings/mobile/PracticeEditorMobile').then((m) => ({ default: m.PracticeEditorMobile })))
 
 /** Redesigned on every layout: no legacy fallback, just the loading state while the code arrives. */
 const ui = (element: ReactNode) => <Suspense fallback={<UiLoading />}>{element}</Suspense>
+
+/** Tablet and desktop still edit charts on the old page. */
+function ToChartsManage() {
+  const { id = '' } = useParams()
+  return <Navigate to={`/charts/manage?report=${encodeURIComponent(id)}`} replace />
+}
 
 /** The old admin page's URL: its sections are listed on the yatra settings hub now. */
 function ToSettingsHub() {
@@ -127,6 +135,7 @@ export const router = createBrowserRouter([
         element: <ByLayout mobile={<YatrasMobileScreen />} tablet={<YatrasTabletScreen />} desktop={<YatrasDesktopScreen />} legacy={<AppShell />} />,
         children: [{ index: true, element: <YatrasPage /> }],
       },
+      { path: '/charts/:id/edit', element: <ByLayout mobile={<ChartEditorMobileScreen />} tablet={<ChartEditorWide />} desktop={<ChartEditorWide />} legacy={<ToChartsManage />} /> },
       { path: '/yatra/:id/settings', element: ui(<YatraSettingsHome />) },
       { path: '/yatra/:id/links', element: ui(<LinkPracticesScreen />) },
       { path: '/yatra/:id/admin/settings', element: <ToSettingsHub /> },

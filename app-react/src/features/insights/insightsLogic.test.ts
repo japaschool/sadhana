@@ -116,11 +116,11 @@ describe('averageLines', () => {
   const rows = [e('2026-10-05', 'A', dur(30)), e('2026-10-05', 'B', dur(20))]
   it('one line per trace with show_average, in its colour and on its axis', () => {
     const traces = [tr('A', 'Duration', { showAverage: true, yAxis: 'Y2' }), tr('B', 'Duration')]
-    expect(averageLines(traces, rows, 'Grouped', TODAY)).toEqual([{ axis: 'num-right', value: 30, color: 'c-A' }])
+    expect(averageLines(traces, rows, 'Grouped', TODAY)).toEqual([{ axis: 'Y2', value: 30, color: 'c-A' }])
   })
   it('stacked: one accent line at the average total of the bars', () => {
     const traces = [tr('A', 'Duration', { type_: 'Bar', showAverage: true }), tr('B', 'Duration', { type_: 'Bar' })]
-    expect(averageLines(traces, rows, 'Stacked', TODAY)).toEqual([{ axis: 'num', value: 50, color: 'var(--ui-accent)' }])
+    expect(averageLines(traces, rows, 'Stacked', TODAY)).toEqual([{ axis: 'Y', value: 50, color: 'var(--ui-accent)' }])
   })
   it('stacked: only sums bars on the first bar axis, never mixing units', () => {
     const mixed = [...rows, e('2026-10-05', 'Y', { Bool: true })]
@@ -129,7 +129,7 @@ describe('averageLines', () => {
       tr('Y', 'Bool', { type_: 'Bar' }),
       tr('B', 'Duration', { type_: 'Bar' }),
     ]
-    expect(averageLines(traces, mixed, 'Stacked', TODAY)).toEqual([{ axis: 'num', value: 50, color: 'var(--ui-accent)' }])
+    expect(averageLines(traces, mixed, 'Stacked', TODAY)).toEqual([{ axis: 'Y', value: 50, color: 'var(--ui-accent)' }])
   })
   it('none when no trace asks for one', () => {
     expect(averageLines([tr('A', 'Duration', { type_: 'Bar' })], rows, 'Stacked', TODAY)).toEqual([])
@@ -155,10 +155,10 @@ describe('barPlacement', () => {
 
   it('Stacked: one stack per Y axis, only the top bar of each stack is rounded', () => {
     expect(barPlacement(bars, 'Stacked')).toEqual([
-      { stackId: 'num', rounded: false, fillOpacity: 1 },
+      { stackId: 'Y', rounded: false, fillOpacity: 1 },
       null,
-      { stackId: 'num', rounded: true, fillOpacity: 1 },
-      { stackId: 'num-right', rounded: true, fillOpacity: 1 },
+      { stackId: 'Y', rounded: true, fillOpacity: 1 },
+      { stackId: 'Y2', rounded: true, fillOpacity: 1 },
     ])
   })
 

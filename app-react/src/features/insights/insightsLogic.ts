@@ -1,13 +1,14 @@
 import type { BarLayout, ReportDataEntry } from '../../api/charts'
 import {
-  averageForType, formatMinutesAsHHMM, resolveAxisId, valueToNumber,
-  type AxisId, type ChartDataRow, type Trace, type TraceInput,
+  averageForType, formatMinutesAsHHMM, valueToNumber,
+  type ChartDataRow, type Trace, type TraceInput,
 } from '../../pages/charts/chartLogic'
+import { assignAxes, type Axis } from './axes'
 import { fromDateStr } from '../today/date'
 import { formatDuration, type DurationUnits } from '../today/values'
 
 export interface Headline { kind: 'duration' | 'count' | 'time'; value: number; delta: number | null }
-export interface AverageLine { axis: AxisId; value: number; color: string }
+export interface AverageLine { axis: Axis; value: number; color: string }
 
 const forTrace = (rows: ReportDataEntry[], name: string) => rows.filter((e) => e.practice === name)
 
@@ -56,16 +57,17 @@ export function formatDelta(pct: number): string {
 // ponytail: a stacked report's single line uses the first bar's axis; stacks split across Y1/Y2 get no second line.
 export function averageLines(traces: Trace[], rows: ReportDataEntry[], barLayout: BarLayout, todayCob: string): AverageLine[] {
   if (!traces.some((t) => t.showAverage)) return []
-  const bars = traces.filter((t) => t.type_ === 'Bar')
+  const axes = assignAxes(traces)
+  const bars = traces.flatMap((t, i) => (t.type_ === 'Bar' ? [i] : []))
   if (barLayout === 'Stacked' && bars.length) {
-    const axis = resolveAxisId(bars[0].yAxis, bars[0].dataType)
-    const stack = bars.filter((t) => resolveAxisId(t.yAxis, t.dataType) === axis)
+    const axis = axes[bars[0]]
+    const stack = bars.filter((i) => axes[i] === axis).map((i) => traces[i])
     const value = averageDailyTotal(rows, stack, todayCob)
     return value === null ? [] : [{ axis, value, color: 'var(--ui-accent)' }]
   }
-  return traces.filter((t) => t.showAverage).flatMap((t) => {
-    const value = averageForType(forTrace(rows, t.name), t.dataType, todayCob)
-    return value === null ? [] : [{ axis: resolveAxisId(t.yAxis, t.dataType), value, color: t.color }]
+  return traces.flatMap((t, i) => {
+    const value = t.showAverage ? averageForType(forTrace(rows, t.name), t.dataType, todayCob) : null
+    return value === null ? [] : [{ axis: axes[i], value, color: t.color }]
   })
 }
 
@@ -115,15 +117,15 @@ export interface BarPlacement { stackId?: string; xAxisId?: string; rounded: boo
 /** How each trace is drawn as a bar for a report's bar layout (null for non-bars), by position.
  *  Mirrors Plotly's group / relative / overlay bar modes in the old Yew chart. */
 export function barPlacement(traces: Trace[], barLayout: BarLayout): (BarPlacement | null)[] {
-  const axisOf = (t: Trace) => resolveAxisId(t.yAxis, t.dataType)
+  const axes = assignAxes(traces)
   let nthBar = 0
   return traces.map((t, i) => {
     if (t.type_ !== 'Bar') return null
     const n = nthBar++
     if (barLayout === 'Stacked') {
-      const stackId = axisOf(t)
+      const stackId = axes[i]
       // ponytail: the top trace is rounded even on days it is 0, leaving a square top there.
-      const top = !traces.slice(i + 1).some((b) => b.type_ === 'Bar' && axisOf(b) === stackId)
+      const top = !traces.some((b, j) => j > i && b.type_ === 'Bar' && axes[j] === stackId)
       return { stackId, rounded: top, fillOpacity: 1 }
     }
     if (barLayout === 'Overlaid') {

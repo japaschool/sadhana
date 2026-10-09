@@ -1,7 +1,8 @@
 import { Bar, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, XAxis, YAxis } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import type { BarLayout } from '../../../api/charts'
-import { formatMinutesAsHHMM, resolveAxisId, type AxisId, type ChartDataRow, type Trace } from '../../../pages/charts/chartLogic'
+import { formatMinutesAsHHMM, type ChartDataRow, type Trace } from '../../../pages/charts/chartLogic'
+import { assignAxes, AXES, isLeft, type Axis } from '../axes'
 import { barPlacement, formatDurationTick, seriesRows, formatTick, spansYears, type AverageLine } from '../insightsLogic'
 
 const TICK = { fontSize: 11, fontFamily: "'IBM Plex Mono', ui-monospace, monospace", fill: 'var(--ui-muted)' }
@@ -15,18 +16,23 @@ export function InsightsChart({ rows, traces, barLayout, averages, height = 170 
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const units = { h: t('today.unitH'), min: t('insights.tickMin') }
-  const axisOf = (tr: Trace) => resolveAxisId(tr.yAxis, tr.dataType)
-  const used = new Set(traces.map(axisOf))
-  const numTick = (axis: AxisId) =>
-    traces.filter((tr) => axisOf(tr) === axis).every((tr) => tr.dataType === 'Duration')
-      ? (v: number) => formatDurationTick(v, units)
-      : (v: number) => String(v)
+  const axes = assignAxes(traces)
+  const used = AXES.filter((a) => axes.includes(a))
+  const on = (a: Axis) => traces.filter((_, i) => axes[i] === a)
+  const isUnit = (a: Axis) => ['Bool', 'Text'].includes(on(a)[0].dataType)
+  // ponytail: one axis with ticks per side; Left 2, Right 2, … keep their own scale but no ticks.
+  const left = used.find((a) => isLeft(a) && !isUnit(a))
+  const right = used.find((a) => !isLeft(a) && !isUnit(a))
+  const tickFormat = (a: Axis) => {
+    const dt = on(a)[0].dataType
+    if (dt === 'Time') return formatMinutesAsHHMM
+    return dt === 'Duration' ? (v: number) => formatDurationTick(v, units) : (v: number) => String(v)
+  }
   const xTicks = rows.length
     ? [...new Set([rows[0], rows[Math.floor((rows.length - 1) / 2)], rows[rows.length - 1]].map((r) => r.cob))]
     : []
-  const timeLeft = used.has('time') && !used.has('num')
-  const hasLeft = used.has('num') || timeLeft
-  const hasRight = used.has('num-right') || (used.has('time') && !timeLeft)
+  const hasLeft = !!left
+  const hasRight = !!right
   const multiYear = rows.length > 0 && spansYears(rows[0].cob, rows[rows.length - 1].cob)
   const placement = barPlacement(traces, barLayout)
   const data = seriesRows(rows, traces)
@@ -39,15 +45,17 @@ export function InsightsChart({ rows, traces, barLayout, averages, height = 170 
         <CartesianGrid vertical={false} stroke="var(--ui-hairline)" />
         <XAxis dataKey="cob" ticks={xTicks} interval={0} tickFormatter={(c: string) => formatTick(c, locale, multiYear)} {...AXIS} />
         {overlayAxes.map((id) => <XAxis key={id} xAxisId={id} dataKey="cob" hide />)}
-        {used.has('num') && <YAxis yAxisId="num" orientation="left" width={40} domain={[0, 'auto']} tickFormatter={numTick('num')} {...AXIS} />}
-        {used.has('num-right') && <YAxis yAxisId="num-right" orientation="right" width={40} domain={[0, 'auto']} tickFormatter={numTick('num-right')} {...AXIS} />}
-        {used.has('time') && (
-          <YAxis yAxisId="time" orientation={timeLeft ? 'left' : 'right'} width={44} domain={['auto', 'auto']}
-            tickFormatter={formatMinutesAsHHMM} {...AXIS} />
-        )}
-        {used.has('unit') && <YAxis yAxisId="unit" hide domain={[0, 1.1]} />}
+        {used.map((a) => {
+          const dt = on(a)[0].dataType
+          const single = on(a).length === 1 ? on(a)[0].color : undefined
+          return (
+            <YAxis key={a} yAxisId={a} orientation={isLeft(a) ? 'left' : 'right'} hide={a !== left && a !== right} width={dt === 'Time' ? 44 : 40}
+              domain={isUnit(a) ? [0, 1.1] : dt === 'Time' ? ['auto', 'auto'] : [0, 'auto']} tickFormatter={tickFormat(a)}
+              {...AXIS} tick={{ ...TICK, fill: single ?? TICK.fill }} />
+          )
+        })}
         {traces.map((tr, i) => {
-          const axis = axisOf(tr)
+          const axis = axes[i]
           const bar = placement[i]
           if (bar) {
             return (

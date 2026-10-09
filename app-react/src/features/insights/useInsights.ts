@@ -10,7 +10,7 @@ import { averageLines, headline } from './insightsLogic'
 
 export const ALL = '__all__'
 const KEY = 'insights-report'
-const COLORS = Array.from({ length: 8 }, (_, i) => `var(--ui-chart-${i + 1})`)
+export const COLORS = Array.from({ length: 8 }, (_, i) => `var(--ui-chart-${i + 1})`)
 
 export type Range = '7d' | '30d' | '90d' | '1y' | 'all'
 export const RANGES: Range[] = ['7d', '30d', '90d', '1y', 'all']
@@ -24,7 +24,7 @@ function readStored(): string {
   try { return localStorage.getItem(KEY) ?? ALL } catch { return ALL }
 }
 
-function writeStored(id: string) {
+export function writeStored(id: string) {
   try { localStorage.setItem(KEY, id) } catch { /* blocked storage: the choice lasts for this visit */ }
 }
 

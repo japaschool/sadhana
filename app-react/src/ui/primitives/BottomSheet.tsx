@@ -7,11 +7,15 @@ import { UiPortal } from './UiPortal'
 const FOCUSABLE = 'button:not([disabled]), input, textarea, [tabindex]:not([tabindex="-1"])'
 const CLOSE_DRAG_PX = 100
 
-interface BottomSheetProps { label: string; onClose: () => void; children: ReactNode }
+interface BottomSheetProps {
+  label: string; onClose: () => void; children: ReactNode
+  /** Mobile: a lower ceiling than 92dvh, e.g. to stop under something kept in view. */
+  maxHeight?: string
+}
 
 // ponytail: no exit animation (needs AnimatePresence at every call site); add if the snap-close feels abrupt.
 /** A sheet from the bottom; on desktop, a dialog in the middle of the screen. */
-export function BottomSheet({ label, onClose, children }: BottomSheetProps) {
+export function BottomSheet({ label, onClose, children, maxHeight }: BottomSheetProps) {
   const ref = useRef<HTMLDivElement>(null)
   const dialog = useLayout() === 'desktop'
 
@@ -57,6 +61,7 @@ export function BottomSheet({ label, onClose, children }: BottomSheetProps) {
         aria-label={label}
         tabIndex={-1}
         onKeyDown={onKeyDown}
+        style={{ maxHeight }}
         // Tablet (useLayout's query): one practice column wide — (content − 2·36px padding − 16px gap) / 2 —
         // centred in the area right of the 88px rail; floored at a phone's width for the 640–767px single-column range.
         className="fixed inset-x-0 bottom-0 z-50 [@media(min-width:640px)_and_(min-height:500px)]:left-[88px] [@media(min-width:640px)_and_(min-height:500px)]:mx-auto [@media(min-width:640px)_and_(min-height:500px)]:w-[max(375px,calc(50vw-88px))] flex max-h-[92dvh] flex-col gap-[18px] overflow-y-auto rounded-t-[28px] bg-ui-sheet px-5 pt-2.5 pb-[calc(30px+env(safe-area-inset-bottom))] outline-none"

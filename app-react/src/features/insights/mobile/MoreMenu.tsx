@@ -8,6 +8,7 @@ import { useToast } from '../../../hooks/useToast'
 import type { AppBarAction } from '../../../layouts/mobile/AppBar'
 import { BottomSheet } from '../../../ui/primitives/BottomSheet'
 import { copyShareLink, downloadCsv } from '../../today/actions'
+import { NewChartSheet } from '../settings/mobile/NewChartSheet'
 import type { Report } from '../../../api/charts'
 
 export function useMoreMenu(report: Report | null): { actions: AppBarAction[]; sheet: ReactNode } {
@@ -16,6 +17,7 @@ export function useMoreMenu(report: Report | null): { actions: AppBarAction[]; s
   const qc = useQueryClient()
   const { showToast } = useToast()
   const [confirming, setConfirming] = useState(false)
+  const [creating, setCreating] = useState(false)
   const remove = useMutation({
     mutationFn: (id: string) => chartsApi.deleteReport(id),
     onSuccess: () => { setConfirming(false); void qc.invalidateQueries({ queryKey: ['reports'] }) },
@@ -23,9 +25,12 @@ export function useMoreMenu(report: Report | null): { actions: AppBarAction[]; s
   })
 
   const actions: AppBarAction[] = [
-    { label: t('insights.newChart'), onSelect: () => navigate('/charts/new') },
+    { label: t('insights.newChart'), onSelect: () => setCreating(true) },
     ...(report
-      ? [{ label: t('insights.editReport', { name: report.name }), onSelect: () => navigate(`/charts/manage?report=${encodeURIComponent(report.id)}`) }]
+      ? [{
+        label: t('insights.editReport', { name: report.name }),
+        onSelect: () => navigate(`/charts/${report.id}/edit`),
+      }]
       : []),
     { label: t('charts.shareLink'), onSelect: () => { if (copyShareLink()) showToast({ message: t('charts.copied'), variant: 'success' }) } },
     { label: t('charts.downloadCsv'), onSelect: () => { downloadCsv().catch(() => showToast({ message: t('common.error'), variant: 'error' })) } },
@@ -51,5 +56,5 @@ export function useMoreMenu(report: Report | null): { actions: AppBarAction[]; s
     </BottomSheet>
   ) : null
 
-  return { actions, sheet }
+  return { actions, sheet: <>{sheet}{creating && <NewChartSheet onClose={() => setCreating(false)} />}</> }
 }
