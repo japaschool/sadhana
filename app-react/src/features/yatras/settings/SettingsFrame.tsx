@@ -6,8 +6,6 @@ import { DesktopShell } from '../../../layouts/desktop/DesktopShell'
 import { MobileShell } from '../../../layouts/mobile/MobileShell'
 import { TabletShell } from '../../../layouts/tablet/TabletShell'
 import { useLayout } from '../../../layouts/useLayout'
-import type { Yatra } from '../../../types/api'
-import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import { SettingsRow } from '../../settings/mobile/SettingsRow'
 import { LeaveSheets } from './mobile/LeaveSheets'
 import { useLinkPractices } from './useLinkPractices'
@@ -39,33 +37,6 @@ function useSections(id: string) {
     loading: a.isLoading || l.isLoading,
     error: a.isError || l.isError,
   }
-}
-
-/** The yatra's name; picks another yatra, staying on the same section. */
-function YatraSwitcher({ id, yatras, className }: { id: string; yatras: Yatra[]; className: string }) {
-  const { t } = useTranslation()
-  const navigate = useNavigate()
-  const { pathname } = useLocation()
-  const [anchor, setAnchor] = useState<HTMLElement | null>(null)
-  const name = yatras.find((y) => y.id === id)?.name
-  if (!name) return null
-  // A practice belongs to one yatra, so its editor goes back to the hub.
-  const rest = /^\/yatra\/[^/]+\/(links|admin\/[a-z]+)$/.exec(pathname)?.[1] ?? 'settings'
-  return (
-    <>
-      <button type="button" aria-haspopup="menu" onClick={(e) => setAnchor(e.currentTarget)}
-        className={`flex min-h-8 min-w-0 items-center gap-1 self-start font-bold text-ui-accent ${className}`}>
-        <span className="truncate">{name}</span><span aria-hidden className="shrink-0">▾</span>
-      </button>
-      {anchor && (
-        <AnchoredMenu anchor={anchor} label={t('nav.yatras')} onClose={() => setAnchor(null)}>
-          {yatras.map((y) => (
-            <MenuItem key={y.id} selected={y.id === id} onSelect={() => { setAnchor(null); navigate(`/yatra/${y.id}/${rest}`) }}>{y.name}</MenuItem>
-          ))}
-        </AnchoredMenu>
-      )}
-    </>
-  )
 }
 
 function LeaveYatra({ id, l, className }: { id: string; l: Links; className: string }) {
@@ -112,8 +83,10 @@ function SectionColumn({ id }: { id: string }) {
     <nav aria-label={t('yatraSettings.hubTitle')}
       className="sticky top-0 flex h-dvh w-[248px] shrink-0 flex-col gap-1 overflow-y-auto border-r border-ui-control px-3 pt-[calc(32px+env(safe-area-inset-top))] pb-[calc(24px+env(safe-area-inset-bottom))]">
       <div className="flex flex-col gap-0.5 px-3 pb-4">
-        <YatraSwitcher id={id} yatras={s.l.yatras} className="text-[13px]" />
-        <p className="text-[22px] leading-tight font-extrabold tracking-[-0.01em] text-ui-ink">{t('yatraSettings.hubTitle')}</p>
+        <Link to="/settings/yatras" className="flex min-h-8 items-center gap-1 self-start text-[13px] font-bold text-ui-accent">
+          <span aria-hidden>‹</span>{t('settings.yatras')}
+        </Link>
+        <p className="text-[22px] leading-tight font-extrabold tracking-[-0.01em] break-words text-ui-ink">{s.l.yatra?.name}</p>
       </div>
       <p className={`${GROUP_LABEL} px-3 pb-1`}>{t('yatraSettings.sectionYou')}</p>
       {item('links', s.links.to, s.links.label, s.links.count)}
@@ -167,7 +140,7 @@ export function SettingsFrame({ title, back, subtitle, intro, action, aside, wid
   const ready = !loading && !error
 
   if (layout === 'mobile') {
-    const up = back ?? { to: `/yatra/${id}/settings`, label: t('yatraSettings.hubTitle') }
+    const up = back ?? { to: `/yatra/${id}/settings`, label: l.yatra?.name ?? t('yatraSettings.hubTitle') }
     return (
       <MobileShell>
         <header className="sticky top-0 z-30 bg-ui-bg pt-[env(safe-area-inset-top)]">
@@ -242,8 +215,8 @@ function HubMobile({ id }: { id: string }) {
   const { t } = useTranslation()
   const s = useSections(id)
   return (
-    <SettingsFrame title={t('yatraSettings.hubTitle')} back={{ to: '/settings', label: t('nav.settings') }}
-      subtitle={<YatraSwitcher id={id} yatras={s.l.yatras} className="text-[15px]" />} loading={s.loading} error={s.error}>
+    <SettingsFrame title={s.l.yatra?.name} back={{ to: '/settings/yatras', label: t('settings.yatras') }}
+      subtitle={null} loading={s.loading} error={s.error}>
       {() => (
         <>
           <section aria-label={t('yatraSettings.sectionYou')} className="flex flex-col gap-2">

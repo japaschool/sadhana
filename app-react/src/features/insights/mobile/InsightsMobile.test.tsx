@@ -135,7 +135,7 @@ describe('InsightsMobile', () => {
         <MemoryRouter initialEntries={['/charts']}>
           <Routes>
             <Route path="/charts" element={<InsightsMobileScreen />} />
-            <Route path="/charts/:id/edit" element={<LocationProbe />} />
+            <Route path="/settings/charts/:id" element={<LocationProbe />} />
           </Routes>
         </MemoryRouter>
       </QueryClientProvider>,
@@ -144,7 +144,7 @@ describe('InsightsMobile', () => {
     await openMore()
     expect(screen.getByRole('menuitem', { name: 'Delete report' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('menuitem', { name: `Edit “${LONG}”` }))
-    expect(screen.getByTestId('location')).toHaveTextContent('/charts/r1/edit')
+    expect(screen.getByTestId('location')).toHaveTextContent('/settings/charts/r1')
   })
 
   it('deletes the report after confirming and falls back to All practices', async () => {

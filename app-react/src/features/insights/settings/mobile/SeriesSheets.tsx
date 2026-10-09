@@ -193,7 +193,7 @@ export function PracticePickerSheet({ ed, replace, maxHeight, onClose }: {
         <div className="flex flex-col gap-3 text-center">
           <h3 className="pt-2 text-lg font-extrabold text-ui-ink">{t('chartSettings.noPracticesTitle')}</h3>
           <p className="text-sm leading-normal text-ui-ink2">{t('chartSettings.noPracticesText')}</p>
-          <button type="button" onClick={() => navigate('/user/practices')} className={`${BTN} bg-ui-accent-fill text-ui-ink`}>{t('chartSettings.addPractice')}</button>
+          <button type="button" onClick={() => navigate('/settings/practices')} className={`${BTN} bg-ui-accent-fill text-ui-ink`}>{t('chartSettings.addPractice')}</button>
           <button type="button" onClick={onClose} className={`${BTN} border border-ui-control bg-ui-surface text-ui-ink`}>{t('chartSettings.notNow')}</button>
           <p className={`${HINT} rounded-xl bg-ui-chip px-3 py-2.5 text-left`}>{t('chartSettings.archivedCantPlot')}</p>
         </div>

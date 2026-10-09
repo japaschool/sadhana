@@ -45,7 +45,8 @@ export function YatrasMobile() {
 
   return (
     <>
-      <AppBar title={<h1 className="text-[28px] font-extrabold tracking-[-0.02em] text-ui-ink">{t('nav.yatras')}</h1>} />
+      <AppBar title={<h1 className="text-[28px] font-extrabold tracking-[-0.02em] text-ui-ink">{t('nav.yatras')}</h1>}
+        actions={y.yatra ? [{ label: t('yatras.settings'), onSelect: () => navigate(`/yatra/${y.yatra!.id}/settings`) }] : undefined} />
       <div className="flex flex-col gap-2 px-4 pb-6">
         {y.yatra && (
           <div className="flex items-center justify-between gap-2">

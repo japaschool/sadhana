@@ -10,7 +10,7 @@ export function NoPractices({ onSeed, seeding }: { onSeed: () => void; seeding: 
         className="h-11 rounded-full bg-ui-primary px-6 text-sm font-semibold text-ui-on-primary disabled:opacity-60">
         {t('home.addStarters')}
       </button>
-      <Link to="/user/practice/new" className="text-sm font-semibold text-ui-accent">{t('home.addCustom')}</Link>
+      <Link to="/settings/practices/new" className="text-sm font-semibold text-ui-accent">{t('home.addCustom')}</Link>
     </div>
   )
 }

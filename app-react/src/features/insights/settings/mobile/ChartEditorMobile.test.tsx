@@ -33,7 +33,7 @@ function renderAt(path: string) {
       <MemoryRouter initialEntries={[path]}>
         <Routes>
           <Route path="/charts" element={<NewChartSheet onClose={() => {}} />} />
-          <Route path="/charts/:id/edit" element={<ChartEditorMobileScreen />} />
+          <Route path="/settings/charts/:id" element={<ChartEditorMobileScreen />} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -55,7 +55,7 @@ describe('ChartEditorMobile', () => {
   })
 
   it('lists series on their axes and adds one where the picker says it lands', async () => {
-    renderAt('/charts/r1/edit')
+    renderAt('/settings/charts/r1')
     expect(await screen.findByRole('button', { name: 'Edit Book reading' })).toHaveTextContent('Left axis · avg')
     expect(screen.getByRole('button', { name: 'Edit Wake-up time' })).toHaveTextContent('Right axis · avg')
     fireEvent.click(screen.getByRole('button', { name: '+ Add series' }))
@@ -74,7 +74,7 @@ describe('ChartEditorMobile', () => {
 
   it('keeps an edit that failed to save and sends it again on Retry', async () => {
     charts.updateReport.mockRejectedValueOnce(new Error('offline'))
-    renderAt('/charts/r1/edit')
+    renderAt('/settings/charts/r1')
     fireEvent.click(await screen.findByRole('radio', { name: 'Stacked' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t save your last change')
     expect(screen.getByRole('radio', { name: 'Stacked' })).toHaveAttribute('aria-checked', 'true')
@@ -85,7 +85,7 @@ describe('ChartEditorMobile', () => {
   })
 
   it('a table saves its ticked columns in My practices order', async () => {
-    renderAt('/charts/t1/edit')
+    renderAt('/settings/charts/t1')
     fireEvent.click(await screen.findByRole('checkbox', { name: /Japa rounds/ }))
     await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['japa', 'wake'] } }))
   })

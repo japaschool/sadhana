@@ -23,7 +23,7 @@ export function renderLinkScreen(url = '/yatra/y1/links') {
         <Routes>
           <Route path="/yatra/:id/links" element={<LinkPracticesMobile />} />
           <Route path="/yatra/:id/settings" element={<p>Hub</p>} />
-          <Route path="/user/practices" element={<p>My practices</p>} />
+          <Route path="/settings/practices" element={<p>My practices</p>} />
           <Route path="/yatras" element={<p>Yatras page</p>} />
         </Routes>
       </MemoryRouter>
@@ -59,7 +59,7 @@ describe('LinkPracticesMobile', () => {
     expect(screen.getByText("Your entries for Hearing lectures and Day's realisation won't appear in the table.")).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Link your practices' })).toBeInTheDocument()
     expect(screen.getByText('You have no Text practice')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Add one in My practices ›' })).toHaveAttribute('href', '/user/practices')
+    expect(screen.getByRole('link', { name: 'Add one in My practices ›' })).toHaveAttribute('href', '/settings/practices')
   })
 
   it('says so when the yatra has no practices yet', async () => {
@@ -96,7 +96,7 @@ describe('LinkPracticesMobile', () => {
     mockLinkApi(true)
     renderLinkScreen()
     await screen.findByText('1 of 3 linked')
-    expect(screen.getByRole('link', { name: 'Yatra settings' })).toHaveAttribute('href', '/yatra/y1/settings')
+    expect(screen.getByRole('link', { name: "Balarama's League" })).toHaveAttribute('href', '/yatra/y1/settings')
     expect(screen.queryByRole('button', { name: 'Leave yatra' })).toBeNull()
   })
 })

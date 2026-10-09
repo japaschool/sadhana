@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -8,6 +8,10 @@ import { useAuthStore } from '../../../store/authStore'
 
 vi.mock('../../../api/yatras', () => ({ yatrasApi: { getYatras: vi.fn(), getYatraUsers: vi.fn() } }))
 import { yatrasApi } from '../../../api/yatras'
+vi.mock('../../../api/charts', () => ({ chartsApi: { getReports: vi.fn() } }))
+import { chartsApi } from '../../../api/charts'
+vi.mock('../../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn() } }))
+import { practicesApi } from '../../../api/practices'
 vi.mock('../../../hooks/useServiceWorkerUpdate', () => ({ useServiceWorkerUpdate: () => ({ updateReady: false, applyUpdate: vi.fn() }) }))
 
 describe('SettingsTablet', () => {
@@ -15,6 +19,8 @@ describe('SettingsTablet', () => {
     setViewportWidth(834)
     useAuthStore.setState({ user: { id: '1', email: 't@e.st', token: 'tok', name: 'Test User' }, token: 'tok' })
     vi.mocked(yatrasApi.getYatras).mockResolvedValue([])
+    vi.mocked(chartsApi.getReports).mockResolvedValue([])
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([])
   })
 
   const renderScreen = () => render(
@@ -23,34 +29,28 @@ describe('SettingsTablet', () => {
     </QueryClientProvider>,
   )
 
-  it('shows Preferences first and switches the detail pane by section', () => {
+  it('stacks every section in one list, no section picker', () => {
     renderScreen()
     expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('heading', { level: 2, name: 'Preferences' })).toBeInTheDocument()
     expect(screen.getByRole('switch', { name: 'Preview channel' })).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Account & data' }))
-    expect(screen.getByRole('button', { name: 'Account & data' })).toHaveAttribute('aria-current', 'true')
     expect(screen.getByRole('link', { name: /Change password/ })).toHaveAttribute('href', '/settings/edit-password')
-    expect(screen.queryByRole('switch', { name: 'Preview channel' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Account & data' })).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: 'Logout' }))
     expect(screen.getByRole('dialog', { name: 'Log out?' })).toBeInTheDocument()
   })
 
-  it('has a Yatras section with each yatra and my role, to its settings', async () => {
-    vi.mocked(yatrasApi.getYatras).mockResolvedValue([{ id: 'y1', name: 'League', show_stability_metrics: false }])
-    vi.mocked(yatrasApi.getYatraUsers).mockResolvedValue([{ user_id: '1', user_name: 'Test User', is_admin: true }])
+  it('has one Your sadhana group: Insights, Yatras and Practices, each to its list with a count', async () => {
+    vi.mocked(chartsApi.getReports).mockResolvedValue([{ id: 'r1', name: 'Morning', definition: { Grid: { practices: [] } } }])
+    vi.mocked(yatrasApi.getYatras).mockResolvedValue([])
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([
+      { id: 'p1', practice: 'Japa', data_type: 'Int', is_active: true },
+      { id: 'p2', practice: 'Reading', data_type: 'Duration', is_active: true },
+    ])
     renderScreen()
-    fireEvent.click(await screen.findByRole('button', { name: 'Yatras' }))
-    const row = await screen.findByRole('link', { name: /League/ })
-    expect(row).toHaveAttribute('href', '/yatra/y1/settings')
-    expect(await within(row).findByText('Admin')).toBeInTheDocument()
-  })
-
-  it('hides the Yatras section without yatras', async () => {
-    renderScreen()
-    await waitFor(() => expect(yatrasApi.getYatras).toHaveBeenCalled())
-    expect(screen.queryByRole('button', { name: 'Yatras' })).toBeNull()
+    const group = screen.getByRole('region', { name: 'Your sadhana' })
+    expect(await within(group).findByRole('link', { name: /Insights\s*1/ })).toHaveAttribute('href', '/settings/charts')
+    expect(within(group).getByRole('link', { name: 'Yatras' })).toHaveAttribute('href', '/settings/yatras')
+    expect(await within(group).findByRole('link', { name: /Practices\s*2/ })).toHaveAttribute('href', '/settings/practices')
   })
 })

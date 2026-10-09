@@ -15,7 +15,7 @@ export function AppBar({ title, actions }: { title: ReactNode; actions?: AppBarA
         <div className="min-w-0">{title}</div>
         {actions?.length ? (
           <button type="button" aria-label={t('today.more')} aria-haspopup="menu" onClick={(e) => setAnchor(e.currentTarget)}
-            className="flex h-11 w-11 items-center justify-center gap-[3px] rounded-[14px]">
+            className="flex h-11 w-11 items-center justify-center gap-[3px] rounded-full border border-ui-hairline bg-ui-surface">
             {[0, 1, 2].map((i) => <span key={i} className="h-1 w-1 rounded-full bg-ui-ink" />)}
           </button>
         ) : null}

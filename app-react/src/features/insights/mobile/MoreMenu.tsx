@@ -29,7 +29,7 @@ export function useMoreMenu(report: Report | null): { actions: AppBarAction[]; s
     ...(report
       ? [{
         label: t('insights.editReport', { name: report.name }),
-        onSelect: () => navigate(`/charts/${report.id}/edit`),
+        onSelect: () => navigate(`/settings/charts/${report.id}`),
       }]
       : []),
     { label: t('charts.shareLink'), onSelect: () => { if (copyShareLink()) showToast({ message: t('charts.copied'), variant: 'success' }) } },

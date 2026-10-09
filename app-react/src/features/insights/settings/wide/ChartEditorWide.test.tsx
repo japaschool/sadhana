@@ -27,7 +27,7 @@ function renderAt(path: string) {
   return render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={[path]}>
-        <Routes><Route path="/charts/:id/edit" element={<ChartEditorWide />} /></Routes>
+        <Routes><Route path="/settings/charts/:id" element={<ChartEditorWide />} /></Routes>
       </MemoryRouter>
     </QueryClientProvider>,
   )
@@ -47,10 +47,10 @@ describe('ChartEditorWide', () => {
 
   it('tablet: lists your charts and edits a series inline, under its row', async () => {
     setViewportWidth(800)
-    renderAt('/charts/r1/edit')
-    const column = await screen.findByRole('navigation', { name: 'Charts' })
+    renderAt('/settings/charts/r1')
+    const column = await screen.findByRole('navigation', { name: 'Insights' })
     expect(within(column).getByRole('link', { name: /Morning sadhana/ })).toHaveAttribute('aria-current', 'page')
-    expect(within(column).getByRole('link', { name: /Monthly table/ })).toHaveAttribute('href', '/charts/t1/edit')
+    expect(within(column).getByRole('link', { name: /Monthly table/ })).toHaveAttribute('href', '/settings/charts/t1')
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit Wake-up time' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -62,9 +62,21 @@ describe('ChartEditorWide', () => {
     expect(screen.queryByRole('listitem', { name: 'Wake-up time' })).not.toBeInTheDocument()
   })
 
+  it('picking another chart after an edit opens that chart', async () => {
+    setViewportWidth(1440)
+    renderAt('/settings/charts/r1')
+    const name = await screen.findByLabelText('Name')
+    fireEvent.change(name, { target: { value: 'Evening' } })
+    fireEvent.blur(name)
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalled())
+    fireEvent.click(screen.getByRole('link', { name: /Monthly table/ }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Monthly table' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Name')).toHaveValue('Monthly table')
+  })
+
   it('desktop: the preview and axes sit in their own panel', async () => {
     setViewportWidth(1440)
-    renderAt('/charts/r1/edit')
+    renderAt('/settings/charts/r1')
     const panel = await screen.findByRole('complementary', { name: 'Preview' })
     expect(within(panel).getByRole('heading', { name: 'Axes' })).toBeInTheDocument()
   })

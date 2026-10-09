@@ -20,3 +20,14 @@ describe('practicesApi.saveDiaryEntry', () => {
     await expect(practicesApi.saveDiaryEntry('2026-10-06', 'Rounds', null)).rejects.toThrow()
   })
 })
+
+describe('practicesApi.reorderUserPractices', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('sends the ids as `practices`, the field the server reads', async () => {
+    const { apiClient } = await import('./client')
+    const put = vi.spyOn(apiClient, 'put').mockResolvedValue({ data: null })
+    await practicesApi.reorderUserPractices(['p2', 'p1'])
+    expect(put).toHaveBeenCalledWith('/user/practices/reorder', { practices: ['p2', 'p1'] })
+  })
+})

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { AppBar } from '../../../layouts/mobile/AppBar'
 import { MobileShell } from '../../../layouts/mobile/MobileShell'
 import { ListGroup } from '../../../ui/primitives/ListGroup'
-import { AccountRows, PreferencesRows, ProfileCard, SupportRows, useMyYatras, YatraRows } from '../sections'
+import { AccountRows, PreferencesRows, ProfileCard, SadhanaRows, SupportRows } from '../sections'
 import { LogoutSheet } from './LogoutSheet'
 
 export function SettingsMobile() {
@@ -16,10 +16,9 @@ export function SettingsMobile() {
   )
 }
 
-/** Profile card, the three sections and log out, stacked (mobile and desktop). */
+/** Profile card, the sections and log out, stacked (every layout). */
 export function SettingsList() {
   const { t } = useTranslation()
-  const yatras = useMyYatras()
   const [logoutOpen, setLogoutOpen] = useState(false)
 
   return (
@@ -27,7 +26,7 @@ export function SettingsList() {
       <div className="flex flex-col gap-[18px]">
         <ProfileCard />
         <ListGroup label={t('settings.preferences')}><PreferencesRows /></ListGroup>
-        {yatras.length > 0 && <ListGroup label={t('settings.yatras')}><YatraRows /></ListGroup>}
+        <ListGroup label={t('settings.yourSadhana')}><SadhanaRows /></ListGroup>
         <ListGroup label={t('settings.accountData')}><AccountRows /></ListGroup>
         <ListGroup label={t('settings.support')}><SupportRows /></ListGroup>
         <button type="button" onClick={() => setLogoutOpen(true)}

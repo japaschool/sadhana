@@ -70,7 +70,7 @@ export function ChartEditorMobile() {
   const header = (
     <header className="sticky top-0 z-30 bg-ui-bg pt-[env(safe-area-inset-top)]">
       <div className="grid min-h-11 grid-cols-[1fr_auto_1fr] items-center px-2">
-        <Link to="/charts" className="flex min-h-11 items-center gap-1 justify-self-start px-2 text-[17px] font-semibold text-ui-accent">
+        <Link to="/settings/charts" className="flex min-h-11 items-center gap-1 justify-self-start px-2 text-[17px] font-semibold text-ui-accent">
           <span aria-hidden>‹</span>{t('insights.title')}
         </Link>
         <span className="max-w-[44vw] truncate text-[15px] font-extrabold text-ui-ink">{pinned ? ed.report?.name : ''}</span>
@@ -81,7 +81,7 @@ export function ChartEditorMobile() {
 
   if (ed.isLoading) return <>{header}<div className="flex h-40 items-center justify-center"><span role="status" aria-label={t('common.loading')} className={SPINNER} /></div></>
   if (ed.isError) return <>{header}<p role="alert" className="py-10 text-center text-sm text-ui-danger">{t('common.error')}</p></>
-  if (!ed.report) return <Navigate to="/charts" replace />
+  if (!ed.report) return <Navigate to="/settings/charts" replace />
   const close = () => setSheet(null)
 
   return (
@@ -179,7 +179,7 @@ export function DeleteChartSheet({ ed, onClose }: { ed: Editor; onClose: () => v
     <ConfirmSheet title={t('chartSettings.deleteTitle', { name: report.name })} confirm={t('chartSettings.deleteChart')}
       text={ed.graph ? t('chartSettings.deleteGraph', { count: ed.graph.traces.length }) : t('chartSettings.deleteTable')}
       busy={ed.remove.isPending} onClose={onClose}
-      onConfirm={() => ed.remove.mutate(undefined, { onSuccess: () => navigate('/charts', { replace: true }) })} />
+      onConfirm={() => ed.remove.mutate(undefined, { onSuccess: () => navigate('/settings/charts', { replace: true }) })} />
   )
 }
 

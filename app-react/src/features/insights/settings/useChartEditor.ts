@@ -41,7 +41,8 @@ export function useChartEditor(id: string) {
 
   // ponytail: edits not yet saved live in memory only; they're lost if the app is closed while offline.
   const [draft, setDraft] = useState<Report | null>(null)
-  const report = draft ?? reportsQ.data?.find((r) => r.id === id) ?? null
+  // Tablet and desktop keep the editor mounted while another chart is picked; a draft is only for its own chart.
+  const report = (draft?.id === id ? draft : null) ?? reportsQ.data?.find((r) => r.id === id) ?? null
   const latest = useRef(report)
   latest.current = report
   const [failed, setFailed] = useState(false)

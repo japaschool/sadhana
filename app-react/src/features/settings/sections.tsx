@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { chartsApi } from '../../api/charts'
+import { practicesApi } from '../../api/practices'
 import { yatrasApi } from '../../api/yatras'
 import { useServiceWorkerUpdate } from '../../hooks/useServiceWorkerUpdate'
 import { useAuthStore } from '../../store/authStore'
@@ -78,6 +80,20 @@ export function SupportRows() {
   )
 }
 
+/** Insights, Yatras and Practices, each to its own list, with how many there are. */
+export function SadhanaRows() {
+  const { t } = useTranslation()
+  const practices = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices }).data
+  const count = (n?: number) => (n ? String(n) : undefined)
+  return (
+    <>
+      <SettingsRow label={t('insights.title')} value={count(useMyCharts().length)} to="/settings/charts" />
+      <SettingsRow label={t('settings.yatras')} value={count(useMyYatras().length)} to="/settings/yatras" />
+      <SettingsRow label={t('practices.title')} value={count(practices?.length)} to="/settings/practices" />
+    </>
+  )
+}
+
 export const useMyYatras = () => useQuery({ queryKey: ['yatras'], queryFn: yatrasApi.getYatras }).data ?? []
 
 /** One row per yatra, to its settings, with my role there. */
@@ -97,6 +113,21 @@ export function YatraRows() {
             value={admin === undefined ? undefined : t(admin ? 'yatraSettings.roleAdmin' : 'yatraSettings.roleMember')} />
         )
       })}
+    </>
+  )
+}
+
+export const useMyCharts = () => useQuery({ queryKey: ['reports'], queryFn: chartsApi.getReports }).data ?? []
+
+/** One row per chart, to its settings, with its kind. */
+export function ChartRows() {
+  const { t } = useTranslation()
+  return (
+    <>
+      {useMyCharts().map((r) => (
+        <SettingsRow key={r.id} label={r.name} to={`/settings/charts/${r.id}`}
+          value={t('Graph' in r.definition ? 'chartSettings.graph' : 'chartSettings.table')} />
+      ))}
     </>
   )
 }

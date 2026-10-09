@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
@@ -11,6 +11,10 @@ import { useServiceWorkerUpdate } from '../../../hooks/useServiceWorkerUpdate'
 vi.mock('../../../hooks/useServiceWorkerUpdate', () => ({ useServiceWorkerUpdate: vi.fn() }))
 vi.mock('../../../api/yatras', () => ({ yatrasApi: { getYatras: vi.fn(), getYatraUsers: vi.fn() } }))
 import { yatrasApi } from '../../../api/yatras'
+vi.mock('../../../api/charts', () => ({ chartsApi: { getReports: vi.fn() } }))
+import { chartsApi } from '../../../api/charts'
+vi.mock('../../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn() } }))
+import { practicesApi } from '../../../api/practices'
 const swUpdate = vi.mocked(useServiceWorkerUpdate)
 
 const realLocation = window.location
@@ -35,6 +39,8 @@ describe('SettingsMobile', () => {
     setViewportWidth(390)
     swUpdate.mockReturnValue({ updateReady: false, applyUpdate: vi.fn() })
     vi.mocked(yatrasApi.getYatras).mockResolvedValue([])
+    vi.mocked(chartsApi.getReports).mockResolvedValue([])
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([])
   })
   afterEach(() => {
     vi.restoreAllMocks()
@@ -147,18 +153,17 @@ describe('SettingsMobile', () => {
     expect(useAuthStore.getState().token).toBe('tok')
   })
 
-  it('lists yatras with the role, each linking to its settings', async () => {
-    vi.mocked(yatrasApi.getYatras).mockResolvedValue([{ id: 'y1', name: 'League', show_stability_metrics: false }])
-    vi.mocked(yatrasApi.getYatraUsers).mockResolvedValue([{ user_id: '1', user_name: 'Test User', is_admin: true }])
+  it('has one Your sadhana group: Insights, Yatras and Practices, each to its list with a count', async () => {
+    vi.mocked(chartsApi.getReports).mockResolvedValue([{ id: 'r1', name: 'Morning', definition: { Grid: { practices: [] } } }])
+    vi.mocked(yatrasApi.getYatras).mockResolvedValue([])
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([
+      { id: 'p1', practice: 'Japa', data_type: 'Int', is_active: true },
+      { id: 'p2', practice: 'Reading', data_type: 'Duration', is_active: true },
+    ])
     renderScreen()
-    const row = await screen.findByRole('link', { name: /League/ })
-    expect(row).toHaveAttribute('href', '/yatra/y1/settings')
-    expect(await within(row).findByText('Admin')).toBeInTheDocument()
-  })
-
-  it('hides the section without yatras', async () => {
-    renderScreen()
-    await waitFor(() => expect(yatrasApi.getYatras).toHaveBeenCalled())
-    expect(screen.queryByRole('region', { name: 'Yatras' })).toBeNull()
+    const group = screen.getByRole('region', { name: 'Your sadhana' })
+    expect(await within(group).findByRole('link', { name: /Insights\s*1/ })).toHaveAttribute('href', '/settings/charts')
+    expect(within(group).getByRole('link', { name: 'Yatras' })).toHaveAttribute('href', '/settings/yatras')
+    expect(await within(group).findByRole('link', { name: /Practices\s*2/ })).toHaveAttribute('href', '/settings/practices')
   })
 })

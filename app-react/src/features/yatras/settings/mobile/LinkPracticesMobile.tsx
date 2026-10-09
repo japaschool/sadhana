@@ -219,7 +219,7 @@ function LinkRow({ item, suggestion, hasCompatible, wide, grid, onLink, onPick }
           <span className="font-bold text-ui-ink">{t('yatraSettings.noneOfType', { type: t(typeLabelKey(y.data_type)) })}</span>
           <span className="text-ui-muted">
             {t('yatraSettings.nothingYet')}{' '}
-            <Link to="/user/practices" className="font-bold text-ui-accent">{t('yatraSettings.addInMyPractices')}</Link>
+            <Link to="/settings/practices" className="font-bold text-ui-accent">{t('yatraSettings.addInMyPractices')}</Link>
           </span>
         </span>
       </div>

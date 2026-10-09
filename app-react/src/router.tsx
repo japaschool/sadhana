@@ -24,15 +24,31 @@ const LinkPracticesScreen = lazy(() => import('./features/yatras/settings/mobile
 const AdminSectionMobile = lazy(() => import('./features/yatras/settings/mobile/AdminSectionMobile').then((m) => ({ default: m.AdminSectionMobile })))
 const ChartEditorMobileScreen = lazy(() => import('./features/insights/settings/mobile/ChartEditorMobile').then((m) => ({ default: m.ChartEditorMobileScreen })))
 const ChartEditorWide = lazy(() => import('./features/insights/settings/wide/ChartEditorWide').then((m) => ({ default: m.ChartEditorWide })))
+const PracticesMobileScreen = lazy(() => import('./features/practices/mobile/PracticesMobile').then((m) => ({ default: m.PracticesMobileScreen })))
+const PracticesWide = lazy(() => import('./features/practices/wide/PracticesWide').then((m) => ({ default: m.PracticesWide })))
+const ChartsSettings = lazy(() => import('./features/settings/SettingsLists').then((m) => ({ default: m.ChartsSettings })))
+const YatrasSettings = lazy(() => import('./features/settings/SettingsLists').then((m) => ({ default: m.YatrasSettings })))
 const PracticeEditorMobile = lazy(() => import('./features/yatras/settings/mobile/PracticeEditorMobile').then((m) => ({ default: m.PracticeEditorMobile })))
 
 /** Redesigned on every layout: no legacy fallback, just the loading state while the code arrives. */
 const ui = (element: ReactNode) => <Suspense fallback={<UiLoading />}>{element}</Suspense>
 
-/** Tablet and desktop still edit charts on the old page. */
+/** Legacy layout still edits charts on the old page. */
 function ToChartsManage() {
   const { id = '' } = useParams()
   return <Navigate to={`/charts/manage?report=${encodeURIComponent(id)}`} replace />
+}
+
+/** The chart editor's old URL: it lives under Settings now. */
+function ToChartSettings() {
+  const { id } = useParams()
+  return <Navigate to={`/settings/charts/${id}`} replace />
+}
+
+/** Practices' old URL: they live under Settings now. */
+function ToPracticeSettings() {
+  const { id } = useParams()
+  return <Navigate to={`/settings/practices/${id}`} replace />
 }
 
 /** The old admin page's URL: its sections are listed on the yatra settings hub now. */
@@ -135,7 +151,17 @@ export const router = createBrowserRouter([
         element: <ByLayout mobile={<YatrasMobileScreen />} tablet={<YatrasTabletScreen />} desktop={<YatrasDesktopScreen />} legacy={<AppShell />} />,
         children: [{ index: true, element: <YatrasPage /> }],
       },
-      { path: '/charts/:id/edit', element: <ByLayout mobile={<ChartEditorMobileScreen />} tablet={<ChartEditorWide />} desktop={<ChartEditorWide />} legacy={<ToChartsManage />} /> },
+      // One screen per layout; Add and Edit are sheets over the list on mobile, a panel beside it on tablet and desktop.
+      { path: '/settings/practices', element: <ByLayout mobile={<PracticesMobileScreen />} tablet={<PracticesWide />} desktop={<PracticesWide />} legacy={<AppShell />} />, children: [{ index: true, element: <MyPracticesPage /> }] },
+      { path: '/settings/practices/new', element: <ByLayout mobile={<PracticesMobileScreen />} tablet={<PracticesWide />} desktop={<PracticesWide />} legacy={<AppShell />} />, children: [{ index: true, element: <PracticeNewPage /> }] },
+      { path: '/settings/practices/:id', element: <ByLayout mobile={<PracticesMobileScreen />} tablet={<PracticesWide />} desktop={<PracticesWide />} legacy={<AppShell />} />, children: [{ index: true, element: <PracticeEditPage /> }] },
+      { path: '/user/practices', element: <Navigate to="/settings/practices" replace /> },
+      { path: '/user/practice/new', element: <Navigate to="/settings/practices/new" replace /> },
+      { path: '/user/practice/:id/edit', element: <ToPracticeSettings /> },
+      { path: '/settings/charts', element: <ByLayout mobile={<ChartsSettings />} tablet={<ChartsSettings />} desktop={<ChartsSettings />} legacy={<Navigate to="/charts/manage" replace />} /> },
+      { path: '/settings/yatras', element: ui(<YatrasSettings />) },
+      { path: '/charts/:id/edit', element: <ToChartSettings /> },
+      { path: '/settings/charts/:id', element: <ByLayout mobile={<ChartEditorMobileScreen />} tablet={<ChartEditorWide />} desktop={<ChartEditorWide />} legacy={<ToChartsManage />} /> },
       { path: '/yatra/:id/settings', element: ui(<YatraSettingsHome />) },
       { path: '/yatra/:id/links', element: ui(<LinkPracticesScreen />) },
       { path: '/yatra/:id/admin/settings', element: <ToSettingsHub /> },
@@ -151,9 +177,6 @@ export const router = createBrowserRouter([
           { path: '/settings/edit-password', element: <EditPasswordPage /> },
           { path: '/settings/language', element: <LanguagePage /> },
           { path: '/settings/import', element: <ImportPage /> },
-          { path: '/user/practices', element: <MyPracticesPage /> },
-          { path: '/user/practice/new', element: <PracticeNewPage /> },
-          { path: '/user/practice/:id/edit', element: <PracticeEditPage /> },
           { path: '/help', element: <HelpPage /> },
           { path: '/help/support-form', element: <SupportPage /> },
         ],

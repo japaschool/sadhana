@@ -20,7 +20,7 @@ export const practicesApi = {
     await apiClient.delete(`/user/practice/${id}`)
   },
   async reorderUserPractices(ids: string[]): Promise<void> {
-    await apiClient.put('/user/practices/reorder', { ids })
+    await apiClient.put('/user/practices/reorder', { practices: ids })
   },
   async getDiaryEntries(date: string): Promise<DiaryEntry[]> {
     const res = await apiClient.get<{ diary_day: DiaryEntry[] }>(`/diary/${date}`)

@@ -26,6 +26,10 @@ export const motion = new Proxy(
             dragConstraints: _dc,
             dragElastic: _de,
             onDragEnd: _ode,
+            onDragStart: _ods,
+            dragControls: _dctl,
+            dragListener: _dl,
+            dragDirectionLock: _ddl,
             ...rest
           }: React.HTMLAttributes<HTMLElement> & {
             initial?: unknown
@@ -38,6 +42,10 @@ export const motion = new Proxy(
             dragConstraints?: unknown
             dragElastic?: unknown
             onDragEnd?: unknown
+            onDragStart?: unknown
+            dragControls?: unknown
+            dragListener?: unknown
+            dragDirectionLock?: unknown
           },
           ref: React.Ref<HTMLElement>,
         ) => React.createElement(tag, { ...rest, ref }, children),
@@ -62,6 +70,8 @@ export const useMotionValue = (initial: number) => ({
   set: () => {},
   onChange: () => () => {},
 })
+
+export const useDragControls = () => ({ start: () => {} })
 
 export const useTransform = () => ({ get: () => 0 })
 

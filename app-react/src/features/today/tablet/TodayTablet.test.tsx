@@ -49,7 +49,9 @@ describe('TodayTablet', () => {
     expect(await screen.findByText('Wake up')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Log' })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Tuesday, October 6')
-    expect(screen.getByRole('link', { name: 'Edit practices' })).toHaveAttribute('href', '/user/practices')
+    expect(screen.queryByRole('link', { name: 'Edit practices' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'More' }))
+    expect(screen.getByRole('menuitem', { name: 'Edit practices' })).toBeInTheDocument()
 
     const days = within(screen.getByTestId('day-strip')).getAllByRole('button')
     expect(days.map((d) => d.textContent?.replace(/\D/g, ''))).toEqual(['4', '5', '6', '7', '8', '9', '10', '11', '12'])

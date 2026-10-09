@@ -2,11 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import useNetworkStatus from '../../../hooks/useNetworkStatus'
-import { useToast } from '../../../hooks/useToast'
 import { AppBar, type AppBarAction } from '../../../layouts/mobile/AppBar'
 import { MobileShell } from '../../../layouts/mobile/MobileShell'
 import { ListGroup } from '../../../ui/primitives/ListGroup'
-import { copyShareLink, downloadCsv } from '../actions'
 import { toDateStr } from '../date'
 import { NoPractices } from '../NoPractices'
 import { useToday } from '../useToday'
@@ -19,7 +17,6 @@ import { PracticeRow } from './PracticeRow'
 export function TodayMobile() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { showToast } = useToast()
   const isOnline = useNetworkStatus()
   const [date, setDate] = useLogDate()
   const [calendarOpen, setCalendarOpen] = useState(false)
@@ -27,13 +24,8 @@ export function TodayMobile() {
   const dateStr = toDateStr(date)
 
   const actions: AppBarAction[] = [
-    { label: t('home.addPractice'), onSelect: () => navigate('/user/practice/new') },
-    { label: t('home.editPractices'), onSelect: () => navigate('/user/practices') },
-    { label: t('charts.downloadCsv'), onSelect: () => void downloadCsv() },
-    {
-      label: t('charts.shareLink'),
-      onSelect: () => { if (copyShareLink()) showToast({ message: t('charts.copied'), variant: 'success' }) },
-    },
+    { label: t('home.addPractice'), onSelect: () => navigate('/settings/practices/new') },
+    { label: t('home.editPractices'), onSelect: () => navigate('/settings/practices') },
   ]
 
   return (

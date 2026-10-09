@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { TabletShell } from '../../../layouts/tablet/TabletShell'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
@@ -19,6 +20,7 @@ const NAME_COL = 'sticky left-0 z-10 bg-ui-surface pl-5'
 /** Tablet and desktop: the yatra as one table, a row per member. Desktop passes `fixedDate`: the log panel picks the day. */
 export function YatrasTablet({ fixedDate = false }: { fixedDate?: boolean }) {
   const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
   const y = useYatras()
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null)
@@ -29,6 +31,7 @@ export function YatrasTablet({ fixedDate = false }: { fixedDate?: boolean }) {
   const data = y.data
 
   const actions = [
+    ...(y.yatra ? [{ label: t('yatras.settings'), onSelect: () => navigate(`/yatra/${y.yatra!.id}/settings`) }] : []),
     { label: t('yatras.createNewYatra'), onSelect: () => setCreating(true) },
   ]
 

@@ -2,11 +2,9 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import useNetworkStatus from '../../../hooks/useNetworkStatus'
-import { useToast } from '../../../hooks/useToast'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import { ListGroup } from '../../../ui/primitives/ListGroup'
 import { PanelPopover } from '../../../ui/primitives/PanelPopover'
-import { copyShareLink, downloadCsv } from '../actions'
 import { addDays, toDateStr } from '../date'
 import { NoPractices } from '../NoPractices'
 import { useToday } from '../useToday'
@@ -25,7 +23,6 @@ function isEditable(el: EventTarget | null) {
 export function LogPanel({ date, onDate }: { date: Date; onDate: (d: Date) => void }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { showToast } = useToast()
   const isOnline = useNetworkStatus()
   const [calendarAnchor, setCalendarAnchor] = useState<HTMLElement | null>(null)
   const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null)
@@ -44,13 +41,8 @@ export function LogPanel({ date, onDate }: { date: Date; onDate: (d: Date) => vo
   }, [date, onDate])
 
   const more = [
-    { label: t('home.addPractice'), onSelect: () => navigate('/user/practice/new') },
-    { label: t('home.editPractices'), onSelect: () => navigate('/user/practices') },
-    { label: t('charts.downloadCsv'), onSelect: () => void downloadCsv() },
-    {
-      label: t('charts.shareLink'),
-      onSelect: () => { if (copyShareLink()) showToast({ message: t('charts.copied'), variant: 'success' }) },
-    },
+    { label: t('home.addPractice'), onSelect: () => navigate('/settings/practices/new') },
+    { label: t('home.editPractices'), onSelect: () => navigate('/settings/practices') },
   ]
 
   return (
@@ -63,7 +55,7 @@ export function LogPanel({ date, onDate }: { date: Date; onDate: (d: Date) => vo
             <button type="button" aria-label={t('today.prevWeek')} onClick={() => onDate(addDays(date, -7))} className={STEP}>‹</button>
             <button type="button" aria-label={t('today.nextWeek')} onClick={() => onDate(addDays(date, 7))} className={STEP}>›</button>
             <button type="button" aria-label={t('today.more')} aria-haspopup="menu" onClick={(e) => setMoreAnchor(e.currentTarget)}
-              className={`${STEP} gap-[3px]`}>
+              className="ml-1 flex h-9 w-9 items-center justify-center gap-[3px] rounded-full border border-ui-hairline bg-ui-surface">
               {[0, 1, 2].map((i) => <span key={i} className="h-1 w-1 rounded-full bg-ui-ink" />)}
             </button>
           </div>

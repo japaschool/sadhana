@@ -1,12 +1,10 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import useNetworkStatus from '../../../hooks/useNetworkStatus'
-import { useToast } from '../../../hooks/useToast'
 import { TabletShell } from '../../../layouts/tablet/TabletShell'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import type { UserPractice } from '../../../types/api'
-import { copyShareLink, downloadCsv } from '../actions'
 import { toDateStr } from '../date'
 import { NoPractices } from '../NoPractices'
 import { useToday } from '../useToday'
@@ -22,7 +20,6 @@ export function TodayTablet() {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const navigate = useNavigate()
-  const { showToast } = useToast()
   const isOnline = useNetworkStatus()
   const [date, setDate] = useLogDate()
   const [calendarOpen, setCalendarOpen] = useState(false)
@@ -35,12 +32,8 @@ export function TodayTablet() {
     + (today.summary.requiredLeft ? ` · ${t('today.requiredLeft', { count: today.summary.requiredLeft })}` : '')
 
   const more = [
-    { label: t('home.addPractice'), onSelect: () => navigate('/user/practice/new') },
-    { label: t('charts.downloadCsv'), onSelect: () => void downloadCsv() },
-    {
-      label: t('charts.shareLink'),
-      onSelect: () => { if (copyShareLink()) showToast({ message: t('charts.copied'), variant: 'success' }) },
-    },
+    { label: t('home.addPractice'), onSelect: () => navigate('/settings/practices/new') },
+    { label: t('home.editPractices'), onSelect: () => navigate('/settings/practices') },
   ]
 
   // ponytail: one hardcoded group, so the two columns are its halves (down the left, then the right).
@@ -56,7 +49,7 @@ export function TodayTablet() {
 
   return (
     <div className="flex flex-col gap-[22px] px-9 pt-[calc(36px+env(safe-area-inset-top))] pb-9">
-      <header className="flex items-end justify-between gap-4">
+      <header className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-0.5">
           <h1 className="text-[34px] leading-tight font-extrabold tracking-[-0.02em]">
             <button type="button" aria-haspopup="dialog" title={t('today.openCalendar')} onClick={() => setCalendarOpen(true)}
@@ -66,16 +59,10 @@ export function TodayTablet() {
           </h1>
           <span className="text-sm text-ui-muted">{line}</span>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Link to="/user/practices"
-            className="rounded-full border border-ui-accent-pill px-3.5 py-2 text-[13px] font-bold text-ui-accent">
-            {t('home.editPractices')}
-          </Link>
-          <button type="button" aria-label={t('today.more')} aria-haspopup="menu" onClick={(e) => setMoreAnchor(e.currentTarget)}
-            className="flex h-11 w-11 items-center justify-center gap-[3px] rounded-[14px]">
-            {[0, 1, 2].map((i) => <span key={i} className="h-1 w-1 rounded-full bg-ui-ink" />)}
-          </button>
-        </div>
+        <button type="button" aria-label={t('today.more')} aria-haspopup="menu" onClick={(e) => setMoreAnchor(e.currentTarget)}
+          className="flex h-11 w-11 shrink-0 items-center justify-center gap-[3px] rounded-full border border-ui-hairline bg-ui-surface">
+          {[0, 1, 2].map((i) => <span key={i} className="h-1 w-1 rounded-full bg-ui-ink" />)}
+        </button>
       </header>
 
       {!isOnline && (

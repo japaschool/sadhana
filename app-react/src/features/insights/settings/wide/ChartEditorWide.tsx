@@ -5,7 +5,6 @@ import { DesktopShell } from '../../../../layouts/desktop/DesktopShell'
 import { TabletShell } from '../../../../layouts/tablet/TabletShell'
 import { useLayout } from '../../../../layouts/useLayout'
 import { CARD } from '../../../yatras/settings/mobile/AdminPage'
-import { ALL, writeStored } from '../../useInsights'
 import { graphOf, useChartEditor } from '../useChartEditor'
 import {
   AxesCard, DeleteChartSheet, FailedBanner, Footer, GraphSections, GROUP, NameCard, Preview, SPINNER, subtitle, TableColumns,
@@ -22,31 +21,26 @@ const ITEM = 'flex min-h-11 items-center gap-2.5 rounded-xl px-3 text-[15px]'
 /** Your charts beside the editor; picking one opens its settings. */
 function ChartsColumn({ id, reports }: { id: string; reports: NonNullable<Editor['reports']> }) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const [creating, setCreating] = useState(false)
   const icon = (graph: boolean) => graph
     ? <StyleIcon style="Bar" className="h-3.5 w-3.5" />
     : <span aria-hidden className="w-3.5 text-center text-[13px] leading-none">▦</span>
   return (
-    <nav aria-label={t('chartSettings.charts')}
+    <nav aria-label={t('insights.title')}
       className="sticky top-0 flex h-dvh w-[232px] shrink-0 flex-col gap-1 overflow-y-auto border-r border-ui-control px-3 pt-[calc(32px+env(safe-area-inset-top))] pb-[calc(24px+env(safe-area-inset-bottom))]">
       <div className="flex flex-col gap-0.5 px-3 pb-4">
-        <Link to="/charts" className="flex min-h-8 items-center gap-1 self-start text-[13px] font-bold text-ui-accent">
-          <span aria-hidden>‹</span>{t('insights.title')}
+        <Link to="/settings" className="flex min-h-8 items-center gap-1 self-start text-[13px] font-bold text-ui-accent">
+          <span aria-hidden>‹</span>{t('nav.settings')}
         </Link>
-        <p className="text-[22px] leading-tight font-extrabold tracking-[-0.01em] text-ui-ink">{t('chartSettings.charts')}</p>
+        <p className="text-[22px] leading-tight font-extrabold tracking-[-0.01em] text-ui-ink">{t('insights.title')}</p>
       </div>
-      <p className={`${GROUP} px-3 pb-1`}>{t('chartSettings.builtIn')}</p>
-      <button type="button" onClick={() => { writeStored(ALL); navigate('/charts') }} className={`${ITEM} font-semibold text-ui-ink2`}>
-        <span aria-hidden className="w-3.5 text-center text-[13px] leading-none">▦</span>{t('charts.allPractices')}
-      </button>
-      <p className={`${GROUP} px-3 pt-5 pb-1`}>{t('chartSettings.yourCharts')}</p>
+      <p className={`${GROUP} px-3 pb-1`}>{t('chartSettings.yourCharts')}</p>
       {reports.map((r) => {
         const active = r.id === id
         const g = graphOf(r)
         const count = g ? g.traces.length : 'Grid' in r.definition ? r.definition.Grid.practices.length : 0
         return (
-          <Link key={r.id} to={`/charts/${r.id}/edit`} aria-current={active ? 'page' : undefined}
+          <Link key={r.id} to={`/settings/charts/${r.id}`} aria-current={active ? 'page' : undefined}
             className={`${ITEM} ${active ? 'bg-ui-accent-pill font-bold text-ui-ink' : 'font-semibold text-ui-ink2'}`}>
             {icon(!!g)}
             <span className="min-w-0 flex-1 truncate">{r.name}</span>
@@ -89,7 +83,7 @@ export function ChartEditorWide() {
   let content
   if (ed.isLoading) content = <div className="flex h-40 items-center justify-center"><span role="status" aria-label={t('common.loading')} className={SPINNER} /></div>
   else if (ed.isError) content = <p role="alert" className="py-10 text-center text-sm text-ui-danger">{t('common.error')}</p>
-  else if (!ed.report) return <Navigate to="/charts" replace />
+  else if (!ed.report) return <Navigate to="/settings/charts" replace />
   else {
     const preview = (header: boolean) => (
       <section className={`${CARD} flex flex-col gap-3 p-4`}>

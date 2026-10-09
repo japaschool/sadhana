@@ -51,7 +51,7 @@ export function NewChartSheet({ onClose }: { onClose: () => void }) {
       qc.setQueryData<Report[]>(['reports'], (list) => [...(list ?? []), r])
       // Back on Insights, the new chart is the one shown.
       writeStored(r.id)
-      navigate(`/charts/${r.id}/edit`, { state: { pick: kind === 'Graph' } })
+      navigate(`/settings/charts/${r.id}`, { state: { pick: kind === 'Graph' } })
     },
     onError: () => showToast({ message: t('common.error'), variant: 'error' }),
   })

@@ -46,7 +46,7 @@ beforeEach(() => {
 })
 
 describe('Yatra settings hub (mobile)', () => {
-  it('lists Your links with its count, the admin sections and Leave; back goes to Settings', async () => {
+  it('lists Your links with its count, the admin sections and Leave; back goes to Yatras', async () => {
     mockAdmin(api)
     api.getYatraUserPractices.mockResolvedValue([
       { yatra_practice: { id: 'p1', practice: 'Japa rounds', data_type: 'Int' }, user_practice: 'Japa rounds' },
@@ -54,13 +54,12 @@ describe('Yatra settings hub (mobile)', () => {
     ])
     renderAt('/yatra/y1/settings')
     expect(await screen.findByRole('link', { name: /Your links\s*1 \/ 2/ })).toHaveAttribute('href', '/yatra/y1/links')
-    expect(screen.getByRole('heading', { name: 'Yatra settings' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: "Balarama's League" })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Practices\s*5/ })).toHaveAttribute('href', '/yatra/y1/admin/practices')
     expect(screen.getByRole('link', { name: /Danger zone/ })).toHaveAttribute('href', '/yatra/y1/admin/danger')
-    // The back link, then the tab bar's, which is the selected tab.
-    const settings = screen.getAllByRole('link', { name: 'Settings' })
-    expect(settings.map((l) => l.getAttribute('href'))).toEqual(['/settings', '/settings'])
-    expect(settings[1].querySelector('.text-ui-accent')).not.toBeNull()
+    expect(screen.getAllByRole('link', { name: 'Yatras' }).map((l) => l.getAttribute('href'))).toContain('/settings/yatras')
+    // The Settings tab stays selected.
+    expect(screen.getByRole('link', { name: 'Settings' }).querySelector('.text-ui-accent')).not.toBeNull()
     expect(screen.getByRole('button', { name: 'Leave yatra' })).toBeInTheDocument()
   })
 
@@ -74,7 +73,7 @@ describe('Yatra settings hub (mobile)', () => {
   it('a member opening an admin URL lands on the hub', async () => {
     mockAdmin(api, { admin: false })
     renderAt('/yatra/y1/admin/members')
-    expect(await screen.findByRole('heading', { name: 'Yatra settings' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: "Balarama's League" })).toBeInTheDocument()
   })
 })
 
