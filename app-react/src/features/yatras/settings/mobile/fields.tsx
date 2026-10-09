@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLayout } from '../../../../layouts/useLayout'
 import { BottomSheet } from '../../../../ui/primitives/BottomSheet'
 import { onRadioKeys, radioTabIndex } from '../../../../ui/radioKeys'
 import { useDebouncedCommit } from '../useDebouncedCommit'
@@ -62,6 +63,10 @@ export function SheetHeader({ title, onClose, children }: { title: string; onClo
   )
 }
 
+/** Sheet buttons stack; a desktop dialog's sit in a row on the right, the action last. */
+export const useConfirmRow = () =>
+  useLayout() === 'desktop' ? 'flex flex-row-reverse gap-2.5 [&>*]:px-5' : 'flex flex-col gap-2.5'
+
 /** Asks before something that can't be undone. */
 export function ConfirmSheet({ title, text, confirm, busy, disabled, onConfirm, onClose, children }: {
   title: string; text: string; confirm: string; busy?: boolean; disabled?: boolean
@@ -73,7 +78,7 @@ export function ConfirmSheet({ title, text, confirm, busy, disabled, onConfirm, 
       <h2 className="text-xl font-extrabold break-words text-ui-ink">{title}</h2>
       <p className="text-sm leading-normal text-ui-ink2">{text}</p>
       {children}
-      <div className="flex flex-col gap-2.5">
+      <div className={useConfirmRow()}>
         <button type="button" disabled={busy || disabled} onClick={onConfirm} className={`${BTN} bg-ui-danger text-white disabled:opacity-50`}>{confirm}</button>
         <button type="button" onClick={onClose} className={`${BTN} border border-ui-control text-ui-ink`}>{t('common.cancel')}</button>
       </div>
@@ -82,13 +87,15 @@ export function ConfirmSheet({ title, text, confirm, busy, disabled, onConfirm, 
 }
 
 /** A wrapping set of chips; picks one. */
-export function ChoiceChips<T extends string>({ label, value, options, onChange }: {
-  label: string; value: T; options: { value: T; label: string }[]; onChange: (v: T) => void
+export function ChoiceChips<T extends string>({ label, hideLabel, value, options, onChange }: {
+  label: string; value: T; options: { value: T; label: ReactNode }[]; onChange: (v: T) => void
+  /** The label is shown elsewhere (e.g. a section title); it still names the group. */
+  hideLabel?: boolean
 }) {
   const values = options.map((o) => o.value)
   return (
     <div className="flex flex-col gap-2">
-      <span aria-hidden className="text-[13px] font-bold text-ui-muted">{label}</span>
+      {!hideLabel && <span aria-hidden className="text-[13px] font-bold text-ui-muted">{label}</span>}
       <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2" onKeyDown={(e) => onRadioKeys(e, values, value, onChange)}>
         {options.map((o) => (
           <button key={o.value} type="button" role="radio" aria-checked={o.value === value} tabIndex={radioTabIndex(values, value, o.value)}

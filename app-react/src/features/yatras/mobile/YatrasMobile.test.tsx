@@ -57,7 +57,7 @@ describe('YatrasMobile', () => {
     renderScreen()
     expect(await screen.findByText('1 of your practices isn\'t linked')).toBeInTheDocument()
     expect(screen.getByText("What you log for Rounds won't appear in this table.")).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Link practices' })).toHaveAttribute('href', '/yatra/y1/settings')
+    expect(screen.getByRole('link', { name: 'Link practices' })).toHaveAttribute('href', '/yatra/y1/links')
     fireEvent.click(screen.getByRole('button', { name: 'Later' }))
     expect(screen.queryByText('1 of your practices isn\'t linked')).toBeNull()
     expect(localStorage.getItem('yatra_link_later_y1')).toBe('p1')
@@ -68,11 +68,11 @@ describe('YatrasMobile', () => {
     expect(await screen.findByText('not linked')).toBeInTheDocument()
   })
 
-  it('has a Settings action to the link page', async () => {
+  it('has no Settings action: yatra settings live in Settings', async () => {
     renderScreen()
     await screen.findByRole('button', { name: "Lord Balarama's League" })
-    // The tab bar has a Settings link too (to /settings).
-    expect(screen.getAllByRole('link', { name: 'Settings' }).map((l) => l.getAttribute('href'))).toContain('/yatra/y1/settings')
+    // Only the tab bar's Settings link is left.
+    expect(screen.getAllByRole('link', { name: 'Settings' }).map((l) => l.getAttribute('href'))).toEqual(['/settings'])
   })
 
   it('switcher lists yatras with role and members, and creates a new one', async () => {

@@ -54,15 +54,10 @@ export function YatrasMobile() {
               <span className="truncate">{y.yatra.name}</span>
               <span aria-hidden className="shrink-0">▾</span>
             </button>
-            <div className="flex items-center gap-3">
-              <Link to={`/yatra/${y.yatra.id}/settings`} className="flex min-h-9 shrink-0 items-center text-[13px] font-bold text-ui-accent">
-                {t('nav.settings')}
-              </Link>
-              <button type="button" onClick={() => setCalendarOpen(true)}
-                className="flex min-h-9 shrink-0 items-center gap-1 text-[13px] font-bold text-ui-muted">
-                {y.isToday ? t('today.goToday') : formatDay(toDateStr(y.date), i18n.language || 'en')} <span aria-hidden>⌄</span>
-              </button>
-            </div>
+            <button type="button" onClick={() => setCalendarOpen(true)}
+              className="flex min-h-9 shrink-0 items-center gap-1 text-[13px] font-bold text-ui-muted">
+              {y.isToday ? t('today.goToday') : formatDay(toDateStr(y.date), i18n.language || 'en')} <span aria-hidden>⌄</span>
+            </button>
           </div>
         )}
         {showBanner && (
@@ -72,7 +67,7 @@ export function YatrasMobile() {
               {t('yatraSettings.bannerText', { names: joinNames(missing.map((p) => p.practice), i18n.language || 'en') })}
             </p>
             <div className="flex gap-2.5">
-              <Link to={`/yatra/${y.yatra!.id}/settings`}
+              <Link to={`/yatra/${y.yatra!.id}/links`}
                 className="flex h-11 items-center rounded-xl bg-ui-primary px-4 text-sm font-bold text-ui-on-primary">
                 {t('yatraSettings.linkPractices')}
               </Link>

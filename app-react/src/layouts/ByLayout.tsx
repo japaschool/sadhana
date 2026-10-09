@@ -11,7 +11,7 @@ interface ByLayoutProps {
 }
 
 /** While a redesigned screen's code loads: the new palette, so there's no flash of the old dark theme. */
-function UiLoading() {
+export function UiLoading() {
   const { t } = useTranslation()
   return (
     <div className="ui-root flex min-h-dvh items-center justify-center bg-ui-bg">

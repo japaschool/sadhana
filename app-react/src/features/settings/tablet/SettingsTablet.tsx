@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TabletShell } from '../../../layouts/tablet/TabletShell'
 import { LogoutSheet } from '../mobile/LogoutSheet'
-import { AccountRows, PreferencesRows, ProfileCard, SupportRows } from '../sections'
+import { AccountRows, PreferencesRows, ProfileCard, SupportRows, useMyYatras, YatraRows } from '../sections'
 
 const SECTIONS = [
   { key: 'settings.preferences', Rows: PreferencesRows },
+  { key: 'settings.yatras', Rows: YatraRows },
   { key: 'settings.accountData', Rows: AccountRows },
   { key: 'settings.support', Rows: SupportRows },
 ] as const
@@ -16,6 +17,8 @@ export function SettingsTablet() {
   const [selected, setSelected] = useState<(typeof SECTIONS)[number]['key']>(SECTIONS[0].key)
   const [logoutOpen, setLogoutOpen] = useState(false)
   const { Rows } = SECTIONS.find((s) => s.key === selected)!
+  const hasYatras = useMyYatras().length > 0
+  const sections = SECTIONS.filter((s) => s.key !== 'settings.yatras' || hasYatras)
 
   return (
     <div className="flex min-h-dvh">
@@ -23,7 +26,7 @@ export function SettingsTablet() {
         <h1 className="px-1.5 text-[28px] font-extrabold tracking-[-0.02em]">{t('nav.settings')}</h1>
         <ProfileCard />
         <nav aria-label={t('nav.settings')} className="flex flex-col gap-1.5">
-          {SECTIONS.map((s) => (
+          {sections.map((s) => (
             <button key={s.key} type="button" aria-current={s.key === selected ? 'true' : undefined} onClick={() => setSelected(s.key)}
               className={`rounded-xl p-3 text-left text-[15px] ${s.key === selected ? 'bg-ui-selected font-bold text-ui-on-selected' : 'font-semibold text-ui-ink'}`}>
               {t(s.key)}

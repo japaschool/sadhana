@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { BottomSheet } from '../../../../ui/primitives/BottomSheet'
+import { useConfirmRow } from './fields'
 
 const BTN = 'flex h-[50px] items-center justify-center rounded-[14px] text-[15px] font-bold'
 
@@ -8,6 +9,7 @@ export function LeaveSheets({ yatraId, yatraName, lastAdmin, leaving, onLeave, o
   yatraId: string; yatraName: string; lastAdmin: boolean; leaving: boolean; onLeave: () => void; onClose: () => void
 }) {
   const { t } = useTranslation()
+  const row = useConfirmRow()
   const cancel = (
     <button type="button" onClick={onClose} className={`${BTN} border border-ui-control text-ui-ink`}>{t('common.cancel')}</button>
   )
@@ -30,7 +32,7 @@ export function LeaveSheets({ yatraId, yatraName, lastAdmin, leaving, onLeave, o
     <BottomSheet label={title} onClose={onClose}>
       <h2 className="text-xl font-extrabold text-ui-ink">{title}</h2>
       <p className="text-sm leading-normal text-ui-ink2">{t('yatraSettings.leaveText')}</p>
-      <div className="flex flex-col gap-2.5">
+      <div className={row}>
         <button type="button" disabled={leaving} onClick={onLeave} className={`${BTN} bg-ui-danger text-white disabled:opacity-60`}>
           {t('yatraSettings.leave')}
         </button>

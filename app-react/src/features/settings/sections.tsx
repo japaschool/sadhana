@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { yatrasApi } from '../../api/yatras'
 import { useServiceWorkerUpdate } from '../../hooks/useServiceWorkerUpdate'
 import { useAuthStore } from '../../store/authStore'
 import { initials } from '../../ui/initials'
@@ -72,6 +74,29 @@ export function SupportRows() {
       {updateReady && <SettingsRow label={t('settings.updateAvailable')} accent onClick={applyUpdate} />}
       <SettingsRow label={t('settings.helpSupport')} to="/help" />
       <SettingsRow label={t('settings.aboutShort')} href="https://sadhana.pro" />
+    </>
+  )
+}
+
+export const useMyYatras = () => useQuery({ queryKey: ['yatras'], queryFn: yatrasApi.getYatras }).data ?? []
+
+/** One row per yatra, to its settings, with my role there. */
+export function YatraRows() {
+  const { t } = useTranslation()
+  const userId = useAuthStore((s) => s.user?.id)
+  const yatras = useMyYatras()
+  const users = useQueries({
+    queries: yatras.map((y) => ({ queryKey: ['yatra-users', y.id], queryFn: () => yatrasApi.getYatraUsers(y.id) })),
+  })
+  return (
+    <>
+      {yatras.map((y, i) => {
+        const admin = users[i]?.data?.find((u) => u.user_id === userId)?.is_admin
+        return (
+          <SettingsRow key={y.id} label={y.name} to={`/yatra/${y.id}/settings`}
+            value={admin === undefined ? undefined : t(admin ? 'yatraSettings.roleAdmin' : 'yatraSettings.roleMember')} />
+        )
+      })}
     </>
   )
 }

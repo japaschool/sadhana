@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
 import { motion } from 'framer-motion'
+import { useLayout } from '../../layouts/useLayout'
 import { UiPortal } from './UiPortal'
 
 const FOCUSABLE = 'button:not([disabled]), input, textarea, [tabindex]:not([tabindex="-1"])'
@@ -9,8 +10,10 @@ const CLOSE_DRAG_PX = 100
 interface BottomSheetProps { label: string; onClose: () => void; children: ReactNode }
 
 // ponytail: no exit animation (needs AnimatePresence at every call site); add if the snap-close feels abrupt.
+/** A sheet from the bottom; on desktop, a dialog in the middle of the screen. */
 export function BottomSheet({ label, onClose, children }: BottomSheetProps) {
   const ref = useRef<HTMLDivElement>(null)
+  const dialog = useLayout() === 'desktop'
 
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null
@@ -38,6 +41,15 @@ export function BottomSheet({ label, onClose, children }: BottomSheetProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       />
+      {dialog ? (
+        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-6">
+          <motion.div ref={ref} role="dialog" aria-modal="true" aria-label={label} tabIndex={-1} onKeyDown={onKeyDown}
+            className="pointer-events-auto flex max-h-[85dvh] w-full max-w-[440px] flex-col gap-[18px] overflow-y-auto rounded-[24px] bg-ui-sheet p-6 shadow-[0_30px_60px_-16px_rgba(0,0,0,.35)] outline-none"
+            initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.16 }}>
+            {children}
+          </motion.div>
+        </div>
+      ) : (
       <motion.div
         ref={ref}
         role="dialog"
@@ -45,7 +57,7 @@ export function BottomSheet({ label, onClose, children }: BottomSheetProps) {
         aria-label={label}
         tabIndex={-1}
         onKeyDown={onKeyDown}
-        // Tablet (useLayout's query; desktop has no sheets): one practice column wide — (content − 2·36px padding − 16px gap) / 2 —
+        // Tablet (useLayout's query): one practice column wide — (content − 2·36px padding − 16px gap) / 2 —
         // centred in the area right of the 88px rail; floored at a phone's width for the 640–767px single-column range.
         className="fixed inset-x-0 bottom-0 z-50 [@media(min-width:640px)_and_(min-height:500px)]:left-[88px] [@media(min-width:640px)_and_(min-height:500px)]:mx-auto [@media(min-width:640px)_and_(min-height:500px)]:w-[max(375px,calc(50vw-88px))] flex max-h-[92dvh] flex-col gap-[18px] overflow-y-auto rounded-t-[28px] bg-ui-sheet px-5 pt-2.5 pb-[calc(30px+env(safe-area-inset-bottom))] outline-none"
         initial={{ y: '100%' }}
@@ -59,6 +71,7 @@ export function BottomSheet({ label, onClose, children }: BottomSheetProps) {
         <span aria-hidden className="h-[5px] w-10 self-center rounded-full bg-ui-control" />
         {children}
       </motion.div>
+      )}
     </UiPortal>
   )
 }

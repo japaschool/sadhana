@@ -1,8 +1,9 @@
-import { lazy } from 'react'
+import { lazy, Suspense } from 'react'
+import type { ReactNode } from 'react'
 import { createBrowserRouter, isRouteErrorResponse, Navigate, useParams, useRouteError } from 'react-router-dom'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { GuestRoute } from './components/layout/GuestRoute'
-import { ByLayout } from './layouts/ByLayout'
+import { ByLayout, UiLoading } from './layouts/ByLayout'
 
 // AppShell is the authenticated layout; lazy-load it so the guest/login
 // bundle doesn't pull in the whole nav subtree (TopBar/BottomNav/
@@ -18,15 +19,18 @@ const InsightsDesktopScreen = lazy(() => import('./features/insights/desktop/Ins
 const SettingsDesktopScreen = lazy(() => import('./features/settings/desktop/SettingsDesktop').then((m) => ({ default: m.SettingsDesktopScreen })))
 const YatrasMobileScreen = lazy(() => import('./features/yatras/mobile/YatrasMobile').then((m) => ({ default: m.YatrasMobileScreen })))
 const YatrasTabletScreen = lazy(() => import('./features/yatras/tablet/YatrasTablet').then((m) => ({ default: m.YatrasTabletScreen })))
-const LinkPracticesMobileScreen = lazy(() => import('./features/yatras/settings/mobile/LinkPracticesMobile').then((m) => ({ default: m.LinkPracticesMobileScreen })))
-const ManageYatraMobile = lazy(() => import('./features/yatras/settings/mobile/ManageYatraMobile').then((m) => ({ default: m.ManageYatraMobile })))
+const YatraSettingsHome = lazy(() => import('./features/yatras/settings/SettingsFrame').then((m) => ({ default: m.YatraSettingsHome })))
+const LinkPracticesScreen = lazy(() => import('./features/yatras/settings/mobile/LinkPracticesMobile').then((m) => ({ default: m.LinkPracticesMobile })))
 const AdminSectionMobile = lazy(() => import('./features/yatras/settings/mobile/AdminSectionMobile').then((m) => ({ default: m.AdminSectionMobile })))
 const PracticeEditorMobile = lazy(() => import('./features/yatras/settings/mobile/PracticeEditorMobile').then((m) => ({ default: m.PracticeEditorMobile })))
 
-/** The admin sub-pages exist on mobile only; the legacy admin page has every section. */
-function ToAdminHub() {
+/** Redesigned on every layout: no legacy fallback, just the loading state while the code arrives. */
+const ui = (element: ReactNode) => <Suspense fallback={<UiLoading />}>{element}</Suspense>
+
+/** The old admin page's URL: its sections are listed on the yatra settings hub now. */
+function ToSettingsHub() {
   const { id } = useParams()
-  return <Navigate to={`/yatra/${id}/admin/settings`} replace />
+  return <Navigate to={`/yatra/${id}/settings`} replace />
 }
 const YatrasDesktopScreen = lazy(() => import('./features/yatras/desktop/YatrasDesktop').then((m) => ({ default: m.YatrasDesktopScreen })))
 
@@ -66,10 +70,6 @@ const SharedChartPage = lazy(() => import('./pages/charts/SharedChartPage').then
 // Yatras
 const YatrasPage = lazy(() => import('./pages/yatras/YatrasPage').then(m => ({ default: m.YatrasPage })))
 const YatraJoinPage = lazy(() => import('./pages/yatras/YatraJoinPage').then(m => ({ default: m.YatraJoinPage })))
-const YatraSettingsPage = lazy(() => import('./pages/yatras/YatraSettingsPage').then(m => ({ default: m.YatraSettingsPage })))
-const YatraAdminSettingsPage = lazy(() => import('./pages/yatras/YatraAdminSettingsPage').then(m => ({ default: m.YatraAdminSettingsPage })))
-const YatraPracticeNewPage = lazy(() => import('./pages/yatras/YatraPracticeNewPage').then(m => ({ default: m.YatraPracticeNewPage })))
-const YatraPracticeEditPage = lazy(() => import('./pages/yatras/YatraPracticeEditPage').then(m => ({ default: m.YatraPracticeEditPage })))
 
 // Settings
 const SettingsPage = lazy(() => import('./pages/settings/SettingsPage').then(m => ({ default: m.SettingsPage })))
@@ -127,29 +127,17 @@ export const router = createBrowserRouter([
         element: <ByLayout mobile={<YatrasMobileScreen />} tablet={<YatrasTabletScreen />} desktop={<YatrasDesktopScreen />} legacy={<AppShell />} />,
         children: [{ index: true, element: <YatrasPage /> }],
       },
-      {
-        path: '/yatra/:id/settings',
-        element: <ByLayout mobile={<LinkPracticesMobileScreen />} legacy={<AppShell />} />,
-        children: [{ index: true, element: <YatraSettingsPage /> }],
-      },
-      {
-        path: '/yatra/:id/admin/settings',
-        element: <ByLayout mobile={<ManageYatraMobile />} legacy={<AppShell />} />,
-        children: [{ index: true, element: <YatraAdminSettingsPage /> }],
-      },
-      { path: '/yatra/:id/admin/:section', element: <ByLayout mobile={<AdminSectionMobile />} legacy={<ToAdminHub />} /> },
-      {
-        path: '/yatra/:id/practice/:practice_id/edit',
-        element: <ByLayout mobile={<PracticeEditorMobile />} legacy={<AppShell />} />,
-        children: [{ index: true, element: <YatraPracticeEditPage /> }],
-      },
+      { path: '/yatra/:id/settings', element: ui(<YatraSettingsHome />) },
+      { path: '/yatra/:id/links', element: ui(<LinkPracticesScreen />) },
+      { path: '/yatra/:id/admin/settings', element: <ToSettingsHub /> },
+      { path: '/yatra/:id/admin/:section', element: ui(<AdminSectionMobile />) },
+      { path: '/yatra/:id/practice/:practice_id/edit', element: ui(<PracticeEditorMobile />) },
       {
         element: <AppShell />,
         children: [
           { path: '/charts/manage', element: <ChartsPage /> },
           { path: '/charts/new', element: <NewChartPage /> },
           { path: '/yatra/:id/join', element: <YatraJoinPage /> },
-          { path: '/yatra/:id/practice/new', element: <YatraPracticeNewPage /> },
           { path: '/settings/edit-user', element: <EditUserPage /> },
           { path: '/settings/edit-password', element: <EditPasswordPage /> },
           { path: '/settings/language', element: <LanguagePage /> },

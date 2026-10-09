@@ -8,7 +8,9 @@ import { SegmentedControl } from '../../../../ui/primitives/SegmentedControl'
 import { typeTime } from '../../../today/values'
 import { ZONE_BG } from '../../yatrasLogic'
 import { useDebouncedCommit } from '../useDebouncedCommit'
+import { useLayout } from '../../../../layouts/useLayout'
 import { useYatraAdmin } from '../useYatraAdmin'
+import type { YatraAdmin } from '../useYatraAdmin'
 import type { FieldError, ScoredType } from '../zones'
 import {
   aboveColour, barGeometry, bonusOf, checkBounds, checkScore, formatValue, greenStart, isScored, paletteZones, parseValue, scoreConfig, zoneCount, zoneSamples,
@@ -16,6 +18,7 @@ import {
 import { AdminPage, BTN, CARD, FIELD, HINT, SECTION_TITLE } from './AdminPage'
 import { AutosaveText } from './fields'
 import { DeletePracticeSheet } from './PracticeSheets'
+import { PracticesMobile } from './PracticesMobile'
 import { RangeBar } from './RangeBar'
 import { practiceNameError, zoneKey } from './summaries'
 import { TypeChip } from './TypeChip'
@@ -24,53 +27,71 @@ const EMPTY_COLOURS: ZoneColour[] = ['Neutral', 'Red', 'Yellow', 'Green']
 const PLACEHOLDER: Record<ScoredType, string> = { Int: '', Duration: '90', Time: 'HH:MM' }
 const LABEL = 'text-[13px] font-bold text-ui-muted'
 
+/** Desktop edits a practice in a panel beside the list; mobile and tablet open it as a page. */
 export function PracticeEditorMobile() {
+  return useLayout() === 'desktop' ? <PracticesMobile /> : <PracticeEditorPage />
+}
+
+function PracticeEditorPage() {
   const { t } = useTranslation()
   const { id = '', practice_id = '' } = useParams()
   const navigate = useNavigate()
   const a = useYatraAdmin(id)
-  const [deleting, setDeleting] = useState(false)
   const p = a.practices.find((x) => x.id === practice_id)
   const back = `/yatra/${id}/admin/practices`
   return (
     <AdminPage admin={a} title={p?.practice ?? ''} back={{ to: back, label: t('yatraSettings.practices') }}>
-      {() => !p ? <Navigate to={back} replace /> : (
-        <>
-          <section className={`${CARD} flex flex-col gap-4 p-4`}>
-            <AutosaveText id="practice-name" label={t('yatraSettings.name')} value={p.practice}
-              validate={(v) => practiceNameError(t, v, a.practices.filter((x) => x.id !== p.id))}
-              onCommit={(v) => a.savePractice({ ...p, practice: v.trim() }, t('yatraSettings.renamed'))} />
-            <div className="flex flex-col gap-1.5">
-              <span className={LABEL}>{t('yatraSettings.type')}</span>
-              <div className="flex flex-wrap items-center gap-2">
-                <TypeChip type={p.data_type} />
-                <span className={HINT}>{t('yatraSettings.typeSet')}</span>
-              </div>
-            </div>
-          </section>
-          {isScored(p.data_type) ? (
-            <>
-              <ColoursAndScore p={p} dt={p.data_type} save={(next) => a.savePractice(next, t('common.saved'))} />
-              <p className="flex items-center gap-1.5 px-1.5 text-xs font-semibold text-ui-muted">
-                <span className="h-[7px] w-[7px] rounded-full bg-ui-good" />{t('yatraSettings.savedAsYouEdit')}
-              </p>
-            </>
-          ) : (
-            <section className={`${CARD} flex flex-col gap-1.5 p-4`}>
-              <h2 className={SECTION_TITLE}>{t('yatraSettings.noZonesTitle')}</h2>
-              <p className={HINT}>{t(p.data_type === 'Bool' ? 'yatraSettings.noZonesBool' : 'yatraSettings.noZonesText')}</p>
-            </section>
-          )}
-          <button type="button" onClick={() => setDeleting(true)} className={`${BTN} border border-ui-control bg-ui-surface text-ui-danger`}>
-            {t('yatraSettings.deletePractice')}
-          </button>
-          {deleting && (
-            <DeletePracticeSheet practice={p} statCount={a.statCount(p.id)} busy={a.deletePractice.isPending} onClose={() => setDeleting(false)}
-              onConfirm={() => a.deletePractice.mutate(p, { onSuccess: () => navigate(back, { replace: true }), onSettled: () => setDeleting(false) })} />
-          )}
-        </>
-      )}
+      {() => !p ? <Navigate to={back} replace /> : <PracticeEditor a={a} p={p} onDeleted={() => navigate(back, { replace: true })} />}
     </AdminPage>
+  )
+}
+
+/** Name, type, colours and score of one practice, then Delete. */
+export function PracticeEditor({ a, p, onDeleted }: { a: YatraAdmin; p: YatraPractice; onDeleted: () => void }) {
+  const { t } = useTranslation()
+  const wide = useLayout() !== 'mobile'
+  const [deleting, setDeleting] = useState(false)
+  const saved = (
+    <p className="flex items-center gap-1.5 px-1.5 text-xs font-semibold text-ui-muted">
+      <span className="h-[7px] w-[7px] rounded-full bg-ui-good" />{t('yatraSettings.savedAsYouEdit')}
+    </p>
+  )
+  const del = (
+    <button type="button" onClick={() => setDeleting(true)}
+      className={`${BTN} border border-ui-control bg-ui-surface text-ui-danger ${wide ? 'min-h-10 px-4 text-sm' : ''}`}>
+      {t('yatraSettings.deletePractice')}
+    </button>
+  )
+  return (
+    <>
+      <section className={`${CARD} flex flex-col gap-4 p-4`}>
+        <AutosaveText id="practice-name" label={t('yatraSettings.name')} value={p.practice}
+          validate={(v) => practiceNameError(t, v, a.practices.filter((x) => x.id !== p.id))}
+          onCommit={(v) => a.savePractice({ ...p, practice: v.trim() }, t('yatraSettings.renamed'))} />
+        <div className="flex flex-col gap-1.5">
+          <span className={LABEL}>{t('yatraSettings.type')}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <TypeChip type={p.data_type} />
+            <span className={HINT}>{t('yatraSettings.typeSet')}</span>
+          </div>
+        </div>
+      </section>
+      {isScored(p.data_type) ? (
+        <ColoursAndScore p={p} dt={p.data_type} save={(next) => a.savePractice(next, t('common.saved'))} />
+      ) : (
+        <section className={`${CARD} flex flex-col gap-1.5 p-4`}>
+          <h2 className={SECTION_TITLE}>{t('yatraSettings.noZonesTitle')}</h2>
+          <p className={HINT}>{t(p.data_type === 'Bool' ? 'yatraSettings.noZonesBool' : 'yatraSettings.noZonesText')}</p>
+        </section>
+      )}
+      {wide
+        ? <div className="flex items-center justify-between gap-3">{isScored(p.data_type) ? saved : <span />}{del}</div>
+        : <>{isScored(p.data_type) && saved}{del}</>}
+      {deleting && (
+        <DeletePracticeSheet practice={p} statCount={a.statCount(p.id)} busy={a.deletePractice.isPending} onClose={() => setDeleting(false)}
+          onConfirm={() => a.deletePractice.mutate(p, { onSuccess: onDeleted, onSettled: () => setDeleting(false) })} />
+      )}
+    </>
   )
 }
 

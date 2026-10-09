@@ -1,20 +1,21 @@
 import { useRef } from 'react'
 import type { ReactNode } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ToastContainer } from '../../components/ui/Toast'
+import { UiToastContainer } from '../../ui/primitives/Toast'
 import { LogPanel } from '../../features/today/desktop/LogPanel'
 import { useLogDate } from '../../features/today/useLogDate'
 import { useAuthStore } from '../../store/authStore'
 import { initials } from '../../ui/initials'
 import { TabIcon } from '../TabIcon'
-import { TABS } from '../tabIcons'
+import { TABS, tabActive } from '../tabIcons'
 import { useShellBackground } from '../useShellBackground'
 
 function Sidebar() {
   const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)
   const name = user?.name ?? ''
+  const { pathname } = useLocation()
   return (
     // Below xl the main column gets tight, so the sidebar collapses to the tablet's 88px rail (icon over a small label).
     <nav aria-label={t('today.tabs')}
@@ -24,15 +25,18 @@ function Sidebar() {
       {/* No Log tab: the log is always open in the right-hand panel. */}
       {TABS.filter((tab) => tab.to !== '/').map((tab) => (
         <NavLink key={tab.to} to={tab.to}
-          className={({ isActive }) => `flex flex-col items-center gap-1.5 text-[11px] font-bold xl:flex-row xl:gap-3 xl:rounded-xl xl:px-3 xl:py-2.5 xl:text-sm ${isActive ? 'text-ui-ink xl:bg-ui-accent-pill' : 'xl:font-semibold'}`}>
-          {({ isActive }) => (
-            <>
-              <span className={`flex h-8 w-12 items-center justify-center rounded-full xl:h-auto xl:w-auto ${isActive ? 'bg-ui-accent-pill text-ui-accent' : 'text-ui-faint2'}`}>
-                <TabIcon d={isActive ? tab.activeIcon : tab.icon} className="h-6 w-6 xl:h-5 xl:w-5" />
-              </span>
-              {t(tab.key)}
-            </>
-          )}
+          className={({ isActive }) => `flex flex-col items-center gap-1.5 text-[11px] font-bold xl:flex-row xl:gap-3 xl:rounded-xl xl:px-3 xl:py-2.5 xl:text-sm ${tabActive(tab.to, isActive, pathname) ? 'text-ui-ink xl:bg-ui-accent-pill' : 'xl:font-semibold'}`}>
+          {({ isActive }) => {
+            const on = tabActive(tab.to, isActive, pathname)
+            return (
+              <>
+                <span className={`flex h-8 w-12 items-center justify-center rounded-full xl:h-auto xl:w-auto ${on ? 'bg-ui-accent-pill text-ui-accent' : 'text-ui-faint2'}`}>
+                  <TabIcon d={on ? tab.activeIcon : tab.icon} className="h-6 w-6 xl:h-5 xl:w-5" />
+                </span>
+                {t(tab.key)}
+              </>
+            )
+          }}
         </NavLink>
       ))}
       <Link to="/settings/edit-user" aria-label={t('settings.userDetails')}
@@ -50,8 +54,9 @@ function Sidebar() {
 }
 
 /** Desktop frame: sidebar nav, the screen, and the log panel on the right. The screen gets the log's date
- *  (Insights ends its window on it) and can move it (a table row opens its day in the panel). */
-export function DesktopShell({ children }: { children: (logDate: Date, setLogDate: (d: Date) => void) => ReactNode }) {
+ *  (Insights ends its window on it) and can move it (a table row opens its day in the panel).
+ *  `log={false}` drops the panel, for screens that need the width (yatra settings). */
+export function DesktopShell({ children, log = true }: { children: (logDate: Date, setLogDate: (d: Date) => void) => ReactNode; log?: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   useShellBackground(ref)
   const [date, setDate] = useLogDate()
@@ -59,8 +64,8 @@ export function DesktopShell({ children }: { children: (logDate: Date, setLogDat
     <div ref={ref} className="ui-root flex min-h-dvh items-start bg-ui-bg">
       <Sidebar />
       <main className="min-w-0 flex-1">{children(date, setDate)}</main>
-      <LogPanel date={date} onDate={setDate} />
-      <ToastContainer />
+      {log && <LogPanel date={date} onDate={setDate} />}
+      <UiToastContainer />
     </div>
   )
 }

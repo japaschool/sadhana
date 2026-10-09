@@ -18,3 +18,7 @@ export const TABS = [
   { to: '/yatras', key: 'today.tabYatra', icon: TAB_ICONS.userGroup, activeIcon: TAB_ICONS.userGroupSolid },
   { to: '/settings', key: 'today.tabSettings', icon: TAB_ICONS.adjust, activeIcon: TAB_ICONS.adjustSolid },
 ] as const
+
+/** Yatra settings live at /yatra/:id/… but belong to the Settings tab. */
+export const tabActive = (to: string, isActive: boolean, pathname: string) =>
+  isActive || (to === '/settings' && pathname.startsWith('/yatra/'))

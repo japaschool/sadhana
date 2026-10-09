@@ -6,7 +6,6 @@ import type { yatrasApi } from '../../../../api/yatras'
 import { useAuthStore } from '../../../../store/authStore'
 import type { Yatra, YatraPractice, YatraUser } from '../../../../types/api'
 import { AdminSectionMobile } from './AdminSectionMobile'
-import { ManageYatraMobile } from './ManageYatraMobile'
 import { PracticeEditorMobile } from './PracticeEditorMobile'
 
 export const PRACTICES: YatraPractice[] = [
@@ -48,6 +47,8 @@ export const USERS: YatraUser[] = [
 export function mockAdmin(api: Mocked<typeof yatrasApi>, { admin = true, users = USERS }: { admin?: boolean; users?: YatraUser[] } = {}) {
   useAuthStore.setState({ user: { id: admin ? 'u1' : 'u3', email: '', token: 't', name: 'Me' }, token: 't' })
   api.getYatra.mockResolvedValue(structuredClone(YATRA))
+  api.getYatras.mockResolvedValue([structuredClone(YATRA)])
+  api.getYatraUserPractices.mockResolvedValue([])
   api.getYatraPractices.mockResolvedValue(structuredClone(PRACTICES))
   api.getYatraUsers.mockResolvedValue(structuredClone(users))
   api.getYatraData.mockResolvedValue({
@@ -65,7 +66,6 @@ export function renderAdmin(url: string) {
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={[url]}>
         <Routes>
-          <Route path="/yatra/:id/admin/settings" element={<ManageYatraMobile />} />
           <Route path="/yatra/:id/admin/:section" element={<AdminSectionMobile />} />
           <Route path="/yatra/:id/practice/:practice_id/edit" element={<PracticeEditorMobile />} />
           <Route path="/yatra/:id/settings" element={<p>Link page</p>} />

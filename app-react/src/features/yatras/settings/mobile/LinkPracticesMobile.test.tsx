@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { setViewportWidth } from '../../../../test/viewport'
 import { useAuthStore } from '../../../../store/authStore'
 import { useToastStore } from '../../../../hooks/useToast'
-import { LinkPracticesMobileScreen } from './LinkPracticesMobile'
+import { LinkPracticesMobile } from './LinkPracticesMobile'
 
 vi.mock('../../../../api/yatras', () => ({
   yatrasApi: { getYatras: vi.fn(), getYatraUserPractices: vi.fn(), updateYatraUserPractices: vi.fn(), getYatraUsers: vi.fn(), leaveYatra: vi.fn() },
@@ -15,14 +15,14 @@ import { yatrasApi } from '../../../../api/yatras'
 import { practicesApi } from '../../../../api/practices'
 const api = vi.mocked(yatrasApi)
 
-export function renderLinkScreen(url = '/yatra/y1/settings') {
+export function renderLinkScreen(url = '/yatra/y1/links') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={[url]}>
         <Routes>
-          <Route path="/yatra/:id/settings" element={<LinkPracticesMobileScreen />} />
-          <Route path="/yatra/:id/admin/settings" element={<p>Admin hub</p>} />
+          <Route path="/yatra/:id/links" element={<LinkPracticesMobile />} />
+          <Route path="/yatra/:id/settings" element={<p>Hub</p>} />
           <Route path="/user/practices" element={<p>My practices</p>} />
           <Route path="/yatras" element={<p>Yatras page</p>} />
         </Routes>
@@ -88,20 +88,16 @@ describe('LinkPracticesMobile', () => {
   })
 
   it('shows the joined header after joining', async () => {
-    renderLinkScreen('/yatra/y1/settings?joined=1')
+    renderLinkScreen('/yatra/y1/links?joined=1')
     expect(await screen.findByRole('heading', { name: "You've joined Balarama's League" })).toBeInTheDocument()
   })
 
-  it('shows Manage yatra only to admins', async () => {
-    renderLinkScreen()
-    await screen.findByText('1 of 3 linked')
-    expect(screen.queryByRole('link', { name: /Manage yatra/ })).toBeNull()
-  })
-
-  it('admins get Manage yatra to the admin hub', async () => {
+  it('goes back to the hub, which has Leave and the admin sections', async () => {
     mockLinkApi(true)
     renderLinkScreen()
-    expect(await screen.findByRole('link', { name: /Manage yatra/ })).toHaveAttribute('href', '/yatra/y1/admin/settings')
+    await screen.findByText('1 of 3 linked')
+    expect(screen.getByRole('link', { name: 'Yatra settings' })).toHaveAttribute('href', '/yatra/y1/settings')
+    expect(screen.queryByRole('button', { name: 'Leave yatra' })).toBeNull()
   })
 })
 describe('LinkPickerSheet', () => {
@@ -152,31 +148,5 @@ describe('LinkPickerSheet', () => {
     fireEvent.click(within(row).getByText('Book reading'))
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: /Don't link/ }))
     await waitFor(() => expect(api.updateYatraUserPractices.mock.calls[0][1].map((i) => i.user_practice)).toEqual([null, null]))
-  })
-})
-describe('Leave yatra', () => {
-  beforeEach(() => { vi.clearAllMocks(); setViewportWidth(390); useToastStore.setState({ toasts: [] }) })
-
-  it('asks first, then leaves and goes to the Yatras screen', async () => {
-    mockLinkApi(false)
-    api.leaveYatra.mockResolvedValue()
-    renderLinkScreen()
-    fireEvent.click(await screen.findByRole('button', { name: 'Leave yatra' }))
-    const sheet = screen.getByRole('dialog', { name: "Leave Balarama's League?" })
-    fireEvent.click(within(sheet).getByRole('button', { name: 'Leave yatra' }))
-    expect(await screen.findByText('Yatras page')).toBeInTheDocument()
-    expect(api.leaveYatra).toHaveBeenCalledWith('y1')
-  })
-
-  it('the last admin gets the explanation and nothing is sent', async () => {
-    mockLinkApi(true) // u1 is the only admin
-    renderLinkScreen()
-    fireEvent.click(await screen.findByRole('button', { name: 'Leave yatra' }))
-    const sheet = screen.getByRole('dialog', { name: "You're the last admin" })
-    expect(within(sheet).getByRole('link', { name: 'Choose another admin' })).toHaveAttribute('href', '/yatra/y1/admin/members')
-    expect(within(sheet).getByRole('link', { name: 'Delete yatra…' })).toHaveAttribute('href', '/yatra/y1/admin/danger')
-    fireEvent.click(within(sheet).getByRole('button', { name: 'Cancel' }))
-    expect(screen.queryByRole('dialog')).toBeNull()
-    expect(api.leaveYatra).not.toHaveBeenCalled()
   })
 })

@@ -57,6 +57,7 @@ export function useLinkPractices(yatraId: string) {
 
   const users = usersQ.data ?? []
   return {
+    yatras: yatrasQ.data ?? [],
     yatra: yatrasQ.data?.find((y) => y.id === yatraId),
     items: itemsQ.data ?? [],
     practices: practicesQ.data ?? [],

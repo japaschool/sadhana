@@ -7,7 +7,6 @@ import { MembersMobile } from './MembersMobile'
 import { PracticesMobile } from './PracticesMobile'
 import { StatisticsMobile } from './StatisticsMobile'
 
-// Tasks 6–11 add: general, practices, members, statistics, invite, danger.
 const SECTIONS: Record<string, ReactNode> = {
   general: <GeneralMobile />,
   practices: <PracticesMobile />,
@@ -17,8 +16,8 @@ const SECTIONS: Record<string, ReactNode> = {
   danger: <DangerZoneMobile />,
 }
 
-/** /yatra/:id/admin/:section on mobile; unknown sections go to the hub. */
+/** /yatra/:id/admin/:section; unknown sections go to the hub. */
 export function AdminSectionMobile() {
   const { id = '', section = '' } = useParams()
-  return SECTIONS[section] ?? <Navigate to={`/yatra/${id}/admin/settings`} replace />
+  return SECTIONS[section] ?? <Navigate to={`/yatra/${id}/settings`} replace />
 }

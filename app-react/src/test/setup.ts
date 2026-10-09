@@ -2,6 +2,7 @@ import '@testing-library/jest-dom'
 import { afterEach, beforeAll, afterAll } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import { server } from './handlers/auth.handlers'
+import { setViewportWidth } from './viewport'
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import en from '../../public/locales/en/translation.json'
@@ -293,3 +294,6 @@ if (!i18n.isInitialized) {
 beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
 afterEach(() => { cleanup(); server.resetHandlers() })
 afterAll(() => server.close())
+
+// A phone, unless a test sets another width: screens and sheets read the layout.
+setViewportWidth(390)

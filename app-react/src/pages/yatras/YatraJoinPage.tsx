@@ -30,7 +30,7 @@ export function YatraJoinPage() {
     mutationFn: () => yatrasApi.joinYatra(id!),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['yatras'] })
-      navigate(`/yatra/${id}/settings?joined=1`, { replace: true })
+      navigate(`/yatra/${id}/links?joined=1`, { replace: true })
     },
   })
 

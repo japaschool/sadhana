@@ -37,7 +37,7 @@ export function InviteMobile() {
             )}
             <button type="button" onClick={copy} className={`${BTN} flex-1 border border-ui-control text-ui-ink`}>{t('yatraSettings.copy')}</button>
           </div>
-          {canShare && <p className={HINT}>{t('yatraSettings.shareHint')}</p>}
+          <p className={HINT}>{t(canShare ? 'yatraSettings.shareHint' : 'yatraSettings.noShareHint')}</p>
         </section>
       )}
     </AdminPage>

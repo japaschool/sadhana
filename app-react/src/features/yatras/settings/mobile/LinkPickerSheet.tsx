@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BottomSheet } from '../../../../ui/primitives/BottomSheet'
+import { PanelPopover } from '../../../../ui/primitives/PanelPopover'
 import type { YatraUserPracticeItem } from '../../../../types/api'
 import type { PickerGroups } from '../linking'
 import { TypeIcon, typeLabelKey } from './TypeChip'
@@ -25,8 +26,9 @@ function Line({ title, hint, muted }: { title: string; hint?: string; muted?: bo
   )
 }
 
-export function LinkPickerSheet({ item, groups, onPick, onClose }: {
-  item: YatraUserPracticeItem; groups: PickerGroups; onPick: (name: string | null) => void; onClose: () => void
+/** A sheet; on desktop (`anchor`), a popover beside the row. */
+export function LinkPickerSheet({ item, groups, anchor, onPick, onClose }: {
+  item: YatraUserPracticeItem; groups: PickerGroups; anchor?: HTMLElement; onPick: (name: string | null) => void; onClose: () => void
 }) {
   const { t } = useTranslation()
   const y = item.yatra_practice
@@ -37,11 +39,12 @@ export function LinkPickerSheet({ item, groups, onPick, onClose }: {
     ...groups.compatible.map((p) => ({ p, current: false })),
   ]
 
-  return (
-    <BottomSheet label={t('yatraSettings.pickerTitle', { name: y.practice })} onClose={onClose}>
+  const label = t('yatraSettings.pickerTitle', { name: y.practice })
+  const body = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h2 className="text-xl font-extrabold text-ui-ink">{t('yatraSettings.pickerTitle', { name: y.practice })}</h2>
+          <h2 className="text-xl font-extrabold text-ui-ink">{label}</h2>
           <p className="text-sm text-ui-muted">{t('yatraSettings.pickerOnly', { type: typeName(y.data_type) })}</p>
         </div>
         <button type="button" aria-label={t('yatraSettings.close')} onClick={onClose}
@@ -110,6 +113,9 @@ export function LinkPickerSheet({ item, groups, onPick, onClose }: {
           </p>
         </section>
       )}
-    </BottomSheet>
+    </>
   )
+  return anchor
+    ? <PanelPopover anchor={anchor} label={label} onClose={onClose}>{body}</PanelPopover>
+    : <BottomSheet label={label} onClose={onClose}>{body}</BottomSheet>
 }
