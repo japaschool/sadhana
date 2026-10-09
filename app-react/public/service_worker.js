@@ -61,9 +61,16 @@ async function isTakeover() {
 }
 
 self.addEventListener('message', (event) => {
-  if (event.data?.type === 'SKIP_WAITING') void self.skipWaiting()
+  if (event.data?.type === 'SKIP_WAITING') event.waitUntil(skipWaitingIfUnseen(event.source))
   else if (event.data?.type === 'FLUSH') event.waitUntil(flush().then(report))
 })
+
+/** Activating reloads every page, so only when no other window is on screen: an automatic update from a hidden tab
+ *  must not reload a visible one mid-form. The sender counts as hidden (it asked, by hiding or from Settings). */
+async function skipWaitingIfUnseen(sender) {
+  const windows = await self.clients.matchAll({ type: 'window' })
+  if (windows.every((c) => c.id === sender?.id || c.visibilityState === 'hidden')) await self.skipWaiting()
+}
 
 // ---- fetch rules: first match wins; anything else goes to the network untouched ----
 
@@ -112,6 +119,9 @@ async function saveEntry(req, event) {
 
 /** The network's diary day with the values still waiting in the outbox laid over it. A failure stays a failure. */
 async function diaryDay(req, date, event) {
+  // Read before the request: a flush meanwhile may delete a record whose value then isn't in the answer either.
+  // A record settled meanwhile is in the server's answer, so laying it over again is harmless.
+  const pending = idb('readonly', (s) => s.getAll()).catch(() => [])
   let res
   try {
     res = await fetch(req)
@@ -124,8 +134,7 @@ async function diaryDay(req, date, event) {
   event.waitUntil(report())
   if (!res.ok) return res
   event.waitUntil(flush().then(report))
-  const pending = await idb('readonly', (s) => s.getAll()).catch(() => [])
-  const body = overlay(await res.json(), pending, date, req.headers.get('Authorization'))
+  const body = overlay(await res.json(), await pending, date, req.headers.get('Authorization'))
   return new Response(JSON.stringify(body), { status: res.status, headers: { 'Content-Type': 'application/json' } })
 }
 

@@ -6,7 +6,14 @@ import { resolve } from 'node:path'
 // (import.meta.url is http:// under the jsdom environment, so resolve from the app root instead.)
 const scope = {}
 new Function('self', readFileSync(resolve(process.cwd(), 'public/sw-lib.js'), 'utf8'))(scope)
-const { entryDate, dayDate, outboxKey, overlay, flushRecords, isUnchanged } = scope.swLib
+const { entryDate, dayDate, accountOf, outboxKey, overlay, flushRecords, isUnchanged } = scope.swLib
+
+// A server-shaped token: base64url JSON payload with user_id, no padding.
+const b64url = (o) => Buffer.from(JSON.stringify(o)).toString('base64url')
+const jwt = (claims) => `Token ${b64url({ typ: 'JWT', alg: 'HS256' })}.${b64url(claims)}.sig`
+const U1a = jwt({ user_id: 'u-1', iat: 1, exp: 9 })
+const U1b = jwt({ user_id: 'u-1', iat: 2, exp: 10 })
+const U2 = jwt({ user_id: 'u-2', iat: 1, exp: 9 })
 
 const entry = (auth, date, practice, value, seq = 1) => {
   const url = `https://app.sadhana.pro/api/diary/${date}/entry`
@@ -32,6 +39,24 @@ describe('outboxKey', () => {
 
   it('falls back to the url for a body that is not an entry', () => {
     expect(outboxKey('Token a', '/api/x', 'not json')).toBe('Token a|/api/x')
+  })
+})
+
+describe('accountOf', () => {
+  it('is the JWT user_id, so a new session of one user is the same account', () => {
+    expect(accountOf(U1a)).toBe('u-1')
+    expect(accountOf(U1b)).toBe(accountOf(U1a))
+    expect(accountOf(U2)).not.toBe(accountOf(U1a))
+  })
+
+  it('falls back to the raw header when it is not a JWT', () => {
+    expect(accountOf('Token a')).toBe('Token a')
+    expect(accountOf(null)).toBeNull()
+  })
+
+  it('keys two tokens of one user alike, and of different users apart', () => {
+    expect(entry(U1a, '2026-10-09', 'Japa', null).key).toBe(entry(U1b, '2026-10-09', 'Japa', null).key)
+    expect(entry(U2, '2026-10-09', 'Japa', null).key).not.toBe(entry(U1a, '2026-10-09', 'Japa', null).key)
   })
 })
 
@@ -64,6 +89,30 @@ describe('overlay', () => {
       entry('Token b', '2026-10-09', 'Japa', { Int: 2 }),
     ], '2026-10-09', 'Token a')
     expect(out).toEqual(day)
+  })
+})
+
+describe('overlay across sessions', () => {
+  const day = { diary_day: [{ practice: 'Japa', data_type: 'Int', value: { Int: 4 } }] }
+
+  it('lays a value queued under an older token of the same user over the new token’s GET', () => {
+    const out = overlay(day, [entry(U1a, '2026-10-09', 'Japa', { Int: 16 })], '2026-10-09', U1b)
+    expect(out.diary_day[0].value).toEqual({ Int: 16 })
+  })
+
+  it('not another user’s', () => {
+    expect(overlay(day, [entry(U2, '2026-10-09', 'Japa', { Int: 16 })], '2026-10-09', U1b)).toEqual(day)
+  })
+
+  it('the newest record wins when one practice has two', () => {
+    const out = overlay(day, [entry(U1a, '2026-10-09', 'Japa', { Int: 2 }, 5), entry('x', '2026-10-09', 'Japa', null, 1)]
+      .map((r) => ({ ...r, auth: U1a })), '2026-10-09', U1b)
+    expect(out.diary_day[0].value).toEqual({ Int: 2 })
+  })
+
+  it('skips records whose body is not JSON or has no entry', () => {
+    const bad = [{ ...entry(U1a, '2026-10-09', 'Japa', null), body: 'oops' }, { ...entry(U1a, '2026-10-09', 'Japa', null), body: '{}' }]
+    expect(overlay(day, bad, '2026-10-09', U1a)).toEqual(day)
   })
 })
 

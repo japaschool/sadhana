@@ -54,10 +54,12 @@ export function useToday(date: Date) {
 
   // The date travels in the mutation variables so callbacks always target the
   // day the value was entered on, even if the user has moved to another day.
-  // One scope runs saves one at a time, in order: values saved while typing ("4" then "45")
-  // would otherwise race, and the server could keep the older one.
+  // Without the worker, one scope runs saves one at a time, in order: values saved while typing ("4" then "45")
+  // would otherwise race, and the server could keep the older one. With the worker, each save goes straight to it:
+  // it orders them by arrival and keeps one value per practice, and a save held back here (up to 10 s each behind
+  // the one before) would live only in page memory and be lost if the app were killed.
   const mutation = useMutation({
-    scope: { id: 'diary-save' },
+    scope: navigator.serviceWorker?.controller ? undefined : { id: 'diary-save' },
     mutationFn: ({ date, practice, value }: SaveVars) => practicesApi.saveDiaryEntry(date, practice.practice, value),
     onMutate: async ({ date, practice, value }) => {
       await qc.cancelQueries({ queryKey: ['diary', date] })

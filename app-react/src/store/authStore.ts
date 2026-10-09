@@ -36,6 +36,11 @@ interface AuthState {
   setLoading: (v: boolean) => void
 }
 
+/** Signed in, signed out or another user: the cached data isn't this account's. /api/user mints a new token on every
+ *  call, so a new token for the same user is not a change. */
+export const accountChanged = (s: Pick<AuthState, 'user' | 'token'>, prev: Pick<AuthState, 'user' | 'token'>) =>
+  !!s.token !== !!prev.token || (!!s.user && !!prev.user && s.user.id !== prev.user.id)
+
 export const useAuthStore = create<AuthState>((set) => {
   const token = readToken()
   return {

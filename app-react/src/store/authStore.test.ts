@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { act } from '@testing-library/react'
-import { readToken, useAuthStore } from './authStore'
+import { accountChanged, readToken, useAuthStore } from './authStore'
 
 describe('authStore', () => {
   beforeEach(() => {
@@ -73,5 +73,21 @@ describe('authStore', () => {
     localStorage.setItem('sadhana.user', JSON.stringify({ id: '1', email: 'a@b.com', token: 'tok', name: 'Alice' }))
     vi.resetModules()
     expect((await import('./authStore')).useAuthStore.getState().user).toBeNull()
+  })
+
+  it('a hydrate returning the same user with a new token keeps the cache; sign-out and another user clear it', () => {
+    const alice = { id: '1', email: 'a@b.com', token: 'tok', name: 'Alice' }
+    const clear = vi.fn()
+    useAuthStore.getState().setAuth(alice)
+    const unsub = useAuthStore.subscribe((s, prev) => { if (accountChanged(s, prev)) clear() })
+    useAuthStore.getState().setAuth({ ...alice, token: 'tok2' })
+    expect(clear).not.toHaveBeenCalled()
+    useAuthStore.getState().setAuth({ id: '2', email: 'b@b.com', token: 'tok3', name: 'Bob' })
+    expect(clear).toHaveBeenCalledTimes(1)
+    useAuthStore.getState().logout()
+    expect(clear).toHaveBeenCalledTimes(2)
+    useAuthStore.getState().setAuth(alice)
+    expect(clear).toHaveBeenCalledTimes(3)
+    unsub()
   })
 })

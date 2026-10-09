@@ -28,4 +28,15 @@ describe('network status', () => {
     window.dispatchEvent(new Event('offline'))
     expect(useNetStore.getState().online).toBe(false)
   })
+
+  it('calls onSynced when the outbox shrinks, not when it grows or stays', () => {
+    const onSynced = vi.fn()
+    startNetworkWatch(onSynced)
+    const net = (pending: number) => onMessage!(new MessageEvent('message', { data: { type: 'NET', online: true, pending } }))
+    net(2)
+    net(2)
+    expect(onSynced).not.toHaveBeenCalled()
+    net(1)
+    expect(onSynced).toHaveBeenCalledOnce()
+  })
 })

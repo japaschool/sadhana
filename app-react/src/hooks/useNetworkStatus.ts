@@ -12,11 +12,15 @@ export function flushOutbox() {
   navigator.serviceWorker?.controller?.postMessage({ type: 'FLUSH' })
 }
 
-/** Once, at startup. */
-export function startNetworkWatch() {
+/** Once, at startup. `onSynced` runs when the outbox shrinks: values the worker sent in the background
+ *  are on the server now, so the screen should refetch them. */
+export function startNetworkWatch(onSynced?: () => void) {
   const sw = navigator.serviceWorker
   sw?.addEventListener('message', (e: MessageEvent) => {
-    if (e.data?.type === 'NET') useNetStore.setState({ online: e.data.online, pending: e.data.pending })
+    if (e.data?.type !== 'NET') return
+    const before = useNetStore.getState().pending
+    useNetStore.setState({ online: e.data.online, pending: e.data.pending })
+    if (e.data.pending < before) onSynced?.()
   })
   sw?.startMessages()
   window.addEventListener('offline', () => setOnline(false))

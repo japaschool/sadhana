@@ -7,7 +7,7 @@ import { CACHE_MAX_AGE, CACHE_VERSION, persister, shouldPersist } from './api/pe
 import './i18n'
 import './index.css'
 import { router } from './router'
-import { readToken, useAuthStore } from './store/authStore'
+import { accountChanged, readToken, useAuthStore } from './store/authStore'
 import { startNetworkWatch } from './hooks/useNetworkStatus'
 import { startUpdateWatch } from './hooks/useServiceWorkerUpdate'
 import { hydrateAuth } from './store/hydrateAuth'
@@ -32,7 +32,7 @@ const queryClient = new QueryClient({
 
 // A different user (or none) must not see the last one's cached practices and diary, in memory or on disk.
 useAuthStore.subscribe((s, prev) => {
-  if (s.token !== prev.token) { queryClient.clear(); void persister.removeClient() }
+  if (accountChanged(s, prev)) { queryClient.clear(); void persister.removeClient() }
 })
 
 applyThemePref()
@@ -50,7 +50,10 @@ if (location.hash !== '#reset') {
       .then((reg) => startUpdateWatch(reg, hadController))
   }
 
-  startNetworkWatch()
+  // A background flush delivered queued values: refetch what shows them.
+  startNetworkWatch(() => {
+    for (const key of ['diary', 'incomplete-days', 'report-data']) void queryClient.invalidateQueries({ queryKey: [key] })
+  })
 
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>

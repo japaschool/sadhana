@@ -73,4 +73,13 @@ describe('service worker updates', () => {
     swListeners.controllerchange()
     expect(reload).not.toHaveBeenCalled()
   })
+
+  it('a page that loaded uncontrolled reloads once it has applied an update', () => {
+    start(false)
+    reg.waiting = { postMessage: vi.fn() }
+    useSwStore.setState({ waiting: reg.waiting as unknown as ServiceWorker })
+    setVisibility('hidden')
+    swListeners.controllerchange()
+    expect(reload).toHaveBeenCalledOnce()
+  })
 })

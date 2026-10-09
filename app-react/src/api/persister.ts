@@ -28,17 +28,31 @@ async function run<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRe
 }
 
 let pendingWrite: ReturnType<typeof setTimeout> | undefined
+let pendingClient: PersistedClient | undefined
+
+function writeNow() {
+  clearTimeout(pendingWrite)
+  const client = pendingClient
+  pendingWrite = pendingClient = undefined
+  if (client) run('readwrite', (s) => s.put(client, KEY)).catch(() => {})
+}
+
+// A hidden app may be reloaded (an update) or frozen (iOS stops timers): don't leave the last change in the debounce.
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') writeNow() })
+window.addEventListener('pagehide', writeNow)
 
 // IndexedDB can be missing (private mode, blocked storage): the app then just runs without a saved cache.
 export const persister: Persister = {
   // ponytail: trailing 1 s debounce, like the library's own persisters. Unsynced values live in the worker's outbox, not here.
   persistClient: (client: PersistedClient) => {
     clearTimeout(pendingWrite)
-    pendingWrite = setTimeout(() => { run('readwrite', (s) => s.put(client, KEY)).catch(() => {}) }, 1000)
+    pendingClient = client
+    pendingWrite = setTimeout(writeNow, 1000)
   },
   restoreClient: () => run<PersistedClient | undefined>('readonly', (s) => s.get(KEY)).catch(() => undefined),
   removeClient: async () => {
     clearTimeout(pendingWrite)
+    pendingWrite = pendingClient = undefined
     await run('readwrite', (s) => s.delete(KEY)).catch(() => {})
   },
 }

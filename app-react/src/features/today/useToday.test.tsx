@@ -80,6 +80,21 @@ describe('useToday', () => {
     expect(api.saveDiaryEntry).toHaveBeenCalledTimes(2)
   })
 
+  it('with the worker in control, sends each save at once: the worker orders them', async () => {
+    Object.defineProperty(navigator, 'serviceWorker', { configurable: true, value: { controller: {} } })
+    try {
+      api.saveDiaryEntry.mockReturnValueOnce(new Promise<void>(() => {}))
+      const { result } = setup()
+      await waitFor(() => expect(result.current.isLoading || result.current.dayLoading).toBe(false))
+      act(() => result.current.save(B, { Int: 4 }))
+      act(() => result.current.save(B, { Int: 45 }))
+      await waitFor(() => expect(api.saveDiaryEntry).toHaveBeenCalledTimes(2))
+      expect(api.saveDiaryEntry).toHaveBeenLastCalledWith('2026-10-06', 'B', { Int: 45 })
+    } finally {
+      delete (navigator as { serviceWorker?: unknown }).serviceWorker
+    }
+  })
+
   it('rolls back and flags the practice when a save fails', async () => {
     api.saveDiaryEntry.mockRejectedValue(new Error('boom'))
     const { result } = setup()

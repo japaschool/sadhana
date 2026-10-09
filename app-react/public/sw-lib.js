@@ -10,20 +10,37 @@ self.swLib = (() => {
   const dayDate = (path) => DAY.exec(path)?.[1] ?? null
   const pathOf = (url) => new URL(url, 'https://x').pathname
 
+  /** The account behind an Authorization header ("Token <jwt>"): the JWT's user_id. The token itself changes
+   *  every session (/api/user mints a new one), the user doesn't. Falls back to the raw header. */
+  function accountOf(auth) {
+    try {
+      const payload = String(auth).split(' ').pop().split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+      const id = JSON.parse(atob(payload)).user_id
+      if (id) return String(id)
+    } catch { /* not a JWT */ }
+    return auth
+  }
+
   /** One outbox record per (account, date, practice), so a newer value replaces the older one. */
   function outboxKey(auth, url, body) {
+    const account = accountOf(auth)
     const date = entryDate(pathOf(url))
     let practice
     try { practice = JSON.parse(body).entry.practice } catch { /* not an entry */ }
-    return date && practice !== undefined ? `${auth}|${date}|${practice}` : `${auth}|${url}`
+    return date && practice !== undefined ? `${account}|${date}|${practice}` : `${account}|${url}`
   }
 
-  /** The diary day response with the values still waiting in the outbox for that date and account. */
+  /** The diary day response with the values still waiting in the outbox for that date and account.
+   *  Oldest first, so the newest wins if one practice has records under keys from before accountOf. */
   function overlay(body, pending, date, auth) {
+    const account = accountOf(auth)
     const days = [...body.diary_day]
-    for (const r of pending) {
-      if (r.auth !== auth || entryDate(pathOf(r.url)) !== date) continue
-      const { practice, value } = JSON.parse(r.body).entry
+    for (const r of [...pending].sort((a, b) => a.seq - b.seq)) {
+      if (accountOf(r.auth) !== account || entryDate(pathOf(r.url)) !== date) continue
+      let entry
+      try { entry = JSON.parse(r.body).entry } catch { /* not JSON */ }
+      if (!entry) continue
+      const { practice, value } = entry
       const i = days.findIndex((e) => e.practice === practice)
       if (i >= 0) days[i] = { ...days[i], value }
       else days.push({ practice, value })
@@ -48,5 +65,5 @@ self.swLib = (() => {
   /** A sent record may be deleted only if no newer value replaced it while it was in flight. */
   const isUnchanged = (stored, sent) => !!stored && stored.seq === sent.seq
 
-  return { entryDate, dayDate, outboxKey, overlay, flushRecords, isUnchanged }
+  return { entryDate, dayDate, accountOf, outboxKey, overlay, flushRecords, isUnchanged }
 })()

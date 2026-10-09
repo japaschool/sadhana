@@ -58,4 +58,28 @@ describe('persister', () => {
     await removed
     expect(data.size).toBe(0)
   })
+
+  it('writes a waiting save at once when the app is hidden or the page goes away', async () => {
+    persister.persistClient(client)
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' })
+    document.dispatchEvent(new Event('visibilitychange'))
+    await vi.advanceTimersByTimeAsync(10)
+    expect(data.get('client')).toEqual(client)
+
+    data.clear()
+    persister.persistClient(client)
+    window.dispatchEvent(new Event('pagehide'))
+    await vi.advanceTimersByTimeAsync(10)
+    expect(data.get('client')).toEqual(client)
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' })
+  })
+
+  it('removeClient also cancels a save the app would write on hide', async () => {
+    persister.persistClient(client)
+    const removed = persister.removeClient()
+    window.dispatchEvent(new Event('pagehide'))
+    await vi.runAllTimersAsync()
+    await removed
+    expect(data.size).toBe(0)
+  })
 })
