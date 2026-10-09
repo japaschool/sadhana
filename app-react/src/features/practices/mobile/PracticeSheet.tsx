@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { PracticeDataType, UserPractice } from '../../../types/api'
 import { BottomSheet } from '../../../ui/primitives/BottomSheet'
@@ -22,9 +21,11 @@ const SPINNER = 'h-4 w-4 animate-spin rounded-full border-2 border-current borde
 /** Only numbers and text can be picked from a list on Today. */
 const hasList = (type: PracticeDataType | null) => type === 'Int' || type === 'Text'
 
-export function PracticeSheet({ practice, others, busy, onSave, onClose, onDelete, panel }: {
+export function PracticeSheet({ practice, name: initialName, others, busy, onSave, onClose, onDelete, panel }: {
   /** Absent: a new practice. */
   practice?: UserPractice
+  /** Pre-fills a new practice's name (Import CSV's "+" on an unmatched column). */
+  name?: string
   /** Every other practice, so a taken name is caught before saving. */
   others: UserPractice[]
   busy: boolean
@@ -37,9 +38,7 @@ export function PracticeSheet({ practice, others, busy, onSave, onClose, onDelet
 }) {
   const { t } = useTranslation()
   const saved = parseOptions(practice?.dropdown_variants)
-  // ?name= pre-fills a new practice (Import CSV's "+" on an unmatched column).
-  const [params] = useSearchParams()
-  const [name, setName] = useState(practice?.practice ?? params.get('name') ?? '')
+  const [name, setName] = useState(practice?.practice ?? initialName ?? '')
   const [type, setType] = useState<PracticeDataType | null>(practice?.data_type ?? null)
   const [required, setRequired] = useState(!!practice?.is_required)
   // Hide and Show wait for Save, like every other field here.

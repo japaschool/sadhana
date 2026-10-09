@@ -15,7 +15,7 @@ vi.mock('../../api/auth', () => ({ authApi: { updateUser: vi.fn(), updatePasswor
 import { authApi } from '../../api/auth'
 vi.mock('../../api/support', () => ({ supportApi: { sendMessage: vi.fn() } }))
 import { supportApi } from '../../api/support'
-vi.mock('../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn(), saveDiaryDay: vi.fn() } }))
+vi.mock('../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn(), saveDiaryDay: vi.fn(), createUserPractice: vi.fn() } }))
 import { practicesApi } from '../../api/practices'
 vi.mock('../../api/yatras', () => ({ yatrasApi: { getYatras: vi.fn().mockResolvedValue([]) } }))
 vi.mock('../../api/charts', () => ({ chartsApi: { getReports: vi.fn().mockResolvedValue([]) } }))
@@ -135,11 +135,31 @@ describe('ImportCsv', () => {
   it('lists matched and unmatched columns, then saves every day', async () => {
     await pick('date,Japa rounds,Kirtan,Mangala arati\n2024-10-01,16,30,true\n2024-10-02,12,,')
     expect(await screen.findByText('Matched columns')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Add Kirtan as a practice' })).toHaveAttribute('href', '/settings/practices/new?name=Kirtan')
     fireEvent.click(screen.getByRole('button', { name: 'Import 2 rows' }))
     expect(await screen.findByText('Imported 2 rows')).toBeInTheDocument()
     expect(practicesApi.saveDiaryDay).toHaveBeenCalledWith('2024-10-02', [
       { practice: 'Japa rounds', value: { Int: 12 } }, { practice: 'Mangala arati', value: null },
+    ])
+  })
+
+  it('adds an unmatched column as a practice without losing the file', async () => {
+    await pick('date,Japa rounds,Kirtan\n2024-10-01,16,30')
+    vi.mocked(practicesApi.createUserPractice).mockImplementation(async () => {
+      vi.mocked(practicesApi.getUserPractices).mockResolvedValue([
+        { id: 'p1', practice: 'Japa rounds', data_type: 'Int', is_active: true },
+        { id: 'p3', practice: 'Kirtan', data_type: 'Duration', is_active: true },
+      ])
+      return { id: 'p3' } as never
+    })
+    fireEvent.click(await screen.findByRole('button', { name: 'Add Kirtan as a practice' }))
+    expect(screen.getByLabelText('Name')).toHaveValue('Kirtan')
+    fireEvent.click(screen.getByRole('radio', { name: /Duration/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Add practice' }))
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Add Kirtan as a practice' })).not.toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button', { name: 'Import 1 row' }))
+    expect(await screen.findByText('Imported 1 row')).toBeInTheDocument()
+    expect(practicesApi.saveDiaryDay).toHaveBeenCalledWith('2024-10-01', [
+      { practice: 'Japa rounds', value: { Int: 16 } }, { practice: 'Kirtan', value: { Duration: 30 } },
     ])
   })
 

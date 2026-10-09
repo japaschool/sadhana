@@ -22,6 +22,9 @@ const queryClient = new QueryClient({
   },
 })
 
+// A different user (or none) must not see the last one's cached practices and diary.
+useAuthStore.subscribe((s, prev) => { if (s.token !== prev.token) queryClient.clear() })
+
 async function hydrateAuth() {
   const { setAuth, setLoading, token } = useAuthStore.getState()
   if (!token) { setLoading(false); return }

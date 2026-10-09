@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { practicesApi } from '../../api/practices'
+import { PracticeSheet } from '../practices/mobile/PracticeSheet'
+import { usePractices } from '../practices/usePractices'
 import { useLayout } from '../../layouts/useLayout'
 import { CARD, LIST } from '../yatras/settings/mobile/AdminPage'
 import { TypeChip } from '../yatras/settings/mobile/TypeChip'
@@ -121,7 +123,7 @@ function Picker({ chosen, onFile }: { chosen: Chosen | null; onFile: (f: File) =
   )
 }
 
-function Review({ chosen, busy, onChange }: { chosen: Chosen; busy: boolean; onChange: () => void }) {
+function Review({ chosen, busy, onChange, onAdd }: { chosen: Chosen; busy: boolean; onChange: () => void; onAdd: (name: string) => void }) {
   const { t } = useTranslation()
   const { columns, rows } = chosen.csv
   const matched = columns.filter((c) => c.type)
@@ -175,8 +177,8 @@ function Review({ chosen, busy, onChange }: { chosen: Chosen; busy: boolean; onC
                   <span className="truncate text-[15px] font-bold text-ui-ink">{c.name}</span>
                   <span className="text-xs text-ui-muted">{t('import.notImported')}</span>
                 </span>
-                <Link to={`/settings/practices/new?name=${encodeURIComponent(c.name)}`} aria-label={t('import.addPractice', { name: c.name })}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-ui-accent-pill bg-ui-accent-soft text-lg font-bold text-ui-accent">+</Link>
+                <button type="button" onClick={() => onAdd(c.name)} aria-label={t('import.addPractice', { name: c.name })}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-ui-accent-pill bg-ui-accent-soft text-lg font-bold text-ui-accent">+</button>
               </li>
             ))}
           </ul>
@@ -197,11 +199,13 @@ function Review({ chosen, busy, onChange }: { chosen: Chosen; busy: boolean; onC
 export function ImportCsv() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const practices = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices }).data
+  const s = usePractices()
+  // The column being added as a practice; once saved, the review matches it.
+  const [adding, setAdding] = useState<string | null>(null)
   const [step, setStep] = useState<Step>('file')
   const [picked, setPicked] = useState<Picked | null>(null)
   // Read against the practices as they are now: they may load after the file is picked.
-  const chosen: Chosen | null = picked && { file: picked.file, csv: readCsv(picked.text, practices ?? []) }
+  const chosen: Chosen | null = picked && { file: picked.file, csv: readCsv(picked.text, s.practices) }
   const [readFailed, setReadFailed] = useState(false)
   const [errors, setErrors] = useState<ReturnType<typeof toDays>['errors']>([])
   const [done, setDone] = useState(0)
@@ -281,7 +285,11 @@ export function ImportCsv() {
             </div>
           )}
           {save.isError && <ErrorBanner title={t('import.saveFailed')} text={t('import.saveFailedHint')} />}
-          <Review chosen={chosen} busy={save.isPending} onChange={toFile} />
+          <Review chosen={chosen} busy={save.isPending} onChange={toFile} onAdd={setAdding} />
+          {adding !== null && (
+            <PracticeSheet name={adding} others={s.practices} busy={s.create.isPending} onClose={() => setAdding(null)}
+              onSave={async (d) => { await s.create.mutateAsync(d); setAdding(null) }} />
+          )}
         </>
       )}
       {failed && (

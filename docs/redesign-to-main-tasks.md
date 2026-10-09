@@ -2,7 +2,7 @@
 
 Status as of `redesign` @ `2ea6e9f` (2026-10-09), checked by reading the code against the previous version of this list. The React app was not built and its tests were not run for this review.
 
-**Summary:** the Docker build, service worker takeover, token/language compatibility, preview toggle, CI and the API mismatches are done. Still open before merge: the logout cache leak, offline mode/PWA, and cleanup.
+**Summary:** the Docker build, service worker takeover, token/language compatibility, preview toggle, CI and the API mismatches are done. Still open before merge: the iOS device check, the API smoke test, offline mode/PWA, and cleanup.
 
 Paths below refer to the `redesign` branch.
 
@@ -14,9 +14,7 @@ Done: the Apple endpoint is deleted, Google sign-in checks `aud` via tokeninfo a
 
 ## P0: bugs
 
-- [ ] **Logout doesn't clear the React Query cache** (`features/settings/mobile/LogoutSheet.tsx`, and the desktop/tablet logout). The next user in the same tab sees the previous user's practices and diary. Call `queryClient.clear()` on logout and login.
-- [ ] **iOS home-screen app: a value may be lost if the app is swiped away right after entering it** (`features/today/`). Int/Time/Duration now save while typing (debounced, `PracticeRow.tsx:79`), on top of the hidden-flush (`useOnAppHidden`) and `keepalive` attempts. Text still saves on blur/hide only. Verify on a device; if still lost, attach Safari Web Inspector to the home-screen app.
-- [ ] **Import doesn't offer to create missing practices.** Unmatched CSV columns are only listed (`features/settings/ImportCsv.tsx:128`). Main offered to create them (route `/user/practice/new/:practice`).
+- [ ] **iOS home-screen app: a value may be lost if the app is swiped away right after entering it** (`features/today/`). Every input now saves while typing (Int/Time/Duration 300 ms in `PracticeRow.tsx`, Text 600 ms in `TextRow.tsx`), on top of the hidden-flush (`useOnAppHidden`) and `keepalive`. Only a device check is left; if still lost, attach Safari Web Inspector to the home-screen app.
 - [ ] Add a smoke test that runs every function in `src/api/*.ts` against a real dev server. The mocked handlers in `src/test` copy the React side's assumptions, which is why tests didn't catch the earlier API mismatches.
 
 ## P1: offline mode
@@ -82,6 +80,8 @@ The React worker (`app-react/public/service_worker.js`) only takes over from the
 
 ## Done
 
+- Logout/login clears the React Query cache (`main.tsx` subscribes to token changes).
+- Import: "+" on an unmatched column opens the add-practice sheet over the review; once saved, the column matches and the picked file is kept.
 - Dates: one local `yyyy-mm-dd` helper (`features/today/date.ts`); no `toISOString()` dates left.
 - Yatra practice save uses `daily_score` (`types/api.ts:115`).
 - Diary inputs send `null` when empty; dropdown options are comma- or newline-separated, for Int and Text, in the form and on Today.
