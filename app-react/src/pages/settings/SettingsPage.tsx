@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { FaCog, FaChevronRight, FaSignOutAlt } from 'react-icons/fa'
-import { LuUser, LuLock, LuLayers, LuUpload, LuGlobe, LuCircleHelp, LuInfo, LuRefreshCw } from 'react-icons/lu'
+import { LuUser, LuLock, LuLayers, LuUpload, LuCircleHelp, LuInfo, LuRefreshCw } from 'react-icons/lu'
 import { useAuthStore } from '../../store/authStore'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import { ACCENT_GRADIENT } from '../../theme/tokens'
@@ -130,7 +130,6 @@ export function SettingsPage() {
             <span className="flex-1 text-sm font-medium" style={{ color: '#f59e0b' }}>{t('settings.updateApp')}</span>
           </button>
         )}
-        <MenuItem label={t('settings.language')} to="/settings/language" icon={LuGlobe} />
         <MenuItem label={t('settings.help')}     to="/help"              icon={LuCircleHelp} />
         <a
           href="https://sadhana.pro"

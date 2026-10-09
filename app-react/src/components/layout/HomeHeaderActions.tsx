@@ -26,7 +26,7 @@ export function HomeHeaderActions() {
     },
   ]
   const charts: HeaderMenuItem[] = [
-    { label: t('charts.addReport'), to: '/charts/new' },
+    { label: t('charts.addReport'), to: '/settings/charts' },
     { label: t('charts.downloadCsv'), onClick: () => void downloadCsv() },
     {
       label: t('charts.shareLink'),

@@ -21,7 +21,7 @@ describe('TopBar', () => {
   })
 
   it('shows the same header actions on other routes too', () => {
-    wrapAt('/charts/new')
+    wrapAt('/help')
     expect(screen.getByRole('button', { name: /Practices/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Charts/ })).toBeInTheDocument()
   })

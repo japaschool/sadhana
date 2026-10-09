@@ -1,5 +1,4 @@
 import { Outlet, useLocation } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { TopBar } from './TopBar'
 import { BottomNav } from './BottomNav'
 import { navItems } from './navItems'
@@ -10,16 +9,13 @@ import { SettingsModal } from './SettingsModal'
 
 export function AppShell() {
   const location = useLocation()
-  const { t } = useTranslation()
   // Bottom nav shows only on the top-level destinations; sub-pages (which use
   // back/close) don't get it.
   const showBottomNav = navItems.some((n) => n.to === location.pathname)
-  // Mobile Insights opens the legacy report editor here; give it a way back.
-  const isReportEditor = location.pathname === '/charts/manage'
   return (
     <div className="relative">
       <AppBackground />
-      {isReportEditor ? <TopBar showBack title={t('charts.manage')} /> : <TopBar />}
+      <TopBar />
       <main
         className={
           showBottomNav

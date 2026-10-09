@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { ChartsPage } from './ChartsPage'
-import { NewChartPage } from './NewChartPage'
 import { chartsApi } from '../../api/charts'
 import { practicesApi } from '../../api/practices'
 
@@ -44,20 +43,6 @@ function wrap(ui: React.ReactElement) {
           <Route path="/" element={ui} />
           <Route path="/charts/new" element={<div>New chart page</div>} />
           <Route path="/charts" element={<ChartsPage />} />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>
-  )
-}
-
-function wrapNewChart() {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(
-    <QueryClientProvider client={qc}>
-      <MemoryRouter>
-        <Routes>
-          <Route path="/" element={<NewChartPage />} />
-          <Route path="/charts" element={<div>Charts page</div>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>
@@ -131,27 +116,6 @@ describe('ChartsPage — empty state', () => {
     wrap(<ChartsPage />)
     await waitFor(() => {
       expect(screen.getByText(/no reports yet/i)).toBeInTheDocument()
-    })
-  })
-})
-
-// ─── NewChartPage — select all / clear ────────────────────────────────────────
-
-describe('NewChartPage — select all / clear', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('renders Select all and Clear buttons on step 1', async () => {
-    wrapNewChart()
-    // Wait for loading to complete (spinner disappears, input appears)
-    const input = await screen.findByPlaceholderText(/report name/i)
-    // Advance to step 1
-    await userEvent.type(input, 'My Report')
-    await userEvent.click(screen.getByRole('button', { name: /next/i }))
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /select all/i })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /clear/i })).toBeInTheDocument()
     })
   })
 })

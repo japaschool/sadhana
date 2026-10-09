@@ -85,7 +85,7 @@ export function BottomNav() {
   } else {
     center = (
       <Link
-        to={onCharts ? '/charts/new' : '/user/practices'}
+        to={onCharts ? '/settings/charts' : '/user/practices'}
         aria-label={onCharts ? t('charts.newReport') : 'Edit practices'}
         className={CENTER_CLASS}
         style={CENTER_STYLE}

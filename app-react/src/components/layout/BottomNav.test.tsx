@@ -39,7 +39,7 @@ describe('BottomNav', () => {
 
   it('center button becomes New report on the charts route', () => {
     renderAt('/charts')
-    expect(screen.getByRole('link', { name: 'New report' })).toHaveAttribute('href', '/charts/new')
+    expect(screen.getByRole('link', { name: 'New report' })).toHaveAttribute('href', '/settings/charts')
     expect(screen.queryByRole('link', { name: 'Edit practices' })).toBeNull()
   })
 

@@ -16,10 +16,10 @@ describe('HomeHeaderActions', () => {
     expect(screen.getByRole('button', { name: /Charts/ })).toBeInTheDocument()
   })
 
-  it('Charts menu: Add new report links to /charts/new', () => {
+  it('Charts menu: Add new report links to /settings/charts', () => {
     wrap(<HomeHeaderActions />)
     fireEvent.click(screen.getByRole('button', { name: /Charts/ }))
-    expect(screen.getByRole('menuitem', { name: 'Add new report' })).toHaveAttribute('href', '/charts/new')
+    expect(screen.getByRole('menuitem', { name: 'Add new report' })).toHaveAttribute('href', '/settings/charts')
   })
 
   it('Practices menu links to add/edit', () => {

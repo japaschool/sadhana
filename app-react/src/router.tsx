@@ -33,12 +33,6 @@ const PracticeEditorMobile = lazy(() => import('./features/yatras/settings/mobil
 /** Redesigned on every layout: no legacy fallback, just the loading state while the code arrives. */
 const ui = (element: ReactNode) => <Suspense fallback={<UiLoading />}>{element}</Suspense>
 
-/** Legacy layout still edits charts on the old page. */
-function ToChartsManage() {
-  const { id = '' } = useParams()
-  return <Navigate to={`/charts/manage?report=${encodeURIComponent(id)}`} replace />
-}
-
 /** The chart editor's old URL: it lives under Settings now. */
 function ToChartSettings() {
   const { id } = useParams()
@@ -88,7 +82,6 @@ const HomePage = lazy(() => import('./pages/home/HomePage').then(m => ({ default
 
 // Charts
 const ChartsPage = lazy(() => import('./pages/charts/ChartsPage').then(m => ({ default: m.ChartsPage })))
-const NewChartPage = lazy(() => import('./pages/charts/NewChartPage').then(m => ({ default: m.NewChartPage })))
 const SharedChartPage = lazy(() => import('./pages/charts/SharedChartPage').then(m => ({ default: m.SharedChartPage })))
 
 // Yatras
@@ -99,7 +92,6 @@ const YatraJoinPage = lazy(() => import('./pages/yatras/YatraJoinPage').then(m =
 const SettingsPage = lazy(() => import('./pages/settings/SettingsPage').then(m => ({ default: m.SettingsPage })))
 const EditUserPage = lazy(() => import('./pages/settings/EditUserPage').then(m => ({ default: m.EditUserPage })))
 const EditPasswordPage = lazy(() => import('./pages/settings/EditPasswordPage').then(m => ({ default: m.EditPasswordPage })))
-const LanguagePage = lazy(() => import('./pages/settings/LanguagePage').then(m => ({ default: m.LanguagePage })))
 const MyPracticesPage = lazy(() => import('./pages/settings/MyPracticesPage').then(m => ({ default: m.MyPracticesPage })))
 const PracticeNewPage = lazy(() => import('./pages/settings/PracticeNewPage').then(m => ({ default: m.PracticeNewPage })))
 const PracticeEditPage = lazy(() => import('./pages/settings/PracticeEditPage').then(m => ({ default: m.PracticeEditPage })))
@@ -158,10 +150,10 @@ export const router = createBrowserRouter([
       { path: '/user/practices', element: <Navigate to="/settings/practices" replace /> },
       { path: '/user/practice/new', element: <Navigate to="/settings/practices/new" replace /> },
       { path: '/user/practice/:id/edit', element: <ToPracticeSettings /> },
-      { path: '/settings/charts', element: <ByLayout mobile={<ChartsSettings />} tablet={<ChartsSettings />} desktop={<ChartsSettings />} legacy={<Navigate to="/charts/manage" replace />} /> },
+      { path: '/settings/charts', element: ui(<ChartsSettings />) },
       { path: '/settings/yatras', element: ui(<YatrasSettings />) },
       { path: '/charts/:id/edit', element: <ToChartSettings /> },
-      { path: '/settings/charts/:id', element: <ByLayout mobile={<ChartEditorMobileScreen />} tablet={<ChartEditorWide />} desktop={<ChartEditorWide />} legacy={<ToChartsManage />} /> },
+      { path: '/settings/charts/:id', element: <ByLayout mobile={<ChartEditorMobileScreen />} tablet={<ChartEditorWide />} desktop={<ChartEditorWide />} legacy={null} /> },
       { path: '/yatra/:id/settings', element: ui(<YatraSettingsHome />) },
       { path: '/yatra/:id/links', element: ui(<LinkPracticesScreen />) },
       { path: '/yatra/:id/admin/settings', element: <ToSettingsHub /> },
@@ -170,12 +162,9 @@ export const router = createBrowserRouter([
       {
         element: <AppShell />,
         children: [
-          { path: '/charts/manage', element: <ChartsPage /> },
-          { path: '/charts/new', element: <NewChartPage /> },
           { path: '/yatra/:id/join', element: <YatraJoinPage /> },
           { path: '/settings/edit-user', element: <EditUserPage /> },
           { path: '/settings/edit-password', element: <EditPasswordPage /> },
-          { path: '/settings/language', element: <LanguagePage /> },
           { path: '/settings/import', element: <ImportPage /> },
           { path: '/help', element: <HelpPage /> },
           { path: '/help/support-form', element: <SupportPage /> },
