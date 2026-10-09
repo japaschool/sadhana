@@ -13,7 +13,7 @@ import { SegmentedControl } from '../../ui/primitives/SegmentedControl'
 import { Toggle } from '../../ui/primitives/Toggle'
 import type { ThemePref } from '../../ui/theme'
 import { useTheme } from '../../ui/useTheme'
-import { isPreview, setPreview } from './releaseChannel'
+import { isPreview, setPreview, switchChannel } from './releaseChannel'
 import { SettingsRow } from './mobile/SettingsRow'
 
 // Native names on purpose: a user stuck in the wrong language can still find theirs.
@@ -43,7 +43,7 @@ export function PreferencesRows() {
         control={<SegmentedControl label={t('settings.theme')} options={themeOptions} value={theme} onChange={setTheme} />} />
       <SettingsRow label={t('settings.previewChannel')} hint={t('settings.previewHint')}
         control={<Toggle label={t('settings.previewChannel')} checked={isPreview()}
-          onChange={(on) => { setPreview(on); window.location.reload() }} />} />
+          onChange={(on) => { setPreview(on); void switchChannel() }} />} />
       {langAnchor && (
         <AnchoredMenu anchor={langAnchor} label={t('settings.language')} onClose={() => setLangAnchor(null)}>
           {LANGS.map((l) => (

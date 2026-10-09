@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, within } from '@testing-library/react'
+import { render, screen, fireEvent, within, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
@@ -103,7 +103,7 @@ describe('SettingsMobile', () => {
     expect(document.documentElement).not.toHaveAttribute('data-ui-theme')
   })
 
-  it('preview toggle writes the cookie and reloads', () => {
+  it('preview toggle writes the cookie and reloads', async () => {
     const writes: string[] = []
     Object.defineProperty(document, 'cookie', { configurable: true, get: () => '', set: (v: string) => { writes.push(v) } })
     const reload = vi.fn()
@@ -113,7 +113,7 @@ describe('SettingsMobile', () => {
     expect(sw).toHaveAttribute('aria-checked', 'false')
     fireEvent.click(sw)
     expect(writes).toEqual(['sadhana_release_channel=preview; Path=/; Secure; SameSite=Lax; Max-Age=2592000'])
-    expect(reload).toHaveBeenCalledOnce()
+    await waitFor(() => expect(reload).toHaveBeenCalledOnce())
   })
 
   it('shows the update row only when an update is ready', () => {

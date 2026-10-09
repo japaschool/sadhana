@@ -1,5 +1,5 @@
-import { describe, it, expect, afterEach } from 'vitest'
-import { isPreview, setPreview } from './releaseChannel'
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest'
+import { isPreview, setPreview, switchChannel } from './releaseChannel'
 
 function stubCookie(jar: string) {
   const writes: string[] = []
@@ -35,5 +35,48 @@ describe('releaseChannel', () => {
       'sadhana_release_channel=preview; Path=/; Secure; SameSite=Lax; Max-Age=2592000',
       'sadhana_release_channel=stable; Path=/; Secure; SameSite=Lax; Max-Age=2592000',
     ])
+  })
+})
+
+describe('switchChannel', () => {
+  let onChange: (() => void) | undefined
+  const reload = vi.fn()
+  const update = vi.fn()
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    reload.mockClear()
+    update.mockReset().mockResolvedValue(undefined)
+    Object.defineProperty(window, 'location', { configurable: true, value: { reload } })
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: {
+        getRegistration: async () => ({ update }),
+        addEventListener: (_: string, cb: () => void) => { onChange = cb },
+      },
+    })
+  })
+  afterEach(() => vi.useRealTimers())
+
+  it('reloads once the other channel’s worker takes over', async () => {
+    const done = switchChannel()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(update).toHaveBeenCalledOnce()
+    onChange!()
+    await done
+    expect(reload).toHaveBeenCalledOnce()
+  })
+
+  it('reloads anyway after 10 s', async () => {
+    const done = switchChannel()
+    await vi.advanceTimersByTimeAsync(10_000)
+    await done
+    expect(reload).toHaveBeenCalledOnce()
+  })
+
+  it('reloads at once without a worker', async () => {
+    Object.defineProperty(navigator, 'serviceWorker', { configurable: true, value: undefined })
+    await switchChannel()
+    expect(reload).toHaveBeenCalledOnce()
   })
 })
