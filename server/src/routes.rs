@@ -79,7 +79,7 @@ fn collect_precache_assets(dir: &Path, base: &Path, out: &mut Vec<String>) {
                 "html"
                     | "js"
                     | "css"
-                    | "wasm"
+                    | "json"
                     | "webmanifest"
                     | "jpg"
                     | "png"
@@ -87,6 +87,7 @@ fn collect_precache_assets(dir: &Path, base: &Path, out: &mut Vec<String>) {
                     | "svg"
                     | "eot"
                     | "woff"
+                    | "woff2"
                     | "webp"
             ) {
                 let rel = path.strip_prefix(base).unwrap();
