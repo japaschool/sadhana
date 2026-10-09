@@ -7,7 +7,7 @@ import { CACHE_MAX_AGE, CACHE_VERSION, persister, shouldPersist } from './api/pe
 import './i18n'
 import './index.css'
 import { router } from './router'
-import { useAuthStore } from './store/authStore'
+import { readToken, useAuthStore } from './store/authStore'
 import { hydrateAuth } from './store/hydrateAuth'
 import { applyThemePref } from './ui/theme'
 import { UiLoading } from './layouts/ByLayout'
@@ -32,6 +32,10 @@ const queryClient = new QueryClient({
 useAuthStore.subscribe((s, prev) => {
   if (s.token !== prev.token) { queryClient.clear(); void persister.removeClient() }
 })
+
+// A token with no matching saved user means another account signed in (e.g. via the Rust UI): drop the old cache
+// before the provider restores it.
+if (readToken() && !useAuthStore.getState().user) void persister.removeClient()
 
 applyThemePref()
 

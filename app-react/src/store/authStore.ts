@@ -18,9 +18,13 @@ export function writeToken(token: string | null) {
 
 export const USER_KEY = 'sadhana.user'
 
-/** The last signed-in user, so the app opens offline without /api/user. */
-function readUser(): UserInfo | null {
-  try { return JSON.parse(localStorage.getItem(USER_KEY) ?? 'null') } catch { return null }
+/** The last signed-in user, so the app opens offline without /api/user. Only if it belongs to the current token:
+ *  the Rust UI shares localStorage and rewrites just the token when another account signs in. */
+function readUser(token: string): UserInfo | null {
+  try {
+    const user = JSON.parse(localStorage.getItem(USER_KEY) ?? 'null')
+    return user && typeof user === 'object' && user.token === token ? user : null
+  } catch { return null }
 }
 
 interface AuthState {
@@ -35,7 +39,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => {
   const token = readToken()
   return {
-    user: token ? readUser() : null,
+    user: token ? readUser(token) : null,
     token,
     isLoading: true,
     setAuth: (user) => {

@@ -67,4 +67,11 @@ describe('authStore', () => {
     vi.resetModules()
     expect((await import('./authStore')).useAuthStore.getState().user).toBeNull()
   })
+
+  it('ignores a saved user that belongs to another token', async () => {
+    localStorage.setItem('yew.token', '"tok2"')
+    localStorage.setItem('sadhana.user', JSON.stringify({ id: '1', email: 'a@b.com', token: 'tok', name: 'Alice' }))
+    vi.resetModules()
+    expect((await import('./authStore')).useAuthStore.getState().user).toBeNull()
+  })
 })
