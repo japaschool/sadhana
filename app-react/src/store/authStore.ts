@@ -16,6 +16,13 @@ export function writeToken(token: string | null) {
   else localStorage.removeItem(TOKEN_KEY)
 }
 
+export const USER_KEY = 'sadhana.user'
+
+/** The last signed-in user, so the app opens offline without /api/user. */
+function readUser(): UserInfo | null {
+  try { return JSON.parse(localStorage.getItem(USER_KEY) ?? 'null') } catch { return null }
+}
+
 interface AuthState {
   user: UserInfo | null
   token: string | null
@@ -25,17 +32,22 @@ interface AuthState {
   setLoading: (v: boolean) => void
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  token: readToken(),
-  isLoading: true,
-  setAuth: (user) => {
-    writeToken(user.token)
-    set({ user, token: user.token })
-  },
-  logout: () => {
-    writeToken(null)
-    set({ user: null, token: null })
-  },
-  setLoading: (isLoading) => set({ isLoading }),
-}))
+export const useAuthStore = create<AuthState>((set) => {
+  const token = readToken()
+  return {
+    user: token ? readUser() : null,
+    token,
+    isLoading: true,
+    setAuth: (user) => {
+      writeToken(user.token)
+      localStorage.setItem(USER_KEY, JSON.stringify(user))
+      set({ user, token: user.token })
+    },
+    logout: () => {
+      writeToken(null)
+      localStorage.removeItem(USER_KEY)
+      set({ user: null, token: null })
+    },
+    setLoading: (isLoading) => set({ isLoading }),
+  }
+})

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { act } from '@testing-library/react'
 import { readToken, useAuthStore } from './authStore'
 
@@ -42,5 +42,29 @@ describe('authStore', () => {
     })
     expect(localStorage.getItem('yew.token')).toBeNull()
     expect(useAuthStore.getState().user).toBeNull()
+  })
+
+  it('setAuth saves the user and logout removes it', () => {
+    act(() => useAuthStore.getState().setAuth({ id: '1', email: 'a@b.com', token: 'tok', name: 'Alice' }))
+    expect(JSON.parse(localStorage.getItem('sadhana.user')!).name).toBe('Alice')
+    act(() => useAuthStore.getState().logout())
+    expect(localStorage.getItem('sadhana.user')).toBeNull()
+  })
+
+  it('starts with the saved user when a token is present, and ignores it without one', async () => {
+    localStorage.setItem('yew.token', '"tok"')
+    localStorage.setItem('sadhana.user', JSON.stringify({ id: '1', email: 'a@b.com', token: 'tok', name: 'Alice' }))
+    vi.resetModules()
+    expect((await import('./authStore')).useAuthStore.getState().user?.name).toBe('Alice')
+    localStorage.removeItem('yew.token')
+    vi.resetModules()
+    expect((await import('./authStore')).useAuthStore.getState().user).toBeNull()
+  })
+
+  it('survives a corrupt saved user', async () => {
+    localStorage.setItem('yew.token', '"tok"')
+    localStorage.setItem('sadhana.user', '{oops')
+    vi.resetModules()
+    expect((await import('./authStore')).useAuthStore.getState().user).toBeNull()
   })
 })

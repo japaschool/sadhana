@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { readToken, writeToken } from '../store/authStore'
+import { readToken, writeToken, USER_KEY } from '../store/authStore'
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
@@ -14,6 +14,7 @@ export function authHeaders(): Record<string, string> {
 /** A 401 means the session is gone: drop the token and go to the login page. */
 export function handleUnauthorized() {
   writeToken(null)
+  localStorage.removeItem(USER_KEY)
   window.location.href = '/login'
 }
 

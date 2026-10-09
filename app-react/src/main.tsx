@@ -8,7 +8,7 @@ import './i18n'
 import './index.css'
 import { router } from './router'
 import { useAuthStore } from './store/authStore'
-import { authApi } from './api/auth'
+import { hydrateAuth } from './store/hydrateAuth'
 import { applyThemePref } from './ui/theme'
 import { UiLoading } from './layouts/ByLayout'
 
@@ -33,19 +33,6 @@ useAuthStore.subscribe((s, prev) => {
   if (s.token !== prev.token) { queryClient.clear(); void persister.removeClient() }
 })
 
-async function hydrateAuth() {
-  const { setAuth, setLoading, token } = useAuthStore.getState()
-  if (!token) { setLoading(false); return }
-  try {
-    const user = await authApi.getUser()
-    setAuth(user)
-  } catch {
-    // token invalid — logout happens via 401 interceptor
-  } finally {
-    setLoading(false)
-  }
-}
-
 applyThemePref()
 
 // Replaces the Rust UI's worker on installed apps (see public/service_worker.js).
@@ -65,4 +52,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </PersistQueryClientProvider>
   </React.StrictMode>
 )
-hydrateAuth()
+void hydrateAuth()
