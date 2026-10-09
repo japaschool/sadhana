@@ -19,24 +19,19 @@ Done: the Apple endpoint is deleted, Google sign-in checks `aud` via tokeninfo a
 
 ## P1: offline mode
 
-Main's service worker (`frontend/service_worker.js` + `idb.js` on `main`) precaches the app shell, serves API GETs from cache and refreshes them in the background (`API_UPDATED`), queues diary writes in IndexedDB, returns a blank diary day / `[]` incomplete-days offline, reports online/offline from real request failures, and has a `#reset` switch.
+Spec: `docs/superpowers/specs/2026-10-09-offline-mode-design.md`. The browser/device checks (spec §3 manual checklist, including the Rust-UI takeover) have not been run yet.
 
-The React worker (`app-react/public/service_worker.js`) only takes over from the Rust one; it has no fetch handler. The React Query cache is in memory only, and offline writes are lost on reload.
-
-- [ ] **Recommended:** reuse main's `service_worker.js` + `idb.js` almost unchanged (same cache and IndexedDB names). On the React side:
-  - add an `X-Cache-Key` header to GET requests that should be cached (one axios interceptor);
-  - on `API_UPDATED`, invalidate the matching queries;
-  - drive online/offline from the worker's `ONLINE`/`OFFLINE` messages (`hooks/useNetworkStatus.ts` uses `navigator.onLine`).
-- [ ] The takeover worker retries the Rust worker's queued writes only on the next release (see its `ponytail:` note). Offline mode should read that queue again.
-- [ ] `/precache-manifest.js` (`server/src/routes.rs:24`) is unused by the React worker, and its extension list still has `wasm` but not `json`. Either delete it, or use it for offline mode and add `json` (translations are fetched from `/locales/*.json`). Cache or self-host the Google Fonts.
-- [ ] Opening the app offline leaves `user` empty (`hydrateAuth` fails). Cache `/api/user` or save the user locally.
-- [ ] `hooks/useServiceWorkerUpdate.ts` listens for `controllerchange`. Port main's handshake: `CHECK_UPDATE` against `/api/version` on app open, then `UPDATE_READY`, then `SKIP_WAITING`.
-- [ ] Add the `#reset` switch to `index.html`.
+- [x] Takeover queue: done: the worker moves the Rust worker's `SadhanaProPostDB` queue into the outbox.
+- [x] Precache manifest and fonts: done: the shell is precached from `/precache-manifest.js` into `static-vr-<sha>`, fonts included.
+- [x] Opening the app offline leaves `user` empty: done: the user is saved locally and restored offline.
+- [x] Update handshake: done: the page updates via the waiting worker and applies it when the app goes to the background.
+- [x] `#reset` switch: done: wipes all caches except the outbox.
+- [ ] Device check (spec §3 manual checklist) on the preview channel.
 
 ## P1: loading and app open
 
 - [ ] `index.html` has an empty `<div id="root">` until JS loads; users see a blank screen on slow connections. Put a static spinner inside `#root`.
-- [ ] axios has no `timeout` (`api/client.ts`), so the startup `hydrateAuth` → `ProtectedRoute` spinner can hang. Main used 30 s / 5 s / 3 s.
+- [x] axios `timeout` (`api/client.ts`): done: 10 s, so the startup spinner can't hang.
 - [ ] **"Today" doesn't roll over.** `useLogDate` stores `null` for today, but nothing re-renders on wake if the data hasn't changed, so an app left open overnight still shows yesterday. Bump a `today` state on `visibilitychange` → visible (`useToday.ts:98` already listens there).
 - [ ] Check that every submit button is disabled while its request runs (main used a 600 ms delayed full-screen overlay instead).
 
