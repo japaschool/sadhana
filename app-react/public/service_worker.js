@@ -66,9 +66,10 @@ self.addEventListener('message', (event) => {
 })
 
 /** Activating reloads every page, so only when no other window is on screen: an automatic update from a hidden tab
- *  must not reload a visible one mid-form. The sender counts as hidden (it asked, by hiding or from Settings). */
+ *  must not reload a visible one mid-form. The sender counts as hidden (it asked, by hiding or from Settings).
+ *  includeUncontrolled: the open tabs are controlled by the old active worker, not by this waiting one. */
 async function skipWaitingIfUnseen(sender) {
-  const windows = await self.clients.matchAll({ type: 'window' })
+  const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
   if (windows.every((c) => c.id === sender?.id || c.visibilityState === 'hidden')) await self.skipWaiting()
 }
 
