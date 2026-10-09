@@ -2,7 +2,7 @@
 
 Status as of `redesign` @ `2ea6e9f` (2026-10-09), checked by reading the code against the previous version of this list. The React app was not built and its tests were not run for this review.
 
-**Summary:** the Docker build, service worker takeover, token/language compatibility, preview toggle, CI and the API mismatches are done. Still open before merge: the OAuth security holes, the logout cache leak, offline mode/PWA, and cleanup.
+**Summary:** the Docker build, service worker takeover, token/language compatibility, preview toggle, CI and the API mismatches are done. Still open before merge: the logout cache leak, offline mode/PWA, and cleanup.
 
 Paths below refer to the `redesign` branch.
 
@@ -10,9 +10,7 @@ Paths below refer to the `redesign` branch.
 
 ## P0: security
 
-- [ ] **Apple sign-in accepts tokens issued to any app.** `server/src/app/oauth.rs:109` sets `validate_aud = false`, and `User::signin_oauth` links to an existing account by email. Together that allows account takeover. No UI uses Apple, so the simplest fix is to delete the endpoint (`routes.rs:118`) until it's needed. If kept: validate `aud` against our Services ID and check `email_verified`.
-- [ ] **Google sign-in doesn't check the token was issued to our client.** `oauth.rs:30` passes any access token to `userinfo`. Verify `aud`/`azp` (tokeninfo endpoint, or the GIS ID-token credential) and `email_verified`.
-- [ ] Delete `server/src/bin/gen_hash.rs` (scratch code with a hard-coded default password and hash).
+Done: the Apple endpoint is deleted, Google sign-in checks `aud` via tokeninfo and `email_verified`, and `gen_hash.rs` is gone.
 
 ## P0: bugs
 
@@ -60,7 +58,7 @@ The React worker (`app-react/public/service_worker.js`) only takes over from the
 - [ ] Starter practices have hard-coded English names (`STARTERS` in `features/today/useToday.ts:12`). The server already adds language-specific defaults at signup. Drop it or translate the names.
 
 **Auth**
-- [ ] Google sign-in needs `VITE_GOOGLE_CLIENT_ID` as a Docker build arg (plus a GitHub secret) and a Google OAuth client for app.sadhana.pro. The button hides itself when the ID isn't set.
+- [ ] Google sign-in needs `VITE_GOOGLE_CLIENT_ID` as a Docker build arg (plus a GitHub secret) and a Google OAuth client for app.sadhana.pro. The button hides itself when the ID isn't set. The server needs the same ID as `GOOGLE_CLIENT_ID` (prod env); without it, it refuses Google sign-in.
 - [ ] OAuth signup always adds English default practices (`WHERE lang = 'en'`, `server/src/app/user/model.rs:123`). Pass the UI language.
 
 **Settings / Help**

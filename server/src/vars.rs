@@ -43,6 +43,12 @@ pub fn release_channel() -> String {
     var("RELEASE_CHANNEL").unwrap_or_else(|_| "stable".to_owned())
 }
 
+/// The OAuth client ID that Google sign-in tokens must be issued to (same value as the UI's `VITE_GOOGLE_CLIENT_ID`).
+/// Unset, Google sign-in is refused.
+pub fn google_client_id() -> Option<String> {
+    var("GOOGLE_CLIENT_ID").ok()
+}
+
 pub fn run_db_migrations_on_startup() -> bool {
     var("RUN_DB_MIGRATIONS").is_ok_and(|v| v == "1")
 }

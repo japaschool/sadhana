@@ -114,8 +114,7 @@ fn api_scope() -> impl HttpServiceFactory {
         )
         .service(
             web::scope("/oauth")
-                .route("/google", web::post().to(app::oauth::google_signin))
-                .route("/apple", web::post().to(app::oauth::apple_signin)),
+                .route("/google", web::post().to(app::oauth::google_signin)),
         )
         .service(
             web::scope("/user")

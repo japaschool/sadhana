@@ -70,12 +70,4 @@ export const authApi = {
     })
     return res.data.user
   },
-
-  async appleSignin(idToken: string, name?: string): Promise<UserInfo> {
-    const res = await apiClient.post<{ user: UserInfo }>('/oauth/apple', {
-      id_token: idToken,
-      name,
-    })
-    return res.data.user
-  },
 }
