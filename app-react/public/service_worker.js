@@ -23,11 +23,17 @@ self.addEventListener('install', (event) => {
     const takeover = await isTakeover()
     if (!DEV) {
       const cache = await caches.open(SHELL)
-      await Promise.all([...MANIFEST].map(async (url) => {
-        const res = await fetch(url, { cache: 'no-store' })
-        if (!res.ok) throw new Error(`Precache ${url}: HTTP ${res.status}`)
-        await cache.put(url === '/index.html' ? '/' : url, res)
-      }))
+      try {
+        await Promise.all([...MANIFEST].map(async (url) => {
+          const res = await fetch(url, { cache: 'no-store' })
+          if (!res.ok) throw new Error(`Precache ${url}: HTTP ${res.status}`)
+          await cache.put(url === '/index.html' ? '/' : url, res)
+        }))
+      } catch (err) {
+        // A partial shell would make isTakeover() false for every later release.
+        await caches.delete(SHELL)
+        throw err
+      }
     }
     // Replacing our own previous release waits until the page sends SKIP_WAITING.
     if (takeover) await self.skipWaiting()
@@ -77,10 +83,14 @@ async function fromShell(path, req) {
 }
 
 /** Writes the value to the outbox first, then gives the network up to 10 s to take it. */
+let lastSeq = 0
+
 async function saveEntry(req, event) {
+  // Taken before any await, so it follows the order the requests arrived in; strictly increasing.
+  const seq = lastSeq = Math.max(Date.now(), lastSeq + 1)
   const auth = req.headers.get('Authorization')
   const body = await req.clone().text()
-  const record = { key: outboxKey(auth, req.url, body), url: req.url, auth, body, seq: performance.timeOrigin + performance.now() }
+  const record = { key: outboxKey(auth, req.url, body), url: req.url, auth, body, seq }
   try {
     await idb('readwrite', (s) => s.put(record))
   } catch (err) {
@@ -201,11 +211,12 @@ async function moveLegacyQueue() {
   if (!db) return
   try {
     const records = await req(db.transaction(LEGACY_STORE).objectStore(LEGACY_STORE).getAll())
-    for (const r of records) {
+    // Newest first: the Rust worker adds a record per failed PUT, so the newest value for a key must win.
+    for (const r of [...records].reverse()) {
       const auth = r.authHeader ?? null
       // seq = the legacy id: small integers, so they are sent before anything written here.
       const rec = { key: outboxKey(auth, r.url, r.payload), url: r.url, auth, body: r.payload, seq: r.id }
-      // ponytail: a value already in the outbox for the same key was entered later; keep it.
+      // ponytail: a value already in the outbox for the same key (or moved earlier in this loop) is newer; keep it.
       await idb('readwrite', (s) => s.add(rec)).catch((err) => { if (err?.name !== 'ConstraintError') throw err })
       await req(db.transaction(LEGACY_STORE, 'readwrite').objectStore(LEGACY_STORE).delete(r.id))
     }
