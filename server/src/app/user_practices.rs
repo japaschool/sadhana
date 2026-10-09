@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use actix_web::{web, HttpRequest, HttpResponse};
 use common::error::AppError;
 use diesel::prelude::*;
@@ -7,9 +5,7 @@ use diesel::{PgConnection, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::app::report::db::Report;
-use crate::app::report::{GraphReport, GridReport, PracticeTrace, ReportDefinition, TraceType};
-use crate::db_types::{BarLayout, PracticeDataType};
+use crate::db_types::PracticeDataType;
 use crate::middleware::auth;
 use crate::middleware::state::AppState;
 use crate::schema::{diary, report_traces, user_practices, yatra_user_practices};
@@ -170,7 +166,7 @@ impl UserPractice {
                 .select(diesel::dsl::max(order_key))
                 .first(conn)?;
 
-            let practice_id: Uuid = diesel::insert_into(user_practices)
+            diesel::insert_into(user_practices)
                 .values((
                     user_id.eq(record.user_id),
                     practice.eq(&record.practice),
@@ -180,29 +176,7 @@ impl UserPractice {
                     dropdown_variants.eq(&record.dropdown_variants),
                     order_key.eq(max_order_key.unwrap_or_default() + 1),
                 ))
-                .returning(id)
-                .get_result(conn)?;
-
-            let report_definition = match record.data_type {
-                PracticeDataType::Bool | PracticeDataType::Text => {
-                    ReportDefinition::Grid(GridReport {
-                        practices: HashSet::from([practice_id]),
-                    })
-                }
-                _ => ReportDefinition::Graph(GraphReport {
-                    bar_layout: BarLayout::Grouped,
-                    traces: vec![PracticeTrace::new_minimal(TraceType::Bar, practice_id)],
-                }),
-            };
-
-            Report::create(conn, &record.user_id, &record.practice, &report_definition)
-                .map(|_| ())
-                .or_else(|err| match err {
-                    AppError::UnprocessableEntity(msgs) => {
-                        log::warn!("Suppressed a failure to create a new report while creating a new practice {} for user {} with the following message: {}", record.practice, record.user_id, msgs.join("\n"));
-                        Ok(())},
-                    e => Err(e),
-                })?;
+                .execute(conn)?;
 
             Ok(())
         })
