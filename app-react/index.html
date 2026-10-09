@@ -6,6 +6,24 @@
     <!-- No zoom on phones/tablets: iOS zooms in on focused fields and never zooms back out. Desktop ignores this tag. -->
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <title>Sadhana Pro</title>
+    <!-- /#reset recovers a broken install: drop the workers, caches and saved query cache, then reload.
+         sadhana-outbox stays on purpose: it holds diary values the server doesn't have yet. -->
+    <script>
+      if (location.hash === '#reset') {
+        (async () => {
+          try {
+            for (const r of (await navigator.serviceWorker?.getRegistrations()) ?? []) await r.unregister()
+            for (const k of await caches.keys()) await caches.delete(k)
+            await new Promise((done) => {
+              const d = indexedDB.deleteDatabase('sadhana-query')
+              d.onsuccess = d.onerror = d.onblocked = done
+            })
+          } finally {
+            location.replace(location.pathname)
+          }
+        })()
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

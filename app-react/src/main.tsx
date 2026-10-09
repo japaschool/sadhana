@@ -35,31 +35,34 @@ useAuthStore.subscribe((s, prev) => {
   if (s.token !== prev.token) { queryClient.clear(); void persister.removeClient() }
 })
 
-// A token with no matching saved user means another account signed in (e.g. via the Rust UI): drop the old cache
-// before the provider restores it.
-if (readToken() && !useAuthStore.getState().user) void persister.removeClient()
-
 applyThemePref()
 
-// The app's worker: shell cache, diary outbox, takeover from the Rust UI (public/service_worker.js).
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-  const hadController = !!navigator.serviceWorker.controller
-  void navigator.serviceWorker.register('/service_worker.js', { updateViaCache: 'none' })
-    .then((reg) => startUpdateWatch(reg, hadController))
+// #reset (inline script in index.html) is wiping caches and will reload: don't start the app or its worker.
+if (location.hash !== '#reset') {
+  // A token with no matching saved user means another account signed in (e.g. via the Rust UI): drop the old cache
+  // before the provider restores it.
+  if (readToken() && !useAuthStore.getState().user) void persister.removeClient()
+
+  // The app's worker: shell cache, diary outbox, takeover from the Rust UI (public/service_worker.js).
+  if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+    const hadController = !!navigator.serviceWorker.controller
+    void navigator.serviceWorker.register('/service_worker.js', { updateViaCache: 'none' })
+      .then((reg) => startUpdateWatch(reg, hadController))
+  }
+
+  startNetworkWatch()
+
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <PersistQueryClientProvider client={queryClient} persistOptions={{
+        persister,
+        maxAge: CACHE_MAX_AGE,
+        buster: CACHE_VERSION,
+        dehydrateOptions: { shouldDehydrateQuery: shouldPersist, shouldDehydrateMutation: () => false },
+      }}>
+        <Suspense fallback={<UiLoading />}><RouterProvider router={router} /></Suspense>
+      </PersistQueryClientProvider>
+    </React.StrictMode>
+  )
+  void hydrateAuth()
 }
-
-startNetworkWatch()
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <PersistQueryClientProvider client={queryClient} persistOptions={{
-      persister,
-      maxAge: CACHE_MAX_AGE,
-      buster: CACHE_VERSION,
-      dehydrateOptions: { shouldDehydrateQuery: shouldPersist, shouldDehydrateMutation: () => false },
-    }}>
-      <Suspense fallback={<UiLoading />}><RouterProvider router={router} /></Suspense>
-    </PersistQueryClientProvider>
-  </React.StrictMode>
-)
-void hydrateAuth()
