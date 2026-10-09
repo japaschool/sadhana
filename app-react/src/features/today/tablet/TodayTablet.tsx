@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import useNetworkStatus from '../../../hooks/useNetworkStatus'
+import { SyncBanner } from '../SyncBanner'
 import { TabletShell } from '../../../layouts/tablet/TabletShell'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import type { UserPractice } from '../../../types/api'
@@ -20,7 +20,6 @@ export function TodayTablet() {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const navigate = useNavigate()
-  const isOnline = useNetworkStatus()
   const [date, setDate] = useLogDate()
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null)
@@ -65,9 +64,7 @@ export function TodayTablet() {
         </button>
       </header>
 
-      {!isOnline && (
-        <p role="status" className="rounded-xl bg-ui-accent-soft px-3 py-2 text-xs font-semibold text-ui-accent">{t('home.offline')}</p>
-      )}
+      <SyncBanner />
 
       <div className="rounded-[20px] border border-ui-hairline bg-ui-surface">
         <DayStrip9 date={date} incomplete={today.incomplete} onSelect={setDate} />

@@ -254,6 +254,10 @@
     "rowsFailed_other": "{{count}} rows couldn't be read. Fix them in the spreadsheet, then choose the file again."
   },
   "today": {
+    "offlinePending_one": "Offline — {{count}} change will sync",
+    "offlinePending_other": "Offline — {{count}} changes will sync",
+    "syncing": "Syncing {{count}}…",
+    "dayFailed": "Couldn't load this day — what you enter will sync when you're back online.",
     "group": "Practices",
     "filledOf": "{{filled}} of {{total}}",
     "requiredLeft_one": "{{count}} required left",

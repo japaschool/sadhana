@@ -27,11 +27,13 @@ export const practicesApi = {
     return res.data.diary_day
   },
   async saveDiaryEntry(date: string, practice: string, value: PracticeValue | null): Promise<void> {
-    // keepalive: a home-screen app on iOS that is swiped away is killed before an
-    // XHR (axios) completes, losing the value. A keepalive fetch is still delivered.
+    // With a worker in control it writes the value to its outbox before trying the network, and answers 202
+    // (X-Queued) when it couldn't send it, so keepalive adds nothing. Without one: a home-screen app on iOS that
+    // is swiped away is killed before an XHR completes, but a keepalive fetch is still delivered.
     const res = await fetch(`${apiClient.defaults.baseURL}/diary/${date}/entry`, {
       method: 'PUT',
-      keepalive: true,
+      keepalive: !navigator.serviceWorker?.controller,
+      signal: AbortSignal.timeout(15_000),
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ entry: { practice, value } }),
     })

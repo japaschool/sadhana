@@ -1,9 +1,11 @@
 import axios from 'axios'
+import { setOnline } from '../hooks/useNetworkStatus'
 import { readToken, writeToken, USER_KEY } from '../store/authStore'
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api',
   headers: { 'Content-Type': 'application/json' },
+  timeout: 10_000,
 })
 
 export function authHeaders(): Record<string, string> {
@@ -24,8 +26,10 @@ apiClient.interceptors.request.use((config) => {
 })
 
 apiClient.interceptors.response.use(
-  (res) => res,
+  (res) => { setOnline(true); return res },
   (error) => {
+    // Any answer means the server is reachable; none (network error, timeout) means offline. A cancel says nothing.
+    if (!axios.isCancel(error)) setOnline(!!error.response)
     // Signing in and changing the password answer 401 for a wrong password, not a lost session.
     const url = error.config?.url ?? ''
     if (error.response?.status === 401 && !url.includes('/users/login') && !url.includes('/user/password')) handleUnauthorized()

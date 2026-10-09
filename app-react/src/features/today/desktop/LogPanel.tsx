@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import useNetworkStatus from '../../../hooks/useNetworkStatus'
+import { SyncBanner } from '../SyncBanner'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import { ListGroup } from '../../../ui/primitives/ListGroup'
 import { PanelPopover } from '../../../ui/primitives/PanelPopover'
@@ -23,7 +23,6 @@ function isEditable(el: EventTarget | null) {
 export function LogPanel({ date, onDate }: { date: Date; onDate: (d: Date) => void }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const isOnline = useNetworkStatus()
   const [calendarAnchor, setCalendarAnchor] = useState<HTMLElement | null>(null)
   const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null)
   const today = useToday(date)
@@ -64,9 +63,7 @@ export function LogPanel({ date, onDate }: { date: Date; onDate: (d: Date) => vo
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto bg-ui-bg px-5 py-4">
-        {!isOnline && (
-          <p role="status" className="rounded-xl bg-ui-accent-soft px-3 py-2 text-xs font-semibold text-ui-accent">{t('home.offline')}</p>
-        )}
+        <SyncBanner />
         {today.isLoading ? (
           <ListGroup label={t('today.group')}>
             {Array.from({ length: 4 }, (_, i) => (

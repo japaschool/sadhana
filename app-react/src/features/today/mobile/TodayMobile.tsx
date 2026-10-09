@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import useNetworkStatus from '../../../hooks/useNetworkStatus'
+import { SyncBanner } from '../SyncBanner'
 import { AppBar, type AppBarAction } from '../../../layouts/mobile/AppBar'
 import { MobileShell } from '../../../layouts/mobile/MobileShell'
 import { ListGroup } from '../../../ui/primitives/ListGroup'
@@ -17,7 +17,6 @@ import { PracticeRow } from './PracticeRow'
 export function TodayMobile() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const isOnline = useNetworkStatus()
   const [date, setDate] = useLogDate()
   const [calendarOpen, setCalendarOpen] = useState(false)
   const today = useToday(date)
@@ -31,11 +30,7 @@ export function TodayMobile() {
   return (
     <>
       <AppBar title={<DateHeader date={date} summary={today.summary} onOpenCalendar={() => setCalendarOpen(true)} />} actions={actions} />
-      {!isOnline && (
-        <p role="status" className="mx-4 mb-2 rounded-xl bg-ui-accent-soft px-3 py-2 text-xs font-semibold text-ui-accent">
-          {t('home.offline')}
-        </p>
-      )}
+      <SyncBanner className="mx-4 mb-2" />
       <DayStrip9 date={date} incomplete={today.incomplete} onSelect={setDate} />
       <div className="flex flex-col gap-4 px-4 pb-6">
         {today.isLoading ? (

@@ -14,7 +14,7 @@ vi.mock('../../../api/practices', () => ({
     createUserPractice: vi.fn(),
   },
 }))
-vi.mock('../../../hooks/useNetworkStatus', () => ({ default: () => true }))
+vi.mock('../../../hooks/useNetworkStatus', () => ({ default: () => ({ online: true, pending: 0 }) }))
 import { practicesApi } from '../../../api/practices'
 const api = vi.mocked(practicesApi)
 

@@ -8,6 +8,7 @@ import './i18n'
 import './index.css'
 import { router } from './router'
 import { readToken, useAuthStore } from './store/authStore'
+import { startNetworkWatch } from './hooks/useNetworkStatus'
 import { hydrateAuth } from './store/hydrateAuth'
 import { applyThemePref } from './ui/theme'
 import { UiLoading } from './layouts/ByLayout'
@@ -43,6 +44,8 @@ applyThemePref()
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   void navigator.serviceWorker.register('/service_worker.js', { updateViaCache: 'none' })
 }
+
+startNetworkWatch()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
