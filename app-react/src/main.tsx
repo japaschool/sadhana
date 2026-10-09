@@ -9,6 +9,7 @@ import './index.css'
 import { router } from './router'
 import { readToken, useAuthStore } from './store/authStore'
 import { startNetworkWatch } from './hooks/useNetworkStatus'
+import { startUpdateWatch } from './hooks/useServiceWorkerUpdate'
 import { hydrateAuth } from './store/hydrateAuth'
 import { applyThemePref } from './ui/theme'
 import { UiLoading } from './layouts/ByLayout'
@@ -40,9 +41,11 @@ if (readToken() && !useAuthStore.getState().user) void persister.removeClient()
 
 applyThemePref()
 
-// Replaces the Rust UI's worker on installed apps (see public/service_worker.js).
+// The app's worker: shell cache, diary outbox, takeover from the Rust UI (public/service_worker.js).
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  const hadController = !!navigator.serviceWorker.controller
   void navigator.serviceWorker.register('/service_worker.js', { updateViaCache: 'none' })
+    .then((reg) => startUpdateWatch(reg, hadController))
 }
 
 startNetworkWatch()

@@ -1,21 +1,28 @@
-import { useState, useEffect } from 'react'
+import { create } from 'zustand'
+
+/** A new release's worker, installed and waiting for SKIP_WAITING. */
+export const useSwStore = create<{ waiting: ServiceWorker | null }>(() => ({ waiting: null }))
+
+export function applyUpdate() {
+  useSwStore.getState().waiting?.postMessage({ type: 'SKIP_WAITING' })
+}
+
+/** Once, after registering. `hadController`: the page was already controlled when it loaded, so a
+ *  takeover is an update (reload); a first install isn't. */
+export function startUpdateWatch(reg: ServiceWorkerRegistration, hadController: boolean) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) window.location.reload() })
+  const track = () => useSwStore.setState({ waiting: reg.waiting })
+  track()
+  reg.addEventListener('updatefound', () => reg.installing?.addEventListener('statechange', track))
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') reg.update().catch(() => {})
+    // A reload doesn't activate a waiting worker, so a tab that is never closed would stay on the old
+    // release forever. Going to the background is the moment nobody is looking; the outbox is in the worker.
+    else applyUpdate()
+  })
+}
 
 export function useServiceWorkerUpdate(): { updateReady: boolean; applyUpdate: () => void } {
-  const [updateReady, setUpdateReady] = useState(false)
-
-  useEffect(() => {
-    const sw = navigator.serviceWorker
-    if (!sw) return
-    // A new release's worker takes control (skipWaiting + claim). The first install
-    // on a fresh client also fires this, but that isn't an update.
-    const hadController = !!sw.controller
-    const handler = () => { if (hadController) setUpdateReady(true) }
-    sw.addEventListener('controllerchange', handler)
-    return () => sw.removeEventListener('controllerchange', handler)
-  }, [])
-
-  return {
-    updateReady,
-    applyUpdate: () => window.location.reload(),
-  }
+  const waiting = useSwStore((s) => s.waiting)
+  return { updateReady: !!waiting, applyUpdate }
 }

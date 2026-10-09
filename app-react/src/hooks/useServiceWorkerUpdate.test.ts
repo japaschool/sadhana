@@ -1,57 +1,67 @@
 import { renderHook, act } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { useServiceWorkerUpdate } from './useServiceWorkerUpdate'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { startUpdateWatch, useServiceWorkerUpdate, useSwStore } from './useServiceWorkerUpdate'
 
-describe('useServiceWorkerUpdate', () => {
-  let listeners: Record<string, EventListener[]>
+function setVisibility(v: 'visible' | 'hidden') {
+  Object.defineProperty(document, 'visibilityState', { configurable: true, value: v })
+  document.dispatchEvent(new Event('visibilitychange'))
+}
+
+describe('service worker updates', () => {
+  let swListeners: Record<string, () => void>
+  let regListeners: Record<string, () => void>
+  let reg: { waiting: { postMessage: ReturnType<typeof vi.fn> } | null; installing: EventTarget | null; update: ReturnType<typeof vi.fn>; addEventListener: (e: string, cb: () => void) => void }
+  const reload = vi.fn()
 
   beforeEach(() => {
-    listeners = {}
-    const mockSW = {
-      addEventListener: vi.fn((event: string, cb: EventListener) => {
-        listeners[event] = listeners[event] ?? []
-        listeners[event].push(cb)
-      }),
-      removeEventListener: vi.fn(),
-      controller: {} as object | null,
-    }
+    swListeners = {}
+    regListeners = {}
+    reload.mockClear()
+    useSwStore.setState({ waiting: null })
+    Object.defineProperty(window, 'location', { configurable: true, value: { reload } })
     Object.defineProperty(navigator, 'serviceWorker', {
-      value: mockSW,
       configurable: true,
+      value: { addEventListener: (e: string, cb: () => void) => { swListeners[e] = cb } },
     })
+    reg = { waiting: null, installing: null, update: vi.fn().mockResolvedValue(undefined), addEventListener: (e, cb) => { regListeners[e] = cb } }
   })
 
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
+  const start = (hadController = true) => startUpdateWatch(reg as unknown as ServiceWorkerRegistration, hadController)
 
-  it('starts with updateReady = false', () => {
+  it('a waiting worker makes an update ready', () => {
+    reg.waiting = { postMessage: vi.fn() }
+    start()
     const { result } = renderHook(() => useServiceWorkerUpdate())
-    expect(result.current.updateReady).toBe(false)
-  })
-
-  it('sets updateReady = true when controllerchange fires', async () => {
-    const { result } = renderHook(() => useServiceWorkerUpdate())
-    act(() => {
-      listeners['controllerchange']?.forEach(cb => cb(new Event('controllerchange')))
-    })
     expect(result.current.updateReady).toBe(true)
   })
 
-  it('ignores the first worker taking control of a fresh client', () => {
-    ;(navigator.serviceWorker as unknown as { controller: null }).controller = null
-    const { result } = renderHook(() => useServiceWorkerUpdate())
-    act(() => {
-      listeners['controllerchange']?.forEach(cb => cb(new Event('controllerchange')))
-    })
-    expect(result.current.updateReady).toBe(false)
+  it('notices a worker that finishes installing later', () => {
+    start()
+    const installing = new EventTarget()
+    reg.installing = installing
+    regListeners.updatefound()
+    reg.waiting = { postMessage: vi.fn() }
+    act(() => { installing.dispatchEvent(new Event('statechange')) })
+    expect(useSwStore.getState().waiting).toBe(reg.waiting)
   })
 
-  it('applyUpdate calls window.location.reload', () => {
-    const reload = vi.fn()
-    Object.defineProperty(window, 'location', { value: { reload }, configurable: true })
-    const { result } = renderHook(() => useServiceWorkerUpdate())
-    act(() => { result.current.applyUpdate() })
+  it('checks for an update when visible and applies a waiting one when hidden', () => {
+    start()
+    setVisibility('visible')
+    expect(reg.update).toHaveBeenCalledOnce()
+    reg.waiting = { postMessage: vi.fn() }
+    useSwStore.setState({ waiting: reg.waiting as unknown as ServiceWorker })
+    setVisibility('hidden')
+    expect(reg.waiting.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' })
+  })
+
+  it('reloads when the new worker takes over, but not on a first install', () => {
+    start(true)
+    swListeners.controllerchange()
     expect(reload).toHaveBeenCalledOnce()
+    reload.mockClear()
+    start(false)
+    swListeners.controllerchange()
+    expect(reload).not.toHaveBeenCalled()
   })
 })
