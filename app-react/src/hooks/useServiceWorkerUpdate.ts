@@ -12,8 +12,10 @@ export function applyUpdate() {
 export function startUpdateWatch(reg: ServiceWorkerRegistration, hadController: boolean) {
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) window.location.reload() })
   const track = () => useSwStore.setState({ waiting: reg.waiting })
+  const watch = (w: ServiceWorker | null) => w?.addEventListener('statechange', track)
   track()
-  reg.addEventListener('updatefound', () => reg.installing?.addEventListener('statechange', track))
+  watch(reg.installing) // already installing: its updatefound fired before we listened
+  reg.addEventListener('updatefound', () => watch(reg.installing))
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') reg.update().catch(() => {})
     // A reload doesn't activate a waiting worker, so a tab that is never closed would stay on the old

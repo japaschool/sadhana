@@ -45,6 +45,15 @@ describe('service worker updates', () => {
     expect(useSwStore.getState().waiting).toBe(reg.waiting)
   })
 
+  it('notices a worker that was already installing at start', () => {
+    const installing = new EventTarget()
+    reg.installing = installing
+    start()
+    reg.waiting = { postMessage: vi.fn() }
+    act(() => { installing.dispatchEvent(new Event('statechange')) })
+    expect(useSwStore.getState().waiting).toBe(reg.waiting)
+  })
+
   it('checks for an update when visible and applies a waiting one when hidden', () => {
     start()
     setVisibility('visible')
