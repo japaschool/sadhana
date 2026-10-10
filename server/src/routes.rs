@@ -72,6 +72,10 @@ fn collect_precache_assets(dir: &Path, base: &Path, out: &mut Vec<String>) {
         let path = entry.path();
 
         if path.is_dir() {
+            // iOS splash screens and install screenshots (~14 MB): the OS fetches them once, at install.
+            if path.strip_prefix(base).unwrap() == Path::new("images/install") {
+                continue;
+            }
             collect_precache_assets(&path, base, out);
         } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
             if matches!(
@@ -362,5 +366,21 @@ mod tests {
                 .and_then(|v| v.to_str().ok()),
             Some("gzip")
         );
+    }
+
+    #[actix_web::test]
+    async fn precache_skips_install_images() {
+        let dist = std::env::temp_dir().join(format!("precache-test-{}", std::process::id()));
+        fs::create_dir_all(dist.join("images/install")).unwrap();
+        fs::write(dist.join("index.html"), "").unwrap();
+        fs::write(dist.join("images/icon.png"), "").unwrap();
+        fs::write(dist.join("images/install/splash.jpg"), "").unwrap();
+
+        let mut assets = Vec::new();
+        collect_precache_assets(&dist, &dist, &mut assets);
+        fs::remove_dir_all(&dist).unwrap();
+
+        assets.sort();
+        assert_eq!(assets, ["/images/icon.png", "/index.html"]);
     }
 }

@@ -38,8 +38,9 @@ Spec: `docs/superpowers/specs/2026-10-09-offline-mode-design.md`. The Rust-UI ta
 
 ## P1: PWA and install
 
-- [ ] `index.html` needs: `<link rel="manifest">` + `site.webmanifest`, apple-touch-icon, iOS splash screens, `apple-mobile-web-app-status-bar-style`, `mobile-web-app-capable`, theme-color, `robots noindex`, and the Yandex verification meta. Reuse main's `frontend/site.webmanifest` and `frontend/images/*`.
-- [ ] Add `viewport-fit=cover`, or `env(safe-area-inset-*)` is 0 on iOS.
+- [x] `index.html` PWA tags: done: manifest (`public/site.webmanifest`), apple-touch-icon, iOS splash screens, status-bar style, `mobile-web-app-capable`, theme-color (new palette), `robots noindex` + `robots.txt`, Yandex verification. Icons and splashes come from main. Splashes live in `public/images/install/`, which the server leaves out of the precache manifest (they are ~14 MB and iOS fetches them once, at install).
+- [x] `viewport-fit=cover`: done.
+- [ ] Device check: install on iOS and Android; the status bar overlaps nothing and the icon/splash show.
 
 ## P1: features and polish
 
