@@ -39,7 +39,7 @@ Spec: `docs/superpowers/specs/2026-10-09-offline-mode-design.md`. The Rust-UI ta
 ## P1: PWA and install
 
 - [x] `index.html` PWA tags: done: manifest (`public/site.webmanifest`), apple-touch-icon, iOS splash screens, status-bar style, `mobile-web-app-capable`, theme-color (new palette), `robots noindex` + `robots.txt`, Yandex verification. Icons and splashes come from main. Splashes live in `public/images/install/`, which the server leaves out of the precache manifest (they are ~14 MB and iOS fetches them once, at install).
-- [x] `viewport-fit=cover`: done.
+- [x] No `viewport-fit=cover`, on purpose: with it (2026-10-10, iPhone 15 Pro, iOS 27.0.1) the status-bar blur covered the Today header and the tab bar got the full 34px inset under it. Without it iOS keeps the page in the safe area, as the earlier build did.
 - [ ] Device check: install on iOS and Android; the status bar overlaps nothing and the icon/splash show.
 - [ ] New install images in the new design: the splash screens (`public/images/install/apple-splash-*.jpg`, all 30 sizes) and the install screenshot (`banner-narrow-01.png`, which shows the old UI) are main's brown lotus. Possibly a new icon too (`apple-icon-180.png`, `favicon-196.png`, `manifest-icon-*.maskable.png`, `logo.png`); then update `background_color` in `site.webmanifest` (now main's `#7c6d63`).
 
