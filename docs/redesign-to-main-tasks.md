@@ -31,10 +31,10 @@ Spec: `docs/superpowers/specs/2026-10-09-offline-mode-design.md`. The Rust-UI ta
 
 ## P1: loading and app open
 
-- [ ] `index.html` has an empty `<div id="root">` until JS loads; users see a blank screen on slow connections. Put a static spinner inside `#root`.
+- [x] Static spinner: done: `index.html` shows a spinner inside `#root` (mirrors `UiLoading`, light/dark) until React mounts.
 - [x] axios `timeout` (`api/client.ts`): done: 10 s, so the startup spinner can't hang.
-- [ ] **"Today" doesn't roll over.** `useLogDate` stores `null` for today, but nothing re-renders on wake if the data hasn't changed, so an app left open overnight still shows yesterday. Bump a `today` state on `visibilitychange` → visible (`useToday.ts:98` already listens there).
-- [ ] Check that every submit button is disabled while its request runs (main used a 600 ms delayed full-screen overlay instead).
+- [x] "Today" rolls over: done: `useLogDate` bumps a `today` state on `visibilitychange` → visible, so a log left open overnight moves to the new day.
+- [x] Submit buttons disabled while their request runs: done: checked every mutation call site; the Enter-key paths in the yatra create sheets and the user-name field now skip while pending too.
 
 ## P1: PWA and install
 

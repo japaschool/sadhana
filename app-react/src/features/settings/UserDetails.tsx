@@ -67,7 +67,7 @@ export function UserDetails() {
           <input id="user-name" value={name} maxLength={NAME_MAX} autoComplete="name" disabled={save.isPending}
             aria-invalid={!!error} aria-describedby="user-name-msg" className={`${FIELD} disabled:opacity-50`}
             onChange={(e) => { setName(e.target.value); save.reset() }}
-            onKeyDown={(e) => { if (e.key === 'Enter' && dirty && !error) save.mutate(trimmed) }} />
+            onKeyDown={(e) => { if (e.key === 'Enter' && dirty && !error && !save.isPending) save.mutate(trimmed) }} />
           {error
             ? <p id="user-name-msg" role="alert" className={FIELD_ERROR}>{error}</p>
             : <p id="user-name-msg" className={HINT}>{t('userDetails.nameHint')}</p>}

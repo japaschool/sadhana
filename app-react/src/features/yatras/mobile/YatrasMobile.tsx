@@ -177,7 +177,7 @@ function MemberCard({ row, stability, cells }: { row: UserYatraDataRow; stabilit
 export function CreateSheet({ onClose, create, pending }: { onClose: () => void; create: (name: string) => void; pending: boolean }) {
   const { t } = useTranslation()
   const [name, setName] = useState('')
-  const submit = () => { if (name.trim()) create(name.trim()) }
+  const submit = () => { if (name.trim() && !pending) create(name.trim()) }
   return (
     <BottomSheet label={t('yatras.newTitle')} onClose={onClose}>
       <div className="flex flex-col gap-1.5">

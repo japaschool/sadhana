@@ -24,9 +24,19 @@
         })()
       }
     </script>
+    <!-- Shown until React mounts over it; mirrors UiLoading (src/layouts/ByLayout.tsx). -->
+    <style>
+      .boot { display: flex; min-height: 100dvh; align-items: center; justify-content: center; background: #F7F4EE; }
+      .boot span { width: 24px; height: 24px; box-sizing: border-box; border-radius: 50%; border: 2px solid #E7E1D6; border-top-color: #9A6410; animation: boot-spin 1s linear infinite; }
+      @media (prefers-color-scheme: dark) {
+        .boot { background: #15121D; }
+        .boot span { border-color: #332E40; border-top-color: #F0B54A; }
+      }
+      @keyframes boot-spin { to { transform: rotate(360deg); } }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="boot"><span role="status" aria-label="Loading"></span></div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

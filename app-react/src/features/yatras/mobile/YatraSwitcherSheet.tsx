@@ -17,7 +17,7 @@ export function YatraSwitcherSheet({ yatras, currentId, onSelect, create, pendin
   const users = useQueries({
     queries: yatras.map((y) => ({ queryKey: ['yatra-users', y.id], queryFn: () => yatrasApi.getYatraUsers(y.id) })),
   })
-  const submit = () => { if (name.trim()) create(name.trim()) }
+  const submit = () => { if (name.trim() && !pending) create(name.trim()) }
 
   return (
     <BottomSheet label={t('yatraSettings.yourYatras')} onClose={onClose}>
