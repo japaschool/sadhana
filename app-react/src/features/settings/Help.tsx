@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { openInBrowser } from '../../ui/openInBrowser'
 import { apiClient } from '../../api/client'
+import { useAuth } from '../../hooks/useAuth'
+import { UiLoading } from '../../layouts/ByLayout'
 import { useLayout } from '../../layouts/useLayout'
 import { ListGroup } from '../../ui/primitives/ListGroup'
 import { SettingsDetail } from './SettingsDetail'
@@ -134,10 +136,30 @@ function Build() {
   )
 }
 
+/** Signed out (from Sign in): no shell, just the page and a way back. */
+function GuestHelp() {
+  const { t } = useTranslation()
+  return (
+    <div className="ui-root min-h-dvh bg-ui-bg text-ui-ink">
+      <div className="mx-auto flex max-w-[640px] flex-col gap-4 px-4 pt-[env(safe-area-inset-top)] pb-[calc(32px+env(safe-area-inset-bottom))]">
+        <Link to="/login" className="flex min-h-11 items-center gap-1 self-start pt-2 text-[17px] font-semibold text-ui-accent">
+          <span aria-hidden>‹</span>{t('auth.signIn')}
+        </Link>
+        <h1 className="px-1 text-[28px] leading-[1.15] font-extrabold tracking-[-0.02em] text-ui-ink">{t('settings.helpSupport')}</h1>
+        <Faq /><Contact /><Build />
+      </div>
+    </div>
+  )
+}
+
 export function Help() {
   const { t } = useTranslation()
+  const { isAuthenticated, isLoading } = useAuth()
+  const layout = useLayout()
+  if (isLoading) return <UiLoading />
+  if (!isAuthenticated) return <GuestHelp />
   // Desktop: contact sits beside the FAQ. Mobile and tablet: after it.
-  if (useLayout() === 'desktop') return (
+  if (layout === 'desktop') return (
     <SettingsDetail title={t('settings.helpSupport')} wide>
       <div className="grid grid-cols-[minmax(0,1fr)_260px] items-start gap-5">
         <div className="flex flex-col gap-[18px]"><Faq /><Build /></div>

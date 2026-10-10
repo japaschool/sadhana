@@ -216,9 +216,10 @@ const SKIP_AUTH_API_ROUTES: [SkipAuthRoute; 11] = [
         path: "/api/oauth/google",
         method: Method::POST,
     },
+    // Shown on the public Help page.
     SkipAuthRoute {
-        path: "/api/oauth/apple",
-        method: Method::POST,
+        path: "/api/version",
+        method: Method::GET,
     },
 ];
 

@@ -44,11 +44,11 @@ export function ResendButton({ email, type }: { email: string; type: 'Registrati
 
 /** Step 1: an email gets a confirmation link; then "Check your inbox". */
 export function Register() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const setAuth = useAuthStore((s) => s.setAuth)
   const [email, setEmail] = useState('')
   const send = useMutation({ mutationFn: () => authApi.sendConfirmationLink(email.trim(), 'Registration') })
-  const google = useMutation({ mutationFn: (token: string) => authApi.googleSignin(token), onSuccess: setAuth })
+  const google = useMutation({ mutationFn: (token: string) => authApi.googleSignin(token, (i18n.resolvedLanguage || 'en').slice(0, 2)), onSuccess: setAuth })
   const [googleFailed, setGoogleFailed] = useState(false)
   const busy = send.isPending || google.isPending
   const err = send.error ?? google.error

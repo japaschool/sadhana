@@ -10,12 +10,13 @@ import { sameValue } from './values'
 
 export interface TodaySummary { filled: number; total: number; requiredLeft: number }
 
-const STARTERS: { practice: string; data_type: PracticeDataType }[] = [
-  { practice: 'Wake up time',     data_type: 'Time'     },
-  { practice: 'Go to sleep time', data_type: 'Time'     },
-  { practice: 'Reading',          data_type: 'Bool'     },
-  { practice: 'Meditation',       data_type: 'Duration' },
-  { practice: 'Yoga',             data_type: 'Duration' },
+/** Names are translation keys under home.starters. */
+const STARTERS: { key: string; data_type: PracticeDataType }[] = [
+  { key: 'wakeUp',     data_type: 'Time'     },
+  { key: 'sleep',      data_type: 'Time'     },
+  { key: 'reading',    data_type: 'Bool'     },
+  { key: 'meditation', data_type: 'Duration' },
+  { key: 'yoga',       data_type: 'Duration' },
 ]
 
 const FAIL_FLASH_MS = 600
@@ -91,7 +92,7 @@ export function useToday(date: Date) {
 
   const seed = useMutation({
     mutationFn: async () => {
-      for (const p of STARTERS) await practicesApi.createUserPractice(p).catch(() => {})
+      for (const { key, data_type } of STARTERS) await practicesApi.createUserPractice({ practice: t(`home.starters.${key}`), data_type }).catch(() => {})
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['practices'] }),
   })

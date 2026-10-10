@@ -28,15 +28,18 @@ export function averageDailyTotal(rows: ReportDataEntry[], traces: TraceInput[],
   return any ? Math.floor(sum / days.size) : null
 }
 
+/** The headline is for the traces on the first Left axis (Y); one axis holds one type, so a mixed report still gets one. */
 export function headline(
-  traces: TraceInput[], rows: ReportDataEntry[], prevRows: ReportDataEntry[] | undefined, todayCob: string,
+  all: Trace[], rows: ReportDataEntry[], prevRows: ReportDataEntry[] | undefined, todayCob: string,
 ): Headline | null {
+  const axes = assignAxes(all)
+  const traces = all.filter((_, i) => axes[i] === 'Y')
   if (traces.length === 1 && traces[0].dataType === 'Time') {
     const value = averageForType(forTrace(rows, traces[0].name), 'Time', todayCob)
     return value === null ? null : { kind: 'time', value, delta: null }
   }
-  const all = (dt: TraceInput['dataType']) => traces.length > 0 && traces.every((t) => t.dataType === dt)
-  const kind = all('Duration') ? 'duration' : all('Int') ? 'count' : null
+  const every = (dt: TraceInput['dataType']) => traces.length > 0 && traces.every((t) => t.dataType === dt)
+  const kind = every('Duration') ? 'duration' : every('Int') ? 'count' : null
   if (!kind) return null
   const value = averageDailyTotal(rows, traces, todayCob)
   if (value === null) return null

@@ -1,32 +1,32 @@
+import { formatTime } from '../today/values'
 import type { ReportDataEntry } from '../../api/charts'
 
-/** Type-agnostic value extractor used only by toCSV (no data_type context). */
-function csvValueToNumber(raw: unknown): number | null {
-  if (raw === null || raw === undefined) return null
-  if (typeof raw === 'number') return raw
-  if (typeof raw === 'boolean') return raw ? 1 : 0
-  if (typeof raw === 'object') {
-    const obj = raw as Record<string, unknown>
-    if ('Int' in obj) return obj.Int as number
-    if ('Bool' in obj) return (obj.Bool as boolean) ? 1 : 0
-    if ('Duration' in obj) return obj.Duration as number
-    if ('Time' in obj) {
-      const t = obj.Time as { h: number; m: number }
-      return t.h * 60 + t.m
-    }
-  }
-  return null
+/** A cell in the app's value format, the one the CSV import reads back. */
+function cell(raw: unknown): string {
+  if (raw === null || typeof raw !== 'object') return ''
+  const v = raw as Partial<Record<string, unknown>>
+  if ('Int' in v) return String(v.Int)
+  if ('Bool' in v) return v.Bool ? '✓' : ''
+  if ('Time' in v) return formatTime(v.Time as { h: number; m: number })
+  // h:mm, not "2h": the import reads a lone "2h" as 2 minutes.
+  if ('Duration' in v) { const m = v.Duration as number; return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}` }
+  if ('Text' in v) return String(v.Text)
+  return ''
 }
 
-/** Build a `date,practice,value` CSV from report entries. */
-export function toCSV(entries: ReportDataEntry[], practiceMap: Record<string, string>): string {
-  const header = ['date', 'practice', 'value'].join(',')
-  const rows = entries.map((e) => {
-    const name = (practiceMap[e.practice] ?? e.practice).replace(/,/g, ' ')
-    const val = csvValueToNumber(e.value)
-    return [e.cob_date, name, val === null ? '' : String(val)].join(',')
-  })
-  return [header, ...rows].join('\n')
+const quote = (s: string) => (/[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s)
+
+/** One row per date, one column per practice (as main writes it, and as Settings → Import reads it). */
+export function toCSV(entries: ReportDataEntry[]): string {
+  const practices = [...new Set(entries.map((e) => e.practice))]
+  const days = new Map<string, Map<string, string>>()
+  for (const e of entries) {
+    if (!days.has(e.cob_date)) days.set(e.cob_date, new Map())
+    days.get(e.cob_date)!.set(e.practice, cell(e.value))
+  }
+  return [['date', ...practices], ...[...days].map(([date, row]) => [date, ...practices.map((p) => row.get(p) ?? '')])]
+    .map((r) => r.map(quote).join(','))
+    .join('\n')
 }
 
 /** Trigger a browser download of the given CSV string as `data.csv`. */

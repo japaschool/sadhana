@@ -71,6 +71,13 @@
     "editPractices": "Edit practices",
     "noPractices": "No practices yet",
     "addStarters": "Add starter practices",
+    "starters": {
+      "wakeUp": "Wake up time",
+      "sleep": "Go to sleep time",
+      "reading": "Reading",
+      "meditation": "Meditation",
+      "yoga": "Yoga"
+    },
     "addCustom": "or create a custom one",
     "offline": "You're offline — changes will sync when reconnected",
     "saveFailed": "Could not save — please try again"

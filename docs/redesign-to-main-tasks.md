@@ -41,24 +41,25 @@ Spec: `docs/superpowers/specs/2026-10-09-offline-mode-design.md`. The Rust-UI ta
 - [x] `index.html` PWA tags: done: manifest (`public/site.webmanifest`), apple-touch-icon, iOS splash screens, status-bar style, `mobile-web-app-capable`, theme-color (new palette), `robots noindex` + `robots.txt`, Yandex verification. Icons and splashes come from main. Splashes live in `public/images/install/`, which the server leaves out of the precache manifest (they are ~14 MB and iOS fetches them once, at install).
 - [x] `viewport-fit=cover`: done.
 - [ ] Device check: install on iOS and Android; the status bar overlaps nothing and the icon/splash show.
+- [ ] New install images in the new design: the splash screens (`public/images/install/apple-splash-*.jpg`, all 30 sizes) and the install screenshot (`banner-narrow-01.png`, which shows the old UI) are main's brown lotus. Possibly a new icon too (`apple-icon-180.png`, `favicon-196.png`, `manifest-icon-*.maskable.png`, `logo.png`); then update `background_color` in `site.webmanifest` (now main's `#7c6d63`).
 
 ## P1: features and polish
 
 **Charts**
-- [ ] **CSV export** writes `date,practice,value` with numbers only (`features/insights/csv.ts:23`). Main writes one column per practice in the app's value format, which re-imports cleanly.
+- [x] **CSV export**: done: one column per practice in the app's value format, as main writes it; a test checks it round-trips through Import. Durations are `h:mm` (main's `2h` re-imports as 2 minutes).
 - [ ] Check on real data that chart rendering matches main: time/duration axes, stacked/overlaid bars, `show_average`, grid reports.
 
 **Today**
 - [ ] Main marks missing required entries on past days; check that React's incomplete-day markers cover the same.
-- [ ] Starter practices have hard-coded English names (`STARTERS` in `features/today/useToday.ts:12`). The server already adds language-specific defaults at signup. Drop it or translate the names.
+- [x] Starter practices: done: names translated (`home.starters.*`).
 
 **Auth**
 - [ ] Google sign-in needs `VITE_GOOGLE_CLIENT_ID` as a Docker build arg (plus a GitHub secret) and a Google OAuth client for app.sadhana.pro. The button hides itself when the ID isn't set. The server needs the same ID as `GOOGLE_CLIENT_ID` (prod env); without it, it refuses Google sign-in.
-- [ ] OAuth signup always adds English default practices (`WHERE lang = 'en'`, `server/src/app/user/model.rs:123`). Pass the UI language.
+- [x] OAuth signup: done: the client sends its UI language (`lang`, default `en` for older clients) and signup adds that language's default practices.
 
 **Settings / Help**
-- [ ] `/help` and `/help/support-form` require login in React; on main `/help` is public. Decide.
-- [ ] Translate "Something went wrong" and "Go home" in the router error page (`router.tsx:57-63`).
+- [x] `/help` is public: done: signed out it's a plain page with a link back to Sign in, and Sign in links to it. `GET /api/version` (the build line) no longer needs auth. The support form still needs login (it redirects there and back).
+- [x] Router error page: done: translated, with English fallbacks for errors before the translations load.
 
 **Out of scope for now, confirm before merge**
 - [ ] Practice groups: one hardcoded "Practices" group. If main users rely on groups, this is a regression.

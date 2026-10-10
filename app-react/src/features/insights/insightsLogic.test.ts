@@ -47,8 +47,14 @@ describe('headline', () => {
     const rows = [e('2026-10-04', 'W', { Time: { h: 5, m: 0 } }), e('2026-10-05', 'W', { Time: { h: 5, m: 30 } })]
     expect(headline([tr('W', 'Time')], rows, rows, TODAY)).toEqual({ kind: 'time', value: 315, delta: null })
   })
+  it('mixed types → only the traces on the first Left axis', () => {
+    const rows = [...cur, e('2026-10-04', 'N', { Int: 900 }), e('2026-10-05', 'B', dur(10))]
+    expect(headline([tr('A', 'Duration'), tr('N', 'Int'), tr('B', 'Duration')], rows, prev, TODAY))
+      .toEqual({ kind: 'duration', value: 55, delta: 38 }) // (40+60+10)/2 vs 40
+    expect(headline([tr('A', 'Duration', { yAxis: 'Y2' }), tr('N', 'Int')], rows, prev, TODAY))
+      .toEqual({ kind: 'count', value: 450, delta: null })
+  })
   it('anything else → no headline', () => {
-    expect(headline([tr('A', 'Duration'), tr('N', 'Int')], cur, prev, TODAY)).toBeNull()
     expect(headline([tr('B', 'Bool')], cur, prev, TODAY)).toBeNull()
     expect(headline([tr('W', 'Time'), tr('X', 'Time')], cur, prev, TODAY)).toBeNull()
     expect(headline([], cur, prev, TODAY)).toBeNull()

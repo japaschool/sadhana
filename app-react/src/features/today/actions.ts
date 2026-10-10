@@ -1,16 +1,10 @@
 import { chartsApi } from '../../api/charts'
-import { practicesApi } from '../../api/practices'
 import { toCSV, triggerCSVDownload } from '../insights/csv'
 import { useAuthStore } from '../../store/authStore'
 import { toDateStr } from './date'
 
 export async function downloadCsv() {
-  const [entries, practices] = await Promise.all([
-    chartsApi.getReportData(toDateStr(new Date()), 'AllData'),
-    practicesApi.getUserPractices(),
-  ])
-  const practiceMap = Object.fromEntries(practices.map((p) => [p.id, p.practice]))
-  triggerCSVDownload(toCSV(entries, practiceMap))
+  triggerCSVDownload(toCSV(await chartsApi.getReportData(toDateStr(new Date()), 'AllData')))
 }
 
 /** Copies the public charts link. Returns false when nobody is signed in. */

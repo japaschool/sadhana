@@ -64,9 +64,11 @@ export const authApi = {
     })
   },
 
-  async googleSignin(accessToken: string): Promise<UserInfo> {
+  /** lang picks the default practices of a new account. */
+  async googleSignin(accessToken: string, lang: string): Promise<UserInfo> {
     const res = await apiClient.post<{ user: UserInfo }>('/oauth/google', {
       access_token: accessToken,
+      lang,
     })
     return res.data.user
   },

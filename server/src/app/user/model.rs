@@ -102,6 +102,7 @@ impl User {
         conn: &mut PgConnection,
         email: &str,
         name: &str,
+        lang: &str,
     ) -> Result<(User, Token), AppError> {
         if let Ok(user) = users::table
             .filter(users::email.eq(email))
@@ -120,9 +121,10 @@ impl User {
         sql_query(
             r#"INSERT INTO user_practices (user_id, practice, data_type, is_active, order_key)
                SELECT $1, practice, data_type, true, order_key
-               FROM default_user_practices WHERE lang = 'en'"#,
+               FROM default_user_practices WHERE lang = $2"#,
         )
         .bind::<DieselUuid, _>(&user.id)
+        .bind::<Text, _>(lang)
         .execute(conn)?;
 
         let token = user.generate_token()?;

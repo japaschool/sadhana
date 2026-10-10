@@ -4,6 +4,7 @@ import { createBrowserRouter, isRouteErrorResponse, Navigate, useParams, useRout
 import { ProtectedRoute } from './layouts/ProtectedRoute'
 import { GuestRoute } from './layouts/GuestRoute'
 import { ByLayout, UiLoading } from './layouts/ByLayout'
+import { useTranslation } from 'react-i18next'
 
 const TodayMobileScreen = lazy(() => import('./features/today/mobile/TodayMobile').then((m) => ({ default: m.TodayMobileScreen })))
 const InsightsMobileScreen = lazy(() => import('./features/insights/mobile/InsightsMobile').then((m) => ({ default: m.InsightsMobileScreen })))
@@ -50,17 +51,20 @@ const YatrasDesktopScreen = lazy(() => import('./features/yatras/desktop/YatrasD
 
 function RootError() {
   const error = useRouteError()
+  const { t } = useTranslation()
+  // Fallbacks: the error may come before the translations have loaded.
+  const failed = t('common.error', 'Something went wrong')
   const message = isRouteErrorResponse(error)
     ? error.statusText
     : error instanceof Error
     ? error.message
-    : 'Something went wrong'
+    : failed
   return (
     <div className="ui-root flex min-h-dvh items-center justify-center bg-ui-bg p-8 text-center text-ui-ink">
       <div>
-        <p className="mb-2 text-lg font-semibold text-ui-danger">Something went wrong</p>
+        <p className="mb-2 text-lg font-semibold text-ui-danger">{failed}</p>
         <p className="text-sm text-ui-ink2">{message}</p>
-        <button className="mt-4 rounded-xl bg-ui-control px-4 py-2 text-sm font-semibold" onClick={() => window.location.href = '/'}>Go home</button>
+        <button className="mt-4 rounded-xl bg-ui-control px-4 py-2 text-sm font-semibold" onClick={() => window.location.href = '/'}>{t('notFound.goHome', 'Go home')}</button>
       </div>
     </div>
   )
@@ -124,12 +128,13 @@ export const router = createBrowserRouter([
       { path: '/settings/edit-user', element: ui(<UserDetails />) },
       { path: '/settings/edit-password', element: ui(<ChangePassword />) },
       { path: '/settings/import', element: ui(<ImportCsv />) },
-      { path: '/help', element: ui(<Help />) },
       { path: '/help/support-form', element: ui(<SendMessage />) },
       { path: '/yatra/:id/join', element: ui(<YatraJoin />) },
     ],
   },
   // Public routes
+  // Public: Sign in links here. Signed out, it's a plain page (features/settings/Help.tsx).
+  { path: '/help', element: ui(<Help />) },
   { path: '/shared/:id', element: <ByLayout mobile={<SharedMobile />} tablet={<SharedTablet />} desktop={<SharedDesktop />} /> },
   { path: '*', element: ui(<NotFound />) },
 ])

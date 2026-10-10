@@ -51,7 +51,7 @@ export function useCsv(userId: string, s: Shared) {
   return () => {
     const names = new Set(s.traces.map((tr) => tr.name))
     chartsApi.getSharedReportData(userId, toDateStr(new Date()), 'AllData')
-      .then((rows) => triggerCSVDownload(toCSV(rows.filter((r) => names.has(r.practice)), {})))
+      .then((rows) => triggerCSVDownload(toCSV(rows.filter((r) => names.has(r.practice)))))
       .catch(() => showToast({ message: t('common.error'), variant: 'error' }))
   }
 }
