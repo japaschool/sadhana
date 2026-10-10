@@ -137,4 +137,29 @@ describe('PracticeRow', () => {
     expect(screen.getByText('+ Add')).toBeInTheDocument()
     expect(screen.queryByText(/on your mind/)).not.toBeInTheDocument()
   })
+
+  it('tapping the row name acts on the row: edit, menu, toggle; ＋ keeps its sheet', () => {
+    const onSave = setup({ practice: 'Attunement', data_type: 'Bool' }, { Bool: false })
+    fireEvent.click(screen.getByText('Attunement'))
+    expect(onSave).toHaveBeenCalledWith({ Bool: true })
+
+    setup({ practice: 'Rounds', data_type: 'Int' })
+    fireEvent.click(screen.getByText('Rounds'))
+    const input = screen.getByRole('textbox', { name: 'Rounds' })
+    // A tap on the name while editing only commits; it does not reopen the input.
+    fireEvent.pointerDown(screen.getByText('Rounds'))
+    fireEvent.blur(input)
+    fireEvent.click(screen.getByText('Rounds'))
+    expect(screen.queryByRole('textbox', { name: 'Rounds' })).not.toBeInTheDocument()
+
+    setup({ practice: 'Quality', data_type: 'Int', dropdown_variants: '1,2' })
+    fireEvent.click(screen.getByText('Quality'))
+    expect(screen.getByRole('menu')).toBeInTheDocument()
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' })
+
+    setup({ practice: 'Audiobooks', data_type: 'Duration' }, { Duration: 30 })
+    fireEvent.click(screen.getByRole('button', { name: 'Add time to Audiobooks' }))
+    expect(screen.queryByRole('textbox', { name: 'Audiobooks' })).not.toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Add' })).toBeInTheDocument()
+  })
 })

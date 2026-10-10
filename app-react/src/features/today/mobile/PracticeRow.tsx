@@ -42,9 +42,19 @@ function choiceOptions(p: UserPractice): string[] {
   return []
 }
 
+/** A tap anywhere on the row acts as a tap on its first control (value, + Add, toggle).
+ *  Touch convenience only: the controls stay the focusable, labelled targets. */
 function RowShell({ label, children }: { label: string; children: ReactNode }) {
+  const wasEditing = useRef(false)
   return (
-    <div className="flex min-h-[50px] items-center justify-between gap-3 bg-ui-surface pr-2 pl-4">
+    <div
+      // The input blurs (and closes) before the click lands; that tap only commits.
+      onPointerDown={(e) => { wasEditing.current = !!e.currentTarget.querySelector('input') }}
+      onClick={(e) => {
+        if (wasEditing.current || (e.target as Element).closest('button, input')) return
+        e.currentTarget.querySelector('button')?.click()
+      }}
+      className="flex min-h-[50px] cursor-pointer items-center justify-between gap-3 bg-ui-surface pr-2 pl-4">
       <span className="min-w-0 text-[15px] font-medium">{label}</span>
       <div className="flex shrink-0 items-center gap-2">{children}</div>
     </div>

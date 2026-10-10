@@ -21,6 +21,7 @@ export function TextRow({ label, value, required, failed, onSave }: TextRowProps
   const area = useRef<HTMLTextAreaElement>(null)
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const pending = useRef<string | null>(null)
+  const wasEditing = useRef(false) // the textarea blurs (and closes) before the header's click lands
   const onSaveRef = useRef(onSave)
   useEffect(() => { onSaveRef.current = onSave })
 
@@ -72,7 +73,10 @@ export function TextRow({ label, value, required, failed, onSave }: TextRowProps
 
   return (
     <div className={`flex flex-col bg-ui-surface px-4 ${editing || value ? 'pb-3.5' : ''}`}>
-      <div className="flex min-h-[50px] items-center justify-between gap-3">
+      {/* Tapping the header line acts as Edit / + Add (touch convenience; the button stays the target). */}
+      <div onPointerDown={() => { wasEditing.current = editing }}
+        onClick={(e) => { if (!wasEditing.current && !(e.target as Element).closest('button')) start() }}
+        className={`flex min-h-[50px] items-center justify-between gap-3 ${editing ? '' : 'cursor-pointer'}`}>
         <span className="text-[15px] font-medium">{label}</span>
         {editing ? (
           <button type="button" onPointerDown={(e) => e.preventDefault()} onClick={finish} className="text-sm font-bold text-ui-accent">

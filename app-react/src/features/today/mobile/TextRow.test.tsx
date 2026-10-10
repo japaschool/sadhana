@@ -25,6 +25,16 @@ describe('TextRow', () => {
     expect(screen.getByText('Saved as you type')).toBeInTheDocument()
   })
 
+  it('tapping the label opens the editor; tapping it while editing only closes it', () => {
+    setup('Thankful')
+    fireEvent.click(screen.getByText('Gratitude'))
+    const area = screen.getByRole('textbox', { name: 'Gratitude' })
+    fireEvent.pointerDown(screen.getByText('Gratitude'))
+    fireEvent.blur(area)
+    fireEvent.click(screen.getByText('Gratitude'))
+    expect(screen.queryByRole('textbox', { name: 'Gratitude' })).not.toBeInTheDocument()
+  })
+
   it('shows Required instead of Edit when required and empty', () => {
     setup('', true)
     expect(screen.getByText('Required')).toBeInTheDocument()
