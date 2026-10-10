@@ -49,7 +49,7 @@ export function InsightsChart({ rows, traces, barLayout, averages, height = 170 
           const dt = on(a)[0].dataType
           const single = on(a).length === 1 ? on(a)[0].color : undefined
           return (
-            <YAxis key={a} yAxisId={a} orientation={isLeft(a) ? 'left' : 'right'} hide={a !== left && a !== right} width={dt === 'Time' ? 44 : 40}
+            <YAxis key={a} yAxisId={a} orientation={isLeft(a) ? 'left' : 'right'} hide={a !== left && a !== right} width={a !== left && a !== right ? 0 : dt === 'Time' ? 44 : 40}
               domain={isUnit(a) ? [0, 1.1] : dt === 'Time' ? ['auto', 'auto'] : [0, 'auto']} tickFormatter={tickFormat(a)}
               {...AXIS} tick={{ ...TICK, fill: single ?? TICK.fill }} />
           )

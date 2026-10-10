@@ -350,6 +350,7 @@ export function AxesCard({ ed }: { ed: Editor }) {
         <h2 className={SECTION_TITLE}>{t('chartSettings.axes')}</h2>
         <p className={HINT}>{t('chartSettings.axesHint')}</p>
       </div>
+      <p className={`${HINT} rounded-xl bg-ui-chip px-3 py-2.5`}>{t('chartSettings.headlineHint')}</p>
       {used.map((a) => {
         const on = drawn.filter((s) => s.axis === a)
         const dt = on[0].practice!.data_type

@@ -33,45 +33,53 @@ describe('averageDailyTotal', () => {
 })
 
 describe('headline', () => {
+  const hl = (t: Trace[], rows: ReportDataEntry[], prev: ReportDataEntry[] | undefined, today: string) => headline(t, 'Grouped', rows, prev, today)
   const cur = [e('2026-10-04', 'A', dur(40)), e('2026-10-05', 'A', dur(60))]
   const prev = [e('2026-09-03', 'A', dur(40)), e('2026-09-04', 'A', dur(40))]
 
   it('all Duration → average daily total with delta', () => {
-    expect(headline([tr('A', 'Duration')], cur, prev, TODAY)).toEqual({ kind: 'duration', value: 50, delta: 25 })
+    expect(hl([tr('A', 'Duration')], cur, prev, TODAY)).toEqual({ kind: 'duration', value: 50, delta: 25 })
   })
   it('all Int → count', () => {
     const rows = [e('2026-10-04', 'N', { Int: 3 }), e('2026-10-05', 'N', { Int: 4 })]
-    expect(headline([tr('N', 'Int')], rows, undefined, TODAY)).toEqual({ kind: 'count', value: 3, delta: null })
+    expect(hl([tr('N', 'Int')], rows, undefined, TODAY)).toEqual({ kind: 'count', value: 3, delta: null })
   })
   it('exactly one Time → its average time, never a delta', () => {
     const rows = [e('2026-10-04', 'W', { Time: { h: 5, m: 0 } }), e('2026-10-05', 'W', { Time: { h: 5, m: 30 } })]
-    expect(headline([tr('W', 'Time')], rows, rows, TODAY)).toEqual({ kind: 'time', value: 315, delta: null })
+    expect(hl([tr('W', 'Time')], rows, rows, TODAY)).toEqual({ kind: 'time', value: 315, delta: null })
   })
-  it('mixed types → only the traces on the first Left axis', () => {
+  it('is the first series on the Left axis; others there may overlap it, so they are not added', () => {
     const rows = [...cur, e('2026-10-04', 'N', { Int: 900 }), e('2026-10-05', 'B', dur(10))]
-    expect(headline([tr('A', 'Duration'), tr('N', 'Int'), tr('B', 'Duration')], rows, prev, TODAY))
-      .toEqual({ kind: 'duration', value: 55, delta: 38 }) // (40+60+10)/2 vs 40
-    expect(headline([tr('A', 'Duration', { yAxis: 'Y2' }), tr('N', 'Int')], rows, prev, TODAY))
-      .toEqual({ kind: 'count', value: 450, delta: null })
+    const bar = { type_: 'Bar' as const }
+    expect(hl([tr('N', 'Int', { yAxis: 'Y2' }), tr('A', 'Duration', bar), tr('B', 'Duration', bar)], rows, prev, TODAY))
+      .toEqual({ kind: 'duration', value: 50, delta: 25 })
+    expect(hl([tr('A', 'Duration', { yAxis: 'Y2' }), tr('N', 'Int')], rows, prev, TODAY))
+      .toEqual({ kind: 'count', value: 900, delta: null })
+  })
+  it('stacked: the total of the bars on the Left axis', () => {
+    const rows = [...cur, e('2026-10-05', 'B', dur(10)), e('2026-10-05', 'L', dur(500))]
+    const bar = { type_: 'Bar' as const }
+    const traces = [tr('L', 'Duration'), tr('A', 'Duration', bar), tr('B', 'Duration', bar), tr('C', 'Duration', { ...bar, yAxis: 'Y2' })]
+    expect(headline(traces, 'Stacked', rows, prev, TODAY)).toEqual({ kind: 'duration', value: 55, delta: 38 }) // (40+60+10)/2 vs 40
   })
   it('anything else → no headline', () => {
-    expect(headline([tr('B', 'Bool')], cur, prev, TODAY)).toBeNull()
-    expect(headline([tr('W', 'Time'), tr('X', 'Time')], cur, prev, TODAY)).toBeNull()
-    expect(headline([], cur, prev, TODAY)).toBeNull()
+    expect(hl([tr('B', 'Bool')], cur, prev, TODAY)).toBeNull()
+    expect(hl([tr('X', 'Int', { yAxis: 'Y2' })], cur, prev, TODAY)).toBeNull()
+    expect(hl([], cur, prev, TODAY)).toBeNull()
   })
   it('no headline when nothing was logged', () => {
-    expect(headline([tr('A', 'Duration')], [e('2026-10-05', 'A', null)], prev, TODAY)).toBeNull()
+    expect(hl([tr('A', 'Duration')], [e('2026-10-05', 'A', null)], prev, TODAY)).toBeNull()
   })
   it('hides the delta without previous data or when previous is 0', () => {
-    expect(headline([tr('A', 'Duration')], cur, undefined, TODAY)!.delta).toBeNull()
-    expect(headline([tr('A', 'Duration')], cur, [e('2026-09-04', 'A', null)], TODAY)!.delta).toBeNull()
-    expect(headline([tr('A', 'Duration')], cur, [e('2026-09-04', 'A', dur(0))], TODAY)!.delta).toBeNull()
+    expect(hl([tr('A', 'Duration')], cur, undefined, TODAY)!.delta).toBeNull()
+    expect(hl([tr('A', 'Duration')], cur, [e('2026-09-04', 'A', null)], TODAY)!.delta).toBeNull()
+    expect(hl([tr('A', 'Duration')], cur, [e('2026-09-04', 'A', dur(0))], TODAY)!.delta).toBeNull()
   })
   it('rounds the delta to a whole percent', () => {
     const p45 = [e('2026-09-04', 'A', dur(45))]
-    expect(headline([tr('A', 'Duration')], cur, p45, TODAY)!.delta).toBe(11) // 50 vs 45 = 11.1%
+    expect(hl([tr('A', 'Duration')], cur, p45, TODAY)!.delta).toBe(11) // 50 vs 45 = 11.1%
     const c40 = [e('2026-10-05', 'A', dur(40))]
-    expect(headline([tr('A', 'Duration')], c40, p45, TODAY)!.delta).toBe(-11)
+    expect(hl([tr('A', 'Duration')], c40, p45, TODAY)!.delta).toBe(-11)
   })
 })
 
@@ -132,7 +140,7 @@ describe('averageLines', () => {
     const mixed = [...rows, e('2026-10-05', 'Y', { Bool: true })]
     const traces = [
       tr('A', 'Duration', { type_: 'Bar', showAverage: true }),
-      tr('Y', 'Bool', { type_: 'Bar' }),
+      tr('Y', 'Bool', { type_: 'Bar', yAxis: 'Y2' }),
       tr('B', 'Duration', { type_: 'Bar' }),
     ]
     expect(averageLines(traces, mixed, 'Stacked', TODAY)).toEqual([{ axis: 'Y', value: 50, color: 'var(--ui-accent)' }])

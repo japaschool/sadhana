@@ -88,7 +88,7 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     entries,
     rows: buildChartData(entries, traces, locale),
     barLayout,
-    headline: headline(traces, entries, previous.data, todayCob),
+    headline: headline(traces, barLayout, entries, previous.data, todayCob),
     averages: averageLines(traces, entries, barLayout, todayCob),
     hasData: entries.some((e) => names.has(e.practice) && e.value !== null && e.value !== undefined),
     isLoading: reportsQ.isLoading || practicesQ.isLoading || current.isLoading,

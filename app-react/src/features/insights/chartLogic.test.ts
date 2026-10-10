@@ -154,10 +154,10 @@ const P: UserPractice[] = [
 const COLORS = ['c1', 'c2']
 
 describe('tracesFor', () => {
-  it('All practices: every active practice as a regular line, no averages', () => {
+  it('All practices: every active practice as a regular line, no averages, each type on its own axis', () => {
     expect(tracesFor(null, P, COLORS)).toEqual([
-      { name: 'Japa', dataType: 'Duration', type_: { Line: { style: 'Regular' } }, color: 'c1', showAverage: false, yAxis: null },
-      { name: 'Wake up', dataType: 'Time', type_: { Line: { style: 'Regular' } }, color: 'c2', showAverage: false, yAxis: null },
+      { name: 'Japa', dataType: 'Duration', type_: { Line: { style: 'Regular' } }, color: 'c1', showAverage: false, yAxis: 'Y' },
+      { name: 'Wake up', dataType: 'Time', type_: { Line: { style: 'Regular' } }, color: 'c2', showAverage: false, yAxis: 'Y2' },
     ])
   })
 

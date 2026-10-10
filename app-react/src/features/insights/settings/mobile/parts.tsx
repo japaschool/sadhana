@@ -8,11 +8,11 @@ export const styleOf = (type_: TraceType): Style => (typeof type_ === 'object' ?
 export const typeOf = (style: Style, was: TraceType): TraceType =>
   style === 'Line' ? (typeof was === 'object' ? was : { Line: { style: 'Regular' } }) : style
 
-/** A new series: times as a line, yes/no and text as dots, amounts as bars; on its type's axis. */
-export function newTrace(p: UserPractice): PracticeTrace {
+/** A new series: times as a line, yes/no and text as dots, amounts as bars; on the axis it lands on. */
+export function newTrace(p: UserPractice, y_axis: Axis): PracticeTrace {
   const dt = p.data_type
   const type_: TraceType = dt === 'Time' ? { Line: { style: 'Regular' } } : dt === 'Bool' || dt === 'Text' ? 'Dot' : 'Bar'
-  return { label: null, type_, practice: p.id, y_axis: null, show_average: dt === 'Int' || dt === 'Duration' || dt === 'Time' }
+  return { label: null, type_, practice: p.id, y_axis, show_average: dt === 'Int' || dt === 'Duration' || dt === 'Time' }
 }
 
 export const axisName = (t: TFunction, a: Axis) => {

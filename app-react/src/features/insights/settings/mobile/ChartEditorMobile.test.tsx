@@ -20,7 +20,7 @@ vi.stubGlobal('IntersectionObserver', class { observe() {} disconnect() {} })
 const GRAPH: Report = {
   id: 'r1', name: 'Morning sadhana', definition: { Graph: { bar_layout: 'Grouped', traces: [
     { label: null, type_: 'Bar', practice: 'read', y_axis: null, show_average: true },
-    { label: null, type_: { Line: { style: 'Regular' } }, practice: 'wake', y_axis: null, show_average: true },
+    { label: null, type_: { Line: { style: 'Regular' } }, practice: 'wake', y_axis: 'Y2', show_average: true },
   ] } },
 }
 const TABLE: Report = { id: 't1', name: 'Monthly table', definition: { Grid: { practices: ['wake'] } } }
@@ -64,7 +64,7 @@ describe('ChartEditorMobile', () => {
     fireEvent.click(within(sheet).getByRole('button', { name: 'Add Japa rounds' }))
     await waitFor(() => expect(charts.updateReport).toHaveBeenCalled())
     const [, , def] = charts.updateReport.mock.calls[0]
-    expect('Graph' in def && def.Graph.traces[2]).toMatchObject({ practice: 'japa', type_: 'Bar', y_axis: null })
+    expect('Graph' in def && def.Graph.traces[2]).toMatchObject({ practice: 'japa', type_: 'Bar', y_axis: 'Y3' })
     expect(await screen.findByRole('button', { name: 'Edit Japa rounds' })).toHaveTextContent('Left 2 axis')
     // Confirmed like yatra settings: a toast, whose Undo takes the series back out.
     fireEvent.click(await screen.findByRole('button', { name: 'Undo' }))

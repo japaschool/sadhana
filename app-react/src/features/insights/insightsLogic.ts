@@ -28,12 +28,15 @@ export function averageDailyTotal(rows: ReportDataEntry[], traces: TraceInput[],
   return any ? Math.floor(sum / days.size) : null
 }
 
-/** The headline is for the traces on the first Left axis (Y); one axis holds one type, so a mixed report still gets one. */
+/** The headline is for the Left axis (Y): the total of its bars when they're stacked, otherwise its first series.
+ *  Other layouts can overlap (total rounds and morning rounds), so they aren't summed. */
 export function headline(
-  all: Trace[], rows: ReportDataEntry[], prevRows: ReportDataEntry[] | undefined, todayCob: string,
+  all: Trace[], barLayout: BarLayout, rows: ReportDataEntry[], prevRows: ReportDataEntry[] | undefined, todayCob: string,
 ): Headline | null {
   const axes = assignAxes(all)
-  const traces = all.filter((_, i) => axes[i] === 'Y')
+  const left = all.filter((_, i) => axes[i] === 'Y')
+  const stack = barLayout === 'Stacked' ? left.filter((t) => t.type_ === 'Bar') : []
+  const traces = stack.length ? stack : left.slice(0, 1)
   if (traces.length === 1 && traces[0].dataType === 'Time') {
     const value = averageForType(forTrace(rows, traces[0].name), 'Time', todayCob)
     return value === null ? null : { kind: 'time', value, delta: null }

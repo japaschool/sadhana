@@ -11,31 +11,25 @@ export const isLeft = (a: Axis) => AXES.indexOf(a) % 2 === 0
 export const axisRank = (a: Axis) => Math.floor(AXES.indexOf(a) / 2) + 1
 const asAxis = (s: string | null): Axis | null => (AXES as readonly string[]).includes(s ?? '') ? (s as Axis) : null
 
-/** Each series' axis. A manual one (yAxis set) keeps its own; an automatic one (null) shares the first axis
- *  holding its type, or takes the first free one. Series on one axis share its scale, so it holds one type. */
+/** Each series' axis. An unset one is Left (Y), as the Yew chart drew it. */
 export function assignAxes(series: AxisSeries[]): Axis[] {
-  const typeOf = new Map<Axis, PracticeDataType>()
-  for (const s of series) {
-    const a = asAxis(s.yAxis)
-    if (a && !typeOf.has(a)) typeOf.set(a, s.dataType)
-  }
-  return series.map((s) => {
-    const manual = asAxis(s.yAxis)
-    if (manual) return manual
-    const shared = AXES.find((a) => typeOf.get(a) === s.dataType)
-    if (shared) return shared
-    // ponytail: with all 8 axes taken by other types (only possible through manual picks), it lands on Left.
-    const free = AXES.find((a) => !typeOf.has(a)) ?? 'Y'
-    typeOf.set(free, s.dataType)
-    return free
-  })
+  return series.map((s) => asAxis(s.yAxis) ?? 'Y')
 }
 
-/** Where a new automatic series of this type would land, and the series already there. */
+/** Where a new series of this type goes: the first axis already holding its type, else the first free one. */
 export function landing(series: AxisSeries[], dataType: PracticeDataType): { axis: Axis; shared: boolean } {
-  const axes = assignAxes([...series, { dataType, yAxis: null }])
-  const axis = axes[axes.length - 1]
-  return { axis, shared: axes.slice(0, -1).includes(axis) }
+  const axes = assignAxes(series)
+  const held = AXES.find((a) => series[axes.indexOf(a)]?.dataType === dataType)
+  if (held) return { axis: held, shared: true }
+  // ponytail: with all 8 axes taken by other types it lands on Left.
+  return { axis: AXES.find((a) => !axes.includes(a)) ?? 'Y', shared: false }
+}
+
+/** Every series given its axis outright, each landing as if added in order (for All practices, which has no report). */
+export function withLandedAxes<T extends AxisSeries>(series: T[]): T[] {
+  const out: T[] = []
+  for (const s of series) out.push({ ...s, yAxis: landing(out, s.dataType).axis })
+  return out
 }
 
 /** For the manual picker: who holds each axis apart from series `index`. */

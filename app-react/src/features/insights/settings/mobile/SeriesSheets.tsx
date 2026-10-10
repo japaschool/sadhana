@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { UserPractice } from '../../../../types/api'
 import { BottomSheet } from '../../../../ui/primitives/BottomSheet'
-import { SegmentedControl } from '../../../../ui/primitives/SegmentedControl'
 import { Toggle } from '../../../../ui/primitives/Toggle'
 import { BTN, HINT } from '../../../yatras/settings/mobile/AdminPage'
 import { AutosaveText, ChoiceChips, SheetHeader } from '../../../yatras/settings/mobile/fields'
@@ -50,7 +49,6 @@ export function SeriesFields({ ed, index, onChoose, onClose }: { ed: Editor; ind
   const drawn = ed.series.filter((x) => x.axis)
   const use = axisUse(drawn.map((x): AxisSeries => ({ dataType: x.practice!.data_type, yAxis: x.trace.y_axis })), drawn.indexOf(s))
   const namesOn = (a: string) => drawn.filter((x) => x !== s && x.axis === a).map((x) => x.trace.label || x.practice!.practice).join(', ')
-  const manual = trace.y_axis !== null
   const styles: Style[] = ['Bar', 'Line', 'Dot']
   const styleKey = { Bar: 'bar', Line: 'line', Dot: 'dots' } as const
 
@@ -79,44 +77,35 @@ export function SeriesFields({ ed, index, onChoose, onClose }: { ed: Editor; ind
       </div>
 
       <div className={`${RULE} flex flex-col gap-3`}>
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[15px] font-bold text-ui-ink">{t('chartSettings.axis')}</span>
-            <span className={HINT}>{manual ? t('chartSettings.axisPick') : t('chartSettings.axisAuto', { axis: axisName(t, axis), lower: axisName(t, axis).toLocaleLowerCase(lang) })}</span>
-          </div>
-          {/* Manual starts on the axis it's on now, so nothing moves until another one is picked. */}
-          <SegmentedControl label={t('chartSettings.axis')} value={manual ? 'manual' : 'auto'} onChange={(v) => set({ y_axis: v === 'manual' ? axis : null })}
-            options={[{ value: 'auto', label: t('chartSettings.automatic') }, { value: 'manual', label: t('chartSettings.manual') }]} />
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[15px] font-bold text-ui-ink">{t('chartSettings.axis')}</span>
+          <span className={HINT}>{t('chartSettings.axisPick')}</span>
         </div>
-        {manual && (
-          <>
-            <div role="radiogroup" aria-label={t('chartSettings.axis')} className="grid grid-cols-2 gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-[.1em] text-ui-muted">{t('chartSettings.leftSide')}</span>
-              <span className="text-[11px] font-bold uppercase tracking-[.1em] text-ui-muted">{t('chartSettings.rightSide')}</span>
-              {AXES.map((a) => {
-                const held = use.get(a)
-                const blocked = !!held && held !== practice.data_type
-                const on = a === axis
-                const note = on ? t('chartSettings.thisSeries')
-                  : blocked ? t('chartSettings.shows', { kind: kindName(t, held).toLocaleLowerCase(lang) })
-                  : held ? t('chartSettings.with', { names: namesOn(a) }) : t('chartSettings.free')
-                return (
-                  <button key={a} type="button" role="radio" aria-checked={on} disabled={blocked} onClick={() => set({ y_axis: a })}
-                    className={`flex min-h-14 items-center gap-2.5 rounded-xl border px-3 text-left ${on ? 'border-ui-accent-fill bg-ui-accent-soft' : blocked ? 'border-dashed border-ui-control bg-ui-chip' : 'border-ui-control bg-ui-surface'}`}>
-                    <span aria-hidden className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${on ? 'border-ui-accent-fill' : blocked ? 'border-dashed border-ui-faint' : 'border-ui-faint2'}`}>
-                      {on && <span className="h-2.5 w-2.5 rounded-full bg-ui-accent-fill" />}
-                    </span>
-                    <span className="flex min-w-0 flex-col">
-                      <span className={`text-[15px] font-bold ${blocked ? 'text-ui-faint2' : 'text-ui-ink'}`}>{axisName(t, a)}</span>
-                      <span className={`truncate text-xs ${on ? 'font-semibold text-ui-accent' : 'text-ui-muted'}`}>{note}</span>
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-            <p className={`${HINT} rounded-xl bg-ui-chip px-3 py-2.5`}>{t('chartSettings.sameTypeNote')}</p>
-          </>
-        )}
+        <div role="radiogroup" aria-label={t('chartSettings.axis')} className="grid grid-cols-2 gap-2">
+          <span className="text-[11px] font-bold uppercase tracking-[.1em] text-ui-muted">{t('chartSettings.leftSide')}</span>
+          <span className="text-[11px] font-bold uppercase tracking-[.1em] text-ui-muted">{t('chartSettings.rightSide')}</span>
+          {AXES.map((a) => {
+            const held = use.get(a)
+            const blocked = !!held && held !== practice.data_type
+            const on = a === axis
+            const note = on ? t('chartSettings.thisSeries')
+              : blocked ? t('chartSettings.shows', { kind: kindName(t, held).toLocaleLowerCase(lang) })
+              : held ? t('chartSettings.with', { names: namesOn(a) }) : t('chartSettings.free')
+            return (
+              <button key={a} type="button" role="radio" aria-checked={on} disabled={blocked} onClick={() => set({ y_axis: a })}
+                className={`flex min-h-14 items-center gap-2.5 rounded-xl border px-3 text-left ${on ? 'border-ui-accent-fill bg-ui-accent-soft' : blocked ? 'border-dashed border-ui-control bg-ui-chip' : 'border-ui-control bg-ui-surface'}`}>
+                <span aria-hidden className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${on ? 'border-ui-accent-fill' : blocked ? 'border-dashed border-ui-faint' : 'border-ui-faint2'}`}>
+                  {on && <span className="h-2.5 w-2.5 rounded-full bg-ui-accent-fill" />}
+                </span>
+                <span className="flex min-w-0 flex-col">
+                  <span className={`text-[15px] font-bold ${blocked ? 'text-ui-faint2' : 'text-ui-ink'}`}>{axisName(t, a)}</span>
+                  <span className={`truncate text-xs ${on ? 'font-semibold text-ui-accent' : 'text-ui-muted'}`}>{note}</span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+        <p className={`${HINT} rounded-xl bg-ui-chip px-3 py-2.5`}>{t('chartSettings.sameTypeNote')}</p>
       </div>
 
       <div className={RULE}>
@@ -147,11 +136,12 @@ export function PracticePickerSheet({ ed, replace, maxHeight, onClose }: {
     : first ? `${ed.report?.name} · ${t('chartSettings.graph')}` : t('chartSettings.addOneHint')
 
   function pick(p: UserPractice) {
-    if (replace === undefined) ed.setTraces((ts) => [...ts, newTrace(p)])
+    const axis = landing(baseAxes, p.data_type).axis
+    if (replace === undefined) ed.setTraces((ts) => [...ts, newTrace(p, axis)])
     else ed.setTraces((ts) => ts.map((x, i) => (i !== replace ? x : {
       ...x, practice: p.id,
-      // A manual axis may now hold another type; let it find one again.
-      y_axis: ed.series[replace].practice?.data_type === p.data_type ? x.y_axis : null,
+      // Its axis may now hold another type; let it land again.
+      y_axis: ed.series[replace].practice?.data_type === p.data_type ? x.y_axis : axis,
     })))
     onClose()
   }
