@@ -92,17 +92,22 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300 }: Insigh
                   )}
                 </div>
               )}
-              {/* Remount per report: Recharts hangs updating in place when the series layout changes. */}
-              <InsightsChart key={ins.selectedId} rows={ins.rows} traces={ins.traces} barLayout={ins.barLayout} averages={ins.averages} height={chartHeight} />
+              {/* Remount per report and legend toggle: Recharts hangs updating in place when the series layout changes. */}
+              <InsightsChart key={`${ins.selectedId}|${[...ins.hidden]}`} rows={ins.rows} traces={ins.traces} barLayout={ins.barLayout}
+                averages={ins.averages} hidden={ins.hidden} height={chartHeight} />
               <ul aria-label={t('insights.legend')}
                 className="grid grid-cols-4 gap-px overflow-hidden rounded-2xl border border-ui-hairline bg-ui-hairline">
                 {ins.traces.map((tr, i) => (
-                  <li key={i} className="flex min-w-0 flex-col gap-1 bg-ui-surface px-3.5 py-3">
-                    <span className="flex min-w-0 items-center gap-2 text-[13px] font-semibold text-ui-ink2">
-                      <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: tr.color }} />
-                      <span className="truncate">{tr.name}</span>
-                    </span>
-                    <span className="font-ui-mono text-lg text-ui-ink">{traceAverageLabel(tr, ins.entries, ins.todayCob, units)}</span>
+                  <li key={i} className="flex min-w-0 bg-ui-surface">
+                    {/* Clicking a cell shows or hides its series on the chart. */}
+                    <button type="button" aria-pressed={!ins.hidden.has(i)} onClick={() => ins.toggle(i)}
+                      className={`flex min-w-0 flex-1 flex-col gap-1 px-3.5 py-3 text-left ${ins.hidden.has(i) ? 'opacity-40' : ''}`}>
+                      <span className="flex min-w-0 items-center gap-2 text-[13px] font-semibold text-ui-ink2">
+                        <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: tr.color }} />
+                        <span className="truncate">{tr.name}</span>
+                      </span>
+                      <span className="font-ui-mono text-lg text-ui-ink">{traceAverageLabel(tr, ins.entries, ins.todayCob, units)}</span>
+                    </button>
                   </li>
                 ))}
                 {Array.from({ length: pad }, (_, i) => <li key={`pad${i}`} aria-hidden className="bg-ui-surface" />)}

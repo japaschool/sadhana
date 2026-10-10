@@ -145,6 +145,12 @@ describe('averageLines', () => {
     ]
     expect(averageLines(traces, mixed, 'Stacked', TODAY)).toEqual([{ axis: 'Y', value: 50, color: 'var(--ui-accent)' }])
   })
+  it('legend-hidden traces get no line and leave the stacked total', () => {
+    const traces = [tr('A', 'Duration', { type_: 'Bar', showAverage: true }), tr('B', 'Duration', { type_: 'Bar' })]
+    expect(averageLines(traces, rows, 'Stacked', TODAY, new Set([0]))).toEqual([{ axis: 'Y', value: 20, color: 'var(--ui-accent)' }])
+    const lines = [tr('A', 'Duration', { showAverage: true }), tr('B', 'Duration', { showAverage: true })]
+    expect(averageLines(lines, rows, 'Grouped', TODAY, new Set([0]))).toEqual([{ axis: 'Y', value: 20, color: 'c-B' }])
+  })
   it('none when no trace asks for one', () => {
     expect(averageLines([tr('A', 'Duration', { type_: 'Bar' })], rows, 'Stacked', TODAY)).toEqual([])
   })

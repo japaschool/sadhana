@@ -73,6 +73,16 @@ describe('InsightsMobile', () => {
     expect(within(legend).getByText('Reading').parentElement).toHaveTextContent('—')
   })
 
+  it('a legend row toggles its series', async () => {
+    renderScreen()
+    const japa = await screen.findByRole('button', { name: /Japa/ })
+    expect(japa).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(japa)
+    expect(japa).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(japa)
+    expect(japa).toHaveAttribute('aria-pressed', 'true')
+  })
+
   it('switches reports through the menu; Grid reports are listed too', async () => {
     renderScreen()
     fireEvent.click(await reportLink())

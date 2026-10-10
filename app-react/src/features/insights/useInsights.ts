@@ -48,6 +48,8 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
   const [stored, setStored] = useState(sharedUser ? '' : readStored)
   const [range, setRange] = useState<Range>('30d')
   const [end, setEndState] = useState<Date | null>(null)
+  // Legend toggles, per report: switching reports starts with every series shown.
+  const [hiddenFor, setHiddenFor] = useState<{ id: string; set: Set<number> }>({ id: '', set: new Set() })
 
   const reports = (reportsQ.data ?? []).filter((r) => withTables || isGraph(r))
   // An unknown or deleted id (or a Grid one, without tables) simply isn't found, so the screen shows All practices.
@@ -73,11 +75,13 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
   const entries = current.data ?? []
   const names = new Set(traces.map((t) => t.name))
   const barLayout = report && isGraph(report) ? report.definition.Graph.bar_layout : 'Grouped'
+  const selectedId = report?.id ?? ALL
+  const hidden = hiddenFor.id === selectedId ? hiddenFor.set : new Set<number>()
 
   return {
     reports,
     report,
-    selectedId: report?.id ?? ALL,
+    selectedId,
     select: (id: string) => { setStored(id); if (!sharedUser) writeStored(id) },
     range,
     setRange,
@@ -89,7 +93,13 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     rows: buildChartData(entries, traces, locale),
     barLayout,
     headline: headline(traces, barLayout, entries, previous.data, todayCob),
-    averages: averageLines(traces, entries, barLayout, todayCob),
+    averages: averageLines(traces, entries, barLayout, todayCob, hidden),
+    hidden,
+    toggle: (i: number) => {
+      const set = new Set(hidden)
+      if (!set.delete(i)) set.add(i)
+      setHiddenFor({ id: selectedId, set })
+    },
     hasData: entries.some((e) => names.has(e.practice) && e.value !== null && e.value !== undefined),
     isLoading: reportsQ.isLoading || practicesQ.isLoading || current.isLoading,
     isError: failedWithoutData(current),
