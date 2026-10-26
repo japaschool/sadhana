@@ -219,6 +219,7 @@ impl IncompleteCob {
         user_id: &Uuid,
         from: &NaiveDate,
         to: &NaiveDate,
+        today: Option<&NaiveDate>,
     ) -> Result<Vec<Self>, AppError> {
         let res = sql_query(
             r#"
@@ -244,12 +245,13 @@ impl IncompleteCob {
                 and up.is_active = true
                 and d.value is null
                 and up.user_id = $3
-                and dates.cob_date < current_date
+                and dates.cob_date < coalesce($4, current_date)
             "#,
         )
         .bind::<Date, _>(from)
         .bind::<Date, _>(to)
         .bind::<DieselUuid, _>(&user_id)
+        .bind::<Nullable<Date>, _>(today)
         .load(conn)?;
 
         Ok(res)
@@ -257,3 +259,57 @@ impl IncompleteCob {
 }
 
 //TODO: test `upsert` that empty values are not inserted (and deleted if a value becomes empty) from diary
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utils::db;
+
+    /// A user with one required practice and an empty diary; rolled back with the test.
+    fn user_with_required_practice(conn: &mut PgConnection) -> Uuid {
+        let user_id = Uuid::new_v4();
+        sql_query("insert into users (id, email, hash, name) values ($1, $2, '', 'x')")
+            .bind::<DieselUuid, _>(user_id)
+            .bind::<Text, _>(format!("{user_id}@incomplete.test"))
+            .execute(conn)
+            .unwrap();
+        sql_query(
+            "insert into user_practices (user_id, practice, data_type, is_active, order_key, is_required) \
+             values ($1, 'Japa', 'int', true, 0, true)",
+        )
+        .bind::<DieselUuid, _>(user_id)
+        .execute(conn)
+        .unwrap();
+        user_id
+    }
+
+    #[test]
+    fn incomplete_days_end_at_the_users_today() {
+        let mut conn = db::establish_connection().get().unwrap();
+        conn.test_transaction::<_, AppError, _>(|conn| {
+            let user_id = user_with_required_practice(conn);
+            let d = |s: &str| NaiveDate::parse_from_str(s, "%Y-%m-%d").unwrap();
+            let mut days = |today: Option<NaiveDate>| -> Vec<NaiveDate> {
+                IncompleteCob::get_incomplete_days(
+                    conn,
+                    &user_id,
+                    &d("2020-01-01"),
+                    &d("2020-01-05"),
+                    today.as_ref(),
+                )
+                .unwrap()
+                .into_iter()
+                .map(|c| c.cob_date)
+                .collect()
+            };
+            // Ahead of the server (e.g. India just after midnight): yesterday is already over.
+            assert_eq!(
+                days(Some(d("2020-01-03"))),
+                vec![d("2020-01-01"), d("2020-01-02")]
+            );
+            // No date sent (older clients): the server's date, long after these days.
+            assert_eq!(days(None).len(), 5);
+            Ok(())
+        });
+    }
+}

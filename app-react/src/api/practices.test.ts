@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { practicesApi } from './practices'
+import { apiClient } from './client'
 
 describe('practicesApi.saveDiaryEntry', () => {
   afterEach(() => { vi.restoreAllMocks(); localStorage.clear() })
@@ -44,5 +45,17 @@ describe('practicesApi.reorderUserPractices', () => {
     const put = vi.spyOn(apiClient, 'put').mockResolvedValue({ data: null })
     await practicesApi.reorderUserPractices(['p2', 'p1'])
     expect(put).toHaveBeenCalledWith('/user/practices/reorder', { practices: ['p2', 'p1'] })
+  })
+})
+
+describe('practicesApi.getIncompleteDays', () => {
+  afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() })
+
+  // The server's own date is UTC: in India, yesterday wasn't over there until 05:30 local, and wasn't marked.
+  it('sends the local date, so a day counts as over when it is over for the user', async () => {
+    vi.useFakeTimers({ now: new Date(2026, 9, 16, 0, 30) })
+    const get = vi.spyOn(apiClient, 'get').mockResolvedValue({ data: { days: ['2026-10-15'] } })
+    await expect(practicesApi.getIncompleteDays('2026-10-11', '2026-10-19')).resolves.toEqual(['2026-10-15'])
+    expect(get).toHaveBeenCalledWith('/diary/incomplete-days', { params: { from: '2026-10-11', to: '2026-10-19', today: '2026-10-16' } })
   })
 })

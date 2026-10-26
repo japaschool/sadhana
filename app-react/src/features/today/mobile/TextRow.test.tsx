@@ -35,6 +35,20 @@ describe('TextRow', () => {
     expect(screen.queryByRole('textbox', { name: 'Gratitude' })).not.toBeInTheDocument()
   })
 
+  // iOS blurs the textarea before Done's click lands: the editor closes, Edit takes Done's place and gets the click.
+  it('Done closes the editor even when the textarea blurs first', () => {
+    setup('Thankful')
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    const area = screen.getByRole('textbox', { name: 'Gratitude' })
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Done' }))
+    fireEvent.blur(area)
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    expect(screen.queryByRole('textbox', { name: 'Gratitude' })).not.toBeInTheDocument()
+    // The next Edit (here without a pointer, as from a keyboard) opens it again.
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    expect(screen.getByRole('textbox', { name: 'Gratitude' })).toBeInTheDocument()
+  })
+
   it('shows Required instead of Edit when required and empty', () => {
     setup('', true)
     expect(screen.getByText('Required')).toBeInTheDocument()

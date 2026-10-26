@@ -1,4 +1,5 @@
 import { apiClient, authHeaders, handleUnauthorized } from './client'
+import { toDateStr } from '../features/today/date'
 import type { UserPractice, DiaryEntry, PracticeDataType, PracticeValue } from '../types/api'
 
 export const practicesApi = {
@@ -44,9 +45,10 @@ export const practicesApi = {
   async saveDiaryDay(date: string, entries: { practice: string; value: PracticeValue | null }[]): Promise<void> {
     await apiClient.put(`/diary/${date}`, { diary_day: entries })
   },
+  /** Days missing a required practice. `today` is the local date: the server's own is UTC. */
   async getIncompleteDays(from: string, to: string): Promise<string[]> {
     const res = await apiClient.get<{ days: string[] }>('/diary/incomplete-days', {
-      params: { from, to },
+      params: { from, to, today: toDateStr(new Date()) },
     })
     return res.data.days
   },

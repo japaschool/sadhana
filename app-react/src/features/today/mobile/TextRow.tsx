@@ -21,7 +21,9 @@ export function TextRow({ label, value, required, failed, onSave }: TextRowProps
   const area = useRef<HTMLTextAreaElement>(null)
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const pending = useRef<string | null>(null)
-  const wasEditing = useRef(false) // the textarea blurs (and closes) before the header's click lands
+  // A tap that began while editing only commits. The textarea blurs (and closes) before the click lands, and on iOS
+  // that click then hits whatever took the tapped spot: Edit, in Done's place.
+  const wasEditing = useRef(false)
   const onSaveRef = useRef(onSave)
   useEffect(() => { onSaveRef.current = onSave })
 
@@ -45,6 +47,7 @@ export function TextRow({ label, value, required, failed, onSave }: TextRowProps
   }
 
   function start() {
+    if (wasEditing.current) return
     setDraft(value)
     setEditing(true)
   }
@@ -72,10 +75,10 @@ export function TextRow({ label, value, required, failed, onSave }: TextRowProps
   }, [editing])
 
   return (
-    <div className={`flex flex-col bg-ui-surface px-4 ${editing || value ? 'pb-3.5' : ''}`}>
+    <div onPointerDown={() => { wasEditing.current = editing }} onClick={() => { wasEditing.current = false }}
+      className={`flex flex-col bg-ui-surface px-4 ${editing || value ? 'pb-3.5' : ''}`}>
       {/* Tapping the header line acts as Edit / + Add (touch convenience; the button stays the target). */}
-      <div onPointerDown={() => { wasEditing.current = editing }}
-        onClick={(e) => { if (!wasEditing.current && !(e.target as Element).closest('button')) start() }}
+      <div onClick={(e) => { if (!(e.target as Element).closest('button')) start() }}
         className={`flex min-h-[50px] items-center justify-between gap-3 ${editing ? '' : 'cursor-pointer'}`}>
         <span className="text-[15px] font-medium">{label}</span>
         {editing ? (
