@@ -7,8 +7,19 @@ export const CACHE_MAX_AGE = 30 * 24 * 60 * 60_000
 
 const SAVED = new Set(['practices', 'diary', 'incomplete-days', 'reports', 'report-data', 'yatras', 'yatra-data'])
 
-/** Only the user's own data, once loaded. Shared reports ('shared', …) and one-off lookups aren't saved. */
-export const shouldPersist = (q: Query) => q.state.status === 'success' && SAVED.has(String(q.queryKey[0]))
+/** Only the user's own data, once loaded. Shared reports ('shared', …) and one-off lookups aren't saved.
+ *  A failed refetch (offline) keeps its data and is saved too: dropping it left the next launch with nothing. */
+export const shouldPersist = (q: Query) => q.state.data !== undefined && SAVED.has(String(q.queryKey[0]))
+
+/** Saved as loaded data: the error (an AxiosError holds functions IndexedDB can't store) isn't kept. */
+const asLoaded = (client: PersistedClient): PersistedClient => ({
+  ...client,
+  clientState: {
+    ...client.clientState,
+    queries: client.clientState.queries.map((q) => q.state.status !== 'error' ? q
+      : { ...q, state: { ...q.state, status: 'success', error: null, fetchFailureReason: null } }),
+  },
+})
 
 const KEY = 'client'
 let dbp: Promise<IDBDatabase> | undefined
@@ -46,7 +57,7 @@ export const persister: Persister = {
   // ponytail: trailing 1 s debounce, like the library's own persisters. Unsynced values live in the worker's outbox, not here.
   persistClient: (client: PersistedClient) => {
     clearTimeout(pendingWrite)
-    pendingClient = client
+    pendingClient = asLoaded(client)
     pendingWrite = setTimeout(writeNow, 1000)
   },
   restoreClient: () => run<PersistedClient | undefined>('readonly', (s) => s.get(KEY)).catch(() => undefined),

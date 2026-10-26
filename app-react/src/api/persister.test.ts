@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest'
-import type { Query } from '@tanstack/react-query'
+import { QueryClient, dehydrate, hydrate, type Query } from '@tanstack/react-query'
 import type { PersistedClient } from '@tanstack/react-query-persist-client'
 
 // jsdom has no IndexedDB: a Map behind the few calls the persister makes.
@@ -20,7 +20,8 @@ beforeAll(() => {
 
 const { persister, shouldPersist } = await import('./persister')
 
-const q = (queryKey: unknown[], status = 'success') => ({ queryKey, state: { status } }) as unknown as Query
+const q = (queryKey: unknown[], status = 'success') =>
+  ({ queryKey, state: { status, data: status === 'success' ? [] : undefined } }) as unknown as Query
 const client = { timestamp: 1, buster: '1', clientState: { queries: [], mutations: [] } } as PersistedClient
 
 describe('shouldPersist', () => {
@@ -81,5 +82,26 @@ describe('persister', () => {
     await vi.runAllTimersAsync()
     await removed
     expect(data.size).toBe(0)
+  })
+
+  // An offline launch: the restored data is refetched, the fetch fails, the query turns 'error' but keeps its data.
+  // Dropping it from the save left the next offline launch with nothing to show.
+  it('keeps loaded data whose refetch failed, as data that can be saved and restored', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    await qc.fetchQuery({ queryKey: ['practices'], queryFn: () => [{ practice: 'Japa' }] })
+    // Like an AxiosError: its config holds functions, which IndexedDB can't store.
+    const offline = Object.assign(new Error('Network Error'), { config: { adapter: () => {} } })
+    await qc.fetchQuery({ queryKey: ['practices'], queryFn: () => Promise.reject(offline), staleTime: 0 }).catch(() => {})
+    expect(qc.getQueryState(['practices'])?.status).toBe('error')
+
+    persister.persistClient({ timestamp: 1, buster: '1', clientState: dehydrate(qc, { shouldDehydrateQuery: shouldPersist }) })
+    await vi.runAllTimersAsync()
+    const saved = data.get('client') as PersistedClient
+    expect(() => structuredClone(saved)).not.toThrow()
+
+    const next = new QueryClient()
+    hydrate(next, saved.clientState)
+    expect(next.getQueryData(['practices'])).toEqual([{ practice: 'Japa' }])
+    expect(next.getQueryState(['practices'])?.status).toBe('success')
   })
 })
