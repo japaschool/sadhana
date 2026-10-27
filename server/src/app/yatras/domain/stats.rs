@@ -98,7 +98,14 @@ impl YatraStatisticResult {
             .into_iter()
             .map(|stat| {
                 let from_cob = stat.time_range.to_naive_date(cob_date);
-                let data_type = practice_types.get(&stat.practice_id).unwrap();
+                // A statistic left on a deleted practice has no value, but keeps its place:
+                // clients match values to the config by position.
+                let Some(data_type) = practice_types.get(&stat.practice_id) else {
+                    return Ok(Self {
+                        label: stat.label,
+                        value: None,
+                    });
+                };
                 let sql = Self::stat_sql(data_type, &stat.aggregation);
 
                 log::debug!(

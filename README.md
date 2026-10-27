@@ -41,9 +41,8 @@
 
 ### Running the code
 
-1. Install trunk `cargo install -f trunk`
-2. Do `rustup target add wasm32-unknown-unknown`
-3. Install diesel_cli:
+1. Install Node 22
+2. Install diesel_cli:
 
 ```
 brew install libpq
@@ -52,8 +51,8 @@ echo 'export PATH="/usr/local/opt/libpq/bin:$PATH"' >> ~/.zshrc
 cargo install diesel_cli --no-default-features --features postgres
 ```
 
-4. Run: `make run`
-5. Open in chrome localhost:8080
+3. Run: `make run` (builds `app-react` into `dist/` and starts the server)
+4. Open localhost:8080. For frontend work, `cd app-react && npm run dev` (Vite proxies `/api` to the server).
 
 ### Docker
 

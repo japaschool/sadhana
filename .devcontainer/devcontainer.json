@@ -10,6 +10,9 @@
             "VARIANT": "bookworm"
         }
     },
+    "features": {
+        "ghcr.io/devcontainers/features/node:1": { "version": "22" }
+    },
     // Give container ptrace capability so that lldb can be used for debugging.
     "runArgs": [
         "--init",

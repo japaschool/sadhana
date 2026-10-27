@@ -4,11 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Sadhana Pro is a full-stack **Rust** PWA for tracking spiritual practice. A single Cargo workspace holds three crates:
+Sadhana Pro is a PWA for tracking spiritual practice: a **Rust** API and a **React** (Vite + TypeScript) frontend in `app-react/`. The Cargo workspace holds:
 
 - `server` — actix-web REST API + static file host (Diesel/Postgres). Default workspace member.
-- `frontend` — Yew (WASM) SPA compiled with Trunk, served as an installable iOS/Android PWA.
-- `common` — types shared by both, gated behind mutually exclusive `frontend` / `backend` cargo features (the backend feature pulls in actix/diesel/etc.; frontend stays dependency-light).
+- `common` — types used by the server (`backend` feature).
+
+The Rust/Yew UI (`frontend/`) was removed on this branch; it still lives on `main`, and is deployed only from there. Both UIs share the prod DB.
 
 The compiled frontend lands in `dist/`, which the server serves directly (see `server/src/routes.rs`).
 
@@ -16,18 +17,21 @@ The compiled frontend lands in `dist/`, which the server serves directly (see `s
 
 All common workflows go through the `Makefile`. It hardcodes a `db_url`; override `DATABASE_URL` in your env or edit the Makefile for local dev.
 
-- `make run` — build frontend (`trunk build`) then run the server. App at `localhost:8080`.
-- `make frontend-build` — `trunk build` only (writes to `dist/`).
+- `make run` — build the React app into `dist/`, then run the server. App at `localhost:8080`.
+- `make frontend-build` — `npm ci && npm run build` in `app-react/`, output to `dist/`.
+- In `app-react/`: `npm run dev` (Vite, proxies `/api` to `localhost:8080`), `npm test`, `npm run lint`.
 - `make run_server` — server only (assumes `dist/` already built).
 - `make test T=<name>` — run tests. **Tests hit a real Postgres DB** and require `--test-threads=1` (already in the target); `T` filters by name. `make test` runs all.
-- `make lint` — `cargo clippy --all-targets --all-features -D warnings`. Warnings are errors.
+- `make lint` — `cargo clippy --all-targets --all-features -D warnings` (warnings are errors), then `npm run lint`.
 - `make migrate` / `make undo_migrate` / `make redo_migrate` / `make reset_db` — Diesel migrations in `migrations/`.
 - `make create_migration name=<x>` — new migration.
 - `make gen_schema` — regenerate `server/src/schema.rs` from the live DB. **Do not hand-edit `schema.rs`.**
 
-First-time setup (from README): `cargo install trunk`, `rustup target add wasm32-unknown-unknown`, `cargo install diesel_cli --no-default-features --features postgres` (needs `libpq`).
+First-time setup (from README): Node 22, `cargo install diesel_cli --no-default-features --features postgres` (needs `libpq`).
 
-Docker: `docker build -t sadhanapro .` (multi-stage, uses cargo-chef for dep caching; builds frontend inside). Requires env vars `SERVER_ADDRESS`, `JWT_KEY`, `DATABASE_URL`.
+Docker: `docker build -t sadhanapro .` (multi-stage: a Node stage builds `app-react`, cargo-chef caches Rust deps). Requires env vars `SERVER_ADDRESS`, `JWT_KEY`, `DATABASE_URL`.
+
+CI (`.github/workflows/ci.yml`) runs React lint/test/build and clippy + `cargo test` against a Postgres service. Deploy: `build_dockerhub.yml` with `deploy_channel=preview`; testers opt in with the `sadhana_release_channel=preview` cookie (Settings → preview toggle), which nginx routes on.
 
 ## Architecture notes
 
@@ -39,16 +43,24 @@ Docker: `docker build -t sadhanapro .` (multi-stage, uses cargo-chef for dep cac
 
 **DB migrations are embedded** in the server binary (`embed_migrations!`) and run on startup when enabled via `vars::run_db_migrations_on_startup()`.
 
-**Frontend** (`frontend/src/`) is Yew function components + hooks. `main.rs` nests context providers (network status, app-update, user, session) around a `yew-router` switch. Routes live in `routes/`, shared UI in `components/`, cross-cutting state in `hooks/`. All API calls go through `services/requests.rs`, which handles the JWT (`yew.token` in LocalStorage) and an optional response cache. i18n strings are generated at build time via `i18n_codegen` (`i18n.rs`). Styling uses Tailwind classes merged with `tw_merge`.
+**Compatibility with the Rust UI** (users switch between the two via the preview cookie): the JWT stays in `yew.token`, JSON-quoted as gloo wrote it (`readToken`/`writeToken` in `store/authStore.ts`); the old `user_language` key is migrated once to `i18nextLng` (`legacyLanguage.ts`).
 
-**PWA / service worker:** the server generates a precache manifest and serves `service_worker.js` with no-cache headers; the SW cache is scoped by release SHA (`GIT_SHA` build arg → `frontend/src/utils/release_channel.rs`) so a new deploy invalidates stale assets. Touch this area carefully — it governs what clients cache across releases.
-
-Trunk proxies `/api/` to the running server during dev (`frontend/Trunk.toml`).
+**Service worker:** `app-react/public/service_worker.js` (+ pure logic in `sw-lib.js`) is served at the Rust UI's worker path with no-cache headers; `__GIT_SHA__` is substituted at Docker build (a worker whose `GIT_SHA` still starts with `__GIT` is DEV and skips precaching). It serves the shell from `static-vr-<sha>` (precached from `/precache-manifest.js`), queues diary entry PUTs in IndexedDB `sadhana-outbox` before trying the network (`202` + `X-Queued` when not sent), overlays pending values on `GET /api/diary/{date}`, and takes over from the Rust worker (moving its `SadhanaProPostDB` queue). The page's data is React Query persisted to IndexedDB `sadhana-query` (queries use `gcTime: Infinity`; a saved user `sadhana.user` must match the token, else the cache is dropped). `/#reset` wipes all but the outbox. Touch this area carefully: it governs what installed clients run. Spec: `docs/superpowers/specs/2026-10-09-offline-mode-design.md`.
 
 ## Local dev environment
 
-On this machine the dev environment runs inside a VS Code dev container(`.devcontainer/devcontainer.json`). The Rust toolchain (`cargo`, `trunk`, `rustc`, the `wasm32-unknown-unknown` target) lives inside the container, not on the host — the host has no cargo/trunk. The repo is mounted in the container at `/workspaces/sadhana-pro`.
+On this machine the dev environment runs inside a VS Code dev container(`.devcontainer/devcontainer.json`). The Rust toolchain and Node live inside the container, not on the host — the host has no cargo. (The host does have Node, but its v26 breaks jsdom's `localStorage` in tests; run `npm test` with Node 22.) The repo is mounted in the container at `/workspaces/sadhana-pro`.
 
 To build/test/run, exec into the running dev container rather than invoking tooling on the host, e.g.:
 
 `docker exec <container> bash -lc 'cd /workspaces/sadhana-pro && cargo test ...'`
+## UI redesign (`redesign` branch, `app-react/`)
+
+`app-react/` is the React rewrite of the frontend. It is being redesigned again, screen by screen, from the claude.ai/design project "Sadhana Redesign" (`Sadhana Redesign.dc.html`): https://claude.ai/design/p/cccefa4d-5554-41b1-be47-2704b1233b68?file=Sadhana+Redesign.dc.html. Read the mockups through the `claude_design` MCP (`https://api.anthropic.com/v1/design/mcp`, auth via `/design-login`). Screens with no mockup (e.g. Settings) are derived from the Today screen's design language. Spec and plan: `docs/superpowers/specs/2026-10-06-mobile-today-redesign-design.md`, `docs/superpowers/plans/2026-10-06-mobile-today-redesign.md`.
+
+- **Three real layouts (mobile / tablet / desktop)**, each with its own component tree, not one layout with media queries. `useLayout()` + `<ByLayout mobile tablet desktop>` pick per route; a screen that is the same on every layout is wrapped in `ui()` in `router.tsx`.
+- **Code lives in** `src/ui` (tokens, primitives), `src/layouts` (shells, route guards) and `src/features/<screen>` (logic in hooks; components per layout). The legacy UI (`pages/`, `AppShell`, DaisyUI) is gone.
+- **Theme:** the design's palette replaces the old one. Light is the default; dark follows `prefers-color-scheme` and uses only the "1a · dark" colours (plus `#C2412D` danger). Tokens are CSS vars scoped to `.ui-root` (`src/ui/theme.css`), used as `ui-*` Tailwind colours. Portals go through `UiPortal`.
+- **Fonts:** Manrope + IBM Plex Mono (both have Cyrillic, so they cover ru/uk). All strings are in en/ru/uk.
+- **Practice groups are out of scope for now.** One hardcoded "Practices" group.
+- **Data rules:** local `yyyy-mm-dd` dates (never `toISOString()`); an empty input saves `null`; dropdown options are comma- or newline-separated.

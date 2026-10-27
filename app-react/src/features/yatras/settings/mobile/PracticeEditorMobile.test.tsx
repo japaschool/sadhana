@@ -1,0 +1,250 @@
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { setViewportWidth } from '../../../../test/viewport'
+import { useToastStore } from '../../../../hooks/useToast'
+import { mockAdmin, renderAdmin } from './adminTestUtils'
+
+vi.mock('../../../../api/yatras', async (importOriginal) => {
+  const { yatrasApi } = await importOriginal<typeof import('../../../../api/yatras')>()
+  return { yatrasApi: Object.fromEntries(Object.keys(yatrasApi).map((k) => [k, vi.fn()])) }
+})
+import { yatrasApi } from '../../../../api/yatras'
+const api = vi.mocked(yatrasApi)
+const sent = () => api.updateYatraPractice.mock.calls.at(-1)![1]
+
+describe('PracticeEditorMobile', () => {
+  beforeEach(() => { vi.clearAllMocks(); setViewportWidth(390); useToastStore.setState({ toasts: [] }); mockAdmin(api) })
+
+  it('shows the bounds, the bar and the score of a Number practice', async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    expect(await screen.findByLabelText('Red up to')).toHaveValue('7')
+    expect(screen.getByLabelText('Yellow up to')).toHaveValue('15')
+    expect(screen.getByText('Above 15: Green')).toBeInTheDocument()
+    expect(screen.getByText('✓ 16')).toBeInTheDocument()
+    expect(screen.getByText('★ 20')).toBeInTheDocument()
+    expect(screen.getByText('Counts as done at ≥ 16 · bonus at ≥ 20')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Japa rounds' })).toBeInTheDocument()
+  })
+
+  it('a bound out of order says why and nothing is sent', async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const yellow = await screen.findByLabelText('Yellow up to')
+    fireEvent.change(yellow, { target: { value: '6' } })
+    fireEvent.blur(yellow)
+    expect(screen.getByText('Must be more than 7, the Red bound')).toBeInTheDocument()
+    expect(screen.getByText('Not saved yet. The bar keeps the last valid bounds until this is fixed.')).toBeInTheDocument()
+    expect(api.updateYatraPractice).not.toHaveBeenCalled()
+  })
+
+  it('says a bound is out of order once typing pauses', async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const yellow = await screen.findByLabelText('Yellow up to')
+    fireEvent.focus(yellow)
+    fireEvent.change(yellow, { target: { value: '6' } })
+    expect(screen.queryByText('Must be more than 7, the Red bound')).toBeNull()
+    expect(await screen.findByText('Must be more than 7, the Red bound')).toBeInTheDocument()
+  })
+
+  it('clearing a field and typing a new value is one save, not two', async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const yellow = await screen.findByLabelText('Yellow up to')
+    fireEvent.focus(yellow)
+    fireEvent.change(yellow, { target: { value: '' } })
+    await new Promise((r) => setTimeout(r, 700))
+    expect(api.updateYatraPractice).not.toHaveBeenCalled()
+    fireEvent.change(yellow, { target: { value: '14' } })
+    fireEvent.blur(yellow)
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledOnce())
+    expect(sent().colour_zones!.bounds[1].to).toEqual({ Int: 14 })
+  })
+
+  it('a field left empty is saved as no value', async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const yellow = await screen.findByLabelText('Yellow up to')
+    fireEvent.focus(yellow)
+    fireEvent.change(yellow, { target: { value: '' } })
+    fireEvent.blur(yellow)
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledOnce())
+    expect(sent().colour_zones!.bounds[1].to).toBeNull()
+  })
+
+  it('on a Duration practice the score follows the colours to Lower', async () => {
+    renderAdmin('/yatra/y1/practice/p3/edit')
+    const done = await screen.findByLabelText('✓ Done at · +1 point')
+    fireEvent.focus(done)
+    fireEvent.change(done, { target: { value: '60' } })
+    fireEvent.blur(done)
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledOnce())
+    fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Better when the value is' })).getByRole('radio', { name: 'Lower' }))
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledTimes(2))
+    expect(sent().daily_score!.better_direction).toBe('Lower')
+  })
+
+  it('saves a valid bound and keeps its colours', async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const yellow = await screen.findByLabelText('Yellow up to')
+    fireEvent.change(yellow, { target: { value: '14' } })
+    fireEvent.blur(yellow)
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledOnce())
+    expect(sent().colour_zones!.bounds).toEqual([{ to: { Int: 7 }, colour: 'Red' }, { to: { Int: 14 }, colour: 'Yellow' }])
+  })
+
+  it('keeps what is typed in a focused field when its save lands', async () => {
+    renderAdmin('/yatra/y1/practice/p3/edit')
+    const red = await screen.findByLabelText('Red up to')
+    fireEvent.focus(red)
+    fireEvent.change(red, { target: { value: '45' } })
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledOnce())
+    expect(sent().colour_zones!.bounds[0].to).toEqual({ Duration: 45 })
+    expect(red).toHaveValue('45')
+  })
+
+  it('2 colours keeps the first bound and offers Undo', async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    fireEvent.click(await screen.findByRole('radio', { name: '2 colours' }))
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledOnce())
+    expect(sent().colour_zones).toEqual({ better_direction: 'Higher', bounds: [{ to: { Int: 7 }, colour: 'Red' }], no_value_colour: 'Neutral', best_colour: 'Green' })
+    expect(await screen.findByRole('button', { name: 'Undo' })).toBeInTheDocument()
+  })
+
+  it('Lower re-colours the zones and the score follows', async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const bonus = await screen.findByLabelText('★ Bonus at · +1 more')
+    fireEvent.change(bonus, { target: { value: '' } })
+    fireEvent.blur(bonus)
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledOnce())
+    const colourDir = screen.getByRole('radiogroup', { name: 'Better when the value is' })
+    fireEvent.click(within(colourDir).getByRole('radio', { name: 'Lower' }))
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledTimes(2))
+    expect(sent().colour_zones!.bounds.map((b) => b.colour)).toEqual(['Green', 'Yellow'])
+    expect(sent().colour_zones!.best_colour).toBe('Red')
+    expect(sent().daily_score!.better_direction).toBe('Lower')
+  })
+
+  it("the score keeps its direction when following would put the bonus on the wrong side", async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const colourDir = await screen.findByRole('radiogroup', { name: 'Better when the value is' })
+    fireEvent.click(within(colourDir).getByRole('radio', { name: 'Lower' }))
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledOnce())
+    expect(sent().colour_zones!.better_direction).toBe('Lower')
+    expect(sent().daily_score!.better_direction).toBe('Higher')
+  })
+
+  it("Done where Green starts doesn't save a done value past the bonus", async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const done = await screen.findByLabelText('✓ Done at · +1 point')
+    const bonus = screen.getByLabelText('★ Bonus at · +1 more')
+    fireEvent.change(done, { target: { value: '12' } })
+    fireEvent.change(bonus, { target: { value: '14' } })
+    fireEvent.blur(bonus)
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledOnce())
+    fireEvent.click(await screen.findByRole('button', { name: 'Done starts where Green starts' }))
+    expect(await screen.findByText('Must be at least the done value, 16')).toBeInTheDocument()
+    expect(done).toHaveValue('16')
+    expect(api.updateYatraPractice).toHaveBeenCalledOnce()
+  })
+
+  it('new bound fields take input after the colour count changes', async () => {
+    renderAdmin('/yatra/y1/practice/p3/edit')
+    fireEvent.focus(await screen.findByLabelText('Red up to'))
+    fireEvent.click(screen.getByRole('radio', { name: '3 colours' }))
+    const yellow = await screen.findByLabelText('Yellow up to')
+    fireEvent.focus(yellow)
+    fireEvent.change(yellow, { target: { value: '60' } })
+    expect(yellow).toHaveValue('60')
+  })
+
+  it('clearing both thresholds removes the daily score', async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const done = await screen.findByLabelText('✓ Done at · +1 point')
+    const bonus = screen.getByLabelText('★ Bonus at · +1 more')
+    fireEvent.change(done, { target: { value: '' } })
+    fireEvent.change(bonus, { target: { value: '' } })
+    fireEvent.blur(bonus)
+    await waitFor(() => expect(api.updateYatraPractice).toHaveBeenCalledOnce())
+    expect(sent().daily_score).toBeNull()
+  })
+
+  it("doesn't save a bonus without a done value", async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const done = await screen.findByLabelText('✓ Done at · +1 point')
+    fireEvent.change(done, { target: { value: '' } })
+    fireEvent.blur(done)
+    expect(screen.getByText('Set “Done at” first: the bonus only adds to a done day')).toBeInTheDocument()
+    expect(api.updateYatraPractice).not.toHaveBeenCalled()
+  })
+
+  it('offers to start done where Green starts', async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const done = await screen.findByLabelText('✓ Done at · +1 point')
+    expect(screen.queryByRole('button', { name: 'Done starts where Green starts' })).toBeNull()
+    fireEvent.change(done, { target: { value: '18' } })
+    fireEvent.blur(done)
+    fireEvent.click(await screen.findByRole('button', { name: 'Done starts where Green starts' }))
+    await waitFor(() => expect(sent().daily_score!.mandatory_threshold).toEqual({ Int: 16 }))
+    expect(done).toHaveValue('16')
+  })
+
+  it("won't rename to another practice's name", async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    const name = await screen.findByLabelText('Name')
+    fireEvent.change(name, { target: { value: 'Wake up' } })
+    fireEvent.blur(name)
+    expect(screen.getByText('This yatra already has a practice with this name')).toBeInTheDocument()
+    expect(api.updateYatraPractice).not.toHaveBeenCalled()
+  })
+
+  it("keeps the bar's space before any value is set, so fields don't jump", async () => {
+    renderAdmin('/yatra/y1/practice/p3/edit')
+    fireEvent.click(await screen.findByRole('radio', { name: 'Off' }))
+    await waitFor(() => expect(screen.queryByLabelText('Red up to')).toBeNull())
+    expect(document.querySelectorAll('[data-range-bar="empty"]')).toHaveLength(1)
+  })
+
+  it('time fields type like the Log: numeric keypad, the colon comes by itself', async () => {
+    renderAdmin('/yatra/y1/practice/p2/edit')
+    const done = await screen.findByLabelText('✓ Done at · +1 point')
+    expect(done).toHaveAttribute('inputmode', 'numeric')
+    expect(done).toHaveAttribute('autocomplete', 'off')
+    fireEvent.focus(done)
+    fireEvent.change(done, { target: { value: '' } })
+    fireEvent.change(done, { target: { value: '5' } })
+    expect(done).toHaveValue('05:')
+    fireEvent.change(done, { target: { value: '05:15' } })
+    fireEvent.blur(done)
+    await waitFor(() => expect(sent().daily_score!.mandatory_threshold).toEqual({ Time: { h: 5, m: 15 } }))
+  })
+
+  it('duration fields take minutes and read as minutes when you leave them', async () => {
+    renderAdmin('/yatra/y1/practice/p3/edit')
+    const red = await screen.findByLabelText('Red up to')
+    expect(red).toHaveAttribute('inputmode', 'numeric')
+    expect(red).toHaveValue('30 min')
+    fireEvent.focus(red)
+    expect(red).toHaveValue('30')
+    fireEvent.change(red, { target: { value: '90' } })
+    fireEvent.blur(red)
+    expect(red).toHaveValue('90 min')
+    expect(await screen.findByText('Above 90 min: Green')).toBeInTheDocument()
+    await waitFor(() => expect(sent().colour_zones!.bounds[0].to).toEqual({ Duration: 90 }))
+  })
+
+  it("names don't invite autofill", async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    expect(await screen.findByLabelText('Name')).toHaveAttribute('autocomplete', 'off')
+  })
+
+  it('a Yes / No practice explains why it has no colours or score', async () => {
+    renderAdmin('/yatra/y1/practice/p4/edit')
+    expect(await screen.findByText(/Yes \/ No practices show ✓ in the table/)).toBeInTheDocument()
+    expect(screen.queryByText('Colours in the table')).toBeNull()
+  })
+
+  it('deletes the practice and goes back to Practices', async () => {
+    renderAdmin('/yatra/y1/practice/p1/edit')
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete practice' }))
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete practice' }))
+    await waitFor(() => expect(api.deleteYatraPractice).toHaveBeenCalledWith('y1', 'p1'))
+    expect(await screen.findByRole('heading', { name: 'Practices' })).toBeInTheDocument()
+  })
+})

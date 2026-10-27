@@ -13,8 +13,4 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 
 USER vscode
 
-RUN rustup target add wasm32-unknown-unknown
-
-RUN cargo install cargo-binstall \
-    && cargo binstall -y trunk wasm-bindgen-cli \
-    && cargo install diesel_cli --no-default-features --features postgres
+RUN cargo install diesel_cli --no-default-features --features postgres

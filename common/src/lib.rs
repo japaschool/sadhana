@@ -2,9 +2,6 @@ use std::{fmt, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 
-#[macro_use]
-extern crate log;
-
 pub mod error;
 
 #[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]

@@ -113,6 +113,8 @@ pub async fn get_report_data(
 pub struct IncompleteDaysQuery {
     from: NaiveDate,
     to: NaiveDate,
+    /// The user's local date: a day is incomplete only once it's over where the user is. Defaults to the DB's.
+    today: Option<NaiveDate>,
 }
 
 pub async fn get_incomplete_days(
@@ -124,7 +126,13 @@ pub async fn get_incomplete_days(
     let user_id = auth::get_current_user(&req)?.id;
 
     let res = web::block(move || {
-        IncompleteCob::get_incomplete_days(&mut conn, &user_id, &query.from, &query.to)
+        IncompleteCob::get_incomplete_days(
+            &mut conn,
+            &user_id,
+            &query.from,
+            &query.to,
+            query.today.as_ref(),
+        )
     })
     .await??;
 

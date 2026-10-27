@@ -105,18 +105,6 @@ pub struct PracticeTrace {
     pub show_average: bool,
 }
 
-impl PracticeTrace {
-    pub fn new_minimal(trace_type: TraceType, practice: Uuid) -> Self {
-        Self {
-            label: None,
-            type_: trace_type,
-            practice,
-            y_axis: None,
-            show_average: true,
-        }
-    }
-}
-
 impl TryFrom<DBReportTrace> for PracticeTrace {
     type Error = AppError;
 

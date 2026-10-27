@@ -72,6 +72,10 @@ fn collect_precache_assets(dir: &Path, base: &Path, out: &mut Vec<String>) {
         let path = entry.path();
 
         if path.is_dir() {
+            // iOS splash screens and install screenshots (~14 MB): the OS fetches them once, at install.
+            if path.strip_prefix(base).unwrap() == Path::new("images/install") {
+                continue;
+            }
             collect_precache_assets(&path, base, out);
         } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
             if matches!(
@@ -79,7 +83,7 @@ fn collect_precache_assets(dir: &Path, base: &Path, out: &mut Vec<String>) {
                 "html"
                     | "js"
                     | "css"
-                    | "wasm"
+                    | "json"
                     | "webmanifest"
                     | "jpg"
                     | "png"
@@ -87,6 +91,8 @@ fn collect_precache_assets(dir: &Path, base: &Path, out: &mut Vec<String>) {
                     | "svg"
                     | "eot"
                     | "woff"
+                    | "woff2"
+                    | "webp"
             ) {
                 let rel = path.strip_prefix(base).unwrap();
                 out.push(format!("/{}", rel.to_string_lossy()));
@@ -110,6 +116,10 @@ fn api_scope() -> impl HttpServiceFactory {
         )
         .service(
             web::scope("/password-reset").route("", web::put().to(app::user::api::reset_password)),
+        )
+        .service(
+            web::scope("/oauth")
+                .route("/google", web::post().to(app::oauth::google_signin)),
         )
         .service(
             web::scope("/user")
@@ -322,5 +332,55 @@ mod tests {
             .unwrap();
 
         assert_eq!(value, "no-cache, must-revalidate");
+    }
+
+    #[actix_rt::test]
+    async fn compress_middleware_encodes_gzip_response() {
+        use actix_web::middleware::Compress;
+
+        #[get("/echo")]
+        async fn big_text() -> HttpResponse {
+            HttpResponse::Ok()
+                .content_type("text/plain")
+                .body("x".repeat(1024))
+        }
+
+        let app = test::init_service(
+            App::new()
+                .wrap(Compress::default())
+                .service(big_text),
+        )
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri("/echo")
+            .insert_header(("Accept-Encoding", "gzip"))
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert_eq!(
+            resp.headers()
+                .get("content-encoding")
+                .and_then(|v| v.to_str().ok()),
+            Some("gzip")
+        );
+    }
+
+    #[actix_web::test]
+    async fn precache_skips_install_images() {
+        let dist = std::env::temp_dir().join(format!("precache-test-{}", std::process::id()));
+        fs::create_dir_all(dist.join("images/install")).unwrap();
+        fs::write(dist.join("index.html"), "").unwrap();
+        fs::write(dist.join("images/icon.png"), "").unwrap();
+        fs::write(dist.join("images/install/splash.jpg"), "").unwrap();
+
+        let mut assets = Vec::new();
+        collect_precache_assets(&dist, &dist, &mut assets);
+        fs::remove_dir_all(&dist).unwrap();
+
+        assets.sort();
+        assert_eq!(assets, ["/images/icon.png", "/index.html"]);
     }
 }

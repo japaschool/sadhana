@@ -177,6 +177,7 @@ pub async fn update_user_password(
 mod tests {
     use crate::{
         app::user::{
+            model::Confirmation,
             request::{Signin, SigninUser, Signup, SignupUser},
             response::UserResponse,
         },
@@ -189,6 +190,24 @@ mod tests {
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
+    }
+
+    /// Deletes a test user along with the default practices signup gave them.
+    fn delete_user(conn: &mut PgConnection, user_email: &str) {
+        diesel::sql_query(
+            "delete from user_practices where user_id in (select id from users where email = $1)",
+        )
+        .bind::<diesel::sql_types::Text, _>(user_email)
+        .execute(conn)
+        .unwrap();
+        diesel::delete(users.filter(email.eq(user_email)))
+            .execute(conn)
+            .unwrap();
+    }
+
+    /// Signup only accepts a live confirmation (the emailed link), so make one.
+    fn confirmation_id(conn: &mut PgConnection, user_email: &str) -> Uuid {
+        Confirmation::create(conn, user_email, false).unwrap().id
     }
 
     #[actix_rt::test]
@@ -207,8 +226,7 @@ mod tests {
         let pool = db::establish_connection();
         let mut conn = pool.get().unwrap();
 
-        let cleanup = || diesel::delete(users.filter(email.eq("xyz@gmail.com")));
-        let _ = cleanup().execute(&mut conn);
+        delete_user(&mut conn, "xyz@gmail.com");
 
         let res: (u16, UserResponse) = test_helpers::test_post(
             "/api/users",
@@ -218,7 +236,7 @@ mod tests {
                     password: "abcdef".into(),
                     name: "X Yz".into(),
                     lang: "ru".into(),
-                    confirmation_id: Uuid::new_v4(),
+                    confirmation_id: confirmation_id(&mut conn, "xyz@gmail.com"),
                 },
             },
         )
@@ -227,7 +245,7 @@ mod tests {
         assert_eq!(res.0, 200);
         assert_eq!(res.1.user.email, "xyz@gmail.com");
 
-        cleanup().execute(&mut conn).unwrap();
+        delete_user(&mut conn, "xyz@gmail.com");
     }
 
     #[actix_rt::test]
@@ -268,29 +286,30 @@ mod tests {
         let mut conn = pool.get().unwrap();
 
         let test_email = "dup_test@gmail.com";
-        let payload = Signup {
+        let mut payload = Signup {
             user: SignupUser {
                 email: test_email.into(),
                 password: "abcdef".into(),
                 name: "X Yz".into(),
                 lang: "ru".into(),
-                confirmation_id: Uuid::new_v4(),
+                confirmation_id: confirmation_id(&mut conn, test_email),
             },
         };
 
-        let cleanup = || diesel::delete(users.filter(email.eq(test_email)));
-        let _ = cleanup().execute(&mut conn);
+        delete_user(&mut conn, test_email);
 
         let res: (u16, UserResponse) = test_helpers::test_post("/api/users", &payload).await;
 
         assert_eq!(res.0, 200);
         assert_eq!(res.1.user.email, test_email);
 
+        // A signup uses up its confirmation, so the second attempt needs a new one.
+        payload.user.confirmation_id = confirmation_id(&mut conn, test_email);
         let res = test_helpers::test_post_status("/api/users", &payload).await;
 
         assert_eq!(res, 422);
 
-        cleanup().execute(&mut conn).unwrap();
+        delete_user(&mut conn, test_email);
     }
 
     #[actix_rt::test]
@@ -307,12 +326,11 @@ mod tests {
                 password: test_pwd.into(),
                 name: "X Yz".into(),
                 lang: "ru".into(),
-                confirmation_id: Uuid::new_v4(),
+                confirmation_id: confirmation_id(&mut conn, test_email),
             },
         };
 
-        let cleanup = || diesel::delete(users.filter(email.eq(test_email)));
-        let _ = cleanup().execute(&mut conn);
+        delete_user(&mut conn, test_email);
 
         let res = test_helpers::test_post_status("/api/users", &payload).await;
 
@@ -340,11 +358,39 @@ mod tests {
 
         assert_eq!(res, 401);
 
-        cleanup().execute(&mut conn).unwrap();
+        delete_user(&mut conn, test_email);
     }
 
     #[actix_rt::test]
     pub async fn test_me() {
-        todo!()
+        let pool = db::establish_connection();
+        let mut conn = pool.get().unwrap();
+
+        let test_email = "me_test@gmail.com";
+        delete_user(&mut conn, test_email);
+
+        let signup = Signup {
+            user: SignupUser {
+                email: test_email.into(),
+                password: "abcdef".into(),
+                name: "X Yz".into(),
+                lang: "ru".into(),
+                confirmation_id: confirmation_id(&mut conn, test_email),
+            },
+        };
+        let (status, signed_up): (u16, UserResponse) =
+            test_helpers::test_post("/api/users", &signup).await;
+        assert_eq!(status, 200);
+
+        let app = test_helpers::get_service().await;
+        let req = actix_web::test::TestRequest::get()
+            .uri("/api/user")
+            .insert_header(("Authorization", format!("Token {}", signed_up.user.token)))
+            .to_request();
+        let res: UserResponse = actix_web::test::call_and_read_body_json(&app, req).await;
+
+        assert_eq!(res.user.email, test_email);
+
+        delete_user(&mut conn, test_email);
     }
 }
