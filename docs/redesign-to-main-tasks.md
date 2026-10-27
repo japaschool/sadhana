@@ -54,7 +54,7 @@ Spec: `docs/superpowers/specs/2026-10-09-offline-mode-design.md`. The Rust-UI ta
 - [x] Starter practices: done: names translated (`home.starters.*`).
 
 **Auth**
-- [ ] Google sign-in needs `VITE_GOOGLE_CLIENT_ID` as a Docker build arg (plus a GitHub secret) and a Google OAuth client for app.sadhana.pro. The button hides itself when the ID isn't set. The server needs the same ID as `GOOGLE_CLIENT_ID` (prod env); without it, it refuses Google sign-in.
+- [x] Google sign-in: done: the OAuth web client for app.sadhana.pro is in `app-react/.env.production` (`VITE_GOOGLE_CLIENT_ID`, public, read by `npm run build`), and prod's env has the same ID as `GOOGLE_CLIENT_ID`; without it, the server refuses Google sign-in.
 - [x] OAuth signup: done: the client sends its UI language (`lang`, default `en` for older clients) and signup adds that language's default practices.
 
 **Settings / Help**
