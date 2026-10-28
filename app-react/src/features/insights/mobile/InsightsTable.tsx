@@ -6,9 +6,12 @@ import { practicesApi } from '../../../api/practices'
 import type { TraceInput } from '../chartLogic'
 import { fromDateStr } from '../../today/date'
 import { parseOptions } from '../../today/values'
-import { cellText, formatDay, traceAverageLabel } from '../insightsLogic'
+import { groupName } from '../../practices/groups'
+import { cellText, formatDay, tableColumns, traceAverageLabel } from '../insightsLogic'
 
 interface InsightsTableProps {
+  /** Group columns: a header cell per group, columns sorted by group. */
+  grouped: boolean
   traces: TraceInput[]; entries: ReportDataEntry[]; todayCob: string; onOpenDay: (cob: string) => void
   /** Space kept below the table. Mobile: the 61px tab bar plus 12px. */
   bottomGap?: number
@@ -17,7 +20,7 @@ interface InsightsTableProps {
 const DATE_COL = 'sticky left-0 z-10 w-[72px] min-w-[72px] border-r border-ui-hairline px-3'
 
 // ponytail: every day is rendered; virtualise if the All range on years of data gets slow.
-export function InsightsTable({ traces, entries, todayCob, onOpenDay, bottomGap = 73 }: InsightsTableProps) {
+export function InsightsTable({ grouped, traces, entries, todayCob, onOpenDay, bottomGap = 73 }: InsightsTableProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
@@ -25,40 +28,52 @@ export function InsightsTable({ traces, entries, todayCob, onOpenDay, bottomGap 
   const [top, setTop] = useState(0)
   useLayoutEffect(() => setTop(ref.current!.getBoundingClientRect().top + window.scrollY), [])
   const { data: practices = [] } = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices })
+  const { data: groups = [] } = useQuery({ queryKey: ['practice-groups'], queryFn: practicesApi.getGroups })
   const byName = new Map(practices.map((p) => [p.practice, p]))
   const values = new Map(entries.map((e) => [`${e.cob_date}|${e.practice}`, e.value]))
   const days = [...new Set(entries.map((e) => e.cob_date))].sort().reverse()
   const weekday = new Intl.DateTimeFormat(locale, { weekday: 'short' })
   const fullDate = new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long' })
 
-  const cols = traces.map((tr) => {
+  const all = traces.map((tr) => {
     const p = byName.get(tr.name)
     const long = tr.dataType === 'Text' && !parseOptions(p?.dropdown_variants).length
     return {
       ...tr,
+      id: p?.id ?? tr.name,
       required: !!p?.is_required,
       width: long ? 'w-[220px] min-w-[220px]' : tr.dataType === 'Bool' ? 'w-16 min-w-16' : 'w-[76px] min-w-[76px]',
       align: tr.dataType === 'Bool' ? 'text-center' : tr.dataType === 'Text' ? 'text-left' : 'text-right',
     }
   })
+  const byId = new Map(all.map((c) => [c.id, c]))
+  const blocks = tableColumns(all.map((c) => c.id), groups, practices, grouped)
+    .map((b) => ({ group: b.group, cols: b.ids.map((id) => byId.get(id)!) }))
+  // Columns of a practice that is gone (no group to put it in) stay out when grouped.
+  const cols = blocks.flatMap((b, bi) => b.cols.map((c, i) => ({ ...c, start: bi > 0 && i === 0 })))
+  const DIVIDER = 'border-l border-l-ui-hairline'
 
   return (
     <div ref={ref} style={{ maxHeight: `calc(100dvh - ${top + bottomGap}px - env(safe-area-inset-bottom))` }}
       className="overflow-auto rounded-[20px] border border-ui-hairline bg-ui-surface">
       <table className="min-w-full border-separate border-spacing-0">
         <thead className="sticky top-0 z-20 bg-ui-surface">
-          <tr>
-            <th className={`${DATE_COL} bg-ui-surface`} />
-            <th colSpan={cols.length} className="px-2.5 pt-2.5 pb-0.5 text-left font-ui-mono text-[10px] font-semibold tracking-[.08em] text-ui-accent uppercase">
-              {t('today.group')}
-            </th>
-          </tr>
+          {grouped && (
+            <tr>
+              <th className={`${DATE_COL} bg-ui-surface`} />
+              {blocks.map((b, i) => (
+                <th key={i} colSpan={b.cols.length} className={`${i > 0 ? DIVIDER : ''} max-w-0 truncate px-2.5 pt-2.5 pb-0.5 text-left font-ui-mono text-[10px] font-semibold tracking-[.08em] text-ui-accent uppercase`}>
+                  {groupName(b.group!, t)}
+                </th>
+              ))}
+            </tr>
+          )}
           <tr>
             <th className={`${DATE_COL} border-b bg-ui-surface pt-1 pb-2.5 text-left align-bottom font-ui-mono text-[10px] font-semibold tracking-[.08em] text-ui-faint uppercase`}>
               {t('insights.date')}
             </th>
             {cols.map((c, i) => (
-              <th key={i} className={`${c.width} ${c.align} border-b border-ui-hairline px-2.5 pt-1 pb-2.5 align-bottom text-[11px] leading-tight font-bold break-words hyphens-auto text-ui-ink`}>
+              <th key={i} className={`${c.width} ${c.align} ${c.start ? DIVIDER : ''} border-b border-ui-hairline px-2.5 pt-1 pb-2.5 align-bottom text-[11px] leading-tight font-bold break-words hyphens-auto text-ui-ink`}>
                 {c.name}
               </th>
             ))}
@@ -89,7 +104,7 @@ export function InsightsTable({ traces, entries, todayCob, onOpenDay, bottomGap 
                     : c.dataType === 'Bool' ? 'font-extrabold text-ui-good'
                     : c.dataType === 'Text' ? 'font-semibold text-ui-ink2' : 'font-ui-mono font-medium text-ui-ink'
                   return (
-                    <td key={i} className={`${c.align} ${tone} h-[52px] border-b border-ui-hairline px-2.5 py-2 text-[13px] leading-[1.35]`}>
+                    <td key={i} className={`${c.align} ${tone} ${c.start ? DIVIDER : ''} h-[52px] border-b border-ui-hairline px-2.5 py-2 text-[13px] leading-[1.35]`}>
                       <span className={c.dataType === 'Text' ? 'line-clamp-2' : 'whitespace-nowrap'}>{v || '—'}</span>
                     </td>
                   )
@@ -104,7 +119,7 @@ export function InsightsTable({ traces, entries, todayCob, onOpenDay, bottomGap 
               {t('insights.days', { count: days.length })}
             </td>
             {cols.map((c, i) => (
-              <td key={i} className={`${c.align} border-t border-ui-hairline px-2.5 py-3 font-ui-mono text-xs font-semibold text-ui-ink2`}>
+              <td key={i} className={`${c.align} ${c.start ? DIVIDER : ''} border-t border-ui-hairline px-2.5 py-3 font-ui-mono text-xs font-semibold text-ui-ink2`}>
                 {traceAverageLabel(c, entries, todayCob, units)}
               </td>
             ))}

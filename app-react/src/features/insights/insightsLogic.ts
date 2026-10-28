@@ -6,6 +6,8 @@ import {
 import { assignAxes, type Axis } from './axes'
 import { fromDateStr } from '../today/date'
 import { formatDuration, type DurationUnits } from '../today/values'
+import { groupPractices } from '../practices/groups'
+import type { PracticeGroup, UserPractice } from '../../types/api'
 
 export interface Headline { kind: 'duration' | 'count' | 'time'; value: number; delta: number | null }
 export interface AverageLine { axis: Axis; value: number; color: string }
@@ -161,4 +163,12 @@ export function cellText(raw: unknown, dt: TraceInput['dataType'], u: DurationUn
   if (dt === 'Duration') return formatDuration(n, u)
   if (dt === 'Time') return formatMinutesAsHHMM(n)
   return String(n)
+}
+
+/** A table's columns split into blocks: one per non-empty group when grouped (group order, report order inside), else one block in report order. */
+export function tableColumns(ids: string[], groups: PracticeGroup[], practices: UserPractice[], grouped: boolean): { group: PracticeGroup | null; ids: string[] }[] {
+  if (!grouped) return [{ group: null, ids }]
+  const byId = new Map(practices.map((p) => [p.id, p]))
+  const inReport = ids.flatMap((id) => byId.get(id) ?? [])
+  return groupPractices(groups, inReport).filter((s) => s.practices.length > 0).map((s) => ({ group: s.group, ids: s.practices.map((p) => p.id) }))
 }
