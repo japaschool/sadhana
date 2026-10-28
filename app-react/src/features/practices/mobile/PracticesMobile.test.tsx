@@ -5,13 +5,14 @@ import { AxiosError, AxiosHeaders } from 'axios'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { setViewportWidth } from '../../../test/viewport'
 import { useToastStore } from '../../../hooks/useToast'
-import type { UserPractice } from '../../../types/api'
+import type { PracticeGroup, UserPractice } from '../../../types/api'
 import { PracticesMobileScreen } from './PracticesMobile'
 
 vi.mock('../../../api/practices', () => ({
   practicesApi: {
     getUserPractices: vi.fn(), createUserPractice: vi.fn(), updateUserPractice: vi.fn(),
     deleteUserPractice: vi.fn(), reorderUserPractices: vi.fn(),
+    getGroups: vi.fn(), createGroup: vi.fn(), renameGroup: vi.fn(), deleteGroup: vi.fn(), saveLayout: vi.fn(),
   },
 }))
 import { practicesApi } from '../../../api/practices'
@@ -23,13 +24,26 @@ const PRACTICES: UserPractice[] = [
   { id: 'p3', practice: 'Mood', data_type: 'Text', is_active: true, dropdown_variants: 'Calm, Joyful, Tired, Restless' },
 ]
 
+const GROUPS: PracticeGroup[] = [
+  { id: 'g1', name: 'Morning', is_default: false },
+  { id: null, name: '', is_default: true },
+  { id: 'g2', name: 'Evening', is_default: false },
+]
+const GROUPED: UserPractice[] = [
+  { ...PRACTICES[0], group_id: 'g1' },
+  { ...PRACTICES[1], group_id: null },
+  { ...PRACTICES[2], group_id: 'g1' },
+]
+const unprocessable = () => new AxiosError('x', '422', undefined, undefined,
+  { status: 422, data: {}, statusText: '', headers: {}, config: { headers: new AxiosHeaders() } })
+
 function renderAt(path: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={[path]}>
         <Routes>
-          {['/settings/practices', '/settings/practices/new', '/settings/practices/:id'].map((p) => <Route key={p} path={p} element={<PracticesMobileScreen />} />)}
+          {['/settings/practices', '/settings/practices/new', '/settings/practices/:id', '/settings/practices/groups/new', '/settings/practices/groups/:groupId'].map((p) => <Route key={p} path={p} element={<PracticesMobileScreen />} />)}
           <Route path="/" element={<p>Today page</p>} />
         </Routes>
       </MemoryRouter>
@@ -43,6 +57,7 @@ describe('PracticesMobile', () => {
     setViewportWidth(390)
     useToastStore.setState({ toasts: [] })
     api.getUserPractices.mockResolvedValue(PRACTICES)
+    api.getGroups.mockResolvedValue([])
     api.createUserPractice.mockResolvedValue()
     api.updateUserPractice.mockResolvedValue()
     api.deleteUserPractice.mockResolvedValue()
@@ -134,5 +149,88 @@ describe('PracticesMobile', () => {
     fireEvent.click(within(confirm).getByRole('button', { name: 'Delete practice' }))
     await waitFor(() => expect(api.deleteUserPractice).toHaveBeenCalledWith('p1'))
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+
+  describe('groups', () => {
+    beforeEach(() => {
+      api.getUserPractices.mockResolvedValue(GROUPED)
+      api.getGroups.mockResolvedValue(GROUPS)
+      api.createGroup.mockResolvedValue('g3')
+      api.renameGroup.mockResolvedValue()
+      api.deleteGroup.mockResolvedValue()
+    })
+
+    it('shows group headers with counts, a Default chip on the default group and no menu on it', async () => {
+      renderAt('/settings/practices')
+      expect(await screen.findByText('3 practices in 3 groups · 1 hidden from Today')).toBeInTheDocument()
+      const morning = screen.getByRole('button', { name: 'Morning, 2' })
+      expect(morning).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Drag Morning' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Drag Practices' })).toBeInTheDocument()
+      expect(screen.getByText('Default')).toBeInTheDocument()
+      // The default group's header isn't a button: it can't be renamed or deleted.
+      expect(screen.queryByRole('button', { name: /^Practices, / })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Evening, 0' })).toBeInTheDocument()
+    })
+
+    it('+ Group opens a name sheet; creating calls createGroup("Kirtan")', async () => {
+      renderAt('/settings/practices')
+      fireEvent.click(await screen.findByRole('link', { name: 'Group' }))
+      const sheet = await screen.findByRole('dialog', { name: 'New group' })
+      expect(within(sheet).getByText("It's added at the end, empty. Empty groups don't show on Today.")).toBeInTheDocument()
+      fireEvent.change(within(sheet).getByLabelText('Name'), { target: { value: ' Kirtan ' } })
+      fireEvent.click(within(sheet).getByRole('button', { name: 'Create group' }))
+      await waitFor(() => expect(api.createGroup).toHaveBeenCalledWith('Kirtan'))
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    })
+
+    it('tapping a header opens the group sheet; Save renames', async () => {
+      renderAt('/settings/practices')
+      fireEvent.click(await screen.findByRole('button', { name: 'Morning, 2' }))
+      const sheet = await screen.findByRole('dialog', { name: 'Morning' })
+      fireEvent.change(within(sheet).getByLabelText('Name'), { target: { value: 'Early morning' } })
+      fireEvent.click(within(sheet).getByRole('button', { name: 'Save changes' }))
+      await waitFor(() => expect(api.renameGroup).toHaveBeenCalledWith('g1', 'Early morning'))
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    })
+
+    it('Delete group confirms with the count and destination, then calls deleteGroup', async () => {
+      renderAt('/settings/practices/groups/g1')
+      const sheet = await screen.findByRole('dialog', { name: 'Morning' })
+      expect(within(sheet).getByText('Its 2 practices move to “Practices”.')).toBeInTheDocument()
+      fireEvent.click(within(sheet).getByRole('button', { name: 'Delete…' }))
+      const confirm = screen.getByRole('dialog', { name: 'Delete “Morning”?' })
+      expect(within(confirm).getByText('Its 2 practices move to the end of “Practices”. Their logged data isn\'t touched.')).toBeInTheDocument()
+      expect(api.deleteGroup).not.toHaveBeenCalled()
+      fireEvent.click(within(confirm).getByRole('button', { name: 'Delete group' }))
+      await waitFor(() => expect(api.deleteGroup).toHaveBeenCalledWith('g1'))
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    })
+
+    it('an empty group shows the drop-zone text', async () => {
+      renderAt('/settings/practices')
+      expect(await screen.findByText('No practices yet. Drag one here, or pick this group in a practice. Not shown on Today while empty.')).toBeInTheDocument()
+    })
+
+    it('with only the default group, the count line has no group count and shows the add-group hint', async () => {
+      api.getUserPractices.mockResolvedValue(PRACTICES)
+      api.getGroups.mockResolvedValue([])
+      renderAt('/settings/practices')
+      expect(await screen.findByText('3 practices · 1 hidden from Today')).toBeInTheDocument()
+      expect(screen.getByText('Add a group to split Today into sections.')).toBeInTheDocument()
+      expect(screen.getByText('Default')).toBeInTheDocument()
+    })
+
+    it('a duplicate group name shows the name-taken error', async () => {
+      api.createGroup.mockRejectedValue(unprocessable())
+      renderAt('/settings/practices/groups/new')
+      const sheet = await screen.findByRole('dialog', { name: 'New group' })
+      fireEvent.change(within(sheet).getByLabelText('Name'), { target: { value: 'Kirtan' } })
+      fireEvent.click(within(sheet).getByRole('button', { name: 'Create group' }))
+      expect(await within(sheet).findByText('Group “Kirtan” already exists')).toBeInTheDocument()
+      // Names already loaded are caught before saving.
+      fireEvent.change(within(sheet).getByLabelText('Name'), { target: { value: 'Evening' } })
+      expect(within(sheet).getByRole('alert')).toHaveTextContent('Group “Evening” already exists')
+    })
   })
 })

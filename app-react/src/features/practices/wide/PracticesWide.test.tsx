@@ -3,13 +3,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { setViewportWidth } from '../../../test/viewport'
-import type { UserPractice } from '../../../types/api'
+import type { PracticeGroup, UserPractice } from '../../../types/api'
 import { PracticesWide } from './PracticesWide'
 
 vi.mock('../../../api/practices', () => ({
   practicesApi: {
     getUserPractices: vi.fn(), createUserPractice: vi.fn(), updateUserPractice: vi.fn(),
     deleteUserPractice: vi.fn(), reorderUserPractices: vi.fn(),
+    getGroups: vi.fn(), createGroup: vi.fn(), renameGroup: vi.fn(), deleteGroup: vi.fn(), saveLayout: vi.fn(),
   },
 }))
 import { practicesApi } from '../../../api/practices'
@@ -26,7 +27,7 @@ function renderAt(path: string) {
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={[path]}>
         <Routes>
-          {['/settings/practices', '/settings/practices/new', '/settings/practices/:id'].map((p) => <Route key={p} path={p} element={<PracticesWide />} />)}
+          {['/settings/practices', '/settings/practices/new', '/settings/practices/:id', '/settings/practices/groups/new', '/settings/practices/groups/:groupId'].map((p) => <Route key={p} path={p} element={<PracticesWide />} />)}
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -38,6 +39,7 @@ describe('PracticesWide', () => {
     vi.clearAllMocks()
     setViewportWidth(834, 1112)
     api.getUserPractices.mockResolvedValue(PRACTICES)
+    api.getGroups.mockResolvedValue([])
     api.updateUserPractice.mockResolvedValue()
     api.deleteUserPractice.mockResolvedValue()
   })
@@ -68,6 +70,22 @@ describe('PracticesWide', () => {
     fireEvent.click(within(panel).getByRole('button', { name: 'Delete…' }))
     fireEvent.click(within(screen.getByRole('dialog', { name: 'Delete “Japa rounds”?' })).getByRole('button', { name: 'Delete practice' }))
     await waitFor(() => expect(api.deleteUserPractice).toHaveBeenCalledWith('p1'))
+    expect(await screen.findByText('Select a practice to edit it, or add a new one.')).toBeInTheDocument()
+  })
+
+  it('selecting a group header opens rename/delete in the panel', async () => {
+    api.getUserPractices.mockResolvedValue([{ ...PRACTICES[0], group_id: 'g1' }, PRACTICES[1]])
+    api.getGroups.mockResolvedValue([{ id: null, name: '', is_default: true }, { id: 'g1', name: 'Morning', is_default: false }] as PracticeGroup[])
+    api.renameGroup.mockResolvedValue()
+    renderAt('/settings/practices')
+    fireEvent.click(await screen.findByRole('button', { name: 'Morning, 1' }))
+    const panel = await screen.findByRole('region', { name: 'Morning' })
+    expect(screen.getByRole('button', { name: 'Morning, 1' })).toHaveAttribute('aria-current', 'true')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(within(panel).getByText('Its 1 practice moves to “Practices”.')).toBeInTheDocument()
+    fireEvent.change(within(panel).getByLabelText('Name'), { target: { value: 'Dawn' } })
+    fireEvent.click(within(panel).getByRole('button', { name: 'Save changes' }))
+    await waitFor(() => expect(api.renameGroup).toHaveBeenCalledWith('g1', 'Dawn'))
     expect(await screen.findByText('Select a practice to edit it, or add a new one.')).toBeInTheDocument()
   })
 })

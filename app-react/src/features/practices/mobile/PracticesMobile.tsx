@@ -3,16 +3,20 @@ import { Link, Navigate, useMatch, useNavigate, useParams } from 'react-router-d
 import { useTranslation } from 'react-i18next'
 import { motion, useDragControls } from 'framer-motion'
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import type { DragEndEvent } from '@dnd-kit/core'
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
+import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { MobileShell } from '../../../layouts/mobile/MobileShell'
-import type { PracticeDataType, UserPractice } from '../../../types/api'
+import type { PracticeDataType, PracticeGroup, UserPractice } from '../../../types/api'
 import { parseOptions } from '../../today/values'
 import { LIST } from '../../yatras/settings/mobile/AdminPage'
 import { ConfirmSheet } from '../../yatras/settings/mobile/fields'
 import { TypeIcon } from '../../yatras/settings/mobile/TypeChip'
-import { usePractices } from '../usePractices'
+import { findGroup, saveGroup, sectionOf, usePractices } from '../usePractices'
+import { groupName, layoutOf } from '../groups'
+import type { Section } from '../groups'
+import { dropGroup, dropPractice, emptyId, flatItems, groupKey, headerId, practiceId } from '../dragLayout'
+import { GroupSheet } from './GroupSheet'
 import { PracticeSheet } from './PracticeSheet'
 
 const LIST_PATH = '/settings/practices'
@@ -28,21 +32,28 @@ export function PracticesMobileScreen() {
   )
 }
 
-/** Your practices in Today's order. /settings/practices/new and /settings/practices/:id open Add and Edit as sheets over it. */
+/**
+ * Your practices in Today's order, under their groups. /settings/practices/new and /settings/practices/:id open Add and Edit
+ * as sheets over it; /settings/practices/groups/new and /settings/practices/groups/:groupId name, rename or delete a group.
+ */
 export function PracticesMobile() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { id } = useParams()
+  const { id, groupId } = useParams()
   const adding = !!useMatch('/settings/practices/new')
+  const addingGroup = !!useMatch('/settings/practices/groups/new')
   const s = usePractices()
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deletingGroup, setDeletingGroup] = useState(false)
 
   const close = () => navigate(LIST_PATH, { replace: true })
   const find = (pid?: string | null) => s.practices.find((p) => p.id === pid)
   const editing = find(id)
   const deleting = find(deletingId)
+  const group = findGroup(s, groupId)
 
   if (id && s.isSuccess && !editing) return <Navigate to={LIST_PATH} replace />
+  if (groupId && s.groupsLoaded && !group) return <Navigate to={LIST_PATH} replace />
 
   return (
     <>
@@ -51,9 +62,14 @@ export function PracticesMobile() {
           <Link to="/settings" className="flex min-h-11 items-center gap-1 px-2 text-[17px] font-semibold text-ui-accent">
             <span aria-hidden>‹</span>{t('nav.settings')}
           </Link>
-          <Link to="/settings/practices/new" className="flex min-h-11 items-center gap-1.5 rounded-full bg-ui-accent-fill px-4 text-[15px] font-extrabold text-ui-ink">
-            <span aria-hidden className="text-lg leading-none">+</span>{t('practices.add')}
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to="/settings/practices/groups/new" className="flex min-h-11 items-center gap-1.5 rounded-full bg-ui-chip px-4 text-[15px] font-extrabold text-ui-ink">
+              <span aria-hidden className="text-lg leading-none">+</span>{t('practices.group')}
+            </Link>
+            <Link to="/settings/practices/new" className="flex min-h-11 items-center gap-1.5 rounded-full bg-ui-accent-fill px-4 text-[15px] font-extrabold text-ui-ink">
+              <span aria-hidden className="text-lg leading-none">+</span>{t('practices.add')}
+            </Link>
+          </div>
         </div>
       </header>
       <div className="flex flex-col gap-4 px-4 pb-8">
@@ -72,7 +88,24 @@ export function PracticesMobile() {
           onDelete={editing && (() => setDeletingId(editing.id))} />
       )}
       {deleting && <DeleteSheet s={s} p={deleting} onDeleted={() => { if (editing?.id === deleting.id) close() }} onClose={() => setDeletingId(null)} />}
+
+      {(addingGroup || group) && (
+        <GroupSheet key={group?.id ?? 'new'} group={group} count={group && sectionOf(s, group).practices.length}
+          others={s.groups.filter((g) => g !== group)} busy={s.createGroup.isPending || s.renameGroup.isPending} onClose={close}
+          onSave={(name) => saveGroup(s, group, name).then(close)} onDelete={() => setDeletingGroup(true)} />
+      )}
+      {group && deletingGroup && <DeleteGroupSheet s={s} g={group} onDeleted={close} onClose={() => setDeletingGroup(false)} />}
     </>
+  )
+}
+
+export function DeleteGroupSheet({ s, g, onDeleted, onClose }: { s: Practices; g: PracticeGroup; onDeleted: () => void; onClose: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <ConfirmSheet title={t('practices.deleteConfirmTitle', { name: g.name })}
+      text={t('practices.deleteGroupText', { count: sectionOf(s, g).practices.length, target: t('today.group') })}
+      confirm={t('practices.deleteGroup')} busy={s.deleteGroup.isPending} onClose={onClose}
+      onConfirm={() => s.deleteGroup.mutate(g, { onSuccess: onDeleted, onSettled: onClose })} />
   )
 }
 
@@ -87,57 +120,137 @@ export function DeleteSheet({ s, p, onDeleted, onClose }: { s: Practices; p: Use
   )
 }
 
-/** The count, then your practices in Today's order, dragged by the dots to reorder. Tap a row to edit it. */
-export function PracticeList({ s, swipe, selected, onDelete }: {
+/**
+ * The count, then your practices in Today's order under their group headers. The dots drag a practice (within or across
+ * groups) or a whole group. Tap a row to edit it, a header to rename or delete its group.
+ */
+export function PracticeList({ s, swipe, selected, selectedGroup, onDelete }: {
   s: Practices
   /** Mobile: a left swipe shows Hide and Delete. */
   swipe?: boolean
   /** Wide layouts: the row open in the editor beside the list. */
   selected?: string
+  /** Wide layouts: the group open in the editor beside the list. */
+  selectedGroup?: string
   onDelete: (id: string) => void
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [swiped, setSwiped] = useState<string | null>(null)
+  // What's being dragged and where it would land, so the target group and its count follow the pointer.
+  const [drag, setDrag] = useState<{ active: string; over: string | null } | null>(null)
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
   const hidden = s.practices.filter((p) => !p.is_active).length
+  const draggingGroup = !!drag?.active.startsWith('hdr:')
+  const preview = drag && !draggingGroup && drag.over ? dropPractice(s.sections, drag.active, drag.over) : s.sections
+  const target = drag && !draggingGroup ? preview.find((x) => x.practices.some((p) => practiceId(p.id) === drag.active))?.group : undefined
+  const single = s.sections.length === 1
 
   function onDragEnd({ active, over }: DragEndEvent) {
+    setDrag(null)
     if (!over || active.id === over.id) return
-    const ids = s.practices.map((p) => p.id)
-    s.reorder.mutate(arrayMove(ids, ids.indexOf(String(active.id)), ids.indexOf(String(over.id))))
+    const a = String(active.id), o = String(over.id)
+    const next = a.startsWith('hdr:') ? dropGroup(s.sections, a, o) : dropPractice(s.sections, a, o)
+    const layout = layoutOf(next)
+    if (JSON.stringify(layout) !== JSON.stringify(layoutOf(s.sections))) s.saveLayout.mutate(layout)
   }
 
   if (s.isLoading) return <Skeleton />
   if (s.isError) return <p role="alert" className="rounded-2xl bg-ui-surface px-4 py-3 text-sm text-ui-danger">{t('common.error')}</p>
   // Wide layouts open the Add form beside an empty list, so the card has no button.
-  if (!s.practices.length) return <Empty add={swipe} />
+  if (!s.practices.length && single) return <Empty add={swipe} />
+  const count = t('practices.count', { count: s.practices.length })
   return (
     <>
       <div className="-mt-1 px-1">
         <p className="text-[15px] font-bold text-ui-ink">
-          {t('practices.count', { count: s.practices.length })}{hidden > 0 && ` · ${t('practices.hiddenCount', { count: hidden })}`}
+          {single ? count : t('practices.inGroups', { practices: count, count: s.sections.length })}
+          {hidden > 0 && ` · ${t('practices.hiddenCount', { count: hidden })}`}
         </p>
         <p className="text-sm text-ui-muted">{t('practices.orderHint')}</p>
+        {single && <p className="text-sm text-ui-muted">{t('practices.addGroupHint')}</p>}
       </div>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={() => setSwiped(null)} onDragEnd={onDragEnd}>
-        <SortableContext items={s.practices.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-          <ul className={LIST}>
-            {s.practices.map((p) => (
-              <PracticeRow key={p.id} p={p} swipe={swipe} selected={selected === p.id}
-                open={swiped === p.id} onOpen={(o) => setSwiped(o ? p.id : null)}
-                onEdit={() => navigate(`/settings/practices/${p.id}`)}
-                onSetActive={(active) => { setSwiped(null); s.setActive.mutate({ p, active }) }}
-                onDelete={() => { setSwiped(null); onDelete(p.id) }} />
+      <DndContext sensors={sensors} collisionDetection={closestCenter}
+        onDragStart={({ active }: DragStartEvent) => { setSwiped(null); setDrag({ active: String(active.id), over: null }) }}
+        onDragOver={({ active, over }: DragOverEvent) => setDrag({ active: String(active.id), over: over ? String(over.id) : null })}
+        onDragCancel={() => setDrag(null)} onDragEnd={onDragEnd}>
+        <SortableContext items={flatItems(s.sections, draggingGroup)} strategy={verticalListSortingStrategy}>
+          <div className="flex flex-col gap-2">
+            {s.sections.map((sec, i) => (
+              <div key={groupKey(sec.group)}
+                className={`flex flex-col gap-1.5 rounded-[20px] ${target === sec.group ? 'outline-2 outline-offset-4 outline-ui-accent' : ''}`}>
+                <GroupHeader section={sec} count={preview[i].practices.length} selected={selectedGroup === sec.group.id}
+                  onEdit={() => navigate(`/settings/practices/groups/${sec.group.id}`)} />
+                {!draggingGroup && (
+                  <ul className={sec.practices.length ? LIST : 'overflow-hidden rounded-[18px] border border-dashed border-ui-control'}>
+                    {sec.practices.length ? sec.practices.map((p) => (
+                      <PracticeRow key={p.id} p={p} swipe={swipe} selected={selected === p.id}
+                        open={swiped === p.id} onOpen={(o) => setSwiped(o ? p.id : null)}
+                        onEdit={() => navigate(`/settings/practices/${p.id}`)}
+                        onSetActive={(active) => { setSwiped(null); s.setActive.mutate({ p, active }) }}
+                        onDelete={() => { setSwiped(null); onDelete(p.id) }} />
+                    )) : <EmptyGroup group={sec.group} />}
+                  </ul>
+                )}
+              </div>
             ))}
-          </ul>
+          </div>
         </SortableContext>
       </DndContext>
     </>
   )
+}
+
+/** Dots, name and count. The default group has a chip instead of ⋯ and isn't tappable, but its dots still drag. */
+function GroupHeader({ section: { group }, count, selected, onEdit }: { section: Section; count: number; selected: boolean; onEdit: () => void }) {
+  const { t } = useTranslation()
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: headerId(group) })
+  const name = groupName(group, t)
+  const label = (
+    <>
+      <span className="min-w-0 truncate font-ui-mono text-xs font-semibold tracking-[.1em] text-ui-muted uppercase">{name}</span>
+      <span className="shrink-0 font-ui-mono text-xs text-ui-faint2">{count}</span>
+    </>
+  )
+  return (
+    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`flex min-h-11 items-center gap-1 rounded-xl pr-2 ${isDragging ? 'relative z-10 bg-ui-surface shadow-lg' : ''} ${selected ? 'bg-ui-accent-soft' : ''}`}>
+      <button type="button" {...attributes} {...listeners} aria-label={t('practices.dragGroup', { name })}
+        className="flex h-11 w-9 shrink-0 cursor-grab touch-none items-center justify-center text-ui-faint2">
+        <Dots />
+      </button>
+      {group.is_default ? (
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          {label}
+          <span className="ml-auto shrink-0 rounded-full bg-ui-chip px-2.5 py-0.5 text-xs font-bold text-ui-ink2">{t('practices.defaultGroup')}</span>
+        </div>
+      ) : (
+        <button type="button" onClick={onEdit} aria-label={`${name}, ${count}`} aria-current={selected || undefined}
+          className="flex min-h-11 min-w-0 flex-1 items-center gap-2 text-left">
+          {label}
+          <span aria-hidden className={`ml-auto shrink-0 px-1 text-lg leading-none ${selected ? 'text-ui-accent' : 'text-ui-faint2'}`}>⋯</span>
+        </button>
+      )}
+    </div>
+  )
+}
+
+/** Where a practice lands in a group that has none. */
+function EmptyGroup({ group }: { group: PracticeGroup }) {
+  const { t } = useTranslation()
+  const { setNodeRef } = useSortable({ id: emptyId(group), disabled: { draggable: true, droppable: false } })
+  return (
+    <li ref={setNodeRef} className="px-4 py-4 text-center text-[13px] leading-normal text-ui-muted">
+      {t('practices.emptyGroup')}
+    </li>
+  )
+}
+
+function Dots() {
+  return <span aria-hidden className="grid grid-cols-2 gap-[3px]">{Array.from({ length: 6 }, (_, i) => <span key={i} className="h-1 w-1 rounded-full bg-current" />)}</span>
 }
 
 /** One target per row: tap edits, the dots drag, a left swipe shows Hide and Delete. */
@@ -146,7 +259,7 @@ function PracticeRow({ p, swipe, selected, open, onOpen, onEdit, onSetActive, on
   onEdit: () => void; onSetActive: (active: boolean) => void; onDelete: () => void
 }) {
   const { t } = useTranslation()
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: practiceId(p.id) })
   const drag = useDragControls()
   // A swipe ends with a click on the row; that click mustn't open the editor.
   const swiping = useRef(false)
@@ -169,7 +282,7 @@ function PracticeRow({ p, swipe, selected, open, onOpen, onEdit, onSetActive, on
         className={`relative flex min-h-[66px] items-center gap-1 pr-2 ${selected ? 'bg-ui-accent-soft' : p.is_active ? 'bg-ui-surface' : 'bg-ui-bg'}`}>
         <button type="button" {...attributes} {...listeners} aria-label={t('practices.dragHandle', { name: p.practice })}
           className="flex h-11 w-11 shrink-0 cursor-grab touch-none items-center justify-center text-ui-faint2">
-          <span aria-hidden className="grid grid-cols-2 gap-[3px]">{Array.from({ length: 6 }, (_, i) => <span key={i} className="h-1 w-1 rounded-full bg-current" />)}</span>
+          <Dots />
         </button>
         <button type="button" aria-current={selected || undefined} onPointerDown={(e) => { swiping.current = false; if (swipe) drag.start(e) }}
           onClick={() => { if (!swiping.current) { if (open) onOpen(false); else onEdit() } }}

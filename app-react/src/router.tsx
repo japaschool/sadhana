@@ -113,6 +113,8 @@ export const router = createBrowserRouter([
       { path: '/settings/practices', element: <ByLayout mobile={<PracticesMobileScreen />} tablet={<PracticesWide />} desktop={<PracticesWide />} /> },
       { path: '/settings/practices/new', element: <ByLayout mobile={<PracticesMobileScreen />} tablet={<PracticesWide />} desktop={<PracticesWide />} /> },
       { path: '/settings/practices/:id', element: <ByLayout mobile={<PracticesMobileScreen />} tablet={<PracticesWide />} desktop={<PracticesWide />} /> },
+      { path: '/settings/practices/groups/new', element: <ByLayout mobile={<PracticesMobileScreen />} tablet={<PracticesWide />} desktop={<PracticesWide />} /> },
+      { path: '/settings/practices/groups/:groupId', element: <ByLayout mobile={<PracticesMobileScreen />} tablet={<PracticesWide />} desktop={<PracticesWide />} /> },
       { path: '/user/practices', element: <Navigate to="/settings/practices" replace /> },
       { path: '/user/practice/new', element: <Navigate to="/settings/practices/new" replace /> },
       { path: '/user/practice/:id/edit', element: <ToPracticeSettings /> },
