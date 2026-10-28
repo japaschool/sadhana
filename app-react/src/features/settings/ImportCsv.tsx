@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { practicesApi } from '../../api/practices'
 import { PracticeSheet } from '../practices/mobile/PracticeSheet'
+import { useNewGroup } from '../practices/mobile/useNewGroup'
 import { usePractices } from '../practices/usePractices'
 import { useLayout } from '../../layouts/useLayout'
 import { CARD, LIST } from '../yatras/settings/mobile/AdminPage'
@@ -200,6 +201,7 @@ export function ImportCsv() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const s = usePractices()
+  const newGroup = useNewGroup(s)
   // The column being added as a practice; once saved, the review matches it.
   const [adding, setAdding] = useState<string | null>(null)
   const [step, setStep] = useState<Step>('file')
@@ -287,9 +289,10 @@ export function ImportCsv() {
           {save.isError && <ErrorBanner title={t('import.saveFailed')} text={t('import.saveFailedHint')} />}
           <Review chosen={chosen} busy={save.isPending} onChange={toFile} onAdd={setAdding} />
           {adding !== null && (
-            <PracticeSheet name={adding} others={s.practices} busy={s.create.isPending} onClose={() => setAdding(null)}
+            <PracticeSheet name={adding} groups={s.sections.map((x) => x.group)} onNewGroup={newGroup.ask} others={s.practices} busy={s.create.isPending} onClose={() => setAdding(null)}
               onSave={async (d) => { await s.create.mutateAsync(d); setAdding(null) }} />
           )}
+          {newGroup.sheet}
         </>
       )}
       {failed && (

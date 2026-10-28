@@ -779,6 +779,7 @@
     "dragGroup": "Drag {{name}}",
     "defaultGroup": "Default",
     "emptyGroup": "No practices yet. Drag one here, or pick this group in a practice. Not shown on Today while empty.",
+    "groupHint": "Sets which section it's in on Today.",
     "newGroup": "New group",
     "newGroupHint": "It's added at the end, empty. Empty groups don't show on Today.",
     "createGroup": "Create group",

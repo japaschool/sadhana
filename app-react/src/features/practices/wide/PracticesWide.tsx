@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { DesktopShell } from '../../../layouts/desktop/DesktopShell'
 import { TabletShell } from '../../../layouts/tablet/TabletShell'
 import { useLayout } from '../../../layouts/useLayout'
-import { findGroup, saveGroup, sectionOf, usePractices } from '../usePractices'
+import { findGroup, saveGroup, saveGroupMove, sectionOf, usePractices } from '../usePractices'
 import { DeleteGroupSheet, DeleteSheet, PracticeList } from '../mobile/PracticesMobile'
 import { GroupSheet } from '../mobile/GroupSheet'
+import { useNewGroup } from '../mobile/useNewGroup'
 import { PracticeSheet } from '../mobile/PracticeSheet'
 
 const LIST_PATH = '/settings/practices'
@@ -22,6 +23,7 @@ export function PracticesWide() {
   const { id, groupId } = useParams()
   const desktop = useLayout() === 'desktop'
   const s = usePractices()
+  const newGroup = useNewGroup(s)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deletingGroup, setDeletingGroup] = useState(false)
 
@@ -63,11 +65,13 @@ export function PracticesWide() {
             others={s.groups.filter((g) => g !== group)} busy={s.createGroup.isPending || s.renameGroup.isPending} onClose={close}
             onSave={(name) => saveGroup(s, group, name).then(close)} onDelete={() => setDeletingGroup(true)} />
         ) : adding || editing ? (
-          <PracticeSheet panel key={editing?.id ?? 'new'} practice={editing} others={s.practices.filter((p) => p.id !== editing?.id)}
+          <PracticeSheet panel key={editing?.id ?? 'new'} practice={editing} groups={s.sections.map((x) => x.group)} onNewGroup={newGroup.ask} others={s.practices.filter((p) => p.id !== editing?.id)}
             busy={s.create.isPending || s.update.isPending} onClose={close}
             onSave={async (d) => {
-              if (editing) await s.update.mutateAsync({ ...editing, ...d, dropdown_variants: d.dropdown_variants ?? undefined })
-              else await s.create.mutateAsync(d)
+              if (editing) {
+                await s.update.mutateAsync({ ...editing, ...d, dropdown_variants: d.dropdown_variants ?? undefined })
+                if (d.group_id !== (editing.group_id ?? null)) await saveGroupMove(s, editing.id, d.group_id)
+              } else await s.create.mutateAsync(d)
               close()
             }}
             onDelete={editing && (() => setDeletingId(editing.id))} />
@@ -79,6 +83,7 @@ export function PracticesWide() {
         )}
       </div>
       {group && deletingGroup && <DeleteGroupSheet s={s} g={group} onDeleted={close} onClose={() => setDeletingGroup(false)} />}
+      {newGroup.sheet}
       {deleting && <DeleteSheet s={s} p={deleting} onDeleted={() => { if (editing?.id === deleting.id) close() }} onClose={() => setDeletingId(null)} />}
     </div>
   )

@@ -4,13 +4,13 @@ import { isAxiosError } from 'axios'
 import { practicesApi } from '../../api/practices'
 import { useToast } from '../../hooks/useToast'
 import type { PracticeDataType, PracticeGroup, UserPractice } from '../../types/api'
-import { groupPractices } from './groups'
+import { groupPractices, layoutOf, moveToGroupEnd } from './groups'
 import type { Layout } from './groups'
 
 export const NAME_MAX = 64
 export const LIST_MAX = 1024
 
-export interface PracticeDraft { practice: string; data_type: PracticeDataType; is_active: boolean; is_required: boolean; dropdown_variants: string | null }
+export interface PracticeDraft { practice: string; data_type: PracticeDataType; is_active: boolean; is_required: boolean; dropdown_variants: string | null; group_id: string | null }
 
 /** The server replaces every field on update, so each write sends the whole practice. */
 const fields = (p: UserPractice) => ({
@@ -37,9 +37,9 @@ export function usePractices() {
   const failed = () => showToast({ message: t('common.error'), variant: 'error' })
 
   const create = useMutation({
-    mutationFn: ({ group_id, ...d }: PracticeDraft & { group_id?: string | null }) => practicesApi.createUserPractice({
+    mutationFn: ({ group_id, ...d }: PracticeDraft) => practicesApi.createUserPractice({
       practice: d.practice, data_type: d.data_type, is_required: d.is_required || undefined, dropdown_variants: d.dropdown_variants ?? undefined,
-      ...(group_id !== undefined && { group_id }),
+      ...(group_id && { group_id }),
     }),
     onSuccess: refresh,
   })
@@ -126,3 +126,9 @@ export const sectionOf = (s: ReturnType<typeof usePractices>, g: PracticeGroup) 
 
 export const saveGroup = (s: ReturnType<typeof usePractices>, g: PracticeGroup | undefined, name: string): Promise<unknown> =>
   g ? s.renameGroup.mutateAsync({ id: g.id!, name }) : s.createGroup.mutateAsync(name)
+
+/** Moves a saved practice to the end of its new group; a group made a moment ago may not be in `s.sections` yet. */
+export function saveGroupMove(s: ReturnType<typeof usePractices>, practiceId: string, groupId: string | null) {
+  const sections = s.sections.some((x) => x.group.id === groupId) ? s.sections : [...s.sections, { group: { id: groupId, name: '', is_default: false }, practices: [] }]
+  return s.saveLayout.mutateAsync(layoutOf(moveToGroupEnd(sections, practiceId, groupId)))
+}

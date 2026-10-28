@@ -232,5 +232,67 @@ describe('PracticesMobile', () => {
       fireEvent.change(within(sheet).getByLabelText('Name'), { target: { value: 'Evening' } })
       expect(within(sheet).getByRole('alert')).toHaveTextContent('Group “Evening” already exists')
     })
+
+    describe('the editor Group field', () => {
+      const open = async (name = 'Group') => {
+        const field = await screen.findByRole('button', { name: /^Group/ })
+        fireEvent.click(field)
+        return screen.findByRole('menu', { name })
+      }
+
+      it('shows the practice\'s group and lists groups in order with + New group', async () => {
+        renderAt('/settings/practices/p1')
+        const sheet = await screen.findByRole('dialog', { name: 'Japa rounds' })
+        expect(within(sheet).getByRole('button', { name: /^Group/ })).toHaveTextContent('Morning')
+        const menu = await open()
+        const items = [...menu.querySelectorAll('[role^="menuitem"]')].map((e) => e.textContent)
+        expect(items).toEqual(['Morning✓', 'Practices', 'Evening', '+ New group'])
+      })
+
+      it('saving with a new group calls update then saveLayout with the practice last in that group', async () => {
+        api.saveLayout.mockResolvedValue()
+        renderAt('/settings/practices/p1')
+        await screen.findByRole('dialog', { name: 'Japa rounds' })
+        fireEvent.click(within(await open()).getByRole('menuitemradio', { name: 'Evening' }))
+        fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+        await waitFor(() => expect(api.saveLayout).toHaveBeenCalledWith({
+          groups: ['g1', null, 'g2'],
+          practices: [{ id: 'p3', group_id: 'g1' }, { id: 'p2', group_id: null }, { id: 'p1', group_id: 'g2' }],
+        }))
+        expect(api.updateUserPractice).toHaveBeenCalledWith('p1', expect.objectContaining({ practice: 'Japa rounds' }))
+        expect(api.updateUserPractice.mock.invocationCallOrder[0]).toBeLessThan(api.saveLayout.mock.invocationCallOrder[0])
+      })
+
+      it('a new practice defaults to Practices; picking Morning creates it with group_id g1', async () => {
+        renderAt('/settings/practices/new')
+        const sheet = await screen.findByRole('dialog', { name: 'New practice' })
+        expect(within(sheet).getByRole('button', { name: /^Group/ })).toHaveTextContent('Practices')
+        fireEvent.click(within(await open()).getByRole('menuitemradio', { name: 'Morning' }))
+        fireEvent.change(within(sheet).getByLabelText('Name'), { target: { value: 'Kirtan' } })
+        fireEvent.click(within(sheet).getByRole('radio', { name: /Tick/ }))
+        fireEvent.click(within(sheet).getByRole('button', { name: 'Add practice' }))
+        await waitFor(() => expect(api.createUserPractice).toHaveBeenCalledWith(expect.objectContaining({ practice: 'Kirtan', group_id: 'g1' })))
+      })
+
+      it('saving without changing the group makes no layout call', async () => {
+        renderAt('/settings/practices/p1')
+        await screen.findByRole('dialog', { name: 'Japa rounds' })
+        fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+        await waitFor(() => expect(api.updateUserPractice).toHaveBeenCalled())
+        expect(api.saveLayout).not.toHaveBeenCalled()
+      })
+
+      it('+ New group names a group and selects it', async () => {
+        renderAt('/settings/practices/p1')
+        await screen.findByRole('dialog', { name: 'Japa rounds' })
+        fireEvent.click(within(await open()).getByRole('menuitem', { name: '+ New group' }))
+        const sheet = await screen.findByRole('dialog', { name: 'New group' })
+        fireEvent.change(within(sheet).getByLabelText('Name'), { target: { value: 'Kirtan' } })
+        api.getGroups.mockResolvedValue([...GROUPS, { id: 'g3', name: 'Kirtan', is_default: false }])
+        fireEvent.click(within(sheet).getByRole('button', { name: 'Create group' }))
+        await waitFor(() => expect(api.createGroup).toHaveBeenCalledWith('Kirtan'))
+        await waitFor(() => expect(screen.getByRole('button', { name: /^Group/ })).toHaveTextContent('Kirtan'))
+      })
+    })
   })
 })

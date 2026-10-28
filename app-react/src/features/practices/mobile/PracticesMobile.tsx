@@ -12,11 +12,12 @@ import { parseOptions } from '../../today/values'
 import { LIST } from '../../yatras/settings/mobile/AdminPage'
 import { ConfirmSheet } from '../../yatras/settings/mobile/fields'
 import { TypeIcon } from '../../yatras/settings/mobile/TypeChip'
-import { findGroup, saveGroup, sectionOf, usePractices } from '../usePractices'
+import { findGroup, saveGroup, saveGroupMove, sectionOf, usePractices } from '../usePractices'
 import { groupName, layoutOf } from '../groups'
 import type { Section } from '../groups'
 import { dropGroup, dropPractice, emptyId, flatItems, groupKey, headerId, practiceId } from '../dragLayout'
 import { GroupSheet } from './GroupSheet'
+import { useNewGroup } from './useNewGroup'
 import { PracticeSheet } from './PracticeSheet'
 
 const LIST_PATH = '/settings/practices'
@@ -43,6 +44,7 @@ export function PracticesMobile() {
   const adding = !!useMatch('/settings/practices/new')
   const addingGroup = !!useMatch('/settings/practices/groups/new')
   const s = usePractices()
+  const newGroup = useNewGroup(s)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deletingGroup, setDeletingGroup] = useState(false)
 
@@ -78,15 +80,18 @@ export function PracticesMobile() {
       </div>
 
       {(adding || editing) && (
-        <PracticeSheet key={editing?.id ?? 'new'} practice={editing} others={s.practices.filter((p) => p.id !== editing?.id)}
+        <PracticeSheet key={editing?.id ?? 'new'} practice={editing} groups={s.sections.map((x) => x.group)} onNewGroup={newGroup.ask} others={s.practices.filter((p) => p.id !== editing?.id)}
           busy={s.create.isPending || s.update.isPending} onClose={close}
           onSave={async (d) => {
-            if (editing) await s.update.mutateAsync({ ...editing, ...d, dropdown_variants: d.dropdown_variants ?? undefined })
-            else await s.create.mutateAsync(d)
+            if (editing) {
+              await s.update.mutateAsync({ ...editing, ...d, dropdown_variants: d.dropdown_variants ?? undefined })
+              if (d.group_id !== (editing.group_id ?? null)) await saveGroupMove(s, editing.id, d.group_id)
+            } else await s.create.mutateAsync(d)
             close()
           }}
           onDelete={editing && (() => setDeletingId(editing.id))} />
       )}
+      {newGroup.sheet}
       {deleting && <DeleteSheet s={s} p={deleting} onDeleted={() => { if (editing?.id === deleting.id) close() }} onClose={() => setDeletingId(null)} />}
 
       {(addingGroup || group) && (
