@@ -9,7 +9,7 @@ Sadhana Pro is a PWA for tracking spiritual practice: a **Rust** API and a **Rea
 - `server` — actix-web REST API + static file host (Diesel/Postgres). Default workspace member.
 - `common` — types used by the server (`backend` feature).
 
-The Rust/Yew UI (`frontend/`) was removed on this branch; it still lives on `main`, and is deployed only from there. Both UIs share the prod DB.
+The Rust/Yew UI (`frontend/`) has been removed and is no longer deployed. `main` is the live branch; `master` is stale and unused. Older cached React builds (installed PWAs, open tabs) keep talking to a newly deployed server until they refresh, so API changes must stay backward compatible with them.
 
 The compiled frontend lands in `dist/`, which the server serves directly (see `server/src/routes.rs`).
 
@@ -43,7 +43,7 @@ CI (`.github/workflows/ci.yml`) runs React lint/test/build and clippy + `cargo t
 
 **DB migrations are embedded** in the server binary (`embed_migrations!`) and run on startup when enabled via `vars::run_db_migrations_on_startup()`.
 
-**Compatibility with the Rust UI** (users switch between the two via the preview cookie): the JWT stays in `yew.token`, JSON-quoted as gloo wrote it (`readToken`/`writeToken` in `store/authStore.ts`); the old `user_language` key is migrated once to `i18nextLng` (`legacyLanguage.ts`).
+**Legacy storage keys from the Rust UI** (kept so existing installs stay signed in): the JWT stays in `yew.token`, JSON-quoted as gloo wrote it (`readToken`/`writeToken` in `store/authStore.ts`); the old `user_language` key is migrated once to `i18nextLng` (`legacyLanguage.ts`).
 
 **Service worker:** `app-react/public/service_worker.js` (+ pure logic in `sw-lib.js`) is served at the Rust UI's worker path with no-cache headers; `__GIT_SHA__` is substituted at Docker build (a worker whose `GIT_SHA` still starts with `__GIT` is DEV and skips precaching). It serves the shell from `static-vr-<sha>` (precached from `/precache-manifest.js`), queues diary entry PUTs in IndexedDB `sadhana-outbox` before trying the network (`202` + `X-Queued` when not sent), overlays pending values on `GET /api/diary/{date}`, and takes over from the Rust worker (moving its `SadhanaProPostDB` queue). The page's data is React Query persisted to IndexedDB `sadhana-query` (queries use `gcTime: Infinity`; a saved user `sadhana.user` must match the token, else the cache is dropped). `/#reset` wipes all but the outbox. Touch this area carefully: it governs what installed clients run. Spec: `docs/superpowers/specs/2026-10-09-offline-mode-design.md`.
 
