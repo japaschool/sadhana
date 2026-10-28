@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { groupPractices, todaySections, layoutOf, moveToGroupEnd } from './groups'
-import type { PracticeGroup } from '../../types/api'
-import type { UserPractice } from '../../types/api'
+import type { PracticeGroup, UserPractice } from '../../types/api'
 
 const def: PracticeGroup = { id: null, name: 'Practices', is_default: true }
 const m: PracticeGroup = { id: 'm', name: 'Morning', is_default: false }
@@ -49,5 +48,9 @@ describe('groups', () => {
   it('moveToGroupEnd moves a practice to the end of another group', () => {
     const s = groupPractices([m, def], [A, B, p('C', 'm')])
     expect(shape(moveToGroupEnd(s, 'B', null))).toEqual([['m', ['C']], [null, ['A', 'B']]])
+  })
+  it('moveToGroupEnd leaves the sections alone for a group it has no section for', () => {
+    const s = groupPractices([m, def], [A, B])
+    expect(moveToGroupEnd(s, 'B', 'gone')).toBe(s)
   })
 })

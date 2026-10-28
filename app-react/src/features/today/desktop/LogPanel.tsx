@@ -3,16 +3,15 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { DayFailedNote, SyncBanner } from '../SyncBanner'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
-import { ListGroup } from '../../../ui/primitives/ListGroup'
-import { groupName } from '../../practices/groups'
 import { PanelPopover } from '../../../ui/primitives/PanelPopover'
 import { addDays, toDateStr } from '../date'
+import { ListGroup } from '../../../ui/primitives/ListGroup'
 import { NoPractices } from '../NoPractices'
 import { useToday } from '../useToday'
 import { CalendarMonth } from '../mobile/CalendarSheet'
 import { DateHeader } from '../mobile/DateHeader'
 import { DayStrip9 } from '../mobile/DayStrip9'
-import { PracticeRow } from '../mobile/PracticeRow'
+import { TodaySections } from '../mobile/PracticeRow'
 
 const STEP = 'flex h-9 w-9 items-center justify-center rounded-[10px] text-lg text-ui-muted'
 
@@ -80,14 +79,7 @@ export function LogPanel({ date, onDate }: { date: Date; onDate: (d: Date) => vo
         ) : (
           <>
             {today.dayFailed && <DayFailedNote />}
-            {today.sections.map((s) => (
-              <ListGroup key={s.group.id ?? 'default'} label={groupName(s.group, t)}>
-                {s.practices.map((p) => (
-                  <PracticeRow key={`${p.id}-${dateStr}`} practice={p} value={today.values[p.practice]}
-                    failed={today.failed === p.practice} onSave={(v) => today.save(p, v)} />
-                ))}
-              </ListGroup>
-            ))}
+            <TodaySections today={today} dateStr={dateStr} />
           </>
         )}
       </div>

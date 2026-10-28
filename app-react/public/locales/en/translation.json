@@ -704,8 +704,8 @@
     "groupColumns": "Group columns",
     "groupColumnsOn": "Columns follow your practice groups, with each group's name above its columns.",
     "groupColumnsOff": "Columns follow the order below. No group row.",
-    "columnsHintGrouped": "Group order comes from Practices settings. Drag to reorder inside a group.",
-    "columnsHintFlat": "Drag by the dots to set the column order.",
+    "columnsHintGrouped": "Group order comes from Practices settings. Drag to reorder inside a group. Yes / No shows ✓; text shows what you wrote.",
+    "columnsHintFlat": "Drag by the dots to set the column order. Yes / No shows ✓; text shows what you wrote.",
     "deletedPractice": "Deleted practice",
     "tickToSee": "Tick a practice below and it appears here"
   },

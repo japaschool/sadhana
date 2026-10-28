@@ -20,9 +20,6 @@ export const practicesApi = {
   async deleteUserPractice(id: string): Promise<void> {
     await apiClient.delete(`/user/practice/${id}`)
   },
-  async reorderUserPractices(ids: string[]): Promise<void> {
-    await apiClient.put('/user/practices/reorder', { practices: ids })
-  },
   async getGroups(): Promise<PracticeGroup[]> {
     const res = await apiClient.get<{ groups: PracticeGroup[] }>('/user/practice-groups')
     return res.data.groups

@@ -5,7 +5,7 @@ export type { Layout }
 
 export interface Section { group: PracticeGroup; practices: UserPractice[] }
 
-const DEFAULT_GROUP: PracticeGroup = { id: null, name: '', is_default: true }
+const DEFAULT_GROUP: PracticeGroup = Object.freeze({ id: null, name: '', is_default: true })
 
 /** One section per group, in order (empty ones too); practices keep input order. */
 export function groupPractices(groups: PracticeGroup[], practices: UserPractice[]): Section[] {
@@ -34,7 +34,8 @@ export function layoutOf(sections: Section[]): Layout {
 
 export function moveToGroupEnd(sections: Section[], practiceId: string, groupId: string | null): Section[] {
   const moved = sections.flatMap((s) => s.practices).find((p) => p.id === practiceId)
-  if (!moved) return sections
+  // An unknown group would take the practice out of every section.
+  if (!moved || !sections.some((s) => s.group.id === groupId)) return sections
   return sections.map((s) => {
     const rest = s.practices.filter((p) => p.id !== practiceId)
     return s.group.id === groupId ? { ...s, practices: [...rest, { ...moved, group_id: groupId }] } : { ...s, practices: rest }

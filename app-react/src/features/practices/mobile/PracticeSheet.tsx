@@ -162,7 +162,7 @@ function GroupField({ groups, value, onChange, onNewGroup, hint }: {
       <span id="practice-group" className={LABEL}>{t('practices.group')}</span>
       <button type="button" aria-labelledby="practice-group practice-group-value" aria-haspopup="menu" aria-expanded={!!anchor}
         onClick={(e) => setAnchor(e.currentTarget)} className={`${FIELD} flex items-center justify-between gap-2 text-left`}>
-        <span id="practice-group-value" className="min-w-0 truncate">{current ? groupName(current, t) : t('today.group')}</span>
+        <span id="practice-group-value" className="min-w-0 truncate">{current ? groupName(current, t) : value ? '…' : t('today.group')}</span>
         <span aria-hidden className="text-ui-muted">▾</span>
       </button>
       {hint && <p className={HINT}>{t('practices.groupHint')}</p>}

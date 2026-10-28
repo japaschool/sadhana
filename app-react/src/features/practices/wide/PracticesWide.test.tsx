@@ -9,7 +9,7 @@ import { PracticesWide } from './PracticesWide'
 vi.mock('../../../api/practices', () => ({
   practicesApi: {
     getUserPractices: vi.fn(), createUserPractice: vi.fn(), updateUserPractice: vi.fn(),
-    deleteUserPractice: vi.fn(), reorderUserPractices: vi.fn(),
+    deleteUserPractice: vi.fn(),
     getGroups: vi.fn(), createGroup: vi.fn(), renameGroup: vi.fn(), deleteGroup: vi.fn(), saveLayout: vi.fn(),
   },
 }))
@@ -87,5 +87,20 @@ describe('PracticesWide', () => {
     fireEvent.click(within(panel).getByRole('button', { name: 'Save changes' }))
     await waitFor(() => expect(api.renameGroup).toHaveBeenCalledWith('g1', 'Dawn'))
     expect(await screen.findByText('Select a practice to edit it, or add a new one.')).toBeInTheDocument()
+  })
+
+  it('the panel editor has the Group field with its hint, and moving a practice saves the layout', async () => {
+    api.getGroups.mockResolvedValue([{ id: null, name: '', is_default: true }, { id: 'g1', name: 'Morning', is_default: false }] as PracticeGroup[])
+    api.saveLayout.mockResolvedValue()
+    renderAt('/settings/practices/p2')
+    const panel = await screen.findByRole('region', { name: 'Lectures' })
+    expect(within(panel).getByText("Sets which section it's in on Today.")).toBeInTheDocument()
+    fireEvent.click(within(panel).getByRole('button', { name: /^Group/ }))
+    fireEvent.click(within(await screen.findByRole('menu', { name: 'Group' })).getByRole('menuitemradio', { name: 'Morning' }))
+    fireEvent.click(within(panel).getByRole('button', { name: 'Save changes' }))
+    await waitFor(() => expect(api.saveLayout).toHaveBeenCalledWith({
+      groups: [null, 'g1'],
+      practices: [{ id: 'p1', group_id: null }, { id: 'p2', group_id: 'g1' }],
+    }))
   })
 })

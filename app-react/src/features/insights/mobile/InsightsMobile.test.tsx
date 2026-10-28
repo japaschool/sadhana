@@ -213,9 +213,11 @@ describe('InsightsMobile', () => {
 
   it('a grouped table has one header cell per group spanning its columns', async () => {
     localStorage.setItem('insights-report', 'g1')
+    charts.getReports.mockResolvedValue([{ id: 'g1', name: 'Grid one', definition: { Grid: { practices: ['p1', 'p2', 'p3'] } } }])
     practices.getUserPractices.mockResolvedValue([
       { id: 'p1', practice: 'Japa', data_type: 'Duration', is_active: true, group_id: null },
       { id: 'p2', practice: 'Reading', data_type: 'Duration', is_active: true, group_id: 'm' },
+      { id: 'p3', practice: 'Mantra', data_type: 'Duration', is_active: true, group_id: 'm' },
     ] as never)
     practices.getGroups.mockResolvedValue([{ id: 'm', name: 'Morning', is_default: false }, { id: null, name: '', is_default: true }])
     renderScreen()
@@ -223,9 +225,9 @@ describe('InsightsMobile', () => {
     const head = within(table).getAllByRole('row')[0]
     const cells = within(head).getAllByRole('columnheader').filter((c) => c.textContent)
     expect(cells.map((c) => c.textContent)).toEqual(['Morning', 'Practices'])
-    expect(cells.map((c) => c.getAttribute('colspan'))).toEqual(['1', '1'])
-    // Reading (Morning) comes before Japa.
-    expect(within(table).getAllByRole('row')[1].textContent).toBe('DateReadingJapa')
+    expect(cells.map((c) => c.getAttribute('colspan'))).toEqual(['2', '1'])
+    // Morning's columns, in report order, come before Japa.
+    expect(within(table).getAllByRole('row')[1].textContent).toBe('DateReadingMantraJapa')
   })
 
   it('Group columns off: no group header row, report order', async () => {

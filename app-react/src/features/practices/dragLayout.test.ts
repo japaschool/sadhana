@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { PracticeGroup, UserPractice } from '../../types/api'
 import type { Section } from './groups'
-import { dropGroup, dropPractice, flatItems } from './dragLayout'
+import { dropGroup, dropPractice, flatItems, movePractice } from './dragLayout'
 
 const DEF: PracticeGroup = { id: null, name: '', is_default: true }
 const AM: PracticeGroup = { id: 'g1', name: 'Morning', is_default: false }
@@ -23,6 +23,22 @@ describe('dragLayout', () => {
   it('dropping a practice on another group\'s row moves it into that group, at that position', () => {
     expect(shape(dropPractice(SECTIONS, 'p:a', 'p:c'))).toEqual([['g1', 'b:g1'], [null, 'c:null', 'a:null', 'd:null'], ['g2']])
     expect(shape(dropPractice(SECTIONS, 'p:d', 'p:b'))).toEqual([['g1', 'a:g1', 'd:g1', 'b:g1'], [null, 'c:null'], ['g2']])
+  })
+
+  it('while dragged over another group\'s row, a practice moves in before or after it', () => {
+    expect(shape(movePractice(SECTIONS, 'p:a', 'p:c', false))).toEqual([['g1', 'b:g1'], [null, 'a:null', 'c:null', 'd:null'], ['g2']])
+    expect(shape(movePractice(SECTIONS, 'p:a', 'p:c', true))).toEqual([['g1', 'b:g1'], [null, 'c:null', 'a:null', 'd:null'], ['g2']])
+  })
+
+  it('while dragged into an empty group or onto a header, it goes first there, or last in the group above', () => {
+    expect(shape(movePractice(SECTIONS, 'p:c', 'empty:g2', true))).toEqual([['g1', 'a:g1', 'b:g1'], [null, 'd:null'], ['g2', 'c:g2']])
+    expect(shape(movePractice(SECTIONS, 'p:a', 'hdr:default', true))).toEqual([['g1', 'b:g1'], [null, 'a:null', 'c:null', 'd:null'], ['g2']])
+    expect(shape(movePractice(SECTIONS, 'p:d', 'hdr:default', false))).toEqual([['g1', 'a:g1', 'b:g1', 'd:g1'], [null, 'c:null'], ['g2']])
+  })
+
+  it('within its own group a dragged practice stays put (the sortable shifts the rows)', () => {
+    expect(movePractice(SECTIONS, 'p:a', 'p:b', true)).toBe(SECTIONS)
+    expect(movePractice(SECTIONS, 'p:c', 'hdr:default', true)).toBe(SECTIONS)
   })
 
   it('dropping on an empty group\'s drop zone moves it there', () => {

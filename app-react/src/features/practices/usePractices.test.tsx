@@ -9,7 +9,7 @@ import { usePractices } from './usePractices'
 vi.mock('../../api/practices', () => ({
   practicesApi: {
     getUserPractices: vi.fn(), createUserPractice: vi.fn(), updateUserPractice: vi.fn(),
-    deleteUserPractice: vi.fn(), reorderUserPractices: vi.fn(),
+    deleteUserPractice: vi.fn(),
     getGroups: vi.fn(), createGroup: vi.fn(), renameGroup: vi.fn(), deleteGroup: vi.fn(), saveLayout: vi.fn(),
   },
 }))
@@ -83,5 +83,27 @@ describe('usePractices saveLayout', () => {
     })
     await waitFor(() => expect(qc.getQueryData(['practice-groups'])).toEqual(GROUPS))
     expect(() => result.current.sections).not.toThrow()
+  })
+})
+
+describe('usePractices practice writes', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    useToastStore.setState({ toasts: [] })
+    api.getUserPractices.mockResolvedValue([P1, P2])
+    api.getGroups.mockResolvedValue(GROUPS)
+  })
+
+  const toasts = () => useToastStore.getState().toasts.map((t) => t.message)
+
+  it('a failed save shows the error toast; a taken name does not (it shows under the field)', async () => {
+    const { result } = setup()
+    await waitFor(() => expect(result.current.practices).toHaveLength(2))
+    api.updateUserPractice.mockRejectedValueOnce({ isAxiosError: true, response: { status: 422 } })
+    await act(() => result.current.update.mutateAsync(P1).catch(() => {}))
+    expect(toasts()).toEqual([])
+    api.updateUserPractice.mockRejectedValueOnce(new Error('offline'))
+    await act(() => result.current.update.mutateAsync(P1).catch(() => {}))
+    expect(toasts()).toContain('Something went wrong')
   })
 })

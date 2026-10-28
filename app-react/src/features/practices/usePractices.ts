@@ -35,6 +35,8 @@ export function usePractices() {
   const refresh = () => qc.invalidateQueries({ queryKey: ['practices'] })
   const refreshGroups = () => qc.invalidateQueries({ queryKey: ['practice-groups'] })
   const failed = () => showToast({ message: t('common.error'), variant: 'error' })
+  // A taken name shows under the field instead.
+  const failedUnlessTaken = (e: unknown) => { if (!isDuplicate(e)) failed() }
 
   const create = useMutation({
     mutationFn: ({ group_id, ...d }: PracticeDraft) => practicesApi.createUserPractice({
@@ -42,11 +44,13 @@ export function usePractices() {
       ...(group_id && { group_id }),
     }),
     onSuccess: refresh,
+    onError: failedUnlessTaken,
   })
 
   const update = useMutation({
     mutationFn: (p: UserPractice) => practicesApi.updateUserPractice(p.id, fields(p)),
     onSuccess: refresh,
+    onError: failedUnlessTaken,
   })
 
   /** Hide and Show save straight away. */
@@ -67,17 +71,6 @@ export function usePractices() {
       return refresh()
     },
     onError: failed,
-  })
-
-  /** Moves the list at once; a failed save puts the server's order back. */
-  const reorder = useMutation({
-    mutationFn: (ids: string[]) => practicesApi.reorderUserPractices(ids),
-    onMutate: (ids) => {
-      const byId = new Map(practices.map((p) => [p.id, p]))
-      qc.setQueryData<UserPractice[]>(['practices'], ids.map((id) => byId.get(id)!))
-    },
-    onSuccess: () => showToast({ message: t('practices.orderSaved'), variant: 'success' }),
-    onError: () => { failed(); void refresh() },
   })
 
   /** Resolves with the new group's id; it's added at the end, empty. */
@@ -129,7 +122,7 @@ export function usePractices() {
 
   return {
     ...q, isLoading: q.isLoading || groupsQ.isLoading, groupsLoaded: groupsQ.isSuccess,
-    practices, groups, sections, create, update, setActive, remove, reorder, createGroup, renameGroup, deleteGroup, saveLayout,
+    practices, groups, sections, create, update, setActive, remove, createGroup, renameGroup, deleteGroup, saveLayout,
   }
 }
 

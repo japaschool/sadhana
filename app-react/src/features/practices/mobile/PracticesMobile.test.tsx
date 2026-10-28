@@ -11,7 +11,7 @@ import { PracticesMobileScreen } from './PracticesMobile'
 vi.mock('../../../api/practices', () => ({
   practicesApi: {
     getUserPractices: vi.fn(), createUserPractice: vi.fn(), updateUserPractice: vi.fn(),
-    deleteUserPractice: vi.fn(), reorderUserPractices: vi.fn(),
+    deleteUserPractice: vi.fn(),
     getGroups: vi.fn(), createGroup: vi.fn(), renameGroup: vi.fn(), deleteGroup: vi.fn(), saveLayout: vi.fn(),
   },
 }))

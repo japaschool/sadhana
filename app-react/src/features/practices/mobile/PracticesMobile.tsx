@@ -2,9 +2,10 @@ import { useRef, useState } from 'react'
 import { Link, Navigate, useMatch, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, useDragControls } from 'framer-motion'
-import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { closestCenter, DndContext, DragOverlay, KeyboardSensor, MeasuringStrategy, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import type { SortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { MobileShell } from '../../../layouts/mobile/MobileShell'
 import type { PracticeDataType, PracticeGroup, UserPractice } from '../../../types/api'
@@ -15,7 +16,7 @@ import { TypeIcon } from '../../yatras/settings/mobile/TypeChip'
 import { findGroup, saveGroup, saveGroupMove, sectionOf, usePractices } from '../usePractices'
 import { groupName, layoutOf } from '../groups'
 import type { Section } from '../groups'
-import { dropGroup, dropPractice, emptyId, flatItems, groupKey, headerId, practiceId } from '../dragLayout'
+import { dropGroup, dropPractice, emptyId, flatItems, groupKey, headerId, movePractice, practiceId } from '../dragLayout'
 import { GroupSheet } from './GroupSheet'
 import { useNewGroup } from './useNewGroup'
 import { PracticeSheet } from './PracticeSheet'
@@ -62,7 +63,8 @@ export function PracticesMobile() {
       <header className="sticky top-0 z-30 bg-ui-bg pt-[env(safe-area-inset-top)]">
         <div className="flex min-h-14 items-center justify-between px-2 pr-4">
           <Link to="/settings" className="flex min-h-11 items-center gap-1 px-2 text-[17px] font-semibold text-ui-accent">
-            <span aria-hidden>‹</span>{t('nav.settings')}
+            {/* The narrowest phones keep just the arrow, so both buttons fit (ru/uk labels are long). */}
+            <span aria-hidden>‹</span><span className="max-[359px]:sr-only">{t('nav.settings')}</span>
           </Link>
           <div className="flex items-center gap-2">
             <Link to="/settings/practices/groups/new" className="flex min-h-11 items-center gap-1.5 rounded-full bg-ui-chip px-4 text-[15px] font-extrabold text-ui-ink">
@@ -142,26 +144,63 @@ export function PracticeList({ s, swipe, selected, selectedGroup, onDelete }: {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [swiped, setSwiped] = useState<string | null>(null)
-  // What's being dragged and where it would land, so the target group and its count follow the pointer.
-  const [drag, setDrag] = useState<{ active: string; over: string | null } | null>(null)
+  // What's dragged, and the sections with a practice already moved into the group it's over. While a group is dragged
+  // the list collapses to headers; `collapse` keeps it as tall as it was, so the page doesn't scroll, and pads the
+  // headers down so the grabbed one stays under the pointer.
+  const [drag, setDrag] = useState<{ active: string; sections: Section[]; collapse?: { minHeight: number; paddingTop: number } } | null>(null)
+  const listRef = useRef<HTMLDivElement>(null)
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
   const hidden = s.practices.filter((p) => !p.is_active).length
   const draggingGroup = !!drag?.active.startsWith('hdr:')
-  const preview = drag && !draggingGroup && drag.over ? dropPractice(s.sections, drag.active, drag.over) : s.sections
-  const target = drag && !draggingGroup ? preview.find((x) => x.practices.some((p) => practiceId(p.id) === drag.active))?.group : undefined
+  // Just dropped: the new order shows until the cache has it (the save's optimistic write is async), so nothing
+  // snaps back to where it was. It's for the cache it was dropped on; a newer cache wins.
+  const [dropped, setDropped] = useState<{ sections: Section[]; on: unknown[] } | null>(null)
+  const settled = dropped && dropped.on[0] === s.practices && dropped.on[1] === s.groups ? dropped.sections : null
+  const shown = drag?.sections ?? settled ?? s.sections
+  const target = drag && !draggingGroup ? shown.find((x) => x.practices.some((p) => practiceId(p.id) === drag.active))?.group : undefined
   const single = s.sections.length === 1
+  const items = flatItems(shown, draggingGroup)
+  // Headers stay put while a practice is dragged: it moves between groups itself (`movePractice`).
+  const strategy: SortingStrategy = (args) => (!draggingGroup && items[args.index]?.startsWith('hdr:') ? null : verticalListSortingStrategy(args))
+
+  function onDragOver({ active, over }: DragOverEvent) {
+    if (!over || draggingGroup) return
+    const r = active.rect.current.translated
+    const below = !!r && r.top + r.height / 2 > over.rect.top + over.rect.height / 2
+    setDrag((d) => d && { ...d, sections: movePractice(d.sections, String(active.id), String(over.id), below) })
+  }
 
   function onDragEnd({ active, over }: DragEndEvent) {
+    const sections = drag?.sections ?? s.sections
     setDrag(null)
-    if (!over || active.id === over.id) return
+    if (!over) return
     const a = String(active.id), o = String(over.id)
-    const next = a.startsWith('hdr:') ? dropGroup(s.sections, a, o) : dropPractice(s.sections, a, o)
+    // Over a header or an empty group, the practice is already where it lands.
+    const next = a.startsWith('hdr:') ? dropGroup(s.sections, a, o) : o.startsWith('p:') ? dropPractice(sections, a, o) : sections
     const layout = layoutOf(next)
-    if (JSON.stringify(layout) !== JSON.stringify(layoutOf(s.sections))) s.saveLayout.mutate(layout)
+    if (JSON.stringify(layout) === JSON.stringify(layoutOf(s.sections))) return
+    setDropped({ sections: next, on: [s.practices, s.groups] })
+    s.saveLayout.mutate(layout, { onSettled: () => setDropped(null) })
   }
+
+  /** Where the headers go when the list collapses: measured before it does, so the overlay starts in the right place. */
+  function collapse(id: string) {
+    const list = listRef.current
+    if (!list) return undefined
+    const heads = [...list.querySelectorAll<HTMLElement>('[data-sortable^="hdr:"]')]
+    const at = heads.findIndex((h) => h.dataset.sortable === id)
+    const gap = parseFloat(getComputedStyle(list).rowGap) || 0
+    const above = heads.slice(0, at).reduce((n, h) => n + h.offsetHeight + gap, 0)
+    const offset = heads[at].getBoundingClientRect().top - list.getBoundingClientRect().top
+    return { minHeight: list.offsetHeight, paddingTop: Math.max(0, offset - above) }
+  }
+
+  const dragged = drag && (draggingGroup
+    ? s.sections.find((x) => headerId(x.group) === drag.active)
+    : s.practices.find((p) => practiceId(p.id) === drag.active))
 
   if (s.isLoading) return <Skeleton />
   if (s.isError) return <p role="alert" className="rounded-2xl bg-ui-surface px-4 py-3 text-sm text-ui-danger">{t('common.error')}</p>
@@ -178,16 +217,23 @@ export function PracticeList({ s, swipe, selected, selectedGroup, onDelete }: {
         <p className="text-sm text-ui-muted">{t('practices.orderHint')}</p>
         {single && <p className="text-sm text-ui-muted">{t('practices.addGroupHint')}</p>}
       </div>
-      <DndContext sensors={sensors} collisionDetection={closestCenter}
-        onDragStart={({ active }: DragStartEvent) => { setSwiped(null); setDrag({ active: String(active.id), over: null }) }}
-        onDragOver={({ active, over }: DragOverEvent) => setDrag({ active: String(active.id), over: over ? String(over.id) : null })}
-        onDragCancel={() => setDrag(null)} onDragEnd={onDragEnd}>
-        <SortableContext items={flatItems(s.sections, draggingGroup)} strategy={verticalListSortingStrategy}>
-          <div className="flex flex-col gap-2">
-            {s.sections.map((sec, i) => (
+      {/* No dragging until the groups are known: a layout saved without them would move practices out of theirs. */}
+      <DndContext sensors={s.groupsLoaded ? sensors : []} collisionDetection={closestCenter}
+        measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+        // Its own fix for the collapse scrolls instead of padding, which can't work when the headers end up near the top.
+        autoScroll={draggingGroup ? { enabled: false, layoutShiftCompensation: false } : undefined}
+        onDragStart={({ active }: DragStartEvent) => {
+          const id = String(active.id)
+          setSwiped(null)
+          setDrag({ active: id, sections: s.sections, collapse: id.startsWith('hdr:') ? collapse(id) : undefined })
+        }}
+        onDragOver={onDragOver} onDragCancel={() => setDrag(null)} onDragEnd={onDragEnd}>
+        <SortableContext items={items} strategy={strategy}>
+          <div ref={listRef} className="flex flex-col gap-2" style={drag?.collapse}>
+            {shown.map((sec) => (
               <div key={groupKey(sec.group)}
                 className={`flex flex-col gap-1.5 rounded-[20px] ${target === sec.group ? 'outline-2 outline-offset-4 outline-ui-accent' : ''}`}>
-                <GroupHeader section={sec} count={preview[i].practices.length} selected={selectedGroup === sec.group.id}
+                <GroupHeader section={sec} selected={selectedGroup === sec.group.id}
                   onEdit={() => navigate(`/settings/practices/groups/${sec.group.id}`)} />
                 {!draggingGroup && (
                   <ul className={sec.practices.length ? LIST : 'overflow-hidden rounded-[18px] border border-dashed border-ui-control'}>
@@ -204,25 +250,35 @@ export function PracticeList({ s, swipe, selected, selectedGroup, onDelete }: {
             ))}
           </div>
         </SortableContext>
+        {/* The row follows the pointer above the list, so no group's box clips it. */}
+        <DragOverlay>
+          {dragged && ('group' in dragged ? (
+            <div className="flex min-h-11 items-center gap-1 rounded-xl bg-ui-surface pr-2 shadow-lg">
+              <span className="flex h-11 w-9 shrink-0 items-center justify-center text-ui-faint2"><Dots /></span>
+              <HeaderLabel group={dragged.group} count={dragged.practices.length} />
+            </div>
+          ) : (
+            <div className="flex min-h-[66px] items-center gap-1 rounded-[18px] bg-ui-surface pr-2 shadow-lg">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center text-ui-faint2"><Dots /></span>
+              <RowSummary p={dragged} />
+            </div>
+          ))}
+        </DragOverlay>
       </DndContext>
     </>
   )
 }
 
 /** Dots, name and count. The default group has a chip instead of ⋯ and isn't tappable, but its dots still drag. */
-function GroupHeader({ section: { group }, count, selected, onEdit }: { section: Section; count: number; selected: boolean; onEdit: () => void }) {
+function GroupHeader({ section: { group, practices }, selected, onEdit }: { section: Section; selected: boolean; onEdit: () => void }) {
   const { t } = useTranslation()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: headerId(group) })
   const name = groupName(group, t)
-  const label = (
-    <>
-      <span className="min-w-0 truncate font-ui-mono text-xs font-semibold tracking-[.1em] text-ui-muted uppercase">{name}</span>
-      <span className="shrink-0 font-ui-mono text-xs text-ui-faint2">{count}</span>
-    </>
-  )
+  const count = practices.length
+  const label = <HeaderLabel group={group} count={count} />
   return (
-    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`flex min-h-11 items-center gap-1 rounded-xl pr-2 ${isDragging ? 'relative z-10 bg-ui-surface shadow-lg' : ''} ${selected ? 'bg-ui-accent-soft' : ''}`}>
+    <div ref={setNodeRef} data-sortable={headerId(group)} style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`flex min-h-11 items-center gap-1 rounded-xl pr-2 ${isDragging ? 'opacity-40' : ''} ${selected ? 'bg-ui-accent-soft' : ''}`}>
       <button type="button" {...attributes} {...listeners} aria-label={t('practices.dragGroup', { name })}
         className="flex h-11 w-9 shrink-0 cursor-grab touch-none items-center justify-center text-ui-faint2">
         <Dots />
@@ -240,6 +296,16 @@ function GroupHeader({ section: { group }, count, selected, onEdit }: { section:
         </button>
       )}
     </div>
+  )
+}
+
+function HeaderLabel({ group, count }: { group: PracticeGroup; count: number }) {
+  const { t } = useTranslation()
+  return (
+    <>
+      <span className="min-w-0 truncate font-ui-mono text-xs font-semibold tracking-[.1em] text-ui-muted uppercase">{groupName(group, t)}</span>
+      <span className="shrink-0 font-ui-mono text-xs text-ui-faint2">{count}</span>
+    </>
   )
 }
 
@@ -268,12 +334,10 @@ function PracticeRow({ p, swipe, selected, open, onOpen, onEdit, onSetActive, on
   const drag = useDragControls()
   // A swipe ends with a click on the row; that click mustn't open the editor.
   const swiping = useRef(false)
-  const options = parseOptions(p.dropdown_variants).length
-  const type = t(`practices.type${p.data_type}`)
   const action = 'flex w-[88px] items-center justify-center text-sm font-bold'
   return (
     <li ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`relative overflow-hidden select-none [-webkit-touch-callout:none] ${isDragging ? 'z-10 shadow-lg' : ''}`}>
+      className={`relative overflow-hidden select-none [-webkit-touch-callout:none] ${isDragging ? 'opacity-40' : ''}`}>
       {swipe && <div aria-hidden={!open} className="absolute inset-y-0 right-0 flex">
         <button type="button" tabIndex={open ? 0 : -1} onClick={() => onSetActive(!p.is_active)} className={`${action} bg-ui-control text-ui-ink`}>
           {t(p.is_active ? 'practices.hide' : 'practices.show')}
@@ -292,19 +356,7 @@ function PracticeRow({ p, swipe, selected, open, onOpen, onEdit, onSetActive, on
         <button type="button" aria-current={selected || undefined} onPointerDown={(e) => { swiping.current = false; if (swipe) drag.start(e) }}
           onClick={() => { if (!swiping.current) { if (open) onOpen(false); else onEdit() } }}
           className="flex min-w-0 flex-1 touch-pan-y items-center gap-3 py-2.5 text-left">
-          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] ${p.is_active ? 'bg-ui-chip text-ui-ink2' : 'border border-dashed border-ui-faint text-ui-faint2'}`}>
-            <TypeIcon type={p.data_type} />
-          </span>
-          <span className="flex min-w-0 flex-col">
-            <span className={`truncate text-base font-bold ${p.is_active ? 'text-ui-ink' : 'text-ui-faint2'}`}>{p.practice}</span>
-            <span className="flex flex-wrap items-center gap-x-1.5 text-[13px] text-ui-muted">
-              {p.is_required && (
-                <><span className="flex items-center gap-1 font-semibold text-ui-danger"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ui-danger" />{t('practices.required')}</span>·</>
-              )}
-              <span>{options ? t('practices.typeWithList', { type, n: options }) : type}</span>
-              {!p.is_active && <>·<span className="font-semibold text-ui-ink2">{t('practices.hiddenFromToday')}</span></>}
-            </span>
-          </span>
+          <RowSummary p={p} />
         </button>
         {p.is_active ? (
           <span aria-hidden className={`shrink-0 px-1.5 text-xl ${selected ? 'text-ui-accent' : 'text-ui-faint2'}`}>›</span>
@@ -316,6 +368,30 @@ function PracticeRow({ p, swipe, selected, open, onOpen, onEdit, onSetActive, on
         )}
       </motion.div>
     </li>
+  )
+}
+
+/** Type icon, name and what kind of value it takes. */
+function RowSummary({ p }: { p: UserPractice }) {
+  const { t } = useTranslation()
+  const options = parseOptions(p.dropdown_variants).length
+  const type = t(`practices.type${p.data_type}`)
+  return (
+    <span className="flex min-w-0 flex-1 items-center gap-3">
+      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] ${p.is_active ? 'bg-ui-chip text-ui-ink2' : 'border border-dashed border-ui-faint text-ui-faint2'}`}>
+        <TypeIcon type={p.data_type} />
+      </span>
+      <span className="flex min-w-0 flex-col">
+        <span className={`truncate text-base font-bold ${p.is_active ? 'text-ui-ink' : 'text-ui-faint2'}`}>{p.practice}</span>
+        <span className="flex flex-wrap items-center gap-x-1.5 text-[13px] text-ui-muted">
+          {p.is_required && (
+            <><span className="flex items-center gap-1 font-semibold text-ui-danger"><span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ui-danger" />{t('practices.required')}</span>·</>
+          )}
+          <span>{options ? t('practices.typeWithList', { type, n: options }) : type}</span>
+          {!p.is_active && <>·<span className="font-semibold text-ui-ink2">{t('practices.hiddenFromToday')}</span></>}
+        </span>
+      </span>
+    </span>
   )
 }
 

@@ -118,6 +118,17 @@ describe('ChartEditorMobile', () => {
   }
   const names = () => screen.getAllByRole('checkbox').map((c) => c.closest('label')!.textContent)
 
+  it('with grouping on, a column only drags within its group', async () => {
+    withGroups()
+    charts.getReports.mockResolvedValue([{ ...TABLE, definition: { Grid: { practices: ['wake', 'japa', 'read'], group_columns: true } } }])
+    renderAt('/settings/charts/t1')
+    await screen.findByRole('heading', { name: 'Morning' })
+    act(() => dnd.onDragEnd!({ active: { id: 'wake' }, over: { id: 'japa' } }))
+    expect(charts.updateReport).not.toHaveBeenCalled()
+    act(() => dnd.onDragEnd!({ active: { id: 'read' }, over: { id: 'japa' } }))
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['wake', 'read', 'japa'], group_columns: true } }))
+  })
+
   it('with grouping on, the column list is split by group', async () => {
     withGroups()
     renderAt('/settings/charts/t1')

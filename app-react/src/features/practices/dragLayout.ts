@@ -36,9 +36,29 @@ export function dropPractice(sections: Section[], activeId: string, overId: stri
   return next
 }
 
-export function dropGroup(sections: Section[], activeGroupKey: string, overGroupKey: string): Section[] {
+/** While a practice is dragged into another group it moves there at once, so that group's list makes room for it:
+ *  before or after the row it's over, first in an empty group, and over a header first in that group, or last in the
+ *  one above when `below` is false. Within its own group it doesn't move (the sortable shifts the rows instead). */
+export function movePractice(sections: Section[], activeId: string, overId: string, below: boolean): Section[] {
+  const from = sections.findIndex((s) => s.practices.some((p) => practiceId(p.id) === activeId))
+  let to = sections.findIndex((s) => headerId(s.group) === overId || emptyId(s.group) === overId || s.practices.some((p) => practiceId(p.id) === overId))
+  if (from < 0 || to < 0) return sections
+  let at = 0
+  if (overId.startsWith('hdr:')) {
+    if (!below && to > 0) { to -= 1; at = sections[to].practices.length }
+  } else if (overId.startsWith('p:')) at = sections[to].practices.findIndex((p) => practiceId(p.id) === overId) + (below ? 1 : 0)
+  if (to === from) return sections
+  const moved = sections[from].practices.find((p) => practiceId(p.id) === activeId)!
+  return sections.map((s, i) => {
+    if (i === from) return { ...s, practices: s.practices.filter((p) => p !== moved) }
+    if (i === to) return { ...s, practices: s.practices.toSpliced(at, 0, { ...moved, group_id: s.group.id }) }
+    return s
+  })
+}
+
+export function dropGroup(sections: Section[], activeId: string, overId: string): Section[] {
   const keys = sections.map((s) => headerId(s.group))
-  const from = keys.indexOf(activeGroupKey)
-  const to = keys.indexOf(overGroupKey)
+  const from = keys.indexOf(activeId)
+  const to = keys.indexOf(overId)
   return from < 0 || to < 0 ? sections : arrayMove(sections, from, to)
 }

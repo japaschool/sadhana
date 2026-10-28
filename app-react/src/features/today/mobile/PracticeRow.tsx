@@ -3,10 +3,13 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PracticeValue, UserPractice } from '../../../types/api'
 import { Toggle } from '../../../ui/primitives/Toggle'
+import { ListGroup } from '../../../ui/primitives/ListGroup'
+import { groupName } from '../../practices/groups'
 import { AnchoredMenu, MenuDivider, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import { parseTime } from '../inputFormat'
 import { formatDuration, formatTime, parseOptions, typeTime } from '../values'
 import { useOnAppHidden } from '../useOnAppHidden'
+import type { useToday } from '../useToday'
 import { AddTimeSheet } from './AddTimeSheet'
 import { TextRow } from './TextRow'
 import { Chevron, EmptyValue } from './rowParts'
@@ -16,6 +19,19 @@ interface PracticeRowProps {
   value?: PracticeValue
   failed: boolean
   onSave: (v: PracticeValue | null) => void
+}
+
+/** One list group per practice group (mobile and the desktop log panel). */
+export function TodaySections({ today, dateStr }: { today: ReturnType<typeof useToday>; dateStr: string }) {
+  const { t } = useTranslation()
+  return today.sections.map((s) => (
+    <ListGroup key={s.group.id ?? 'default'} label={groupName(s.group, t)}>
+      {s.practices.map((p) => (
+        <PracticeRow key={`${p.id}-${dateStr}`} practice={p} value={today.values[p.practice]}
+          failed={today.failed === p.practice} onSave={(v) => today.save(p, v)} />
+      ))}
+    </ListGroup>
+  ))
 }
 
 export function PracticeRow(props: PracticeRowProps) {
