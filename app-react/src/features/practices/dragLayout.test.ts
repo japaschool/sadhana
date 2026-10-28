@@ -33,6 +33,11 @@ describe('dragLayout', () => {
     expect(shape(dropPractice(SECTIONS, 'p:c', 'hdr:g1'))).toEqual([['g1', 'c:g1', 'a:g1', 'b:g1'], [null, 'd:null'], ['g2']])
   })
 
+  it('a practice of a group unknown here keeps that group when another practice moves', () => {
+    const ss: Section[] = [{ group: DEF, practices: [p('c'), p('x', 'gone')] }, { group: PM, practices: [] }]
+    expect(shape(dropPractice(ss, 'p:c', 'empty:g2'))).toEqual([[null, 'x:gone'], ['g2', 'c:g2']])
+  })
+
   it('dropGroup reorders groups, including the default', () => {
     expect(dropGroup(SECTIONS, 'hdr:default', 'hdr:g1').map((s) => s.group.id)).toEqual([null, 'g1', 'g2'])
     expect(dropGroup(SECTIONS, 'hdr:g1', 'hdr:g2').map((s) => s.group.id)).toEqual([null, 'g2', 'g1'])

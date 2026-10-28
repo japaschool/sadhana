@@ -5,7 +5,7 @@ import type { PersistedClient, Persister } from '@tanstack/react-query-persist-c
 export const CACHE_VERSION = '1'
 export const CACHE_MAX_AGE = 30 * 24 * 60 * 60_000
 
-const SAVED = new Set(['practices', 'diary', 'incomplete-days', 'reports', 'report-data', 'yatras', 'yatra-data'])
+const SAVED = new Set(['practices', 'practice-groups', 'diary', 'incomplete-days', 'reports', 'report-data', 'yatras', 'yatra-data'])
 
 /** Only the user's own data, once loaded. Shared reports ('shared', …) and one-off lookups aren't saved.
  *  A failed refetch (offline) keeps its data and is saved too: dropping it left the next launch with nothing. */

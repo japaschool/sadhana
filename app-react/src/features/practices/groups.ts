@@ -21,10 +21,14 @@ export function todaySections(groups: PracticeGroup[], practices: UserPractice[]
   return groupPractices(groups, practices.filter((p) => p.is_active)).filter((s) => s.practices.length > 0)
 }
 
+/** A practice shown under the default group only because its group isn't known here (not loaded, or made on another
+ *  device) keeps that group: saving null would take it out. */
 export function layoutOf(sections: Section[]): Layout {
+  const known = new Set(sections.map((s) => s.group.id))
+  const groupOf = (s: Section, p: UserPractice) => (s.group.is_default && p.group_id && !known.has(p.group_id) ? p.group_id : s.group.id)
   return {
     groups: sections.map((s) => s.group.id),
-    practices: sections.flatMap((s) => s.practices.map((p) => ({ id: p.id, group_id: s.group.id }))),
+    practices: sections.flatMap((s) => s.practices.map((p) => ({ id: p.id, group_id: groupOf(s, p) }))),
   }
 }
 

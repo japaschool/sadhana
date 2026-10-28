@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PracticeGroup } from '../../../types/api'
+import { useToast } from '../../../hooks/useToast'
 import { BottomSheet } from '../../../ui/primitives/BottomSheet'
 import { BTN, CARD, FIELD, HINT } from '../../yatras/settings/mobile/AdminPage'
 import { SheetHeader } from '../../yatras/settings/mobile/fields'
@@ -26,6 +27,7 @@ export function GroupSheet({ group, count = 0, others, busy, onSave, onClose, on
   panel?: boolean
 }) {
   const { t } = useTranslation()
+  const { showToast } = useToast()
   const [name, setName] = useState(group?.name ?? '')
   const [submitted, setSubmitted] = useState(false)
   const [takenName, setTakenName] = useState<string | null>(null)
@@ -42,6 +44,7 @@ export function GroupSheet({ group, count = 0, others, busy, onSave, onClose, on
       await onSave(trimmed)
     } catch (e) {
       if (isDuplicate(e)) setTakenName(trimmed)
+      else showToast({ message: t('common.error'), variant: 'error' })
     }
   }
 

@@ -37,6 +37,15 @@ describe('groups', () => {
       practices: [{ id: 'B', group_id: 'm' }, { id: 'A', group_id: null }],
     })
   })
+  it('layoutOf keeps a default-section practice\'s group when that group is unknown here', () => {
+    // The groups query failed, or this cache predates a group made on another device.
+    expect(layoutOf(groupPractices([], [A, B])).practices).toEqual([{ id: 'A', group_id: null }, { id: 'B', group_id: 'm' }])
+    expect(layoutOf(groupPractices([def], [p('C', 'gone')])).practices).toEqual([{ id: 'C', group_id: 'gone' }])
+  })
+  it('layoutOf moves a practice out of a known group', () => {
+    expect(layoutOf(moveToGroupEnd(groupPractices([m, def], [A, B]), 'B', null)).practices)
+      .toEqual([{ id: 'A', group_id: null }, { id: 'B', group_id: null }])
+  })
   it('moveToGroupEnd moves a practice to the end of another group', () => {
     const s = groupPractices([m, def], [A, B, p('C', 'm')])
     expect(shape(moveToGroupEnd(s, 'B', null))).toEqual([['m', ['C']], [null, ['A', 'B']]])

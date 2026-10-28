@@ -101,17 +101,30 @@ export function usePractices() {
     onError: failed,
   })
 
-  /** Group order and each practice's group and place, shown at once; a failed save puts the server's back. */
+  /** Group order and each practice's group and place, shown at once; a failed save puts the cache back.
+   *  Built from the cache, not this render: it may run right after an edit refetched, before a re-render. */
   const saveLayout = useMutation({
     mutationFn: (layout: Layout) => practicesApi.saveLayout(layout),
-    onMutate: (layout) => {
-      const byId = new Map(practices.map((p) => [p.id, p]))
-      qc.setQueryData<UserPractice[]>(['practices'], layout.practices.map(({ id, group_id }) => ({ ...byId.get(id)!, group_id })))
-      const byGroup = new Map(sections.map((s) => [s.group.id, s.group]))
-      qc.setQueryData<PracticeGroup[]>(['practice-groups'], layout.groups.map((id) => byGroup.get(id)!))
+    onMutate: async (layout) => {
+      await Promise.all([qc.cancelQueries({ queryKey: ['practices'] }), qc.cancelQueries({ queryKey: ['practice-groups'] })])
+      const before = { practices: qc.getQueryData<UserPractice[]>(['practices']), groups: qc.getQueryData<PracticeGroup[]>(['practice-groups']) }
+      const byId = new Map((before.practices ?? []).map((p) => [p.id, p]))
+      qc.setQueryData<UserPractice[]>(['practices'], layout.practices.flatMap(({ id, group_id }) => {
+        const p = byId.get(id)
+        return p ? [{ ...p, group_id }] : []
+      }))
+      // A group made a moment ago may not be loaded yet: it shows once the groups refetch.
+      const byGroup = new Map(groupPractices(before.groups ?? [], []).map((s) => [s.group.id, s.group]))
+      qc.setQueryData<PracticeGroup[]>(['practice-groups'], layout.groups.flatMap((id) => byGroup.get(id) ?? []))
+      return before
     },
     onSuccess: () => showToast({ message: t('practices.orderSaved'), variant: 'success' }),
-    onError: () => { failed(); void refresh(); void refreshGroups() },
+    onError: (_, __, before) => {
+      failed()
+      qc.setQueryData(['practices'], before?.practices)
+      qc.setQueryData(['practice-groups'], before?.groups)
+    },
+    onSettled: () => Promise.all([refresh(), refreshGroups()]),
   })
 
   return {

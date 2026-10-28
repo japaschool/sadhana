@@ -30,7 +30,8 @@ export function dropPractice(sections: Section[], activeId: string, overId: stri
     const header = byHeader.get(item)
     if (header) at = sections.findIndex((s) => s.group === header)
     const p = byId.get(item)
-    if (p) next[at].practices.push({ ...p, group_id: next[at].group.id })
+    // Only the dropped one changes group; the rest keep theirs, which may be a group not known here.
+    if (p) next[at].practices.push(item === activeId ? { ...p, group_id: next[at].group.id } : p)
   }
   return next
 }

@@ -233,6 +233,17 @@ describe('PracticesMobile', () => {
       expect(within(sheet).getByRole('alert')).toHaveTextContent('Group “Evening” already exists')
     })
 
+    it('a failed create or rename shows the error toast and keeps the sheet open', async () => {
+      api.createGroup.mockRejectedValue(new Error('Network Error'))
+      renderAt('/settings/practices/groups/new')
+      const sheet = await screen.findByRole('dialog', { name: 'New group' })
+      fireEvent.change(within(sheet).getByLabelText('Name'), { target: { value: 'Kirtan' } })
+      fireEvent.click(within(sheet).getByRole('button', { name: 'Create group' }))
+      await waitFor(() => expect(useToastStore.getState().toasts.map((x) => x.message)).toEqual(['Something went wrong']))
+      expect(screen.getByRole('dialog', { name: 'New group' })).toBeInTheDocument()
+      expect(within(sheet).queryByRole('alert')).not.toBeInTheDocument()
+    })
+
     describe('the editor Group field', () => {
       const open = async (name = 'Group') => {
         const field = await screen.findByRole('button', { name: /^Group/ })
@@ -292,6 +303,25 @@ describe('PracticesMobile', () => {
         fireEvent.click(within(sheet).getByRole('button', { name: 'Create group' }))
         await waitFor(() => expect(api.createGroup).toHaveBeenCalledWith('Kirtan'))
         await waitFor(() => expect(screen.getByRole('button', { name: /^Group/ })).toHaveTextContent('Kirtan'))
+      })
+
+      it('+ New group then Save moves the practice there, even before the groups list has it', async () => {
+        api.saveLayout.mockResolvedValue()
+        renderAt('/settings/practices/p1')
+        await screen.findByRole('dialog', { name: 'Japa rounds' })
+        fireEvent.click(within(await open()).getByRole('menuitem', { name: '+ New group' }))
+        const sheet = await screen.findByRole('dialog', { name: 'New group' })
+        fireEvent.change(within(sheet).getByLabelText('Name'), { target: { value: 'Kirtan' } })
+        // The refetch after creating doesn't include it yet, so the move builds a section for it.
+        fireEvent.click(within(sheet).getByRole('button', { name: 'Create group' }))
+        await waitFor(() => expect(screen.queryByRole('dialog', { name: 'New group' })).not.toBeInTheDocument())
+        fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+        await waitFor(() => expect(api.saveLayout).toHaveBeenCalledWith({
+          groups: ['g1', null, 'g2', 'g3'],
+          practices: [{ id: 'p3', group_id: 'g1' }, { id: 'p2', group_id: null }, { id: 'p1', group_id: 'g3' }],
+        }))
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+        expect(await screen.findByRole('button', { name: /^Japa rounds/ })).toBeInTheDocument()
       })
     })
   })
