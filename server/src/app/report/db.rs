@@ -346,4 +346,63 @@ mod tests {
             Ok(())
         });
     }
+
+    /// Reports saved before trace order was stored: every trace has order_key 0.
+    fn unordered_report(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        kind: &str,
+        practices: &[Uuid],
+    ) -> Uuid {
+        #[derive(QueryableByName)]
+        struct Id {
+            #[diesel(sql_type = DieselUuid)]
+            id: Uuid,
+        }
+        let report = sql_query(format!(
+            "insert into reports (user_id, report_type, name) values ($1, '{kind}', $2) returning id"
+        ))
+        .bind::<DieselUuid, _>(user_id)
+        .bind::<Text, _>(kind)
+        .get_result::<Id>(conn)
+        .unwrap()
+        .id;
+        for p in practices {
+            sql_query("insert into report_traces (report_id, practice_id) values ($1, $2)")
+                .bind::<DieselUuid, _>(report)
+                .bind::<DieselUuid, _>(p)
+                .execute(conn)
+                .unwrap();
+        }
+        report
+    }
+
+    fn trace_order(conn: &mut PgConnection, report: &Uuid) -> Vec<Uuid> {
+        report_traces::table
+            .select(report_traces::practice_id)
+            .filter(report_traces::report_id.eq(report))
+            .order_by(report_traces::order_key)
+            .load(conn)
+            .unwrap()
+    }
+
+    #[test]
+    fn backfill_orders_reports_saved_before_trace_order() {
+        run(|conn| {
+            let (u, [a, b, c, d]) = user_with_practices(conn);
+            let graph = unordered_report(conn, &u, "graph", &[d, a, c]);
+            let old_grid = unordered_report(conn, &u, "grid", &[c, a, b]);
+            let new_grid = Report::create(conn, &u, "r", &grid(vec![c, a, b], Some(false)))?;
+
+            sql_query(include_str!(
+                "../../../../migrations/2026-10-28-000002-0000_backfill_trace_order/up.sql"
+            ))
+            .execute(conn)?;
+
+            assert_eq!(trace_order(conn, &graph), vec![d, a, c]);
+            assert_eq!(trace_order(conn, &old_grid), vec![a, b, c]);
+            assert_eq!(trace_order(conn, &new_grid), vec![c, a, b]);
+            Ok(())
+        });
+    }
 }

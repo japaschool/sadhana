@@ -171,7 +171,8 @@ impl UserPractice {
                     .filter(
                         practice_groups::id
                             .eq(gid)
-                            .and(practice_groups::user_id.eq(record.user_id)),
+                            .and(practice_groups::user_id.eq(record.user_id))
+                            .and(practice_groups::is_default.eq(false)),
                     )
                     .count()
                     .get_result(conn)?;

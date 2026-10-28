@@ -513,7 +513,7 @@ mod tests {
             let theirs = create(conn, &other, "Theirs")?;
             let form = |group_id: Option<Uuid>| {
                 let json = serde_json::json!({
-                    "practice": "P", "data_type": "Int", "is_active": true, "group_id": group_id
+                    "practice": format!("P{}", group_id.map(|g| g.to_string()).unwrap_or_default()), "data_type": "Int", "is_active": true, "group_id": group_id
                 });
                 let f: NewUserPracticeForm = serde_json::from_value(json).unwrap();
                 NewUserPractice::from_form(user_id, f)
@@ -523,6 +523,12 @@ mod tests {
             assert_eq!(all[0].group_id, Some(m));
             assert_eq!(
                 UserPractice::create(conn, &form(Some(theirs))),
+                Err(AppError::NotFound)
+            );
+            // The default group is group_id NULL, never its row's id.
+            let default_id = ensure_default(conn, &user_id)?;
+            assert_eq!(
+                UserPractice::create(conn, &form(Some(default_id))),
                 Err(AppError::NotFound)
             );
             Ok(())
