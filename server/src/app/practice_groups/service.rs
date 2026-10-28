@@ -368,6 +368,12 @@ mod tests {
             // Same name for another user is fine.
             let other = new_user(conn);
             assert!(create(conn, &other, "Morning").is_ok());
+            // Last: the failed insert aborts the transaction.
+            let evening = create(conn, &user_id, "Evening")?;
+            assert!(matches!(
+                rename(conn, &user_id, &evening, "Morning"),
+                Err(AppError::UnprocessableEntity(_))
+            ));
             Ok(())
         });
     }
@@ -428,13 +434,15 @@ mod tests {
                 &user_id,
                 &layout(
                     vec![Some(m), None],
-                    vec![(c, Some(m)), (a, None), (b, None)],
+                    vec![(c, Some(m)), (a, Some(m)), (b, None)],
                 ),
             )?;
             delete(conn, &user_id, &m)?;
             let (gc, oc) = practice(conn, &c);
-            assert_eq!(gc, None);
-            assert!(oc > practice(conn, &a).1 && oc > practice(conn, &b).1);
+            let (ga, oa) = practice(conn, &a);
+            assert_eq!((gc, ga), (None, None));
+            // At the end, in the order they had in the group.
+            assert!(practice(conn, &b).1 < oc && oc < oa);
             assert_eq!(ids(conn, &user_id), vec![None]);
             assert_eq!(delete(conn, &user_id, &m), Err(AppError::NotFound));
             Ok(())

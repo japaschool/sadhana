@@ -3,6 +3,7 @@ use crate::schema::{report_traces, reports};
 use common::error::AppError;
 use diesel::prelude::*;
 use diesel::{result::Error as DieselError, PgConnection, RunQueryDsl};
+use std::collections::HashSet;
 use uuid::Uuid;
 
 use super::{GridReport, ReportDefinition};
@@ -64,16 +65,12 @@ impl Report {
                 .set((
                     reports::name.eq(&report_name),
                     reports::bar_layout.eq(&report_definition.bar_layout()),
+                    report_definition
+                        .group_columns()
+                        .map(|v| reports::group_columns.eq(v)),
                 ))
                 .filter(reports::id.eq(&report_id))
                 .execute(conn)?;
-
-            if let Some(group_columns) = report_definition.group_columns() {
-                diesel::update(reports::table)
-                    .set(reports::group_columns.eq(group_columns))
-                    .filter(reports::id.eq(&report_id))
-                    .execute(conn)?;
-            }
 
             ReportTrace::update(conn, report_id, report_definition, kept_order.as_deref())
         })?;
@@ -136,10 +133,13 @@ impl ReportTrace {
         report_definition: &ReportDefinition,
         grid_order: Option<&[Uuid]>,
     ) -> Result<(), DieselError> {
+        let mut seen = HashSet::new();
         let records: Vec<_> = match report_definition {
+            // A column appears once, as it did when the practices were a set.
             ReportDefinition::Grid(grid) => grid_order
                 .unwrap_or(&grid.practices)
                 .iter()
+                .filter(|p| seen.insert(**p))
                 .enumerate()
                 .map(|(i, p)| NewReportTrace::new(report_id.to_owned(), p.to_owned(), i as i32))
                 .collect(),
@@ -294,6 +294,16 @@ mod tests {
             let (u, [a, b, c, _]) = user_with_practices(conn);
             Report::create(conn, &u, "r", &grid(vec![c, a, b], Some(false)))?;
             assert_eq!(only_grid(conn, &u), (vec![c, a, b], Some(false)));
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn grid_stores_a_column_once() {
+        run(|conn| {
+            let (u, [a, b, _, _]) = user_with_practices(conn);
+            Report::create(conn, &u, "r", &grid(vec![b, a, b], Some(true)))?;
+            assert_eq!(only_grid(conn, &u), (vec![b, a], Some(true)));
             Ok(())
         });
     }

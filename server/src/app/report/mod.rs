@@ -33,7 +33,9 @@ impl Report {
                 ReportType::Graph => {
                     ReportDefinition::Graph(GraphReport::try_from((report.bar_layout, traces))?)
                 }
-                ReportType::Grid => ReportDefinition::Grid(GridReport::from_db(report.group_columns, traces)),
+                ReportType::Grid => {
+                    ReportDefinition::Grid(GridReport::from_db(report.group_columns, traces))
+                }
             };
 
             res.push(Report {
