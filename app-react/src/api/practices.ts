@@ -1,13 +1,13 @@
 import { apiClient, authHeaders, handleUnauthorized } from './client'
 import { toDateStr } from '../features/today/date'
-import type { UserPractice, DiaryEntry, PracticeDataType, PracticeValue } from '../types/api'
+import type { UserPractice, PracticeGroup, Layout, DiaryEntry, PracticeDataType, PracticeValue } from '../types/api'
 
 export const practicesApi = {
   async getUserPractices(): Promise<UserPractice[]> {
     const res = await apiClient.get<{ user_practices: UserPractice[] }>('/user/practices')
     return res.data.user_practices
   },
-  async createUserPractice(data: { practice: string; data_type: PracticeDataType; is_required?: boolean; dropdown_variants?: string }): Promise<void> {
+  async createUserPractice(data: { practice: string; data_type: PracticeDataType; is_required?: boolean; dropdown_variants?: string; group_id?: string | null }): Promise<void> {
     await apiClient.post('/user/practices', {
       user_practice: { ...data, is_active: true },
     })
@@ -22,6 +22,23 @@ export const practicesApi = {
   },
   async reorderUserPractices(ids: string[]): Promise<void> {
     await apiClient.put('/user/practices/reorder', { practices: ids })
+  },
+  async getGroups(): Promise<PracticeGroup[]> {
+    const res = await apiClient.get<{ groups: PracticeGroup[] }>('/user/practice-groups')
+    return res.data.groups
+  },
+  async createGroup(name: string): Promise<string> {
+    const res = await apiClient.post<{ id: string }>('/user/practice-groups', { name })
+    return res.data.id
+  },
+  async renameGroup(id: string, name: string): Promise<void> {
+    await apiClient.put(`/user/practice-group/${id}`, { name })
+  },
+  async deleteGroup(id: string): Promise<void> {
+    await apiClient.delete(`/user/practice-group/${id}`)
+  },
+  async saveLayout(layout: Layout): Promise<void> {
+    await apiClient.put('/user/practices/layout', layout)
   },
   async getDiaryEntries(date: string): Promise<DiaryEntry[]> {
     const res = await apiClient.get<{ diary_day: DiaryEntry[] }>(`/diary/${date}`)
