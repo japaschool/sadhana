@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { DayFailedNote, SyncBanner } from '../SyncBanner'
 import { TabletShell } from '../../../layouts/tablet/TabletShell'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
+import type { UserPractice } from '../../../types/api'
 import { groupName } from '../../practices/groups'
 import { toDateStr } from '../date'
 import { NoPractices } from '../NoPractices'
@@ -34,6 +35,12 @@ export function TodayTablet() {
     { label: t('home.addPractice'), onSelect: () => navigate('/settings/practices/new') },
     { label: t('home.editPractices'), onSelect: () => navigate('/settings/practices') },
   ]
+
+  const half = Math.ceil(today.practices.length / 2)
+  const row = (p: UserPractice) => (
+    <PracticeRow key={`${p.id}-${dateStr}`} practice={p} value={today.values[p.practice]}
+      failed={today.failed === p.practice} onSave={(v) => today.save(p, v)} />
+  )
 
   return (
     <div className="flex flex-col gap-[22px] px-9 pt-[calc(36px+env(safe-area-inset-top))] pb-9">
@@ -74,23 +81,31 @@ export function TodayTablet() {
       ) : (
         <>
           {today.dayFailed && <DayFailedNote />}
-          {/* Two columns only from 768px: at the 640px tablet minimum inline inputs need the full width. Groups flow down the columns and never split. */}
-          <div className="gap-4 md:columns-2">
-            {today.sections.map((sec) => {
-              const label = groupName(sec.group, t)
-              return (
-                <section key={sec.group.id ?? 'default'} aria-label={label} className="mb-4 flex break-inside-avoid flex-col gap-2">
-                  <h2 className="truncate px-1.5 text-[11px] font-bold uppercase tracking-[.1em] text-ui-muted">{label}</h2>
-                  <div className={CARD}>
-                    {sec.practices.map((p) => (
-                      <PracticeRow key={`${p.id}-${dateStr}`} practice={p} value={today.values[p.practice]}
-                        failed={today.failed === p.practice} onSave={(v) => today.save(p, v)} />
-                    ))}
-                  </div>
-                </section>
-              )
-            })}
-          </div>
+          {/* Two columns only from 768px: at the 640px tablet minimum inline inputs need the full width. */}
+          {today.sections.length === 1 ? (
+            // One group: its rows split into two balanced halves (down the left, then the right).
+            <section aria-label={groupName(today.sections[0].group, t)} className="flex flex-col gap-2">
+              <h2 className="truncate px-1.5 text-[11px] font-bold uppercase tracking-[.1em] text-ui-muted">{groupName(today.sections[0].group, t)}</h2>
+              <div className="grid items-start gap-4 md:grid-cols-2">
+                {[today.practices.slice(0, half), today.practices.slice(half)].map((ps, i) => (ps.length > 0 || i === 0) && (
+                  <div key={i} className={CARD}>{ps.map(row)}</div>
+                ))}
+              </div>
+            </section>
+          ) : (
+            // Several groups flow down the columns and never split.
+            <div className="gap-4 md:columns-2">
+              {today.sections.map((sec) => {
+                const label = groupName(sec.group, t)
+                return (
+                  <section key={sec.group.id ?? 'default'} aria-label={label} className="mb-4 flex break-inside-avoid flex-col gap-2">
+                    <h2 className="truncate px-1.5 text-[11px] font-bold uppercase tracking-[.1em] text-ui-muted">{label}</h2>
+                    <div className={CARD}>{sec.practices.map(row)}</div>
+                  </section>
+                )
+              })}
+            </div>
+          )}
         </>
       )}
 

@@ -59,7 +59,8 @@ describe('TodayTablet', () => {
     expect(days.map((d) => d.textContent?.replace(/\D/g, ''))).toEqual(['4', '5', '6', '7', '8', '9', '10', '11', '12'])
     await waitFor(() => expect(within(days[1]).getByTestId('incomplete-dot')).toBeInTheDocument())
 
-    expect(screen.getByRole('region', { name: 'Practices' })).toHaveTextContent(/Wake up.*Reading.*Japa/)
+    const columns = screen.getByRole('region', { name: 'Practices' }).querySelectorAll('.grid > div')
+    expect([...columns].map((c) => c.textContent)).toEqual([expect.stringMatching(/Wake up.*Reading/), expect.stringMatching(/Japa/)])
   })
 
   it('picking a day in the week loads that day', async () => {
