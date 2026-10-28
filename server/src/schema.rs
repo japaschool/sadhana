@@ -80,6 +80,7 @@ diesel::table! {
         y_axis -> Nullable<Text>,
         show_average -> Nullable<Bool>,
         line_style -> Nullable<LineStyleEnum>,
+        order_key -> Int4,
     }
 }
 
@@ -96,6 +97,7 @@ diesel::table! {
         bar_layout -> Nullable<BarLayoutEnum>,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+        group_columns -> Bool,
     }
 }
 
