@@ -9,6 +9,7 @@ import type { UserPractice } from '../../types/api'
 vi.mock('../../api/practices', () => ({
   practicesApi: {
     getUserPractices: vi.fn(),
+    getGroups: vi.fn(),
     getDiaryEntries: vi.fn(),
     getIncompleteDays: vi.fn(),
     saveDiaryEntry: vi.fn(),
@@ -34,6 +35,7 @@ describe('useToday', () => {
     vi.clearAllMocks()
     useToastStore.setState({ toasts: [] })
     api.getUserPractices.mockResolvedValue([A, B, C, D])
+    api.getGroups.mockResolvedValue([{ id: null, name: '', is_default: true }])
     api.getDiaryEntries.mockImplementation(async (date) =>
       date === '2026-10-06'
         ? [{ practice: 'A', data_type: 'Bool', value: { Bool: false } }, { practice: 'C', data_type: 'Text', value: { Text: 'x' } }]
@@ -147,5 +149,22 @@ describe('useToday', () => {
     await act(() => qc.refetchQueries({ queryKey: ['practices'] }))
     expect(result.current.isError).toBe(false)
     expect(result.current.practices).toHaveLength(3)
+  })
+
+  it('sections active practices by group and falls back to one section when groups fail', async () => {
+    const m = { id: 'm', name: 'Morning', is_default: false }
+    api.getGroups.mockResolvedValue([m, { id: null, name: '', is_default: true }])
+    api.getUserPractices.mockResolvedValue([A, { ...B, group_id: 'm' }, C, D])
+    const { result } = setup()
+    await waitFor(() => expect(result.current.sections.map((s) => s.group.name)).toEqual(['Morning', '']))
+    expect(result.current.practices.map((p) => p.id)).toEqual(['b', 'a', 'c'])
+  })
+
+  it('shows one default section while the groups query fails', async () => {
+    api.getGroups.mockRejectedValue(new Error('x'))
+    const { result } = setup()
+    await waitFor(() => expect(result.current.practices.length).toBe(3))
+    expect(result.current.sections).toHaveLength(1)
+    expect(result.current.sections[0].group.is_default).toBe(true)
   })
 })

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { DayFailedNote, SyncBanner } from '../SyncBanner'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import { ListGroup } from '../../../ui/primitives/ListGroup'
+import { groupName } from '../../practices/groups'
 import { PanelPopover } from '../../../ui/primitives/PanelPopover'
 import { addDays, toDateStr } from '../date'
 import { NoPractices } from '../NoPractices'
@@ -79,12 +80,14 @@ export function LogPanel({ date, onDate }: { date: Date; onDate: (d: Date) => vo
         ) : (
           <>
             {today.dayFailed && <DayFailedNote />}
-            <ListGroup label={t('today.group')}>
-              {today.practices.map((p) => (
-                <PracticeRow key={`${p.id}-${dateStr}`} practice={p} value={today.values[p.practice]}
-                  failed={today.failed === p.practice} onSave={(v) => today.save(p, v)} />
-              ))}
-            </ListGroup>
+            {today.sections.map((s) => (
+              <ListGroup key={s.group.id ?? 'default'} label={groupName(s.group, t)}>
+                {s.practices.map((p) => (
+                  <PracticeRow key={`${p.id}-${dateStr}`} practice={p} value={today.values[p.practice]}
+                    failed={today.failed === p.practice} onSave={(v) => today.save(p, v)} />
+                ))}
+              </ListGroup>
+            ))}
           </>
         )}
       </div>

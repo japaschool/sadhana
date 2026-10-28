@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
@@ -8,6 +8,7 @@ import { setViewportWidth } from '../../../test/viewport'
 vi.mock('../../../api/practices', () => ({
   practicesApi: {
     getUserPractices: vi.fn(),
+    getGroups: vi.fn(),
     getDiaryEntries: vi.fn(),
     getIncompleteDays: vi.fn(),
     saveDiaryEntry: vi.fn(),
@@ -37,6 +38,7 @@ describe('TodayMobile', () => {
       { id: '1', practice: 'Wake up', data_type: 'Time', is_active: true, is_required: true },
       { id: '2', practice: 'Reading', data_type: 'Bool', is_active: true },
     ])
+    api.getGroups.mockResolvedValue([{ id: null, name: '', is_default: true }])
     api.getDiaryEntries.mockResolvedValue([{ practice: 'Reading', data_type: 'Bool', value: { Bool: false } }])
     api.getIncompleteDays.mockResolvedValue([])
     api.saveDiaryEntry.mockResolvedValue(undefined)
@@ -84,5 +86,23 @@ describe('TodayMobile', () => {
     expect(await screen.findByText(/Couldn't load this day/)).toBeInTheDocument()
     expect(screen.getByText('Wake up')).toBeInTheDocument()
     expect(screen.getByRole('switch', { name: 'Reading' })).toBeInTheDocument()
+  })
+
+  it('shows one labelled list per group in group order', async () => {
+    api.getUserPractices.mockResolvedValue([
+      { id: '1', practice: 'Wake up', data_type: 'Time', is_active: true },
+      { id: '2', practice: 'Reading', data_type: 'Bool', is_active: true, group_id: 'm' },
+    ])
+    api.getGroups.mockResolvedValue([{ id: 'm', name: 'Morning', is_default: false }, { id: null, name: '', is_default: true }])
+    renderScreen()
+    await screen.findByText('Reading')
+    await waitFor(() => expect(screen.getAllByRole('region').map((r) => r.getAttribute('aria-label'))).toEqual(['Morning', 'Practices']))
+    expect(within(screen.getByRole('region', { name: 'Morning' })).getByText('Reading')).toBeInTheDocument()
+  })
+
+  it('shows a single Practices list when there are no groups', async () => {
+    renderScreen()
+    await screen.findByText('Wake up')
+    expect(screen.getAllByRole('region').map((r) => r.getAttribute('aria-label'))).toEqual(['Practices'])
   })
 })

@@ -5,6 +5,7 @@ import { DayFailedNote, SyncBanner } from '../SyncBanner'
 import { AppBar, type AppBarAction } from '../../../layouts/mobile/AppBar'
 import { MobileShell } from '../../../layouts/mobile/MobileShell'
 import { ListGroup } from '../../../ui/primitives/ListGroup'
+import { groupName } from '../../practices/groups'
 import { toDateStr } from '../date'
 import { NoPractices } from '../NoPractices'
 import { useToday } from '../useToday'
@@ -48,12 +49,14 @@ export function TodayMobile() {
         ) : (
           <>
             {today.dayFailed && <DayFailedNote />}
-            <ListGroup label={t('today.group')}>
-              {today.practices.map((p) => (
-                <PracticeRow key={`${p.id}-${dateStr}`} practice={p} value={today.values[p.practice]}
-                  failed={today.failed === p.practice} onSave={(v) => today.save(p, v)} />
-              ))}
-            </ListGroup>
+            {today.sections.map((s) => (
+              <ListGroup key={s.group.id ?? 'default'} label={groupName(s.group, t)}>
+                {s.practices.map((p) => (
+                  <PracticeRow key={`${p.id}-${dateStr}`} practice={p} value={today.values[p.practice]}
+                    failed={today.failed === p.practice} onSave={(v) => today.save(p, v)} />
+                ))}
+              </ListGroup>
+            ))}
           </>
         )}
       </div>
