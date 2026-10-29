@@ -64,6 +64,10 @@ To run the container use the following command as an example:
 
 The required environment variables can be either passed down with `-e` flag or in a mapped `.env` file.
 
+### Search engine consoles
+
+Google Search Console and Yandex Webmaster are both signed in with `sadhanapro108@gmail.com`. The Yandex verification lives in `static-react/public/yandex_c38ffe4d99a52c79.html` and the `yandex-verification` meta tag in `index.html`.
+
 ### Splash screen generation for iOS
 
 1. `npm install pwa-asset-generator`
