@@ -104,6 +104,7 @@ fn collect_precache_assets(dir: &Path, base: &Path, out: &mut Vec<String>) {
 fn api_scope() -> impl HttpServiceFactory {
     web::scope("/api")
         .service(version)
+        .route("/stats", web::get().to(app::stats::get_stats))
         .service(
             web::scope("/users")
                 .service(

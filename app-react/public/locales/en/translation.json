@@ -854,5 +854,15 @@
     "total": "Total",
     "downloadCsv": "Download CSV",
     "hoverHint": "Hover a day to see the diary value behind it. Tap on touch screens."
+  },
+  "stats": {
+    "title": "Stats",
+    "active": "Active users",
+    "activeHint": "People who logged at least one entry that week",
+    "signups": "New sign-ups",
+    "signupsHint": "Accounts created that week",
+    "lastWeek": "last week",
+    "weekOf": "Week of {{date}}",
+    "loadFailed": "Couldn't load stats."
   }
 }

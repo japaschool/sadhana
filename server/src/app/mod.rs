@@ -3,6 +3,7 @@ pub mod oauth;
 pub mod practice_groups;
 pub mod report;
 pub mod shared;
+pub mod stats;
 pub mod support;
 pub mod user;
 pub mod user_practices;

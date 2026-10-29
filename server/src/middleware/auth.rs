@@ -175,7 +175,7 @@ pub fn get_current_user(req: &HttpRequest) -> Result<User, AppError> {
         })
 }
 
-const SKIP_AUTH_API_ROUTES: [SkipAuthRoute; 11] = [
+const SKIP_AUTH_API_ROUTES: [SkipAuthRoute; 12] = [
     SkipAuthRoute {
         path: "/api/users",
         method: Method::POST,
@@ -219,6 +219,11 @@ const SKIP_AUTH_API_ROUTES: [SkipAuthRoute; 11] = [
     // Shown on the public Help page.
     SkipAuthRoute {
         path: "/api/version",
+        method: Method::GET,
+    },
+    // Public /stats page; aggregate counts only.
+    SkipAuthRoute {
+        path: "/api/stats",
         method: Method::GET,
     },
 ];
