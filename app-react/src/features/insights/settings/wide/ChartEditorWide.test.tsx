@@ -9,7 +9,7 @@ import { ChartEditorWide } from './ChartEditorWide'
 vi.mock('../../../../api/charts', () => ({
   chartsApi: { getReports: vi.fn(), getReportData: vi.fn(), updateReport: vi.fn(), createReport: vi.fn(), deleteReport: vi.fn() },
 }))
-vi.mock('../../../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn(), updateUserPractice: vi.fn() } }))
+vi.mock('../../../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn(), updateUserPractice: vi.fn(), getGroups: vi.fn() } }))
 import { chartsApi } from '../../../../api/charts'
 import { practicesApi } from '../../../../api/practices'
 const charts = vi.mocked(chartsApi)
@@ -40,6 +40,7 @@ describe('ChartEditorWide', () => {
       { id: 'wake', practice: 'Wake-up time', data_type: 'Time', is_active: true },
       { id: 'read', practice: 'Book reading', data_type: 'Duration', is_active: true },
     ])
+    vi.mocked(practicesApi.getGroups).mockResolvedValue([{ id: null, name: '', is_default: true }])
     charts.getReports.mockResolvedValue([GRAPH, TABLE])
     charts.getReportData.mockResolvedValue([])
     charts.updateReport.mockResolvedValue()
@@ -79,5 +80,12 @@ describe('ChartEditorWide', () => {
     renderAt('/settings/charts/r1')
     const panel = await screen.findByRole('complementary', { name: 'Preview' })
     expect(within(panel).getByRole('heading', { name: 'Axes' })).toBeInTheDocument()
+  })
+
+  it('a table has the Group columns setting too', async () => {
+    setViewportWidth(1200)
+    renderAt('/settings/charts/t1')
+    fireEvent.click(await screen.findByRole('switch', { name: 'Group columns' }))
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['wake'], group_columns: false } }))
   })
 })

@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::db_types::PracticeDataType;
 use crate::middleware::auth;
 use crate::middleware::state::AppState;
-use crate::schema::{diary, report_traces, user_practices, yatra_user_practices};
+use crate::schema::{diary, practice_groups, report_traces, user_practices, yatra_user_practices};
 
 #[derive(Debug, Queryable, Serialize, Deserialize)]
 pub struct UserPractice {
@@ -24,6 +24,9 @@ pub struct UserPractice {
     pub is_required: Option<bool>,
     #[diesel(sql_type = Nullable<Text>)]
     pub dropdown_variants: Option<String>,
+    #[diesel(sql_type = Nullable<DieselUuid>)]
+    #[serde(default)]
+    pub group_id: Option<Uuid>,
 }
 
 impl UserPractice {
@@ -36,6 +39,7 @@ impl UserPractice {
                 user_practices::is_active,
                 user_practices::is_required,
                 user_practices::dropdown_variants,
+                user_practices::group_id,
             ))
             .filter(user_practices::id.eq(&practice))
             .first(conn)?;
@@ -55,6 +59,7 @@ impl UserPractice {
                 user_practices::is_active,
                 user_practices::is_required,
                 user_practices::dropdown_variants,
+                user_practices::group_id,
             ))
             .filter(user_practices::user_id.eq(user_id))
             .order(user_practices::order_key)
@@ -161,6 +166,21 @@ impl UserPractice {
         use crate::schema::user_practices::dsl::*;
 
         conn.transaction(|conn| {
+            if let Some(gid) = record.group_id {
+                let owned: i64 = practice_groups::table
+                    .filter(
+                        practice_groups::id
+                            .eq(gid)
+                            .and(practice_groups::user_id.eq(record.user_id))
+                            .and(practice_groups::is_default.eq(false)),
+                    )
+                    .count()
+                    .get_result(conn)?;
+                if owned == 0 {
+                    return Err(AppError::NotFound);
+                }
+            }
+
             let max_order_key: Option<i32> = user_practices
                 .filter(user_id.eq(&record.user_id))
                 .select(diesel::dsl::max(order_key))
@@ -174,6 +194,7 @@ impl UserPractice {
                     is_active.eq(record.is_active),
                     is_required.eq(record.is_required),
                     dropdown_variants.eq(&record.dropdown_variants),
+                    group_id.eq(record.group_id),
                     order_key.eq(max_order_key.unwrap_or_default() + 1),
                 ))
                 .execute(conn)?;
@@ -318,6 +339,7 @@ pub struct NewUserPractice {
     is_active: bool,
     is_required: Option<bool>,
     dropdown_variants: Option<String>,
+    group_id: Option<Uuid>,
 }
 
 impl NewUserPractice {
@@ -329,6 +351,7 @@ impl NewUserPractice {
             is_active: form.is_active,
             is_required: form.is_required,
             dropdown_variants: form.dropdown_variants,
+            group_id: form.group_id,
         }
     }
 }
@@ -340,6 +363,8 @@ pub struct NewUserPracticeForm {
     is_active: bool,
     is_required: Option<bool>,
     dropdown_variants: Option<String>,
+    #[serde(default)]
+    group_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize)]

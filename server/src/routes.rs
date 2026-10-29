@@ -130,7 +130,18 @@ fn api_scope() -> impl HttpServiceFactory {
                             "/reorder",
                             web::put().to(app::user_practices::update_user_practice_order_key),
                         )
+                        .route("/layout", web::put().to(app::practice_groups::save_layout))
                         .route("", web::get().to(app::user_practices::get_user_practices)),
+                )
+                .service(
+                    web::scope("/practice-groups")
+                        .route("", web::get().to(app::practice_groups::list_groups))
+                        .route("", web::post().to(app::practice_groups::create_group)),
+                )
+                .service(
+                    web::scope("/practice-group/{id}")
+                        .route("", web::put().to(app::practice_groups::rename_group))
+                        .route("", web::delete().to(app::practice_groups::delete_group)),
                 )
                 .service(
                     web::scope("/practice/{practice}")

@@ -5,6 +5,7 @@ import { DayFailedNote, SyncBanner } from '../SyncBanner'
 import { TabletShell } from '../../../layouts/tablet/TabletShell'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import type { UserPractice } from '../../../types/api'
+import { groupName } from '../../practices/groups'
 import { toDateStr } from '../date'
 import { NoPractices } from '../NoPractices'
 import { useToday } from '../useToday'
@@ -35,15 +36,10 @@ export function TodayTablet() {
     { label: t('home.editPractices'), onSelect: () => navigate('/settings/practices') },
   ]
 
-  // ponytail: one hardcoded group, so the two columns are its halves (down the left, then the right).
   const half = Math.ceil(today.practices.length / 2)
-  const column = (ps: UserPractice[]) => (
-    <div className={CARD}>
-      {ps.map((p) => (
-        <PracticeRow key={`${p.id}-${dateStr}`} practice={p} value={today.values[p.practice]}
-          failed={today.failed === p.practice} onSave={(v) => today.save(p, v)} />
-      ))}
-    </div>
+  const row = (p: UserPractice) => (
+    <PracticeRow key={`${p.id}-${dateStr}`} practice={p} value={today.values[p.practice]}
+      failed={today.failed === p.practice} onSave={(v) => today.save(p, v)} />
   )
 
   return (
@@ -83,15 +79,34 @@ export function TodayTablet() {
       ) : today.practices.length === 0 ? (
         <NoPractices onSeed={today.seedStarters} seeding={today.isSeeding} />
       ) : (
-        <section aria-label={t('today.group')} className="flex flex-col gap-2">
+        <>
           {today.dayFailed && <DayFailedNote />}
-          <h2 className="px-1.5 text-[11px] font-bold uppercase tracking-[.1em] text-ui-muted">{t('today.group')}</h2>
           {/* Two columns only from 768px: at the 640px tablet minimum inline inputs need the full width. */}
-          <div className="grid items-start gap-4 md:grid-cols-2">
-            {column(today.practices.slice(0, half))}
-            {today.practices.length > 1 && column(today.practices.slice(half))}
-          </div>
-        </section>
+          {today.sections.length === 1 ? (
+            // One group: its rows split into two balanced halves (down the left, then the right).
+            <section aria-label={groupName(today.sections[0].group, t)} className="flex flex-col gap-2">
+              <h2 className="truncate px-1.5 text-[11px] font-bold uppercase tracking-[.1em] text-ui-muted">{groupName(today.sections[0].group, t)}</h2>
+              <div className="grid items-start gap-4 md:grid-cols-2">
+                {[today.practices.slice(0, half), today.practices.slice(half)].map((ps, i) => (ps.length > 0 || i === 0) && (
+                  <div key={i} className={CARD}>{ps.map(row)}</div>
+                ))}
+              </div>
+            </section>
+          ) : (
+            // Several groups flow down the columns and never split.
+            <div className="gap-4 md:columns-2">
+              {today.sections.map((sec) => {
+                const label = groupName(sec.group, t)
+                return (
+                  <section key={sec.group.id ?? 'default'} aria-label={label} className="mb-4 flex break-inside-avoid flex-col gap-2">
+                    <h2 className="truncate px-1.5 text-[11px] font-bold uppercase tracking-[.1em] text-ui-muted">{label}</h2>
+                    <div className={CARD}>{sec.practices.map(row)}</div>
+                  </section>
+                )
+              })}
+            </div>
+          )}
+        </>
       )}
 
       {moreAnchor && (

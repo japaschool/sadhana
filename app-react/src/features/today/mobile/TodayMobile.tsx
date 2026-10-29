@@ -4,15 +4,15 @@ import { useTranslation } from 'react-i18next'
 import { DayFailedNote, SyncBanner } from '../SyncBanner'
 import { AppBar, type AppBarAction } from '../../../layouts/mobile/AppBar'
 import { MobileShell } from '../../../layouts/mobile/MobileShell'
-import { ListGroup } from '../../../ui/primitives/ListGroup'
 import { toDateStr } from '../date'
+import { ListGroup } from '../../../ui/primitives/ListGroup'
 import { NoPractices } from '../NoPractices'
 import { useToday } from '../useToday'
 import { useLogDate } from '../useLogDate'
 import { CalendarSheet } from './CalendarSheet'
 import { DateHeader } from './DateHeader'
 import { DayStrip9 } from './DayStrip9'
-import { PracticeRow } from './PracticeRow'
+import { TodaySections } from './PracticeRow'
 
 export function TodayMobile() {
   const { t } = useTranslation()
@@ -48,12 +48,7 @@ export function TodayMobile() {
         ) : (
           <>
             {today.dayFailed && <DayFailedNote />}
-            <ListGroup label={t('today.group')}>
-              {today.practices.map((p) => (
-                <PracticeRow key={`${p.id}-${dateStr}`} practice={p} value={today.values[p.practice]}
-                  failed={today.failed === p.practice} onSave={(v) => today.save(p, v)} />
-              ))}
-            </ListGroup>
+            <TodaySections today={today} dateStr={dateStr} />
           </>
         )}
       </div>

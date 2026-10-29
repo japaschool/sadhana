@@ -19,7 +19,8 @@ export interface GraphReport {
 }
 
 export interface GridReport {
-  practices: string[]  // UUIDs
+  practices: string[]  // UUIDs, in column order
+  group_columns?: boolean
 }
 
 export type ReportDefinition = { Graph: GraphReport } | { Grid: GridReport }

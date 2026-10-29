@@ -8,6 +8,7 @@ import { setViewportWidth } from '../../../test/viewport'
 vi.mock('../../../api/practices', () => ({
   practicesApi: {
     getUserPractices: vi.fn(),
+    getGroups: vi.fn(),
     getDiaryEntries: vi.fn(),
     getIncompleteDays: vi.fn(),
     saveDiaryEntry: vi.fn(),
@@ -38,13 +39,14 @@ describe('TodayTablet', () => {
       { id: '2', practice: 'Reading', data_type: 'Bool', is_active: true },
       { id: '3', practice: 'Japa', data_type: 'Int', is_active: true },
     ])
+    api.getGroups.mockResolvedValue([{ id: null, name: '', is_default: true }])
     api.getDiaryEntries.mockResolvedValue([])
     api.getIncompleteDays.mockResolvedValue(['2026-10-05'])
     api.saveDiaryEntry.mockResolvedValue(undefined)
   })
   afterEach(() => { vi.useRealTimers() })
 
-  it('renders the rail, header, 9-day strip and practices split into two columns', async () => {
+  it('renders the rail, header, 9-day strip and practices', async () => {
     renderScreen()
     expect(await screen.findByText('Wake up')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Log' })).toHaveAttribute('aria-current', 'page')
@@ -67,5 +69,19 @@ describe('TodayTablet', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Thursday, October 8' }))
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Thursday, October 8')
     await waitFor(() => expect(api.getDiaryEntries).toHaveBeenCalledWith('2026-10-08'))
+  })
+
+  it('never splits a group across the two columns', async () => {
+    api.getUserPractices.mockResolvedValue([
+      { id: '1', practice: 'Wake up', data_type: 'Time', is_active: true },
+      { id: '2', practice: 'Reading', data_type: 'Bool', is_active: true, group_id: 'm' },
+    ])
+    api.getGroups.mockResolvedValue([{ id: 'm', name: 'Morning', is_default: false }, { id: null, name: '', is_default: true }])
+    renderScreen()
+    await screen.findByText('Reading')
+    const morning = screen.getByRole('region', { name: 'Morning' })
+    expect(morning).toHaveClass('break-inside-avoid')
+    expect(morning).toHaveTextContent('Reading')
+    expect(screen.getByRole('region', { name: 'Practices' })).toHaveClass('break-inside-avoid')
   })
 })

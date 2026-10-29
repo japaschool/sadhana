@@ -24,6 +24,18 @@ export interface UserPractice {
   is_active: boolean
   is_required?: boolean
   dropdown_variants?: string
+  group_id?: string | null
+}
+
+export interface PracticeGroup {
+  id: string | null  // null = the default group
+  name: string
+  is_default: boolean
+}
+
+export interface Layout {
+  groups: (string | null)[]
+  practices: { id: string; group_id: string | null }[]
 }
 
 export interface DiaryEntry {

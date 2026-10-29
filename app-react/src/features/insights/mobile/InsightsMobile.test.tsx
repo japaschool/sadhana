@@ -9,7 +9,7 @@ vi.mock('../../../api/charts', () => ({
   chartsApi: { getReports: vi.fn(), getReportData: vi.fn(), deleteReport: vi.fn() },
 }))
 vi.mock('../../../api/practices', () => ({
-  practicesApi: { getUserPractices: vi.fn(), getIncompleteDays: vi.fn(), getDiaryEntries: vi.fn(), saveDiaryEntry: vi.fn() },
+  practicesApi: { getUserPractices: vi.fn(), getIncompleteDays: vi.fn(), getDiaryEntries: vi.fn(), saveDiaryEntry: vi.fn(), getGroups: vi.fn() },
 }))
 import { chartsApi } from '../../../api/charts'
 import { practicesApi } from '../../../api/practices'
@@ -44,6 +44,7 @@ describe('InsightsMobile', () => {
       { id: 'p1', practice: 'Japa', data_type: 'Duration', is_active: true },
       { id: 'p2', practice: 'Reading', data_type: 'Duration', is_active: true, is_required: true },
     ])
+    practices.getGroups.mockResolvedValue([{ id: null, name: '', is_default: true }])
     practices.getIncompleteDays.mockResolvedValue([])
     charts.getReports.mockResolvedValue([
       { id: 'r1', name: LONG, definition: { Graph: { bar_layout: 'Stacked', traces: [
@@ -208,5 +209,39 @@ describe('InsightsMobile', () => {
     fireEvent.change(input, { target: { value: '90' } })
     fireEvent.blur(input)
     await waitFor(() => expect(practices.saveDiaryEntry).toHaveBeenCalledWith('2026-10-05', 'Japa', { Duration: 90 }))
+  })
+
+  it('a grouped table has one header cell per group spanning its columns', async () => {
+    localStorage.setItem('insights-report', 'g1')
+    charts.getReports.mockResolvedValue([{ id: 'g1', name: 'Grid one', definition: { Grid: { practices: ['p1', 'p2', 'p3'] } } }])
+    practices.getUserPractices.mockResolvedValue([
+      { id: 'p1', practice: 'Japa', data_type: 'Duration', is_active: true, group_id: null },
+      { id: 'p2', practice: 'Reading', data_type: 'Duration', is_active: true, group_id: 'm' },
+      { id: 'p3', practice: 'Mantra', data_type: 'Duration', is_active: true, group_id: 'm' },
+    ] as never)
+    practices.getGroups.mockResolvedValue([{ id: 'm', name: 'Morning', is_default: false }, { id: null, name: '', is_default: true }])
+    renderScreen()
+    const table = await screen.findByRole('table')
+    const head = within(table).getAllByRole('row')[0]
+    const cells = within(head).getAllByRole('columnheader').filter((c) => c.textContent)
+    expect(cells.map((c) => c.textContent)).toEqual(['Morning', 'Practices'])
+    expect(cells.map((c) => c.getAttribute('colspan'))).toEqual(['2', '1'])
+    // Morning's columns, in report order, come before Japa.
+    expect(within(table).getAllByRole('row')[1].textContent).toBe('DateReadingMantraJapa')
+  })
+
+  it('Group columns off: no group header row, report order', async () => {
+    localStorage.setItem('insights-report', 'g1')
+    charts.getReports.mockResolvedValue([{ id: 'g1', name: 'Grid one', definition: { Grid: { practices: ['p2', 'p1'], group_columns: false } } }])
+    practices.getUserPractices.mockResolvedValue([
+      { id: 'p1', practice: 'Japa', data_type: 'Duration', is_active: true, group_id: null },
+      { id: 'p2', practice: 'Reading', data_type: 'Duration', is_active: true, group_id: 'm' },
+    ] as never)
+    practices.getGroups.mockResolvedValue([{ id: 'm', name: 'Morning', is_default: false }, { id: null, name: '', is_default: true }])
+    renderScreen()
+    const table = await screen.findByRole('table')
+    const rows = within(table).getAllByRole('row')
+    expect(rows[0].textContent).toBe('DateReadingJapa')
+    expect(within(table).queryByText('Morning')).toBeNull()
   })
 })

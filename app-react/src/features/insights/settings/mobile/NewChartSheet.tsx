@@ -43,7 +43,7 @@ export function NewChartSheet({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState('')
   const create = useMutation({
     mutationFn: async () => {
-      const definition: ReportDefinition = kind === 'Graph' ? { Graph: { bar_layout: 'Grouped', traces: [] } } : { Grid: { practices: [] } }
+      const definition: ReportDefinition = kind === 'Graph' ? { Graph: { bar_layout: 'Grouped', traces: [] } } : { Grid: { practices: [], group_columns: true } }
       const id = await chartsApi.createReport(name.trim(), definition)
       return { id, name: name.trim(), definition } satisfies Report
     },

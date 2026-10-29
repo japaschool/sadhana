@@ -5,6 +5,7 @@ import { practicesApi } from '../../api/practices'
 import { failedWithoutData } from '../../api/queryState'
 import { useToast } from '../../hooks/useToast'
 import type { DiaryEntry, PracticeDataType, PracticeValue, UserPractice } from '../../types/api'
+import { todaySections } from '../practices/groups'
 import { fromDateStr, nineDayWindow, toDateStr } from './date'
 import { sameValue } from './values'
 
@@ -33,13 +34,16 @@ export function useToday(date: Date) {
   const to = toDateStr(window9[8])
 
   const practicesQ = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices })
+  // Loading or failed: no groups, which gives the single default section.
+  const groupsQ = useQuery({ queryKey: ['practice-groups'], queryFn: practicesApi.getGroups })
   const diaryQ = useQuery({ queryKey: ['diary', dateStr], queryFn: () => practicesApi.getDiaryEntries(dateStr) })
   const incompleteQ = useQuery({
     queryKey: ['incomplete-days', from, to],
     queryFn: () => practicesApi.getIncompleteDays(from, to),
   })
 
-  const practices = (practicesQ.data ?? []).filter((p) => p.is_active)
+  const sections = todaySections(groupsQ.data ?? [], practicesQ.data ?? [])
+  const practices = sections.flatMap((s) => s.practices)
   const values: Record<string, PracticeValue> = {}
   for (const e of diaryQ.data ?? []) if (e.value != null) values[e.practice] = e.value
   const isSet = (p: UserPractice) => values[p.practice] !== undefined
@@ -116,6 +120,7 @@ export function useToday(date: Date) {
   }, [qc, dateStr])
 
   return {
+    sections,
     practices,
     values,
     summary,

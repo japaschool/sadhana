@@ -55,6 +55,18 @@ diesel::table! {
 }
 
 diesel::table! {
+    practice_groups (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        name -> Text,
+        order_key -> Int4,
+        is_default -> Bool,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::TraceTypeEnum;
     use super::sql_types::LineStyleEnum;
@@ -68,6 +80,7 @@ diesel::table! {
         y_axis -> Nullable<Text>,
         show_average -> Nullable<Bool>,
         line_style -> Nullable<LineStyleEnum>,
+        order_key -> Int4,
     }
 }
 
@@ -84,6 +97,7 @@ diesel::table! {
         bar_layout -> Nullable<BarLayoutEnum>,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+        group_columns -> Bool,
     }
 }
 
@@ -103,6 +117,7 @@ diesel::table! {
         is_required -> Nullable<Bool>,
         formula -> Nullable<Text>,
         dropdown_variants -> Nullable<Text>,
+        group_id -> Nullable<Uuid>,
     }
 }
 
@@ -160,9 +175,11 @@ diesel::table! {
 
 diesel::joinable!(diary -> user_practices (practice_id));
 diesel::joinable!(diary -> users (user_id));
+diesel::joinable!(practice_groups -> users (user_id));
 diesel::joinable!(report_traces -> reports (report_id));
 diesel::joinable!(report_traces -> user_practices (practice_id));
 diesel::joinable!(reports -> users (user_id));
+diesel::joinable!(user_practices -> practice_groups (group_id));
 diesel::joinable!(user_practices -> users (user_id));
 diesel::joinable!(yatra_practices -> yatras (yatra_id));
 diesel::joinable!(yatra_user_practices -> user_practices (user_practice_id));
@@ -174,6 +191,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     confirmations,
     default_user_practices,
     diary,
+    practice_groups,
     report_traces,
     reports,
     user_practices,

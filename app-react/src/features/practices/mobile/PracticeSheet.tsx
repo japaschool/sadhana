@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { PracticeDataType, UserPractice } from '../../../types/api'
+import type { PracticeDataType, PracticeGroup, UserPractice } from '../../../types/api'
 import { BottomSheet } from '../../../ui/primitives/BottomSheet'
+import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import { Toggle } from '../../../ui/primitives/Toggle'
 import { onRadioKeys, radioTabIndex } from '../../../ui/radioKeys'
 import { addDays, toDateStr } from '../../today/date'
@@ -12,6 +13,7 @@ import { SheetHeader } from '../../yatras/settings/mobile/fields'
 import { TypeIcon } from '../../yatras/settings/mobile/TypeChip'
 import { isDuplicate, LIST_MAX, NAME_MAX } from '../usePractices'
 import type { PracticeDraft } from '../usePractices'
+import { groupName } from '../groups'
 
 const TYPES: PracticeDataType[] = ['Int', 'Time', 'Duration', 'Bool', 'Text']
 const LABEL = 'text-[13px] font-bold text-ui-muted'
@@ -21,11 +23,15 @@ const SPINNER = 'h-4 w-4 animate-spin rounded-full border-2 border-current borde
 /** Only numbers and text can be picked from a list on Today. */
 const hasList = (type: PracticeDataType | null) => type === 'Int' || type === 'Text'
 
-export function PracticeSheet({ practice, name: initialName, others, busy, onSave, onClose, onDelete, panel }: {
+export function PracticeSheet({ practice, name: initialName, groups, onNewGroup, others, busy, onSave, onClose, onDelete, panel }: {
   /** Absent: a new practice. */
   practice?: UserPractice
   /** Pre-fills a new practice's name (Import CSV's "+" on an unmatched column). */
   name?: string
+  /** Every group in Today's order, the default one included. */
+  groups: PracticeGroup[]
+  /** Opens the name sheet; resolves with the new group's id, or null if it was closed. */
+  onNewGroup: () => Promise<string | null>
   /** Every other practice, so a taken name is caught before saving. */
   others: UserPractice[]
   busy: boolean
@@ -45,6 +51,7 @@ export function PracticeSheet({ practice, name: initialName, others, busy, onSav
   const [active, setActive] = useState(practice?.is_active ?? true)
   const [listOn, setListOn] = useState(saved.length > 0)
   const [values, setValues] = useState(saved)
+  const [groupId, setGroupId] = useState<string | null>(practice?.group_id ?? null)
   const [submitted, setSubmitted] = useState(false)
   const [takenName, setTakenName] = useState<string | null>(null)
 
@@ -58,7 +65,7 @@ export function PracticeSheet({ practice, name: initialName, others, busy, onSav
     if (!trimmed || !type || taken) return
     const list = listOn && hasList(type) && values.length ? values.join(', ') : null
     try {
-      await onSave({ practice: trimmed, data_type: type, is_active: active, is_required: required, dropdown_variants: list })
+      await onSave({ practice: trimmed, data_type: type, is_active: active, is_required: required, dropdown_variants: list, group_id: groupId })
     } catch (e) {
       if (isDuplicate(e)) setTakenName(trimmed)
     }
@@ -89,6 +96,8 @@ export function PracticeSheet({ practice, name: initialName, others, busy, onSav
         </div>
         {nameError && <p id="practice-name-error" role="alert" className={ERROR}>{nameError}</p>}
       </div>
+
+      <GroupField groups={groups} value={groupId} onChange={setGroupId} onNewGroup={onNewGroup} hint={panel} />
 
       {practice ? <FixedType type={practice.data_type} /> : <TypePicker value={type} onChange={setType} error={typeError} />}
 
@@ -139,6 +148,33 @@ export function PracticeSheet({ practice, name: initialName, others, busy, onSav
         {saveButton}
       </footer>
     </section>
+  )
+}
+
+function GroupField({ groups, value, onChange, onNewGroup, hint }: {
+  groups: PracticeGroup[]; value: string | null; onChange: (id: string | null) => void; onNewGroup: () => Promise<string | null>; hint?: boolean
+}) {
+  const { t } = useTranslation()
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null)
+  const current = groups.find((g) => g.id === value)
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span id="practice-group" className={LABEL}>{t('practices.group')}</span>
+      <button type="button" aria-labelledby="practice-group practice-group-value" aria-haspopup="menu" aria-expanded={!!anchor}
+        onClick={(e) => setAnchor(e.currentTarget)} className={`${FIELD} flex items-center justify-between gap-2 text-left`}>
+        <span id="practice-group-value" className="min-w-0 truncate">{current ? groupName(current, t) : value ? '…' : t('today.group')}</span>
+        <span aria-hidden className="text-ui-muted">▾</span>
+      </button>
+      {hint && <p className={HINT}>{t('practices.groupHint')}</p>}
+      {anchor && (
+        <AnchoredMenu anchor={anchor} label={t('practices.group')} onClose={() => setAnchor(null)}>
+          {groups.map((g) => (
+            <MenuItem key={g.id ?? 'default'} selected={g.id === value} onSelect={() => { onChange(g.id); setAnchor(null) }}>{groupName(g, t)}</MenuItem>
+          ))}
+          <MenuItem muted onSelect={() => { setAnchor(null); void onNewGroup().then((id) => { if (id) onChange(id) }) }}>+ {t('practices.newGroup')}</MenuItem>
+        </AnchoredMenu>
+      )}
+    </div>
   )
 }
 

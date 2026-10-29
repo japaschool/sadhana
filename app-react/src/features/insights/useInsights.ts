@@ -92,6 +92,8 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     entries,
     rows: buildChartData(entries, traces, locale),
     barLayout,
+    /** A table's Group columns setting (on unless the report says otherwise). */
+    grouped: !(report && 'Grid' in report.definition && report.definition.Grid.group_columns === false),
     headline: headline(traces, barLayout, entries, previous.data, todayCob),
     averages: averageLines(traces, entries, barLayout, todayCob, hidden),
     hidden,

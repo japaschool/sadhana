@@ -20,6 +20,8 @@ export default function Navbar() {
   function changeLang(l: 'en' | 'ru' | 'uk') {
     void i18n.changeLanguage(l)
     window.history.pushState({}, '', l === 'en' ? '/' : `/${l}/`)
+    // GA4 sees pushState itself; Metrika needs the hit (counter in index.html)
+    ;(window as { ym?: (...a: unknown[]) => void }).ym?.(113886867, 'hit', location.href)
   }
 
   const textColor = scrolled ? 'rgba(28,28,28,0.70)' : 'rgba(255,255,255,0.80)'

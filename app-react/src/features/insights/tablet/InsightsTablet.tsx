@@ -62,7 +62,7 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300 }: Insigh
 
       {table ? (
         // The table stops at the screen's 36px bottom padding, so the page itself doesn't scroll.
-        <InsightsTable traces={ins.traces} entries={ins.entries} todayCob={ins.todayCob} bottomGap={36}
+        <InsightsTable grouped={ins.grouped} traces={ins.traces} entries={ins.entries} todayCob={ins.todayCob} bottomGap={36}
           onOpenDay={(cob) => (onLogDate ? onLogDate(fromDateStr(cob)) : setOpenDay(cob))} />
       ) : (
         <section className="flex flex-col gap-[18px] rounded-[24px] border border-ui-hairline bg-ui-surface p-6">

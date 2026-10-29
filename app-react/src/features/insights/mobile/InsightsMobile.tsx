@@ -46,7 +46,7 @@ export function InsightsMobile() {
         </div>
 
         {table ? (
-          <InsightsTable traces={ins.traces} entries={ins.entries} todayCob={ins.todayCob} onOpenDay={setOpenDay} />
+          <InsightsTable grouped={ins.grouped} traces={ins.traces} entries={ins.entries} todayCob={ins.todayCob} onOpenDay={setOpenDay} />
         ) : (
           <section className={`${CARD} p-4`}>
             {ins.isLoading ? (

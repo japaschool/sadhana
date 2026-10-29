@@ -1,4 +1,4 @@
-use std::{collections::HashSet, fmt::Display, str::FromStr};
+use std::{fmt::Display, str::FromStr};
 
 use actix_web::{web, HttpRequest, HttpResponse};
 use common::error::AppError;
@@ -33,7 +33,9 @@ impl Report {
                 ReportType::Graph => {
                     ReportDefinition::Graph(GraphReport::try_from((report.bar_layout, traces))?)
                 }
-                ReportType::Grid => ReportDefinition::Grid(traces.into()),
+                ReportType::Grid => {
+                    ReportDefinition::Grid(GridReport::from_db(report.group_columns, traces))
+                }
             };
 
             res.push(Report {
@@ -58,6 +60,13 @@ impl ReportDefinition {
         match self {
             ReportDefinition::Grid(_) => ReportType::Grid,
             ReportDefinition::Graph(_) => ReportType::Graph,
+        }
+    }
+
+    fn group_columns(&self) -> Option<bool> {
+        match self {
+            ReportDefinition::Grid(grid) => grid.group_columns,
+            ReportDefinition::Graph(_) => None,
         }
     }
 
@@ -129,13 +138,18 @@ impl TryFrom<DBReportTrace> for PracticeTrace {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GridReport {
-    pub practices: HashSet<Uuid>,
+    /// Column order.
+    pub practices: Vec<Uuid>,
+    /// Absent on input from clients that predate the flag: keep the stored value.
+    #[serde(default)]
+    pub group_columns: Option<bool>,
 }
 
-impl From<Vec<DBReportTrace>> for GridReport {
-    fn from(value: Vec<DBReportTrace>) -> Self {
+impl GridReport {
+    fn from_db(group_columns: bool, traces: Vec<DBReportTrace>) -> Self {
         GridReport {
-            practices: value.into_iter().map(|t| t.practice_id).collect(),
+            practices: traces.into_iter().map(|t| t.practice_id).collect(),
+            group_columns: Some(group_columns),
         }
     }
 }

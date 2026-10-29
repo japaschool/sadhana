@@ -3,11 +3,16 @@ import type { ReactNode } from 'react'
 import type { TFunction } from 'i18next'
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { BarLayout } from '../../../../api/charts'
+import { practicesApi } from '../../../../api/practices'
+import type { UserPractice } from '../../../../types/api'
+import { Toggle } from '../../../../ui/primitives/Toggle'
+import { groupName, groupPractices } from '../../../practices/groups'
 import { MobileShell } from '../../../../layouts/mobile/MobileShell'
 import { UiPortal } from '../../../../ui/primitives/UiPortal'
 import { BTN, CARD, HINT, LIST, SECTION_TITLE } from '../../../yatras/settings/mobile/AdminPage'
@@ -442,39 +447,86 @@ function SeriesRow({ s, lang, editor, onOpen, onChoose, onTurnOn, onRemove }: {
   )
 }
 
-/** A table's columns: your active practices, ticked or not. They keep My practices' order. */
+/** A table's columns: ticked ones first, in the report's order, then the unticked. With Group columns on, that holds inside each group. */
 export function TableColumns({ ed }: { ed: Editor }) {
   const { t } = useTranslation()
   const report = ed.report!
-  const checked = new Set('Grid' in report.definition ? report.definition.Grid.practices : [])
+  const grid = 'Grid' in report.definition ? report.definition.Grid : { practices: [] as string[] }
+  const grouped = grid.group_columns ?? true
+  const { data: groups = [] } = useQuery({ queryKey: ['practice-groups'], queryFn: practicesApi.getGroups })
   const active = ed.practices.filter((p) => p.is_active)
-  const save = (ids: Set<string>) => ed.update((r) => ({ ...r, definition: { Grid: { practices: ed.practices.filter((p) => ids.has(p.id)).map((p) => p.id) } } }))
-  const toggle = (id: string) => {
-    const next = new Set(checked)
-    if (!next.delete(id)) next.add(id)
-    save(next)
+  const activeIds = new Set(active.map((p) => p.id))
+  const checked = new Set(grid.practices)
+  const rank = new Map(grid.practices.map((id, i) => [id, i]))
+  const ordered = (list: UserPractice[]) => [
+    ...list.filter((p) => checked.has(p.id)).sort((a, b) => rank.get(a.id)! - rank.get(b.id)!),
+    ...list.filter((p) => !checked.has(p.id)),
+  ]
+  const blocks = grouped
+    ? groupPractices(groups, active).filter((s) => s.practices.length > 0).map((s) => ({ key: s.group.id ?? 'default', group: s.group, rows: ordered(s.practices) }))
+    : [{ key: 'all', group: null, rows: ordered(active) }]
+  const groupOf = (id: string) => blocks.find((b) => b.rows.some((p) => p.id === id))?.key
+  // Every save carries group_columns, so the server knows this client keeps the column order.
+  const save = (practices: string[], group_columns = grouped) => ed.update((r) => ({ ...r, definition: { Grid: { practices, group_columns } } }))
+  const toggle = (id: string) => save(checked.has(id) ? grid.practices.filter((x) => x !== id) : [...grid.practices, id])
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+  function onDragEnd({ active: a, over }: DragEndEvent) {
+    if (!over || a.id === over.id || groupOf(String(a.id)) !== groupOf(String(over.id))) return
+    save(arrayMove(grid.practices, grid.practices.indexOf(String(a.id)), grid.practices.indexOf(String(over.id))))
   }
   const TEXT_BTN = 'min-h-9 px-1.5 text-[13px] font-bold text-ui-accent'
   return (
     <section className="flex flex-col gap-2">
+      <div className={`${CARD} flex items-center gap-3 p-4`}>
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span id="group-columns-label" className="text-[15px] font-bold text-ui-ink">{t('chartSettings.groupColumns')}</span>
+          <span id="group-columns-hint" className={HINT}>{t(grouped ? 'chartSettings.groupColumnsOn' : 'chartSettings.groupColumnsOff')}</span>
+        </div>
+        <Toggle checked={grouped} onChange={(v) => save(grid.practices, v)} label={t('chartSettings.groupColumns')} describedBy="group-columns-hint" />
+      </div>
       <div className="flex items-center gap-3 px-1.5">
         <h2 className={`${GROUP} flex-1`}>{t('chartSettings.columns', { n: active.filter((p) => checked.has(p.id)).length, total: active.length })}</h2>
-        <button type="button" className={TEXT_BTN} onClick={() => save(new Set([...checked, ...active.map((p) => p.id)]))}>{t('chartSettings.selectAll')}</button>
-        <button type="button" className={TEXT_BTN} onClick={() => save(new Set([...checked].filter((id) => !active.some((p) => p.id === id))))}>{t('chartSettings.none')}</button>
+        <button type="button" className={TEXT_BTN} onClick={() => save([...grid.practices, ...blocks.flatMap((b) => b.rows).filter((p) => !checked.has(p.id)).map((p) => p.id)])}>{t('chartSettings.selectAll')}</button>
+        <button type="button" className={TEXT_BTN} onClick={() => save(grid.practices.filter((id) => !activeIds.has(id)))}>{t('chartSettings.none')}</button>
       </div>
-      <ul className={LIST}>
-        {active.map((p) => (
-          <li key={p.id}>
-            <label className="flex min-h-[60px] items-center gap-3 bg-ui-surface px-4">
-              <input type="checkbox" checked={checked.has(p.id)} onChange={() => toggle(p.id)} className="h-5 w-5 shrink-0 accent-[var(--ui-accent-fill)]" />
-              <span className="text-ui-ink2"><TypeIcon type={p.data_type} /></span>
-              <span className={`min-w-0 flex-1 truncate text-[15px] font-bold ${checked.has(p.id) ? 'text-ui-ink' : 'text-ui-muted'}`}>{p.practice}</span>
-              <TypeChip type={p.data_type} />
-            </label>
-          </li>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        {blocks.map((b) => (
+          <div key={b.key} className="flex flex-col gap-1.5">
+            {b.group && <h3 className="truncate px-1.5 pt-1 font-ui-mono text-[10px] font-semibold tracking-[.08em] text-ui-accent uppercase">{groupName(b.group, t)}</h3>}
+            <SortableContext items={b.rows.filter((p) => checked.has(p.id)).map((p) => p.id)} strategy={verticalListSortingStrategy}>
+              <ul className={LIST}>
+                {b.rows.map((p) => <ColumnRow key={p.id} p={p} on={checked.has(p.id)} onToggle={() => toggle(p.id)} />)}
+              </ul>
+            </SortableContext>
+          </div>
         ))}
-      </ul>
-      <p className={`${HINT} px-1.5`}>{t('chartSettings.columnsHint')}</p>
+      </DndContext>
+      <p className={`${HINT} px-1.5`}>{t(grouped ? 'chartSettings.columnsHintGrouped' : 'chartSettings.columnsHintFlat')}</p>
     </section>
+  )
+}
+
+function ColumnRow({ p, on, onToggle }: { p: UserPractice; on: boolean; onToggle: () => void }) {
+  const { t } = useTranslation()
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id, disabled: !on })
+  return (
+    <li ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`flex items-center bg-ui-surface pr-4 ${isDragging ? 'relative z-10 shadow-lg' : ''}`}>
+      {on ? (
+        <button type="button" {...attributes} {...listeners} aria-label={t('chartSettings.dragHandle', { name: p.practice })}
+          className="flex h-[60px] w-9 shrink-0 cursor-grab touch-none items-center justify-center text-ui-faint2">
+          <span aria-hidden className="text-lg leading-none">⋮⋮</span>
+        </button>
+      ) : <span aria-hidden className="w-9 shrink-0" />}
+      <label className="flex min-h-[60px] min-w-0 flex-1 items-center gap-3">
+        <input type="checkbox" checked={on} onChange={onToggle} className="h-5 w-5 shrink-0 accent-[var(--ui-accent-fill)]" />
+        <span className="text-ui-ink2"><TypeIcon type={p.data_type} /></span>
+        <span className={`min-w-0 flex-1 truncate text-[15px] font-bold ${on ? 'text-ui-ink' : 'text-ui-muted'}`}>{p.practice}</span>
+        <TypeChip type={p.data_type} />
+      </label>
+    </li>
   )
 }

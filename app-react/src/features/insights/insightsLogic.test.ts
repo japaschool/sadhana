@@ -3,7 +3,7 @@ import type { ReportDataEntry } from '../../api/charts'
 import type { Trace } from './chartLogic'
 import {
   averageDailyTotal, headline, formatHeadline, formatDelta, averageLines,
-  traceAverageLabel, barPlacement, seriesRows, formatDay, formatTick, windowLabel, formatDurationTick, cellText,
+  traceAverageLabel, barPlacement, seriesRows, formatDay, formatTick, windowLabel, formatDurationTick, cellText, tableColumns,
 } from './insightsLogic'
 
 const TODAY = '2026-10-06'
@@ -215,5 +215,24 @@ describe('cellText', () => {
     expect(cellText({ Text: 'Calm' }, 'Text', U)).toBe('Calm')
     expect(cellText(null, 'Text', U)).toBe('')
     expect(cellText(undefined, 'Int', U)).toBe('')
+  })
+})
+
+describe('tableColumns', () => {
+  const m = { id: 'm', name: 'Morning', is_default: false }
+  const def = { id: null, name: '', is_default: true }
+  const pr = (id: string, group_id: string | null) => ({ id, practice: id, group_id }) as never
+  const practices = [pr('A', null), pr('B', 'm'), pr('C', 'm')]
+
+  it('sorts by group order, keeping report order inside a group', () => {
+    expect(tableColumns(['A', 'C', 'B'], [m, def], practices, true)).toEqual([
+      { group: m, ids: ['C', 'B'] }, { group: def, ids: ['A'] },
+    ])
+  })
+  it('omits empty groups', () => {
+    expect(tableColumns(['A'], [m, def], practices, true)).toEqual([{ group: def, ids: ['A'] }])
+  })
+  it('ungrouped keeps report order in one block', () => {
+    expect(tableColumns(['A', 'C', 'B'], [m, def], practices, false)).toEqual([{ group: null, ids: ['A', 'C', 'B'] }])
   })
 })

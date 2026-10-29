@@ -1,5 +1,6 @@
 pub mod diary;
 pub mod oauth;
+pub mod practice_groups;
 pub mod report;
 pub mod shared;
 pub mod support;

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -10,10 +10,17 @@ import { NewChartSheet } from './NewChartSheet'
 vi.mock('../../../../api/charts', () => ({
   chartsApi: { getReports: vi.fn(), getReportData: vi.fn(), updateReport: vi.fn(), createReport: vi.fn(), deleteReport: vi.fn() },
 }))
-vi.mock('../../../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn(), updateUserPractice: vi.fn() } }))
+vi.mock('../../../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn(), updateUserPractice: vi.fn(), getGroups: vi.fn() } }))
 import { chartsApi } from '../../../../api/charts'
 import { practicesApi } from '../../../../api/practices'
 const charts = vi.mocked(chartsApi)
+
+// jsdom has no layout for dnd-kit to measure, so the test calls the drag-end handler itself.
+const dnd = vi.hoisted(() => ({ onDragEnd: undefined as undefined | ((e: unknown) => void) }))
+vi.mock('@dnd-kit/core', async (orig) => {
+  const actual = await orig<typeof import('@dnd-kit/core')>()
+  return { ...actual, DndContext: (props: React.ComponentProps<typeof actual.DndContext>) => { dnd.onDragEnd = props.onDragEnd as never; return <actual.DndContext {...props} /> } }
+})
 
 vi.stubGlobal('IntersectionObserver', class { observe() {} disconnect() {} })
 
@@ -49,6 +56,7 @@ describe('ChartEditorMobile', () => {
       { id: 'wake', practice: 'Wake-up time', data_type: 'Time', is_active: true },
       { id: 'read', practice: 'Book reading', data_type: 'Duration', is_active: true },
     ])
+    vi.mocked(practicesApi.getGroups).mockResolvedValue([{ id: null, name: '', is_default: true }])
     charts.getReports.mockResolvedValue([GRAPH, TABLE])
     charts.getReportData.mockResolvedValue([])
     charts.updateReport.mockResolvedValue()
@@ -84,10 +92,71 @@ describe('ChartEditorMobile', () => {
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument())
   })
 
-  it('a table saves its ticked columns in My practices order', async () => {
+  it('ticking a column appends it and saves group_columns', async () => {
     renderAt('/settings/charts/t1')
     fireEvent.click(await screen.findByRole('checkbox', { name: /Japa rounds/ }))
-    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['japa', 'wake'] } }))
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['wake', 'japa'], group_columns: true } }))
+  })
+
+  it('the Group columns toggle saves group_columns:false and keeps the practices order', async () => {
+    charts.getReports.mockResolvedValue([{ ...TABLE, definition: { Grid: { practices: ['wake', 'japa'] } } }])
+    renderAt('/settings/charts/t1')
+    const toggle = await screen.findByRole('switch', { name: 'Group columns' })
+    expect(toggle).toHaveAttribute('aria-checked', 'true')
+    fireEvent.click(toggle)
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['wake', 'japa'], group_columns: false } }))
+  })
+
+  const MORNING = { id: 'm', name: 'Morning', is_default: false }
+  const withGroups = () => {
+    vi.mocked(practicesApi.getGroups).mockResolvedValue([MORNING, { id: null, name: '', is_default: true }])
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([
+      { id: 'japa', practice: 'Japa rounds', data_type: 'Int', is_active: true, group_id: null },
+      { id: 'wake', practice: 'Wake-up time', data_type: 'Time', is_active: true, group_id: 'm' },
+      { id: 'read', practice: 'Book reading', data_type: 'Duration', is_active: true, group_id: null },
+    ] as never)
+  }
+  const names = () => screen.getAllByRole('checkbox').map((c) => c.closest('label')!.textContent)
+
+  it('with grouping on, a column only drags within its group', async () => {
+    withGroups()
+    charts.getReports.mockResolvedValue([{ ...TABLE, definition: { Grid: { practices: ['wake', 'japa', 'read'], group_columns: true } } }])
+    renderAt('/settings/charts/t1')
+    await screen.findByRole('heading', { name: 'Morning' })
+    act(() => dnd.onDragEnd!({ active: { id: 'wake' }, over: { id: 'japa' } }))
+    expect(charts.updateReport).not.toHaveBeenCalled()
+    act(() => dnd.onDragEnd!({ active: { id: 'read' }, over: { id: 'japa' } }))
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['wake', 'read', 'japa'], group_columns: true } }))
+  })
+
+  it('with grouping on, the column list is split by group', async () => {
+    withGroups()
+    renderAt('/settings/charts/t1')
+    expect(await screen.findByRole('heading', { name: 'Morning' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Practices' })).toBeInTheDocument()
+    // Morning first; inside Practices the order is Japa, Book (neither ticked).
+    expect(names()[0]).toMatch(/Wake-up time/)
+    expect(names()[1]).toMatch(/Japa rounds/)
+  })
+
+  it('with grouping off, the list is flat: ticked columns in report order, then unticked', async () => {
+    withGroups()
+    charts.getReports.mockResolvedValue([{ ...TABLE, definition: { Grid: { practices: ['read', 'wake'], group_columns: false } } }])
+    renderAt('/settings/charts/t1')
+    await screen.findByRole('checkbox', { name: /Japa rounds/ })
+    expect(screen.queryByRole('heading', { name: 'Morning' })).not.toBeInTheDocument()
+    expect(names()).toHaveLength(3)
+    expect(names()[0]).toMatch(/Book reading/)
+    expect(names()[1]).toMatch(/Wake-up time/)
+    expect(names()[2]).toMatch(/Japa rounds/)
+  })
+
+  it('dragging a ticked column saves the new practices order', async () => {
+    charts.getReports.mockResolvedValue([{ ...TABLE, definition: { Grid: { practices: ['wake', 'read'], group_columns: false } } }])
+    renderAt('/settings/charts/t1')
+    await screen.findByRole('button', { name: 'Move Wake-up time' })
+    act(() => dnd.onDragEnd!({ active: { id: 'wake' }, over: { id: 'read' } }))
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['read', 'wake'], group_columns: false } }))
   })
 
   it('creating a graph opens its settings with the practice picker up', async () => {
