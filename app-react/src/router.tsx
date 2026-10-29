@@ -84,6 +84,7 @@ const SharedDesktop = lazy(() => import('./features/shared/SharedReports').then(
 const UserDetails = lazy(() => import('./features/settings/UserDetails').then((m) => ({ default: m.UserDetails })))
 const ChangePassword = lazy(() => import('./features/settings/ChangePassword').then((m) => ({ default: m.ChangePassword })))
 const ImportCsv = lazy(() => import('./features/settings/ImportCsv').then((m) => ({ default: m.ImportCsv })))
+const Stats = lazy(() => import('./features/stats/Stats').then((m) => ({ default: m.Stats })))
 const Help = lazy(() => import('./features/settings/Help').then((m) => ({ default: m.Help })))
 const SendMessage = lazy(() => import('./features/settings/SendMessage').then((m) => ({ default: m.SendMessage })))
 
@@ -137,6 +138,8 @@ export const router = createBrowserRouter([
   // Public routes
   // Public: Sign in links here. Signed out, it's a plain page (features/settings/Help.tsx).
   { path: '/help', element: ui(<Help />) },
+  // Public and unlinked: aggregate usage stats.
+  { path: '/stats', element: ui(<Stats />) },
   { path: '/shared/:id', element: <ByLayout mobile={<SharedMobile />} tablet={<SharedTablet />} desktop={<SharedDesktop />} /> },
   { path: '*', element: ui(<NotFound />) },
 ])
