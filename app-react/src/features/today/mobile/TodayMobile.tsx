@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { DayFailedNote, SyncBanner } from '../SyncBanner'
+import { InstallSheet } from '../InstallSheet'
 import { AppBar, type AppBarAction } from '../../../layouts/mobile/AppBar'
 import { MobileShell } from '../../../layouts/mobile/MobileShell'
 import { toDateStr } from '../date'
@@ -53,6 +54,7 @@ export function TodayMobile() {
         )}
       </div>
       {calendarOpen && <CalendarSheet date={date} onSelect={setDate} onClose={() => setCalendarOpen(false)} />}
+      <InstallSheet ready={!today.isLoading} />
     </>
   )
 }

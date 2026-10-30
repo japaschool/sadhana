@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { DayFailedNote, SyncBanner } from '../SyncBanner'
+import { InstallSheet } from '../InstallSheet'
 import { TabletShell } from '../../../layouts/tablet/TabletShell'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import type { UserPractice } from '../../../types/api'
@@ -117,6 +118,7 @@ export function TodayTablet() {
         </AnchoredMenu>
       )}
       {calendarOpen && <CalendarSheet date={date} onSelect={setDate} onClose={() => setCalendarOpen(false)} />}
+      <InstallSheet ready={!today.isLoading} />
     </div>
   )
 }
