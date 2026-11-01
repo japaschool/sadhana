@@ -3,6 +3,7 @@ import type { ComponentProps, InputHTMLAttributes, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google'
+import { useReturnTo } from '../../layouts/returnTo'
 import { useLayout } from '../../layouts/useLayout'
 
 /** The auth form kit (Turn 14): one field, primary button, Google button, error banner and text link for every screen. */
@@ -79,7 +80,8 @@ export function SecondaryButton({ children, ...btn }: ComponentProps<'button'>) 
 }
 
 export function PrimaryLink({ to, children }: { to: string; children: ReactNode }) {
-  return <Link to={to} className={`${BTN} bg-ui-selected text-ui-on-selected`}>{children}</Link>
+  const from = useReturnTo()
+  return <Link to={to} state={from && { from }} className={`${BTN} bg-ui-selected text-ui-on-selected`}>{children}</Link>
 }
 
 /** Network and server errors, above the fields. */
@@ -123,10 +125,11 @@ export function SentTo({ email }: { email: string }) {
 
 /** "Don't have an account? Sign up": the prompt is optional. */
 export function SwitchLink({ prompt, to, children }: { prompt?: string; to: string; children: ReactNode }) {
+  const from = useReturnTo()
   return (
     <p className="flex flex-wrap justify-center gap-x-1.5 gap-y-0.5 text-center text-sm leading-normal text-ui-muted">
       {prompt && <span>{prompt}</span>}
-      <Link to={to} className="font-bold text-ui-accent">{children}</Link>
+      <Link to={to} state={from && { from }} className="font-bold text-ui-accent">{children}</Link>
     </p>
   )
 }

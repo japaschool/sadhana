@@ -30,12 +30,14 @@ export const authApi = {
   async sendConfirmationLink(
     email: string,
     confirmationType: 'Registration' | 'PasswordReset',
+    next?: string,
   ): Promise<void> {
     await apiClient.post('/users/confirmation', {
       data: {
         email,
         confirmation_type: confirmationType,
         server_address: window.location.origin,
+        next,
       },
     })
   },

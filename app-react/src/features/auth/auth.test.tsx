@@ -25,6 +25,7 @@ function renderAt(path: string) {
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<p>Today</p>} />
+            <Route path="/yatras" element={<p>Yatras</p>} />
             <Route path="/yatra/:id/join" element={<p>Invite page</p>} />
           </Route>
         </Routes>
@@ -50,6 +51,64 @@ describe('auth screens', () => {
     await signIn()
     expect(await screen.findByText('Invite page')).toBeInTheDocument()
     expect(useAuthStore.getState().token).toBe('mock-token')
+  })
+
+  describe('a new user with an invite', () => {
+    const INVITE = '/yatra/0f8fad5b-d9cb-469f-a165-70867728950e/join'
+    const finishSignUp = async () => {
+      await userEvent.type(await screen.findByLabelText('Your name'), 'Alex')
+      await userEvent.type(screen.getByLabelText('Password'), 'secret1')
+      await userEvent.type(screen.getByLabelText('Confirm password'), 'secret1')
+      await userEvent.click(screen.getByRole('button', { name: /create account/i }))
+    }
+    /** Sends the link from Register and resolves with the request's `next`. */
+    const sentNext = async () => {
+      let next: unknown = 'not sent'
+      server.use(http.post('/api/users/confirmation', async ({ request }) => {
+        next = ((await request.json()) as { data: { next?: string } }).data.next
+        return HttpResponse.json({})
+      }))
+      await userEvent.type(screen.getByLabelText('Email'), 'new@example.com')
+      await userEvent.click(screen.getByRole('button', { name: /send/i }))
+      await screen.findByText('Check your inbox.')
+      return next
+    }
+
+    it('the invite goes from Sign in through Sign up into the emailed link', async () => {
+      renderAt(INVITE)
+      await userEvent.click(await screen.findByRole('link', { name: 'Sign up' }))
+      expect(await sentNext()).toBe(INVITE)
+    })
+
+    it('a sign-up with no invite sends no next', async () => {
+      renderAt('/register')
+      expect(await sentNext()).toBeUndefined()
+    })
+
+    it('a page other than an invite is not put in the email', async () => {
+      renderAt('/yatras')
+      await userEvent.click(await screen.findByRole('link', { name: 'Sign up' }))
+      expect(await sentNext()).toBeUndefined()
+    })
+
+    it('the emailed link ends on the invite', async () => {
+      renderAt(`/register/conf-1?next=${encodeURIComponent(INVITE)}`)
+      await finishSignUp()
+      expect(await screen.findByText('Invite page')).toBeInTheDocument()
+    })
+
+    it.each(['https://evil.example/', '//evil.example', '/settings', `${INVITE}/x`, '/yatra/not-a-uuid/join'])('ignores next=%s', async (next) => {
+      renderAt(`/register/conf-1?next=${encodeURIComponent(next)}`)
+      await finishSignUp()
+      expect(await screen.findByText('Today')).toBeInTheDocument()
+    })
+
+    it('an expired emailed link keeps the invite', async () => {
+      server.use(http.get('/api/users/confirmation/:id', () => HttpResponse.json({}, { status: 404 })))
+      renderAt(`/register/old?next=${encodeURIComponent(INVITE)}`)
+      await userEvent.click(await screen.findByRole('link', { name: 'Sign up' }))
+      expect(await sentNext()).toBe(INVITE)
+    })
   })
 
   it('wrong credentials: a banner and both fields outlined', async () => {

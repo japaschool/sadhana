@@ -57,6 +57,9 @@ pub struct SendConfirmationLink {
     pub email: String,
     pub confirmation_type: ConfirmationType,
     pub server_address: String,
+    /// Where a new user goes after signing up. Older cached clients don't send it.
+    #[serde(default)]
+    pub next: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
