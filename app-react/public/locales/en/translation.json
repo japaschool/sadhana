@@ -608,6 +608,7 @@
     "name": "Name",
     "namePlaceholder": "Morning sadhana",
     "nameRequired": "Give the chart a name. Until then Insights keeps the old one.",
+    "nameTaken": "A report with this name already exists.",
     "createGraph": "Create graph",
     "createTable": "Create table",
     "nextGraph": "Next: pick the first practice to plot",

@@ -24,5 +24,9 @@ export function useReports(): UseQueryResult<Report[]> {
   return useQuery({ queryKey: REPORTS_KEY, queryFn: chartsApi.getReports, select: useReportSort() })
 }
 
+/** Names are unique per user (exact match), so a taken one would come back as a 422. `exceptId`: the report being renamed. */
+export const nameTaken = (reports: Report[], name: string, exceptId?: string) =>
+  reports.some((r) => r.id !== exceptId && r.name === name.trim())
+
 export const isPanels = (r: Report | null): r is Report & { definition: { Panels: PanelsReport } } =>
   !!r && 'Panels' in r.definition

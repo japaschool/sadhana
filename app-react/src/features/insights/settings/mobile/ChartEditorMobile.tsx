@@ -19,6 +19,7 @@ import { BTN, CARD, HINT, LIST, SECTION_TITLE } from '../../../yatras/settings/m
 import { AutosaveText, ChoiceChips, ConfirmSheet } from '../../../yatras/settings/mobile/fields'
 import { TypeChip, TypeIcon } from '../../../yatras/settings/mobile/TypeChip'
 import { AXES } from '../../axes'
+import { nameTaken } from '../../useReports'
 import { cellText, formatDay } from '../../insightsLogic'
 import { InsightsChart } from '../../mobile/InsightsChart'
 import { PanelsReportView } from '../../panels/PanelsReportView'
@@ -159,7 +160,7 @@ export function NameCard({ ed }: { ed: Editor }) {
   return (
     <section className={`${CARD} flex flex-col gap-3 p-4`}>
       <AutosaveText id="chart-name" label={t('chartSettings.name')} value={report.name}
-        validate={(v) => (v.trim() ? null : t('chartSettings.nameRequired'))}
+        validate={(v) => (!v.trim() ? t('chartSettings.nameRequired') : nameTaken(ed.reports, v, report.id) ? t('chartSettings.nameTaken') : null)}
         onCommit={(v) => ed.update((r) => ({ ...r, name: v.trim() }))} />
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-[13px] font-bold text-ui-muted">{t('chartSettings.type')}</span>

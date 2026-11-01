@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { chartsApi } from '../../../../api/charts'
-import { REPORTS_KEY } from '../../useReports'
+import { nameTaken, REPORTS_KEY, useReports } from '../../useReports'
 import type { Report, ReportDefinition } from '../../../../api/charts'
 import { useToast } from '../../../../hooks/useToast'
 import { BottomSheet } from '../../../../ui/primitives/BottomSheet'
@@ -27,6 +27,7 @@ export function NewChartSheet({ onClose }: { onClose: () => void }) {
   const { showToast } = useToast()
   const [kind, setKind] = useState<Kind | null>(null)
   const [name, setName] = useState('')
+  const taken = nameTaken(useReports().data ?? [], name)
   const create = useMutation({
     mutationFn: async () => {
       const definition: ReportDefinition = kind === 'Graph' ? { Graph: { bar_layout: 'Grouped', traces: [] } } : { Grid: { practices: [], group_columns: true } }
@@ -83,14 +84,15 @@ export function NewChartSheet({ onClose }: { onClose: () => void }) {
         </div>
       </div>
       {kind && (
-        <form className="flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); if (name.trim()) create.mutate() }}>
+        <form className="flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); if (name.trim() && !taken) create.mutate() }}>
           <p className={HINT}>{t('chartSettings.typeFixed')}</p>
           <div className="flex flex-col gap-1.5">
             <label htmlFor="new-chart-name" className="text-[13px] font-bold text-ui-muted">{t('chartSettings.name')}</label>
             <input id="new-chart-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off"
-              placeholder={t('chartSettings.namePlaceholder')} className={FIELD} />
+              placeholder={t('chartSettings.namePlaceholder')} aria-invalid={taken} className={FIELD} />
+            {taken && <p role="alert" className="text-[13px] text-ui-danger">{t('chartSettings.nameTaken')}</p>}
           </div>
-          <button type="submit" disabled={!name.trim() || create.isPending} className={`${BTN} bg-ui-accent-fill text-ui-ink disabled:opacity-50`}>
+          <button type="submit" disabled={!name.trim() || taken || create.isPending} className={`${BTN} bg-ui-accent-fill text-ui-ink disabled:opacity-50`}>
             {t(kind === 'Graph' ? 'chartSettings.createGraph' : 'chartSettings.createTable')}
           </button>
           <p className={`${HINT} text-center`}>{t(kind === 'Graph' ? 'chartSettings.nextGraph' : 'chartSettings.nextTable')}</p>
