@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { ReportGlyph } from '../insights/ReportGlyph'
 import { useReports } from '../insights/useReports'
 import { practicesApi } from '../../api/practices'
 import { yatrasApi } from '../../api/yatras'
@@ -125,7 +126,7 @@ export function ChartRows() {
   return (
     <>
       {useMyCharts().map((r) => (
-        <SettingsRow key={r.id} label={r.name} to={`/settings/charts/${r.id}`}
+        <SettingsRow key={r.id} label={r.name} leading={<ReportGlyph report={r} />} to={`/settings/charts/${r.id}`}
           value={t('Graph' in r.definition ? 'chartSettings.graph' : 'Grid' in r.definition ? 'chartSettings.table' : 'chartSettings.template')} />
       ))}
     </>
