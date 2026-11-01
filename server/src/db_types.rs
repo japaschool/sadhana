@@ -17,6 +17,7 @@ pub enum PracticeDataType {
 pub enum ReportType {
     Graph,
     Grid,
+    Panels,
 }
 
 #[derive(DbEnum, PartialEq, Debug, Serialize, Clone, Deserialize)]

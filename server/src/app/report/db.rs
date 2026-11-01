@@ -16,6 +16,7 @@ pub struct Report {
     pub name: String,
     pub bar_layout: Option<BarLayout>,
     pub group_columns: bool,
+    pub definition: Option<serde_json::Value>,
 }
 
 impl Report {
@@ -33,6 +34,7 @@ impl Report {
                     reports::name.eq(report_name),
                     reports::bar_layout.eq(report_definition.bar_layout()),
                     reports::group_columns.eq(report_definition.group_columns().unwrap_or(true)),
+                    reports::definition.eq(report_definition.definition_json()),
                 ))
                 .returning(reports::id)
                 .get_result(conn)?;
@@ -68,6 +70,7 @@ impl Report {
                     report_definition
                         .group_columns()
                         .map(|v| reports::group_columns.eq(v)),
+                    reports::definition.eq(&report_definition.definition_json()),
                 ))
                 .filter(reports::id.eq(&report_id))
                 .execute(conn)?;
@@ -93,12 +96,17 @@ impl Report {
     pub fn get_all(
         conn: &mut PgConnection,
         user_id: &Uuid,
+        panels: bool,
     ) -> Result<Vec<(Self, Vec<ReportTrace>)>, AppError> {
-        let reports: Vec<Self> = reports::table
+        let mut query = reports::table
             .select(Report::as_select())
             .order_by(reports::name)
             .filter(reports::user_id.eq(&user_id))
-            .load(conn)?;
+            .into_boxed();
+        if !panels {
+            query = query.filter(reports::report_type.ne(ReportType::Panels));
+        }
+        let reports: Vec<Self> = query.load(conn)?;
 
         let traces = ReportTrace::belonging_to(&reports)
             .select(ReportTrace::as_select())
@@ -135,6 +143,7 @@ impl ReportTrace {
     ) -> Result<(), DieselError> {
         let mut seen = HashSet::new();
         let records: Vec<_> = match report_definition {
+            ReportDefinition::Panels(_) => Vec::new(),
             // A column appears once, as it did when the practices were a set.
             ReportDefinition::Grid(grid) => grid_order
                 .unwrap_or(&grid.practices)
@@ -234,6 +243,7 @@ impl NewReportTrace {
 
 #[cfg(test)]
 mod tests {
+    use super::super::panels::PanelsReport;
     use super::super::{GraphReport, GridReport, PracticeTrace, Report as ApiReport, TraceType};
     use super::*;
     use crate::db_types::{BarLayout, PracticeDataType};
@@ -278,7 +288,7 @@ mod tests {
     }
 
     fn only_grid(conn: &mut PgConnection, user_id: &Uuid) -> (Vec<Uuid>, Option<bool>) {
-        match ApiReport::get_all(conn, user_id)
+        match ApiReport::get_all(conn, user_id, false)
             .unwrap()
             .remove(0)
             .definition
@@ -324,7 +334,7 @@ mod tests {
                 traces: vec![trace(c), trace(a)],
             });
             Report::create(conn, &u, "r", &def)?;
-            match ApiReport::get_all(conn, &u)?.remove(0).definition {
+            match ApiReport::get_all(conn, &u, false)?.remove(0).definition {
                 ReportDefinition::Graph(g) => {
                     let order: Vec<_> = g.traces.iter().map(|t| t.practice).collect();
                     assert_eq!(order, vec![c, a]);
@@ -414,5 +424,90 @@ mod tests {
             assert_eq!(trace_order(conn, &new_grid), vec![c, a, b]);
             Ok(())
         });
+    }
+
+    fn sleep_report(bedtime: Uuid, wake: Uuid) -> PanelsReport {
+        use super::super::panels::*;
+        PanelsReport {
+            version: 1,
+            template: Some(Template::Sleep(SleepTemplate {
+                bedtime,
+                wake,
+                nap: None,
+                min: Some(420),
+                max: None,
+            })),
+            required: vec![Required {
+                practice: bedtime,
+                label: Label::Key("bedtime".into()),
+            }],
+            panels: vec![Panel::Chart(ChartPanel {
+                title: Some(Label::Text("Sleep".into())),
+                series: vec![Series {
+                    label: None,
+                    mark: Mark::Range,
+                    source: Source::Range {
+                        from: Ref {
+                            practice: bedtime,
+                            day_offset: -1,
+                        },
+                        to: Ref {
+                            practice: wake,
+                            day_offset: 0,
+                        },
+                    },
+                    axis: Side::Left,
+                    only_with: None,
+                }],
+                bar_layout: BarLayout::Grouped,
+                format: Format::NoonClock,
+                reversed: true,
+                target: None,
+                lines: vec![],
+            })],
+        }
+    }
+
+    #[test]
+    fn panels_round_trips() {
+        run(|conn| {
+            let (u, [a, b, _, _]) = user_with_practices(conn);
+            let sent = sleep_report(a, b);
+            let id = Report::create(conn, &u, "r", &ReportDefinition::Panels(sent.clone()))?;
+
+            match ApiReport::get_all(conn, &u, true)?.remove(0).definition {
+                ReportDefinition::Panels(got) => assert_eq!(got, sent),
+                _ => panic!("not panels"),
+            }
+            let (stored, traces) = Report::get_all(conn, &u, true)?.remove(0);
+            assert!(traces.is_empty());
+            assert_eq!(stored.id, id);
+            assert_eq!(stored.bar_layout, None);
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn default_read_hides_panels() {
+        run(|conn| {
+            let (u, [a, b, _, _]) = user_with_practices(conn);
+            Report::create(conn, &u, "g", &grid(vec![a], Some(true)))?;
+            Report::create(conn, &u, "p", &ReportDefinition::Panels(sleep_report(a, b)))?;
+
+            let hidden = ApiReport::get_all(conn, &u, false)?;
+            assert_eq!(hidden.len(), 1);
+            assert!(matches!(hidden[0].definition, ReportDefinition::Grid(_)));
+            assert_eq!(ApiReport::get_all(conn, &u, true)?.len(), 2);
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn panels_rejects_unknown_field() {
+        let (a, b) = (Uuid::new_v4(), Uuid::new_v4());
+        let mut value = serde_json::to_value(sleep_report(a, b)).unwrap();
+        assert!(serde_json::from_value::<PanelsReport>(value.clone()).is_ok());
+        value["panels"][0]["series"][0]["extra"] = serde_json::json!(1);
+        assert!(serde_json::from_value::<PanelsReport>(value).is_err());
     }
 }
