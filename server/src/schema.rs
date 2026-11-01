@@ -98,6 +98,7 @@ diesel::table! {
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
         group_columns -> Bool,
+        definition -> Nullable<Jsonb>,
     }
 }
 

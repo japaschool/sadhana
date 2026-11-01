@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
+import { sleepPanels } from './panels/templates'
 
-type Dict = { insights?: Record<string, string> }
+type Dict = { insights?: Record<string, string>; reportPanels?: Record<string, string>; templateForm?: Record<string, string> }
 const files = import.meta.glob<Dict>('../../../public/locales/*/translation.json', { eager: true, import: 'default' })
 
 const KEYS = [
@@ -17,5 +18,39 @@ describe('insights.* translations', () => {
     for (const [path, dict] of Object.entries(files)) {
       for (const k of KEYS) expect(dict.insights?.[k], `${path} insights.${k}`).toBeTruthy()
     }
+  })
+})
+
+describe('reportPanels.* translations', () => {
+  it('has every key sleepPanels emits in en, ru and uk', () => {
+    const keys = new Set<string>()
+    const walk = (x: unknown) => {
+      if (Array.isArray(x)) x.forEach(walk)
+      else if (x && typeof x === 'object') {
+        for (const [k, v] of Object.entries(x)) {
+          if (k === 'Key' && typeof v === 'string') keys.add(v)
+          else walk(v)
+        }
+      }
+    }
+    const t = { bedtime: 'a', wake: 'b', min: 1, max: 2 }
+    walk(sleepPanels({ ...t, nap: 'c' }))
+    walk(sleepPanels({ ...t, nap: null, min: null, max: null }))
+    expect(keys.size).toBeGreaterThan(5)
+    for (const [path, dict] of Object.entries(files)) {
+      for (const k of keys) {
+        expect(k.startsWith('reportPanels.')).toBe(true)
+        expect(dict.reportPanels?.[k.slice('reportPanels.'.length)], `${path} ${k}`).toBeTruthy()
+      }
+    }
+  })
+})
+
+describe('templateForm.* translations', () => {
+  it('has the same keys in en, ru and uk', () => {
+    const dicts = Object.values(files)
+    const keys = Object.keys(dicts[0].templateForm ?? {}).sort()
+    expect(keys.length).toBeGreaterThan(30)
+    for (const d of dicts) expect(Object.keys(d.templateForm ?? {}).sort()).toEqual(keys)
   })
 })

@@ -40,6 +40,23 @@ describe('Settings lists', () => {
     expect(screen.getByRole('button', { name: 'New chart' })).toBeInTheDocument()
   })
 
+  it('mobile: each chart row starts with its type glyph, and keeps the kind text', async () => {
+    vi.mocked(chartsApi.getReports).mockResolvedValue([
+      { id: 'r1', name: 'Morning', definition: { Grid: { practices: [] } } },
+      { id: 'r2', name: 'Sleep', definition: { Panels: { version: 1, template: null, required: [], panels: [] } } },
+    ])
+    renderAt('/settings/charts')
+    const grid = await screen.findByRole('link', { name: /Morning/ })
+    expect(grid.firstElementChild).toHaveAttribute('data-glyph', 'table')
+    // jsdom has no layout: the class is what keeps the cells from collapsing (inline-flex would beat grid).
+    expect(grid.firstElementChild).toHaveClass('inline-grid', 'shrink-0')
+    expect(grid.firstElementChild).not.toHaveClass('inline-flex')
+    expect(within(grid).getByText('Table')).toBeInTheDocument()
+    const tpl = screen.getByRole('link', { name: /Sleep/ })
+    expect(tpl.firstElementChild).toHaveAttribute('data-glyph', 'template')
+    expect(within(tpl).getByText('Template')).toBeInTheDocument()
+  })
+
   it('tablet: Insights opens the first chart, whose column lists them all', async () => {
     setViewportWidth(834)
     renderAt('/settings/charts')

@@ -23,7 +23,72 @@ export interface GridReport {
   group_columns?: boolean
 }
 
-export type ReportDefinition = { Graph: GraphReport } | { Grid: GridReport }
+/** The "panels" report format; mirrors server/src/app/report/panels.rs. */
+export type Label = { Key: string } | { Text: string }
+export type Mark = 'Bar' | 'Line' | 'Dot' | 'Range'
+export type Side = 'Left' | 'Right'
+/** NoonClock: minutes after the noon before the night. */
+export type Format = 'Duration' | 'Count' | 'NoonClock'
+export type End = 'From' | 'To'
+
+export interface Ref { practice: string; day_offset: number }
+export interface Term { sign: number; practice: string; day_offset: number; optional: boolean }
+export type Source =
+  | { Practice: { practice: string } }
+  | { Calc: { terms: Term[] } }
+  | { Range: { from: Ref; to: Ref } }
+
+export interface Target {
+  min: number | null
+  max: number | null
+  of: Source
+  lines: boolean
+  colour: boolean
+  label: Label | null
+}
+export interface RefLine { of: Source; pick: End | null; dashed: boolean; label: Label | null }
+export interface Series {
+  label: Label | null
+  mark: Mark
+  source: Source
+  axis: Side
+  /** Index of a series this one is drawn beside. */
+  only_with: number | null
+}
+export interface ChartPanel {
+  title: Label | null
+  series: Series[]
+  bar_layout: BarLayout
+  format: Format
+  reversed: boolean
+  target: Target | null
+  lines: RefLine[]
+}
+
+/** Sleep: today in, missing skipped. Japa and Duration: today out, missing counts as 0. */
+export interface Scope { today: boolean; missing_zero: boolean }
+export type StatValue =
+  | { Average: { of: Source; pick: End | null; format: Format; scope: Scope } }
+  | { OnTarget: { of: Source; min: number | null; max: number | null; scope: Scope } }
+  | { Logged: { of: Source; scope: Scope } }
+  | { CountTrue: { of: Source; scope: Scope } }
+export interface Stat { label: Label; value: StatValue; under: Stat | null }
+
+export type Panel = { kind: 'Stats'; stats: Stat[] } | ({ kind: 'Chart' } & ChartPanel)
+
+export interface SleepTemplate { bedtime: string; wake: string; nap: string | null; min: number | null; max: number | null }
+export type Template = { Sleep: SleepTemplate }
+export interface Required { practice: string; label: Label }
+
+export interface PanelsReport {
+  version: number
+  template: Template | null
+  /** Practices the report can't work without. */
+  required: Required[]
+  panels: Panel[]
+}
+
+export type ReportDefinition = { Graph: GraphReport } | { Grid: GridReport } | { Panels: PanelsReport }
 
 export interface Report {
   id: string
@@ -33,7 +98,7 @@ export interface Report {
 
 export const chartsApi = {
   async getReports(): Promise<Report[]> {
-    const res = await apiClient.get<{ reports: Report[] }>('/reports')
+    const res = await apiClient.get<{ reports: Report[] }>('/reports', { params: { panels: true } })
     return res.data.reports
   },
   async createReport(name: string, definition: ReportDefinition): Promise<string> {
@@ -47,7 +112,7 @@ export const chartsApi = {
     await apiClient.delete(`/report/${id}`)
   },
   async getSharedReports(userId: string): Promise<Report[]> {
-    const res = await apiClient.get<{ reports: Report[] }>(`/share/${userId}/reports`)
+    const res = await apiClient.get<{ reports: Report[] }>(`/share/${userId}/reports`, { params: { panels: true } })
     return res.data.reports
   },
   /** The owner's name for a shared reports link; fails for an unknown user. */

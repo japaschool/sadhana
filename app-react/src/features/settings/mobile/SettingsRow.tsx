@@ -4,6 +4,8 @@ import { openInBrowser } from '../../../ui/openInBrowser'
 
 interface SettingsRowProps {
   label: string
+  /** Before the label, e.g. a type glyph. */
+  leading?: ReactNode
   hint?: string
   value?: string
   to?: string
@@ -15,9 +17,10 @@ interface SettingsRowProps {
 }
 
 /** One row inside a ListGroup: a link (`to`), an external link (`href`), a button (`onClick`) or a control holder. */
-export function SettingsRow({ label, hint, value, to, href, onClick, control, accent, danger }: SettingsRowProps) {
+export function SettingsRow({ label, leading, hint, value, to, href, onClick, control, accent, danger }: SettingsRowProps) {
   const body = (
     <>
+      {leading}
       <span className="flex min-w-0 flex-1 flex-col">
         <span className={`text-[15px] ${danger ? 'font-bold text-ui-danger' : accent ? 'font-bold text-ui-accent' : 'font-semibold text-ui-ink'}`}>{label}</span>
         {hint && <span className="text-xs font-medium leading-[1.4] text-ui-muted">{hint}</span>}

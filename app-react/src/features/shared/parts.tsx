@@ -7,6 +7,7 @@ import { chartsApi } from '../../api/charts'
 import type { Report, ReportDataEntry } from '../../api/charts'
 import { useAuth } from '../../hooks/useAuth'
 import { useToastStore } from '../../hooks/useToast'
+import { ReportGlyph } from '../insights/ReportGlyph'
 import { toCSV, triggerCSVDownload } from '../insights/csv'
 import type { Trace } from '../insights/chartLogic'
 import { valueToNumber } from '../insights/chartLogic'
@@ -29,6 +30,8 @@ export function useShared(userId: string) {
     ...ins,
     name: user.data?.name ?? '',
     grid: isTable(ins.report),
+    /** A panels report with its data: it draws its own cards. */
+    panelsReady: !!ins.panels && !ins.isLoading && !ins.isError,
     // An unknown user and a report that's no longer shared look the same, so the page doesn't reveal which.
     notFound: user.isError || ins.reportsError,
     loadingPage: user.isLoading || (ins.isLoading && !ins.reports.length),
@@ -41,7 +44,9 @@ export function useKind() {
   const { t } = useTranslation()
   return (r: Report) => 'Grid' in r.definition
     ? t('shared.grid', { count: r.definition.Grid.practices.length })
-    : t('shared.graph', { count: r.definition.Graph.traces.length })
+    : 'Graph' in r.definition
+      ? t('shared.graph', { count: r.definition.Graph.traces.length })
+      : t('shared.template')
 }
 
 /** CSV of the report's practices, every day ever logged. */
@@ -110,7 +115,7 @@ export function ReportList({ s }: { s: Shared }) {
         return (
           <button key={r.id} type="button" role="radio" aria-checked={on} onClick={() => s.select(r.id)}
             className={`flex flex-col gap-[3px] rounded-[14px] px-3.5 py-3 text-left ${on ? 'bg-ui-accent-pill' : 'hover:bg-ui-chip'}`}>
-            <span className="text-sm leading-snug font-bold text-ui-ink">{r.name}</span>
+            <span className="flex min-w-0 items-center gap-2 text-sm leading-snug font-bold text-ui-ink"><ReportGlyph report={r} /><span className="truncate">{r.name}</span></span>
             <span className={`font-ui-mono text-[11px] font-medium tracking-[.04em] uppercase ${on ? 'text-ui-accent' : 'text-ui-faint2'}`}>{kind(r)}</span>
           </button>
         )

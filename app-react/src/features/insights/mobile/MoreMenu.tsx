@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { chartsApi } from '../../../api/charts'
+import { REPORTS_KEY } from '../useReports'
 import { useToast } from '../../../hooks/useToast'
 import type { AppBarAction } from '../../../layouts/mobile/AppBar'
 import { BottomSheet } from '../../../ui/primitives/BottomSheet'
@@ -20,7 +21,7 @@ export function useMoreMenu(report: Report | null): { actions: AppBarAction[]; s
   const [creating, setCreating] = useState(false)
   const remove = useMutation({
     mutationFn: (id: string) => chartsApi.deleteReport(id),
-    onSuccess: () => { setConfirming(false); void qc.invalidateQueries({ queryKey: ['reports'] }) },
+    onSuccess: () => { setConfirming(false); void qc.invalidateQueries({ queryKey: [...REPORTS_KEY] }) },
     onError: () => showToast({ message: t('common.error'), variant: 'error' }),
   })
 

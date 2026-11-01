@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import type { Report } from '../../../../api/charts'
 import { setViewportWidth } from '../../../../test/viewport'
 import { ChartEditorWide } from './ChartEditorWide'
+import { sleepPanels } from '../../panels/templates'
 
 vi.mock('../../../../api/charts', () => ({
   chartsApi: { getReports: vi.fn(), getReportData: vi.fn(), updateReport: vi.fn(), createReport: vi.fn(), deleteReport: vi.fn() },
@@ -87,5 +88,36 @@ describe('ChartEditorWide', () => {
     renderAt('/settings/charts/t1')
     fireEvent.click(await screen.findByRole('switch', { name: 'Group columns' }))
     await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['wake'], group_columns: false } }))
+  })
+
+  describe('a template report', () => {
+    const SLEEP: Report = { id: 's1', name: 'Sleep', definition: { Panels: sleepPanels({ bedtime: 'bed', wake: 'wake', nap: null, min: 360, max: 540 }) } }
+    beforeEach(() => {
+      vi.mocked(practicesApi.getUserPractices).mockResolvedValue([
+        { id: 'bed', practice: 'Bed time', data_type: 'Time', is_active: true },
+        { id: 'wake', practice: 'Wake-up time', data_type: 'Time', is_active: true },
+      ])
+      charts.getReports.mockResolvedValue([SLEEP])
+    })
+
+    it('desktop: the form beside a live preview that follows a limit change', async () => {
+      setViewportWidth(1440)
+      renderAt('/settings/charts/s1')
+      const panel = await screen.findByRole('complementary', { name: 'Preview' })
+      expect(await within(panel).findByRole('group', { name: 'Sleep' })).toHaveTextContent('Nights in range')
+      expect(screen.getByRole('button', { name: 'Bedtime: Bed time' })).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: 'Clear Minimum sleep' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Clear Maximum sleep' }))
+      await waitFor(() => expect(within(panel).getByRole('group', { name: 'Sleep' })).toHaveTextContent('Nights logged'))
+      expect(screen.queryByRole('button', { name: '+ Add series' })).not.toBeInTheDocument()
+    })
+
+    it('tablet: the preview sits above the form', async () => {
+      setViewportWidth(800)
+      renderAt('/settings/charts/s1')
+      const preview = await screen.findByRole('group', { name: 'Sleep' })
+      const slot = screen.getByRole('button', { name: 'Bedtime: Bed time' })
+      expect(preview.compareDocumentPosition(slot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    })
   })
 })

@@ -215,6 +215,7 @@ export function tracesFor(report: Report | null, practices: UserPractice[], colo
   })
   if (report === null) return withLandedAxes(practices.filter((p) => p.is_active).map((p, i) => line(p.id, i)))
   if ('Grid' in report.definition) return report.definition.Grid.practices.map(line)
+  if ('Panels' in report.definition) return []
   return report.definition.Graph.traces.map((t, i) => ({
     ...line(t.practice, i), type_: t.type_, showAverage: t.show_average, yAxis: t.y_axis,
   }))

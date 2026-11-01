@@ -5,6 +5,7 @@ import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import { SegmentedControl } from '../../../ui/primitives/SegmentedControl'
 import { formatDelta, formatHeadline, traceAverageLabel, windowLabel } from '../insightsLogic'
 import { fromDateStr } from '../../today/date'
+import { PanelsReportView } from '../panels/PanelsReportView'
 import { isTable, RANGES, useInsights } from '../useInsights'
 import { DaySheet } from '../mobile/DaySheet'
 import { EndDateControl } from '../mobile/EndDateControl'
@@ -19,9 +20,11 @@ interface InsightsTabletProps {
   /** Desktop: a table row opens its day in the log panel instead of a sheet. */
   onLogDate?: (d: Date) => void
   chartHeight?: number
+  /** A panels report's lead chart, which sits above other cards (15t5, 15d5). */
+  panelHeight?: number
 }
 
-export function InsightsTablet({ logDate, onLogDate, chartHeight = 300 }: InsightsTabletProps) {
+export function InsightsTablet({ logDate, onLogDate, chartHeight = 300, panelHeight = 300 }: InsightsTabletProps) {
   const { t, i18n } = useTranslation()
   const ins = useInsights(logDate, true)
   const more = useMoreMenu(ins.report)
@@ -34,6 +37,7 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300 }: Insigh
   const pad = (4 - (ins.traces.length % 4)) % 4
   // A table shows empty days too, so they can be filled in from it.
   const table = isTable(ins.report) && !ins.isLoading && !ins.isError && ins.entries.length > 0
+  const panels = !ins.isLoading && !ins.isError ? ins.panels : null
 
   return (
     <div className="flex flex-col gap-[22px] px-9 pt-[calc(36px+env(safe-area-inset-top))] pb-9">
@@ -64,6 +68,9 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300 }: Insigh
         // The table stops at the screen's 36px bottom padding, so the page itself doesn't scroll.
         <InsightsTable grouped={ins.grouped} traces={ins.traces} entries={ins.entries} todayCob={ins.todayCob} bottomGap={36}
           onOpenDay={(cob) => (onLogDate ? onLogDate(fromDateStr(cob)) : setOpenDay(cob))} />
+      ) : panels ? (
+        <PanelsReportView key={ins.selectedId} report={ins.report!} definition={panels} entries={ins.entries} previous={ins.previousEntries}
+          practices={ins.practices} todayCob={ins.todayCob} chartHeight={panelHeight} formLink={`/settings/charts/${ins.selectedId}`} />
       ) : (
         <section className="flex flex-col gap-[18px] rounded-[24px] border border-ui-hairline bg-ui-surface p-6">
           {ins.isLoading ? (

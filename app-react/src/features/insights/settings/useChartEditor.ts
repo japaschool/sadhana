@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { chartsApi } from '../../../api/charts'
+import { isPanels, REPORTS_KEY, useReports } from '../useReports'
 import type { GraphReport, PracticeTrace, Report } from '../../../api/charts'
 import { practicesApi } from '../../../api/practices'
 import { useToast } from '../../../hooks/useToast'
@@ -33,7 +34,7 @@ export function useChartEditor(id: string) {
   const { t, i18n } = useTranslation()
   const qc = useQueryClient()
   const { showToast } = useToast()
-  const reportsQ = useQuery({ queryKey: ['reports'], queryFn: chartsApi.getReports })
+  const reportsQ = useReports()
   const practicesQ = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices })
   const todayCob = toDateStr(new Date())
   // The same query as Insights' default 30 days, so the preview is usually cached already.
@@ -61,11 +62,12 @@ export function useChartEditor(id: string) {
       batch.current = null
       try {
         await chartsApi.updateReport(r.id, r.name, r.definition)
-        qc.setQueryData<Report[]>(['reports'], (list) => list?.map((x) => (x.id === r.id ? r : x)))
+        qc.setQueryData<Report[]>([...REPORTS_KEY], (list) => list?.map((x) => (x.id === r.id ? r : x)))
       } catch {
         pending.current ??= r
         // Changes made meanwhile join this batch, so Undo still goes back to before all of them.
-        batch.current = { ...(batch.current ?? b), prev: b.prev }
+        const later = batch.current as typeof b | null
+        batch.current = { ...(later ?? b), prev: b.prev, undoable: b.undoable && (later?.undoable ?? true) }
         sending.current = false
         setFailed(true)
         return
@@ -82,10 +84,11 @@ export function useChartEditor(id: string) {
   }
 
   function update(change: (r: Report) => Report, message = t('common.saved'), undoable = true) {
-    if (!latest.current) return
-    const prev = latest.current
+    // A flush from a form that outlived a route change must edit its own report, not the one now showing.
+    const prev = latest.current?.id === id ? latest.current : report
+    if (!prev) return
     const next = change(prev)
-    batch.current = { prev: batch.current?.prev ?? prev, message, undoable }
+    batch.current = { prev: batch.current?.prev ?? prev, message, undoable: undoable && (batch.current?.undoable ?? true) }
     latest.current = next
     setDraft(next)
     pending.current = next
@@ -113,7 +116,7 @@ export function useChartEditor(id: string) {
 
   const remove = useMutation({
     mutationFn: () => chartsApi.deleteReport(id),
-    onSuccess: () => qc.setQueryData<Report[]>(['reports'], (list) => list?.filter((r) => r.id !== id)),
+    onSuccess: () => qc.setQueryData<Report[]>([...REPORTS_KEY], (list) => list?.filter((r) => r.id !== id)),
     onError: () => showToast({ message: t('common.error'), variant: 'error' }),
   })
 
@@ -129,6 +132,7 @@ export function useChartEditor(id: string) {
   const practices = practicesQ.data ?? []
   const byId = new Map(practices.map((p) => [p.id, p]))
   const graph = report && graphOf(report)
+  const panels = isPanels(report) ? report.definition.Panels : null
   const all = report ? tracesFor(report, practices, COLORS) : []
   const series: Series[] = (graph?.traces ?? []).map((trace, index) => {
     const practice = byId.get(trace.practice)
@@ -143,12 +147,14 @@ export function useChartEditor(id: string) {
   const entries = dataQ.data ?? []
 
   return {
-    report, reports: reportsQ.data ?? [], graph, practices, series, traces, failed, retry, update, setTraces, removeSeries, remove, turnBackOn, todayCob,
+    report, reports: reportsQ.data ?? [], graph, panels, practices, series, traces, failed, retry, update, setTraces, removeSeries, remove, turnBackOn, todayCob,
     entries,
     rows: buildChartData(entries, traces, i18n.language || 'en'),
     averages: graph ? averageLines(traces, entries, graph.bar_layout, todayCob) : [],
     dataLoading: dataQ.isLoading,
     isLoading: reportsQ.isLoading || practicesQ.isLoading,
+    /** Also false while offline with nothing cached, when isLoading is false too. */
+    practicesLoaded: practicesQ.data !== undefined,
     isError: reportsQ.isError || practicesQ.isError,
   }
 }

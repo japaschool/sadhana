@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { chartsApi } from '../../api/charts'
+import { useReports } from '../insights/useReports'
 import { yatrasApi } from '../../api/yatras'
 import { UiLoading } from '../../layouts/ByLayout'
 import { useLayout } from '../../layouts/useLayout'
@@ -17,7 +17,7 @@ export function ChartsSettings() {
   const { t } = useTranslation()
   const layout = useLayout()
   const [creating, setCreating] = useState(false)
-  const q = useQuery({ queryKey: ['reports'], queryFn: chartsApi.getReports })
+  const q = useReports()
   if (q.isLoading) return <UiLoading />
   if (layout !== 'mobile' && q.data?.length) return <Navigate to={`/settings/charts/${q.data[0].id}`} replace />
   return (

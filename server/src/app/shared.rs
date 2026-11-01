@@ -10,7 +10,7 @@ use crate::middleware::state::AppState;
 
 use super::{
     diary::{model::ReportEntry, response::ReportResponse},
-    report::{GetAllReportsResponse, Report},
+    report::{GetAllReportsResponse, Report, ReportsQuery},
     user_practices::{AllUserPracticesResponse, UserPractice},
 };
 
@@ -56,11 +56,13 @@ pub async fn get_shared_report_practices(
 pub async fn get_shared_reports(
     state: web::Data<AppState>,
     path: web::Path<UserIdSlug>,
+    query: web::Query<ReportsQuery>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user_id = path.into_inner();
 
-    let data = web::block(move || Report::get_all(&mut conn, &user_id)).await??;
+    let data =
+        web::block(move || Report::get_all(&mut conn, &user_id, query.panels)).await??;
 
     Ok(HttpResponse::Ok().json(GetAllReportsResponse { reports: data }))
 }

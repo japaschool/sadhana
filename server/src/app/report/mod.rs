@@ -14,6 +14,9 @@ use crate::{
 use self::db::{Report as DBReport, ReportTrace as DBReportTrace};
 
 pub mod db;
+pub mod panels;
+
+use self::panels::PanelsReport;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Report {
@@ -23,8 +26,12 @@ pub struct Report {
 }
 
 impl Report {
-    pub fn get_all(conn: &mut PgConnection, user_id: &Uuid) -> Result<Vec<Self>, AppError> {
-        let data = DBReport::get_all(conn, user_id)?;
+    pub fn get_all(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        panels: bool,
+    ) -> Result<Vec<Self>, AppError> {
+        let data = DBReport::get_all(conn, user_id, panels)?;
 
         let mut res = Vec::with_capacity(data.len());
 
@@ -36,6 +43,14 @@ impl Report {
                 ReportType::Grid => {
                     ReportDefinition::Grid(GridReport::from_db(report.group_columns, traces))
                 }
+                ReportType::Panels => ReportDefinition::Panels(
+                    serde_json::from_value(
+                        report
+                            .definition
+                            .ok_or(err("Missing definition for panels report"))?,
+                    )
+                    .map_err(|_| err("Invalid panels report definition"))?,
+                ),
             };
 
             res.push(Report {
@@ -53,6 +68,7 @@ impl Report {
 pub enum ReportDefinition {
     Grid(GridReport),
     Graph(GraphReport),
+    Panels(PanelsReport),
 }
 
 impl ReportDefinition {
@@ -60,20 +76,28 @@ impl ReportDefinition {
         match self {
             ReportDefinition::Grid(_) => ReportType::Grid,
             ReportDefinition::Graph(_) => ReportType::Graph,
+            ReportDefinition::Panels(_) => ReportType::Panels,
         }
     }
 
     fn group_columns(&self) -> Option<bool> {
         match self {
             ReportDefinition::Grid(grid) => grid.group_columns,
-            ReportDefinition::Graph(_) => None,
+            ReportDefinition::Graph(_) | ReportDefinition::Panels(_) => None,
         }
     }
 
     fn bar_layout(&self) -> Option<BarLayout> {
         match self {
-            ReportDefinition::Grid(_) => None,
+            ReportDefinition::Grid(_) | ReportDefinition::Panels(_) => None,
             ReportDefinition::Graph(graph) => Some(graph.bar_layout.clone()),
+        }
+    }
+
+    fn definition_json(&self) -> Option<serde_json::Value> {
+        match self {
+            ReportDefinition::Panels(panels) => serde_json::to_value(panels).ok(),
+            _ => None,
         }
     }
 }
@@ -155,6 +179,13 @@ impl GridReport {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct ReportsQuery {
+    /// Older clients can't draw panels reports, so they are left out unless asked for.
+    #[serde(default)]
+    pub panels: bool,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct NewReport {
     pub name: String,
     pub definition: ReportDefinition,
@@ -164,11 +195,12 @@ pub struct NewReport {
 pub async fn get_reports(
     state: web::Data<AppState>,
     req: HttpRequest,
+    query: web::Query<ReportsQuery>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
 
-    let res = web::block(move || Report::get_all(&mut conn, &user_id)).await??;
+    let res = web::block(move || Report::get_all(&mut conn, &user_id, query.panels)).await??;
 
     Ok(HttpResponse::Ok().json(GetAllReportsResponse { reports: res }))
 }
@@ -198,15 +230,18 @@ pub async fn create_report(
 /// Updates report name and definition
 pub async fn update_report(
     state: web::Data<AppState>,
+    req: HttpRequest,
     path: web::Path<ReportIdSlug>,
     form: web::Json<NewReportForm>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
     let report_id = path.into_inner();
 
     web::block(move || {
         DBReport::update(
             &mut conn,
+            &user_id,
             &report_id,
             &form.report.name,
             &form.report.definition,
@@ -217,15 +252,17 @@ pub async fn update_report(
     Ok(HttpResponse::Ok().json(()))
 }
 
-/// Updates report name and definition
+/// Deletes a report
 pub async fn delete_report(
     state: web::Data<AppState>,
+    req: HttpRequest,
     path: web::Path<ReportIdSlug>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
     let report_id = path.into_inner();
 
-    web::block(move || DBReport::delete(&mut conn, &report_id)).await??;
+    web::block(move || DBReport::delete(&mut conn, &user_id, &report_id)).await??;
 
     Ok(HttpResponse::Ok().json(()))
 }

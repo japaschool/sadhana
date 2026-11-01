@@ -48,12 +48,12 @@ describe('shared reports', () => {
     ])
   })
 
-  it('mobile: the owner, report chips and a Sign up strip for visitors', async () => {
+  it('mobile: the owner, report chips (A–Z, the first selected) and a Sign up strip for visitors', async () => {
     setViewportWidth(390)
     renderAt(<SharedMobile />)
     expect(await screen.findByRole('heading', { name: 'Alex das' })).toBeInTheDocument()
     const chips = screen.getByRole('radiogroup', { name: 'Reports' })
-    expect(within(chips).getByRole('radio', { name: 'Hearing & study' })).toHaveAttribute('aria-checked', 'true')
+    expect(within(chips).getByRole('radio', { name: 'Full sadhana' })).toHaveAttribute('aria-checked', 'true')
     expect(screen.getByRole('link', { name: /sign up/i })).toHaveAttribute('href', '/register')
     expect(api.getSharedReportData).toHaveBeenCalledWith('u1', expect.any(String), 'Month')
   })
@@ -91,6 +91,7 @@ describe('shared reports', () => {
     renderAt(<SharedTablet />)
     expect(await screen.findByRole('radio', { name: /Full sadhana.*Grid · 2 practices/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Download CSV' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('radio', { name: /Hearing & study/ }))
     expect(await screen.findByRole('heading', { name: 'Table' })).toBeInTheDocument()
   })
 

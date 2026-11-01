@@ -19,6 +19,7 @@ beforeAll(() => {
 })
 
 const { persister, shouldPersist } = await import('./persister')
+const { REPORTS_KEY } = await import('../features/insights/useReports')
 
 const q = (queryKey: unknown[], status = 'success') =>
   ({ queryKey, state: { status, data: status === 'success' ? [] : undefined } }) as unknown as Query
@@ -37,6 +38,12 @@ describe('shouldPersist', () => {
     }
     expect(shouldPersist(q(['practices'], 'error'))).toBe(false)
     expect(shouldPersist(q(['practices'], 'pending'))).toBe(false)
+  })
+})
+
+describe('panels reports key', () => {
+  it('stays saved', () => {
+    expect(shouldPersist(q([...REPORTS_KEY]))).toBe(true)
   })
 })
 

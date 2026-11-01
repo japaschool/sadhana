@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Bar, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import type { BarLayout } from '../../../api/charts'
@@ -7,8 +8,8 @@ import { barPlacement, formatDurationTick, seriesRows, formatTick, spansYears, t
 import { fromDateStr } from '../../today/date'
 import { formatDuration, type DurationUnits } from '../../today/values'
 
-const TICK = { fontSize: 11, fontFamily: "'IBM Plex Mono', ui-monospace, monospace", fill: 'var(--ui-muted)' }
-const AXIS = { tick: TICK, tickLine: false, axisLine: false } as const
+export const TICK = { fontSize: 11, fontFamily: "'IBM Plex Mono', ui-monospace, monospace", fill: 'var(--ui-muted)' }
+export const AXIS = { tick: TICK, tickLine: false, axisLine: false } as const
 
 interface InsightsChartProps {
   rows: ChartDataRow[]; traces: Trace[]; barLayout: BarLayout; averages: AverageLine[]; height?: number
@@ -26,6 +27,29 @@ function pointText(v: number, dt: Trace['dataType'], u: DurationUnits): string {
 
 interface TipProps { active?: boolean; label?: string | number; payload?: readonly { dataKey?: unknown; value?: unknown }[] }
 
+/** A chart tooltip: the day, then a row per value. */
+export function TipShell({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1 rounded-xl border border-ui-hairline bg-ui-surface px-3 py-2 shadow-lg">
+      <span className="font-ui-mono text-[11px] font-semibold text-ui-muted">{title}</span>
+      {children}
+    </div>
+  )
+}
+
+export function TipRow({ color, name, value }: { color: string; name: string; value: string }) {
+  return (
+    <span className="flex items-center gap-2 text-xs text-ui-ink2">
+      <span aria-hidden className="h-2 w-2 shrink-0 rounded-[2px]" style={{ background: color }} />
+      <span className="max-w-[140px] truncate">{name}</span>
+      <span className="ml-auto pl-2 font-ui-mono text-ui-ink">{value}</span>
+    </span>
+  )
+}
+
+export const tipDate = (cob: string, locale: string) =>
+  new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'short' }).format(fromDateStr(cob))
+
 /** The tapped day: one row per series with a value there. */
 function PointTip({ active, label, payload, traces, units, locale }: TipProps & { traces: Trace[]; units: DurationUnits; locale: string }) {
   const items = (payload ?? []).flatMap((p) => {
@@ -34,18 +58,9 @@ function PointTip({ active, label, payload, traces, units, locale }: TipProps & 
   })
   if (!active || typeof label !== 'string' || !items.length) return null
   return (
-    <div className="flex flex-col gap-1 rounded-xl border border-ui-hairline bg-ui-surface px-3 py-2 shadow-lg">
-      <span className="font-ui-mono text-[11px] font-semibold text-ui-muted">
-        {new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'short' }).format(fromDateStr(label))}
-      </span>
-      {items.map(({ i, tr, v }) => (
-        <span key={i} className="flex items-center gap-2 text-xs text-ui-ink2">
-          <span aria-hidden className="h-2 w-2 shrink-0 rounded-[2px]" style={{ background: tr.color }} />
-          <span className="max-w-[140px] truncate">{tr.name}</span>
-          <span className="ml-auto pl-2 font-ui-mono text-ui-ink">{pointText(v, tr.dataType, units)}</span>
-        </span>
-      ))}
-    </div>
+    <TipShell title={tipDate(label, locale)}>
+      {items.map(({ i, tr, v }) => <TipRow key={i} color={tr.color} name={tr.name} value={pointText(v, tr.dataType, units)} />)}
+    </TipShell>
   )
 }
 

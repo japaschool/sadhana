@@ -5,7 +5,7 @@ import { InsightsTablet } from '../tablet/InsightsTablet'
 export function InsightsDesktopScreen() {
   return (
     <DesktopShell>
-      {(logDate, setLogDate) => <InsightsTablet logDate={logDate} onLogDate={setLogDate} chartHeight={380} />}
+      {(logDate, setLogDate) => <InsightsTablet logDate={logDate} onLogDate={setLogDate} chartHeight={380} panelHeight={270} />}
     </DesktopShell>
   )
 }
