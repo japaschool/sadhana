@@ -21,7 +21,7 @@ export function KindGlyph({ kind, className = 'text-ui-faint' }: { kind: 'graph'
     )
   }
   return (
-    <span aria-hidden data-glyph={kind} className={`${BOX} ${className} grid h-3 w-[13px] grid-cols-3 grid-rows-3 gap-[1.5px]`}>
+    <span aria-hidden data-glyph={kind} className={`inline-grid shrink-0 ${className} h-3 w-[13px] grid-cols-3 grid-rows-3 gap-[1.5px]`}>
       {Array.from({ length: 9 }, (_, i) => <span key={i} className="rounded-[1px] bg-current" />)}
     </span>
   )
@@ -29,6 +29,8 @@ export function KindGlyph({ kind, className = 'text-ui-faint' }: { kind: 'graph'
 
 /** The muted type glyph before a report's name (Report Templates 15m17). `null` is All practices. */
 export function ReportGlyph({ report }: { report: Report | null }) {
-  const d = report?.definition
-  return <KindGlyph kind={d && 'Graph' in d ? 'graph' : d && 'Panels' in d ? 'template' : 'table'} />
+  // All practices is a table of every practice (15m17).
+  if (report === null) return <KindGlyph kind="table" />
+  const d = report.definition
+  return <KindGlyph kind={'Graph' in d ? 'graph' : 'Panels' in d ? 'template' : 'table'} />
 }

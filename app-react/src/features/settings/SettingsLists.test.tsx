@@ -48,6 +48,9 @@ describe('Settings lists', () => {
     renderAt('/settings/charts')
     const grid = await screen.findByRole('link', { name: /Morning/ })
     expect(grid.firstElementChild).toHaveAttribute('data-glyph', 'table')
+    // jsdom has no layout: the class is what keeps the cells from collapsing (inline-flex would beat grid).
+    expect(grid.firstElementChild).toHaveClass('inline-grid', 'shrink-0')
+    expect(grid.firstElementChild).not.toHaveClass('inline-flex')
     expect(within(grid).getByText('Table')).toBeInTheDocument()
     const tpl = screen.getByRole('link', { name: /Sleep/ })
     expect(tpl.firstElementChild).toHaveAttribute('data-glyph', 'template')
