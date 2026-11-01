@@ -8,6 +8,7 @@ import { SegmentedControl } from '../../ui/primitives/SegmentedControl'
 import { UiToastContainer } from '../../ui/primitives/Toast'
 import { EndDateControl } from '../insights/mobile/EndDateControl'
 import { InsightsChart } from '../insights/mobile/InsightsChart'
+import { PanelsReportView } from '../insights/panels/PanelsReportView'
 import type { Range } from '../insights/useInsights'
 import {
   CARD, DayCalendar, DayTable, DeltaText, EmptyState, Eyebrow, HeatKey, Headline, Legend, Mark, PracticeHeatmap, ReportList,
@@ -55,6 +56,13 @@ function ChartBody({ s, height, children }: { s: Shared; height: number; childre
   if (s.isError) return <p role="alert" className="py-10 text-center text-sm text-ui-danger-text">{t('insights.loadFailed')}</p>
   if (s.grid ? !s.entries.length : !s.hasData) return <p className="py-10 text-center text-sm text-ui-muted">{t('insights.noData')}</p>
   return <>{children}</>
+}
+
+function Panels({ s, height, cols }: { s: Shared; height: number; cols?: 2 }) {
+  return (
+    <PanelsReportView key={s.selectedId} report={s.report!} definition={s.panels!} entries={s.entries} previous={s.previousEntries}
+      practices={s.practices} todayCob={s.todayCob} chartHeight={height} formLink={null} cols={cols} />
+  )
 }
 
 function Name({ s, size }: { s: Shared; size: 28 | 34 }) {
@@ -133,25 +141,29 @@ export function SharedMobile() {
         <EndDateControl end={s.end} onChange={s.setEnd} />
       </div>
       <div className="px-4 pt-2.5" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-        <section className={`${CARD} flex flex-col gap-3.5 p-4`}>
-          <div className="flex items-start justify-between gap-3">
-            {!s.isLoading && !s.isError ? <Headline s={s} size={30} /> : <span />}
-            <button type="button" aria-label={t('today.more')} aria-haspopup="menu" onClick={(e) => setMenu(e.currentTarget)}
-              className="-mt-2.5 -mr-2.5 flex h-11 w-11 shrink-0 items-center justify-center gap-[3px]">
-              {[0, 1, 2].map((i) => <span key={i} className="h-1 w-1 rounded-full bg-ui-ink" />)}
-            </button>
-          </div>
-          <ChartBody s={s} height={170}>
-            {s.grid ? (
-              <><DayCalendar s={s} /><HeatKey /></>
-            ) : (
-              <>
-                <InsightsChart key={s.selectedId} rows={s.rows} traces={s.traces} barLayout={s.barLayout} averages={s.averages} />
-                <Legend s={s} cols={2} />
-              </>
-            )}
-          </ChartBody>
-        </section>
+        {s.panelsReady ? <Panels s={s} height={230} cols={2} /> : (
+          <section className={`${CARD} flex flex-col gap-3.5 p-4`}>
+            <div className="flex items-start justify-between gap-3">
+              {!s.isLoading && !s.isError ? <Headline s={s} size={30} /> : <span />}
+              {!s.panels && (
+                <button type="button" aria-label={t('today.more')} aria-haspopup="menu" onClick={(e) => setMenu(e.currentTarget)}
+                  className="-mt-2.5 -mr-2.5 flex h-11 w-11 shrink-0 items-center justify-center gap-[3px]">
+                  {[0, 1, 2].map((i) => <span key={i} className="h-1 w-1 rounded-full bg-ui-ink" />)}
+                </button>
+              )}
+            </div>
+            <ChartBody s={s} height={170}>
+              {s.grid ? (
+                <><DayCalendar s={s} /><HeatKey /></>
+              ) : (
+                <>
+                  <InsightsChart key={s.selectedId} rows={s.rows} traces={s.traces} barLayout={s.barLayout} averages={s.averages} />
+                  <Legend s={s} cols={2} />
+                </>
+              )}
+            </ChartBody>
+          </section>
+        )}
       </div>
       {s.reports.length > 1 && (
         <div aria-hidden className="flex justify-center gap-1.5 pt-3.5">
@@ -220,22 +232,24 @@ export function SharedTablet() {
                 <RangeControl s={s} size="md" />
                 <EndDateControl end={s.end} onChange={s.setEnd} />
                 <span className="flex-1" />
-                <CsvButton onClick={csv} />
+                {!s.panels && <CsvButton onClick={csv} />}
               </div>
-              <section className={`${CARD} flex flex-col gap-3.5 p-5`}>
-                <div className="flex items-start justify-between gap-3">
-                  {!s.isLoading && !s.isError && <Headline s={s} size={34} delta={false} />}
-                  {s.grid ? <HeatKey /> : <DeltaText s={s} className="pt-0.5 text-right" />}
-                </div>
-                <ChartBody s={s} height={220}>
-                  {s.grid ? <PracticeHeatmap s={s} /> : (
-                    <>
-                      <InsightsChart key={s.selectedId} rows={s.rows} traces={s.traces} barLayout={s.barLayout} averages={s.averages} height={220} />
-                      <Legend s={s} cols={4} />
-                    </>
-                  )}
-                </ChartBody>
-              </section>
+              {s.panelsReady ? <Panels s={s} height={300} /> : (
+                <section className={`${CARD} flex flex-col gap-3.5 p-5`}>
+                  <div className="flex items-start justify-between gap-3">
+                    {!s.isLoading && !s.isError && <Headline s={s} size={34} delta={false} />}
+                    {s.grid ? <HeatKey /> : <DeltaText s={s} className="pt-0.5 text-right" />}
+                  </div>
+                  <ChartBody s={s} height={220}>
+                    {s.grid ? <PracticeHeatmap s={s} /> : (
+                      <>
+                        <InsightsChart key={s.selectedId} rows={s.rows} traces={s.traces} barLayout={s.barLayout} averages={s.averages} height={220} />
+                        <Legend s={s} cols={4} />
+                      </>
+                    )}
+                  </ChartBody>
+                </section>
+              )}
               {!s.grid && s.hasData && !s.isLoading && (
                 <section className={`${CARD} flex flex-col gap-3.5 px-5 py-[18px]`}>
                   <h2 className="text-[15px] font-extrabold">{t('shared.table')}</h2>
@@ -295,29 +309,31 @@ export function SharedDesktop() {
               <div className="flex shrink-0 items-center gap-3">
                 <RangeControl s={s} size="lg" />
                 <EndDateControl end={s.end} onChange={s.setEnd} />
-                <CsvButton onClick={csv} />
+                {!s.panels && <CsvButton onClick={csv} />}
               </div>
             </div>
-            <section className={`${CARD} flex flex-col gap-[18px] rounded-[24px] p-6`}>
-              <div className="flex items-start justify-between gap-3">
-                {!s.isLoading && !s.isError && <Headline s={s} size={40} delta={false} />}
-                {s.grid ? <HeatKey /> : (
-                  <div className="flex items-center gap-4">
-                    <DeltaText s={s} />
-                    <SegmentedControl label={t('shared.table')} value={view} onChange={setView}
-                      options={[{ value: 'chart', label: t('shared.chart') }, { value: 'table', label: t('shared.table') }]} />
-                  </div>
-                )}
-              </div>
-              <ChartBody s={s} height={400}>
-                {s.grid ? <PracticeHeatmap s={s} /> : view === 'table' ? <DayTable s={s} /> : (
-                  <>
-                    <InsightsChart key={s.selectedId} rows={s.rows} traces={s.traces} barLayout={s.barLayout} averages={s.averages} height={400} />
-                    <Legend s={s} cols={4} />
-                  </>
-                )}
-              </ChartBody>
-            </section>
+            {s.panelsReady ? <Panels s={s} height={300} /> : (
+              <section className={`${CARD} flex flex-col gap-[18px] rounded-[24px] p-6`}>
+                <div className="flex items-start justify-between gap-3">
+                  {!s.isLoading && !s.isError && <Headline s={s} size={40} delta={false} />}
+                  {s.panels ? null : s.grid ? <HeatKey /> : (
+                    <div className="flex items-center gap-4">
+                      <DeltaText s={s} />
+                      <SegmentedControl label={t('shared.table')} value={view} onChange={setView}
+                        options={[{ value: 'chart', label: t('shared.chart') }, { value: 'table', label: t('shared.table') }]} />
+                    </div>
+                  )}
+                </div>
+                <ChartBody s={s} height={400}>
+                  {s.grid ? <PracticeHeatmap s={s} /> : view === 'table' ? <DayTable s={s} /> : (
+                    <>
+                      <InsightsChart key={s.selectedId} rows={s.rows} traces={s.traces} barLayout={s.barLayout} averages={s.averages} height={400} />
+                      <Legend s={s} cols={4} />
+                    </>
+                  )}
+                </ChartBody>
+              </section>
+            )}
             {s.grid && <p className="text-[13px] text-ui-muted">{t('shared.hoverHint')}</p>}
           </>
         )}

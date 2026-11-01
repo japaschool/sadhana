@@ -30,6 +30,8 @@ export function useShared(userId: string) {
     ...ins,
     name: user.data?.name ?? '',
     grid: isTable(ins.report),
+    /** A panels report with its data: it draws its own cards. */
+    panelsReady: !!ins.panels && !ins.isLoading && !ins.isError,
     // An unknown user and a report that's no longer shared look the same, so the page doesn't reveal which.
     notFound: user.isError || ins.reportsError,
     loadingPage: user.isLoading || (ins.isLoading && !ins.reports.length),

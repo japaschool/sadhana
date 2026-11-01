@@ -32,6 +32,16 @@
   --ui-on-primary: #F7F4EE;
   --ui-good: #4F7A3A;
   /* Chart series, in fixed order. Slots 1–4 from the 5a mockup; 5–8 checked with the dataviz validator. */
+  /* Report states (15m6): solid, outlined + pale fill, striped, neutral. *-solid: the 1y thin bars (15m8). */
+  --ui-state-ok: #B9790F;
+  --ui-state-under: #C2412D;
+  --ui-state-under-fill: rgba(194, 65, 45, 0.13);
+  --ui-state-over: #5F4FA3;
+  --ui-state-over-stripe: #A99BD6;
+  --ui-state-none: #8A8174;
+  --ui-state-ok-solid: #B9790F;
+  --ui-state-under-solid: #C2412D;
+  --ui-state-over-solid: #5F4FA3;
   --ui-chart-1: #E2A24B;
   --ui-chart-2: #D7867A;
   --ui-chart-3: #9DB98A;
@@ -93,6 +103,15 @@
   --ui-primary: #F1ECE4;
   --ui-on-primary: #15121D;
   --ui-good: #A9C996;
+  --ui-state-ok: #F0B54A;
+  --ui-state-under: #F08A74;
+  --ui-state-under-fill: rgba(240, 138, 116, 0.16);
+  --ui-state-over: #9C8CE6;
+  --ui-state-over-stripe: #3A3448;
+  --ui-state-none: #8F88A0;
+  --ui-state-ok-solid: #F0B54A;
+  --ui-state-under-solid: #F08A74;
+  --ui-state-over-solid: #9C8CE6;
   --ui-chart-1: #EDB45A;
   --ui-chart-2: #E3978B;
   --ui-chart-3: #A9C996;
@@ -146,6 +165,15 @@
     --ui-primary: #F1ECE4;
     --ui-on-primary: #15121D;
     --ui-good: #A9C996;
+    --ui-state-ok: #F0B54A;
+    --ui-state-under: #F08A74;
+    --ui-state-under-fill: rgba(240, 138, 116, 0.16);
+    --ui-state-over: #9C8CE6;
+    --ui-state-over-stripe: #3A3448;
+    --ui-state-none: #8F88A0;
+    --ui-state-ok-solid: #F0B54A;
+    --ui-state-under-solid: #F08A74;
+    --ui-state-over-solid: #9C8CE6;
     --ui-chart-1: #EDB45A;
     --ui-chart-2: #E3978B;
     --ui-chart-3: #A9C996;
@@ -206,6 +234,15 @@
   --color-ui-heat-3: var(--ui-heat-3);
   --color-ui-on-heat-3: var(--ui-on-heat-3);
   --color-ui-panel: var(--ui-panel);
+  --color-ui-state-ok: var(--ui-state-ok);
+  --color-ui-state-under: var(--ui-state-under);
+  --color-ui-state-under-fill: var(--ui-state-under-fill);
+  --color-ui-state-over: var(--ui-state-over);
+  --color-ui-state-over-stripe: var(--ui-state-over-stripe);
+  --color-ui-state-none: var(--ui-state-none);
+  --color-ui-state-ok-solid: var(--ui-state-ok-solid);
+  --color-ui-state-under-solid: var(--ui-state-under-solid);
+  --color-ui-state-over-solid: var(--ui-state-over-solid);
   --font-ui: Manrope, ui-sans-serif, system-ui, sans-serif;
   --font-ui-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }

@@ -1,9 +1,11 @@
+import type { TFunction } from 'i18next'
 import type {
-  End, Panel, PanelsReport, ReportDataEntry, Required, Scope, Series, Source, Stat, StatValue, Target,
+  ChartPanel, End, Format, Label, Panel, PanelsReport, ReportDataEntry, Required, Scope, Series, Source, Stat, StatValue, Target,
 } from '../../../api/charts'
 import type { PracticeDataType, UserPractice } from '../../../types/api'
 import { addDays, fromDateStr, toDateStr } from '../../today/date'
-import { valueToNumber } from '../chartLogic'
+import { formatMinutesAsHHMM, valueToNumber } from '../chartLogic'
+import { formatDuration, type DurationUnits } from '../../today/values'
 
 export interface Lookup {
   /** Numeric value on a day; null when empty, or the practice is unavailable. */
@@ -97,7 +99,7 @@ export function stateOf(value: number | null, target: Pick<Target, 'min' | 'max'
   return 'ok'
 }
 
-function scalar(r: Resolved, pick: End | null): number | null {
+export function scalar(r: Resolved, pick: End | null): number | null {
   if (!Array.isArray(r)) return r
   return pick === 'From' ? r[0] : pick === 'To' ? r[1] : r[1] - r[0]
 }
@@ -118,6 +120,7 @@ export function statResult(
 
   switch (kind) {
     case 'Logged':
+      return { value: logged.length, of: past.length }
     case 'CountTrue':
       return { value: logged.length }
     case 'OnTarget': {
@@ -186,4 +189,59 @@ export function fitHours(values: number[]): [number, number] {
   const lo = Math.floor(Math.min(...values) / 60) * 60
   const hi = (Math.floor(Math.max(...values) / 60) + 1) * 60
   return [lo, hi]
+}
+
+export function labelText(label: Label | null, t: TFunction, fallback = ''): string {
+  if (!label) return fallback
+  return 'Key' in label ? t(label.Key) : label.Text
+}
+
+export const clockText = (afterNoon: number) => formatMinutesAsHHMM(afterNoon + 720)
+
+export function formatValue(v: number, format: Format, u: DurationUnits): string {
+  if (format === 'Duration') return formatDuration(v, u)
+  return format === 'NoonClock' ? clockText(v) : String(v)
+}
+
+export type PanelRow = { cob: string; state: BarState | null } & Record<`s${number}`, Resolved>
+
+/** A row per day with one column per series (s0, s1, …) and the day's state against the target. */
+export function chartRows(panel: ChartPanel, days: string[], l: Lookup): PanelRow[] {
+  return days.map((cob) => {
+    const values = panel.series.map((s) => resolve(s.source, cob, l))
+    const row: PanelRow = { cob, state: panel.target ? stateOf(scalar(resolve(panel.target.of, cob, l), null), panel.target) : null }
+    panel.series.forEach((s, i) => {
+      // A dependent series has nothing to add without its base, and a zero would draw as a line.
+      const drop = s.only_with !== null && (values[s.only_with] === null || values[i] === 0)
+      row[`s${i}`] = drop ? null : values[i]
+    })
+    return row
+  })
+}
+
+export interface TipLine { key: string; name: string; text: string; state: BarState | null }
+
+/** What a tapped day shows: every chart's series on that day, then the value the target judges. */
+export function tipLines(panels: Panel[], cob: string, l: Lookup, t: TFunction, u: DurationUnits): TipLine[] {
+  const charts = panels.filter((p): p is Extract<Panel, { kind: 'Chart' }> => p.kind === 'Chart')
+  const lines = charts.flatMap((panel, c) => {
+    const row = chartRows(panel, [cob], l)[0]
+    return panel.series.flatMap((s, i): TipLine[] => {
+      const v = row[`s${i}`]
+      if (v === null) return []
+      const text = Array.isArray(v) ? `${clockText(v[0])} → ${clockText(v[1])}` : formatValue(v, panel.format, u)
+      return [{ key: `${c}.${i}`, name: labelText(s.label, t), text, state: row.state }]
+    })
+  })
+  const judged = charts.find((p) => p.target)
+  const total = judged?.target ? scalar(resolve(judged.target.of, cob, l), null) : null
+  if (!judged?.target || total === null) return lines
+  // A clock chart still judges a length.
+  const format = judged.format === 'NoonClock' ? 'Duration' : judged.format
+  return [...lines, {
+    key: 'target',
+    name: labelText(judged.target.label, t, t('reportPanels.total')),
+    text: formatValue(total, format, u),
+    state: stateOf(total, judged.target),
+  }]
 }

@@ -4,6 +4,7 @@ import { AppBar } from '../../../layouts/mobile/AppBar'
 import { MobileShell } from '../../../layouts/mobile/MobileShell'
 import { SegmentedControl } from '../../../ui/primitives/SegmentedControl'
 import { formatDelta, formatHeadline, traceAverageLabel, windowLabel } from '../insightsLogic'
+import { PanelsReportView } from '../panels/PanelsReportView'
 import { isTable, RANGES, useInsights } from '../useInsights'
 import { DaySheet } from './DaySheet'
 import { EndDateControl } from './EndDateControl'
@@ -25,6 +26,7 @@ export function InsightsMobile() {
   const ready = !ins.isLoading && !ins.isError && ins.hasData
   // A table shows empty days too, so they can be filled in from it.
   const table = isTable(ins.report) && !ins.isLoading && !ins.isError && ins.entries.length > 0
+  const panels = !ins.isLoading && !ins.isError ? ins.panels : null
 
   return (
     <>
@@ -47,6 +49,9 @@ export function InsightsMobile() {
 
         {table ? (
           <InsightsTable grouped={ins.grouped} traces={ins.traces} entries={ins.entries} todayCob={ins.todayCob} onOpenDay={setOpenDay} />
+        ) : panels ? (
+          <PanelsReportView key={ins.selectedId} report={ins.report!} definition={panels} entries={ins.entries} previous={ins.previousEntries}
+            practices={ins.practices} todayCob={ins.todayCob} chartHeight={230} formLink={`/settings/charts/${ins.selectedId}`} cols={2} />
         ) : (
           <section className={`${CARD} p-4`}>
             {ins.isLoading ? (
@@ -81,7 +86,7 @@ export function InsightsMobile() {
           </section>
         )}
 
-        {ready && !table && (
+        {ready && !table && !panels && (
           <ul aria-label={t('insights.legend')} className={`${CARD} px-4 py-1`}>
             {ins.traces.map((tr, i) => (
               <li key={i} className="border-b border-ui-hairline last:border-0">

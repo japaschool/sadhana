@@ -96,6 +96,7 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     barLayout,
     previousEntries: previous.data,
     panels: report && isPanels(report) ? report.definition.Panels : null,
+    practices: practicesQ.data ?? [],
     /** A table's Group columns setting (on unless the report says otherwise). */
     grouped: !(report && 'Grid' in report.definition && report.definition.Grid.group_columns === false),
     headline: headline(traces, barLayout, entries, previous.data, todayCob),

@@ -1,0 +1,297 @@
+import { render, screen, waitFor, within } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { cloneElement, type ReactElement, type ReactNode } from 'react'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import i18n from 'i18next'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import ru from '../../../../public/locales/ru/translation.json'
+import type { PanelsReport, Report, ReportDataEntry, SleepTemplate } from '../../../api/charts'
+import type { PracticeDataType, UserPractice } from '../../../types/api'
+import { setViewportWidth } from '../../../test/viewport'
+import { addDays, fromDateStr, toDateStr } from '../../today/date'
+import { InsightsMobileScreen } from '../mobile/InsightsMobile'
+import { InsightsTabletScreen } from '../tablet/InsightsTablet'
+import { SharedDesktop, SharedMobile, SharedTablet } from '../../shared/SharedReports'
+import { PanelsReportView } from './PanelsReportView'
+import { labelText } from './panelLogic'
+import { sleepPanels } from './templates'
+
+// Recharts measures its container, which jsdom can't: give it a fixed size.
+vi.mock('recharts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('recharts')>()),
+  ResponsiveContainer: ({ children }: { children: ReactElement<{ width: number; height: number }> }) =>
+    cloneElement(children, { width: 600, height: 300 }),
+}))
+vi.mock('../../../api/charts', () => ({
+  chartsApi: {
+    getReports: vi.fn(), getReportData: vi.fn(), deleteReport: vi.fn(),
+    getSharedUser: vi.fn(), getSharedReports: vi.fn(), getSharedPractices: vi.fn(), getSharedReportData: vi.fn(),
+  },
+}))
+vi.mock('../../../api/practices', () => ({
+  practicesApi: { getUserPractices: vi.fn(), getIncompleteDays: vi.fn(), getDiaryEntries: vi.fn(), saveDiaryEntry: vi.fn() },
+}))
+import { chartsApi } from '../../../api/charts'
+import { practicesApi } from '../../../api/practices'
+
+const P = (id: string, practice: string, data_type: PracticeDataType, is_active = true): UserPractice =>
+  ({ id, practice, data_type, is_active })
+const BED = P('11111111-aaaa', 'Bed time', 'Time')
+const WAKE = P('22222222-bbbb', 'Wake-up time', 'Time')
+const NAP = P('33333333-cccc', 'Siesta', 'Duration')
+const PRACTICES = [BED, WAKE, NAP]
+const TODAY = '2026-10-06'
+const T = (h: number, m = 0) => ({ Time: { h, m } })
+const e = (cob_date: string, practice: string, value: unknown): ReportDataEntry => ({ cob_date, practice, value })
+const dayAt = (cob: string, n: number) => toDateStr(addDays(fromDateStr(cob), n))
+
+/** 30 nights to today: wake 07:00; 23:00 bed (480 min) but 02:00 (300 min) on 7 nights; one night has no wake-up. */
+function nights(days = 30) {
+  const window: string[] = Array.from({ length: days }, (_, i) => dayAt(TODAY, i - days + 1))
+  const SHORT = new Set([1, 2, 3, 4, 5, 6, 7])
+  const entries: ReportDataEntry[] = []
+  window.forEach((cob, i) => {
+    entries.push(e(cob, WAKE.practice, i === 19 ? null : T(7)))
+    entries.push(e(cob, BED.practice, SHORT.has(i + 1) ? T(2) : T(23)))
+  })
+  // Night 28 had a nap: 480 + 60 is still in range.
+  entries.push(e(window[28], NAP.practice, { Duration: 60 }))
+  return { entries, previous: [e(dayAt(window[0], -1), BED.practice, T(23))] }
+}
+
+const tmpl = (over: Partial<SleepTemplate> = {}): SleepTemplate =>
+  ({ bedtime: BED.id, wake: WAKE.id, nap: NAP.id, min: 360, max: 540, ...over })
+const report = (definition: PanelsReport): Report => ({ id: 'r1', name: 'My sleep', definition: { Panels: definition } })
+
+function view(over: { def?: PanelsReport; practices?: UserPractice[]; formLink?: string | null; days?: number } = {}) {
+  const def = over.def ?? sleepPanels(tmpl())
+  const { entries, previous } = nights(over.days)
+  return render(
+    <MemoryRouter>
+      <PanelsReportView report={report(def)} definition={def} entries={entries} previous={previous}
+        practices={over.practices ?? PRACTICES} todayCob={TODAY} chartHeight={300}
+        formLink={over.formLink === undefined ? '/settings/charts/r1' : over.formLink} />
+    </MemoryRouter>,
+  )
+}
+
+const legends = () => screen.getAllByRole('list', { name: 'Key' })
+
+describe('PanelsReportView', () => {
+  afterEach(async () => { await i18n.changeLanguage('en') })
+
+  it('a Sleep report shows its figures', () => {
+    view()
+    expect(screen.getByText('Average sleep').parentElement).toHaveTextContent('7 h 18 min')
+    expect(screen.getByText('Night alone: 7 h 16 min')).toBeInTheDocument()
+    expect(screen.getAllByText('Average bedtime')[0].parentElement).toHaveTextContent('23:43')
+    expect(screen.getAllByText('Average wake-up')[0].parentElement).toHaveTextContent('07:00')
+    expect(screen.getByText('Nights in range').parentElement).toHaveTextContent('22 of 29')
+  })
+
+  it('draws a chart per panel, with no bar for the missing night', () => {
+    const { container } = view()
+    expect(screen.getByRole('heading', { name: 'Sleep times' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Hours slept' })).toBeInTheDocument()
+    const charts = container.querySelectorAll('.recharts-surface')
+    expect(charts).toHaveLength(2)
+    expect(charts[0].querySelectorAll('.recharts-bar-rectangle path')).toHaveLength(29)
+    // 29 nights plus the one nap, stacked.
+    expect(charts[1].querySelectorAll('.recharts-bar-rectangle path')).toHaveLength(30)
+  })
+
+  it('states read from the total: under is outlined, in range solid, over striped through a per-chart pattern', () => {
+    const def = sleepPanels(tmpl({ min: 400, max: 450 }))
+    const { container } = view({ def })
+    const [times, hours] = [...container.querySelectorAll('.recharts-surface')]
+    const fills = (el: Element) => [...el.querySelectorAll('.recharts-bar-rectangle path')].map((p) => p.getAttribute('fill'))
+    const a = fills(times)
+    expect(a.filter((f) => f === 'var(--ui-state-under-fill)')).toHaveLength(7)
+    const stripes = a.filter((f) => f?.startsWith('url(#stripes-'))
+    expect(stripes).toHaveLength(22)
+    expect(times.querySelector(`pattern[id="${stripes[0]!.slice(5, -1)}"]`)).not.toBeNull()
+    expect(container.querySelector('.recharts-bar-rectangle path[stroke="var(--ui-state-under)"]')).not.toBeNull()
+    // Two charts, and the preview can mount a report twice: the ids can't collide.
+    expect(fills(hours).find((f) => f?.startsWith('url('))).not.toBe(stripes[0])
+  })
+
+  it('both limits null: Nights logged, one neutral colour, no state rows', () => {
+    const { container } = view({ def: sleepPanels(tmpl({ min: null, max: null })) })
+    expect(screen.getByText('Nights logged').parentElement).toHaveTextContent('29 of 30')
+    expect(screen.queryByText('Nights in range')).toBeNull()
+    expect(screen.getByText('No target set, so every night is one colour')).toBeInTheDocument()
+    expect(screen.queryByText(/^In range/)).toBeNull()
+    expect(screen.queryByText(/^Under/)).toBeNull()
+    expect(screen.queryByText(/^Over/)).toBeNull()
+    const fills = new Set([...container.querySelectorAll('.recharts-bar-rectangle path')].map((p) => p.getAttribute('fill')))
+    expect([...fills]).toEqual(['var(--ui-state-none)'])
+  })
+
+  it('one limit: the legend has that state only', () => {
+    view({ def: sleepPanels(tmpl({ max: null })) })
+    expect(within(legends()[0]).getByText('6 h or more')).toBeInTheDocument()
+    expect(within(legends()[0]).getByText('Under 6 h')).toBeInTheDocument()
+    expect(screen.queryByText(/^Over/)).toBeNull()
+  })
+
+  it('both limits: the legend names the range and the average lines', () => {
+    view()
+    const key = within(legends()[0])
+    expect(key.getByText('In range · 6 h–9 h')).toBeInTheDocument()
+    expect(key.getByText('Under 6 h')).toBeInTheDocument()
+    expect(key.getByText('Over 9 h')).toBeInTheDocument()
+    expect(key.getByText('Average bedtime')).toBeInTheDocument()
+    expect(key.getByText('Average wake-up')).toBeInTheDocument()
+    expect(within(legends()[1]).getByText('Nap, stacked on top')).toBeInTheDocument()
+  })
+
+  it('a long range drops outlines and stripes for solid colours', () => {
+    const { container } = view({ days: 121, def: sleepPanels(tmpl({ min: 400, max: 450 })) })
+    const bars = [...container.querySelectorAll('.recharts-bar-rectangle path')]
+    const fills = new Set(bars.map((p) => p.getAttribute('fill')))
+    expect(fills).toEqual(new Set(['var(--ui-state-under-solid)', 'var(--ui-state-over-solid)']))
+    expect(container.querySelector('.recharts-bar-rectangle path[stroke="var(--ui-state-under)"]')).toBeNull()
+  })
+
+  it('a deleted required practice names the form label and links to the form, never an id', () => {
+    const { container } = view({ practices: [BED, NAP] })
+    expect(screen.getByText(/needs a practice for “Wake-up”/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Choose a practice' })).toHaveAttribute('href', '/settings/charts/r1')
+    expect(container).not.toHaveTextContent(WAKE.id)
+    expect(container.querySelector('.recharts-surface')).toBeNull()
+  })
+
+  it('a hidden required practice reads the same', () => {
+    view({ practices: [BED, { ...WAKE, is_active: false }, NAP] })
+    expect(screen.getByText(/needs a practice for “Wake-up”/)).toBeInTheDocument()
+  })
+
+  it('no form link on shared pages', () => {
+    view({ practices: [BED, NAP], formLink: null })
+    expect(screen.getByText(/needs a practice for “Wake-up”/)).toBeInTheDocument()
+    expect(screen.queryByRole('link')).toBeNull()
+  })
+
+  it('a missing optional nap: no message and no nap row', () => {
+    view({ practices: [BED, WAKE] })
+    expect(screen.queryByText(/needs a practice/)).toBeNull()
+    expect(screen.queryByText(/Nap/)).toBeNull()
+    expect(screen.queryByText(/Night alone/)).not.toBeNull()
+    expect(screen.getByRole('heading', { name: 'Hours slept' })).toBeInTheDocument()
+  })
+
+  it('no nap practice at all: no night-only line', () => {
+    view({ def: sleepPanels(tmpl({ nap: null })) })
+    expect(screen.queryByText(/Night alone/)).toBeNull()
+  })
+
+  it('no data in the window still renders', () => {
+    const def = sleepPanels(tmpl())
+    render(
+      <MemoryRouter>
+        <PanelsReportView report={report(def)} definition={def} entries={[]} previous={undefined}
+          practices={PRACTICES} todayCob={TODAY} chartHeight={300} formLink={null} />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('Average sleep').parentElement).toHaveTextContent('—')
+    expect(screen.getByText('Nights in range').parentElement).toHaveTextContent('—')
+    expect(screen.getByText('No data in this range')).toBeInTheDocument()
+  })
+
+  it('labels render in the active language', async () => {
+    i18n.addResourceBundle('ru', 'translation', ru, true, true)
+    await i18n.changeLanguage('ru')
+    view()
+    expect(screen.getAllByText('Средний отбой')).toHaveLength(2) // figure and legend
+    expect(screen.getByText('Ночей в норме').parentElement).toHaveTextContent('22 из 29')
+  })
+
+  it('labelText reads keys and literal text, with a fallback', () => {
+    const t = i18n.t.bind(i18n) as Parameters<typeof labelText>[1]
+    expect(labelText({ Key: 'reportPanels.nap' }, t)).toBe('Nap')
+    expect(labelText({ Text: 'Mine' }, t)).toBe('Mine')
+    expect(labelText(null, t, 'Total')).toBe('Total')
+  })
+})
+
+describe('panels reports on each screen', () => {
+  const PANELS = report(sleepPanels(tmpl()))
+  const { entries, previous } = nights()
+  const data = async (cob: string) => (cob === TODAY ? entries : previous)
+  const charts = vi.mocked(chartsApi)
+  const practices = vi.mocked(practicesApi)
+
+  function renderAt(el: ReactNode, path = '/charts') {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    return render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={[path]}><Routes><Route path="/shared/:id" element={el} /><Route path="*" element={el} /></Routes></MemoryRouter>
+      </QueryClientProvider>,
+    )
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 9, 6, 9))
+    localStorage.setItem('insights-report', 'r1')
+    practices.getUserPractices.mockResolvedValue(PRACTICES)
+    practices.getIncompleteDays.mockResolvedValue([])
+    charts.getReports.mockResolvedValue([PANELS])
+    charts.getReportData.mockImplementation(data)
+    charts.getSharedUser.mockResolvedValue({ id: 'u1', name: 'Alex das' })
+    charts.getSharedReports.mockResolvedValue([PANELS])
+    charts.getSharedPractices.mockResolvedValue(PRACTICES)
+    charts.getSharedReportData.mockImplementation(async (_u, cob) => data(cob))
+  })
+  afterEach(() => { vi.useRealTimers(); localStorage.clear() })
+
+  // The window's first night fills in when the previous window arrives.
+  const figures = () => waitFor(() => expect(screen.getByText('Nights in range').parentElement).toHaveTextContent('22 of 29'))
+  const hidesGeneric = () => {
+    expect(screen.queryByRole('list', { name: 'Averages' })).toBeNull()
+    expect(screen.queryByText(/^Daily average/)).toBeNull()
+  }
+
+  it('mobile', async () => {
+    setViewportWidth(390)
+    renderAt(<InsightsMobileScreen />)
+    await figures()
+    hidesGeneric()
+  })
+
+  it('tablet', async () => {
+    setViewportWidth(834)
+    renderAt(<InsightsTabletScreen />)
+    await figures()
+    hidesGeneric()
+  })
+
+  it('shared mobile: no CSV menu', async () => {
+    setViewportWidth(390)
+    renderAt(<SharedMobile />, '/shared/u1')
+    await figures()
+    hidesGeneric()
+    expect(screen.queryByRole('button', { name: 'More' })).toBeNull()
+  })
+
+  it('shared tablet: no CSV or table', async () => {
+    setViewportWidth(834)
+    renderAt(<SharedTablet />, '/shared/u1')
+    await figures()
+    hidesGeneric()
+    expect(screen.queryByRole('button', { name: 'Download CSV' })).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'Table' })).toBeNull()
+  })
+
+  it('shared desktop: no CSV or chart/table switch, and no form link', async () => {
+    setViewportWidth(1440)
+    charts.getSharedPractices.mockResolvedValue([BED, NAP])
+    renderAt(<SharedDesktop />, '/shared/u1')
+    expect(await screen.findByText(/needs a practice for “Wake-up”/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Choose a practice' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Download CSV' })).toBeNull()
+    expect(screen.queryByRole('radiogroup', { name: 'Table' })).toBeNull()
+    hidesGeneric()
+  })
+})
