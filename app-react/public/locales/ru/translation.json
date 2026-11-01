@@ -941,5 +941,20 @@
     "lastWeek": "прошлая неделя",
     "weekOf": "Неделя с {{date}}",
     "loadFailed": "Не удалось загрузить статистику."
+  },
+  "reportPanels": {
+    "bedtime": "Отход ко сну",
+    "wakeUp": "Подъём",
+    "avgSleep": "Средний сон",
+    "nightOnly": "Только ночью",
+    "avgBedtime": "Среднее время отхода ко сну",
+    "avgWake": "Среднее время подъёма",
+    "nightsInRange": "Ночей в пределах нормы",
+    "nightsLogged": "Ночей записано",
+    "sleepTimes": "Время сна",
+    "sleepDuration": "Длительность сна",
+    "sleep": "Сон",
+    "night": "Ночь",
+    "nap": "Дневной сон"
   }
 }

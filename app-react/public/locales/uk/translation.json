@@ -941,5 +941,20 @@
     "lastWeek": "минулий тиждень",
     "weekOf": "Тиждень з {{date}}",
     "loadFailed": "Не вдалося завантажити статистику."
+  },
+  "reportPanels": {
+    "bedtime": "Відхід до сну",
+    "wakeUp": "Підйом",
+    "avgSleep": "Середній сон",
+    "nightOnly": "Лише вночі",
+    "avgBedtime": "Середній час відходу до сну",
+    "avgWake": "Середній час підйому",
+    "nightsInRange": "Ночей у межах норми",
+    "nightsLogged": "Ночей записано",
+    "sleepTimes": "Час сну",
+    "sleepDuration": "Тривалість сну",
+    "sleep": "Сон",
+    "night": "Ніч",
+    "nap": "Денний сон"
   }
 }

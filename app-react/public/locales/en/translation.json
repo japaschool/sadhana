@@ -872,5 +872,20 @@
     "lastWeek": "last week",
     "weekOf": "Week of {{date}}",
     "loadFailed": "Couldn't load stats."
+  },
+  "reportPanels": {
+    "bedtime": "Bedtime",
+    "wakeUp": "Wake-up",
+    "avgSleep": "Average sleep",
+    "nightOnly": "Night only",
+    "avgBedtime": "Average bedtime",
+    "avgWake": "Average wake-up",
+    "nightsInRange": "Nights in range",
+    "nightsLogged": "Nights logged",
+    "sleepTimes": "Sleep times",
+    "sleepDuration": "Sleep duration",
+    "sleep": "Sleep",
+    "night": "Night",
+    "nap": "Nap"
   }
 }
