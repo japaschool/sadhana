@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { authApi } from '../../api/auth'
 import { useToastStore } from '../../hooks/useToast'
+import { invitePath, useReturnTo } from '../../layouts/returnTo'
 import { useAuthStore } from '../../store/authStore'
 import { AuthFrame } from './AuthFrame'
 import {
@@ -19,12 +20,12 @@ export function mismatch(password: string, confirm: string) {
 }
 
 /** "Resend in 42s" until the cooldown runs out, then "Resend email". */
-export function ResendButton({ email, type }: { email: string; type: 'Registration' | 'PasswordReset' }) {
+export function ResendButton({ email, type, next }: { email: string; type: 'Registration' | 'PasswordReset'; next?: string }) {
   const { t } = useTranslation()
   const showToast = useToastStore((s) => s.showToast)
   const [left, setLeft] = useState(COOLDOWN)
   const resend = useMutation({
-    mutationFn: () => authApi.sendConfirmationLink(email, type),
+    mutationFn: () => authApi.sendConfirmationLink(email, type, next),
     onSuccess: () => { setLeft(COOLDOWN); showToast({ message: t('auth.resendSent'), variant: 'success' }) },
     onError: (e) => showToast({ message: t(failure(e).key), variant: 'error' }),
   })
@@ -47,7 +48,8 @@ export function Register() {
   const { t, i18n } = useTranslation()
   const setAuth = useAuthStore((s) => s.setAuth)
   const [email, setEmail] = useState('')
-  const send = useMutation({ mutationFn: () => authApi.sendConfirmationLink(email.trim(), 'Registration') })
+  const next = invitePath(useReturnTo())
+  const send = useMutation({ mutationFn: () => authApi.sendConfirmationLink(email.trim(), 'Registration', next) })
   const google = useMutation({ mutationFn: (token: string) => authApi.googleSignin(token, (i18n.resolvedLanguage || 'en').slice(0, 2)), onSuccess: setAuth })
   const [googleFailed, setGoogleFailed] = useState(false)
   const busy = send.isPending || google.isPending
@@ -57,7 +59,7 @@ export function Register() {
     <AuthFrame footer={<BackToSignIn />}>
       <div className="flex flex-col gap-7">
         <Title medallion="accent" hint={<><p>{t('auth.checkEmail')}</p><SentTo email={email.trim()} /></>}>{t('auth.inboxCheck')}</Title>
-        <ResendButton email={email.trim()} type="Registration" />
+        <ResendButton email={email.trim()} type="Registration" next={next} />
       </div>
     </AuthFrame>
   )

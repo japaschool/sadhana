@@ -64,6 +64,15 @@ pub async fn reset_password(
     Ok(HttpResponse::Ok().json(()))
 }
 
+/// The only destination allowed on an emailed link, rebuilt from its id. Anything else is
+/// dropped rather than rejected, so a bad value can't stop someone signing up.
+fn invite_path(next: &str) -> Option<String> {
+    let id = next.strip_prefix("/yatra/")?.strip_suffix("/join")?;
+    // The length rules out Uuid's other spellings (braces, urn:, no hyphens).
+    let id = Uuid::try_parse(id).ok().filter(|_| id.len() == 36)?;
+    Some(format!("/yatra/{id}/join"))
+}
+
 pub async fn send_confirmation_link(
     state: web::Data<AppState>,
     form: web::Json<request::SendConfirmationLinkWrapper>,
@@ -81,12 +90,18 @@ pub async fn send_confirmation_link(
         ConfirmationType::PasswordReset => ("reset", "Сбросить пароль"),
     };
 
-    let action_url = format!(
+    let mut action_url = format!(
         "{domain}/{segment}/{id}",
         domain = server_address,
         segment = segment,
         id = confirmation.id
     );
+
+    if form.data.confirmation_type == ConfirmationType::Registration {
+        if let Some(next) = form.data.next.as_deref().and_then(invite_path) {
+            action_url.push_str(&format!("?next={next}"));
+        }
+    }
 
     let body = match form.data.confirmation_type {
         ConfirmationType::Registration => format!(
@@ -208,6 +223,26 @@ mod tests {
     /// Signup only accepts a live confirmation (the emailed link), so make one.
     fn confirmation_id(conn: &mut PgConnection, user_email: &str) -> Uuid {
         Confirmation::create(conn, user_email, false).unwrap().id
+    }
+
+    #[test]
+    fn invite_path_keeps_only_a_yatra_invite() {
+        use super::invite_path;
+        let invite = "/yatra/0f8fad5b-d9cb-469f-a165-70867728950e/join";
+        assert_eq!(invite_path(invite).as_deref(), Some(invite));
+        for bad in [
+            "",
+            "https://evil.example/",
+            "//evil.example",
+            "/settings",
+            "/yatra/not-a-uuid/join",
+            "/yatra/0f8fad5bd9cb469fa16570867728950e/join",
+            "/yatra/{0f8fad5b-d9cb-469f-a165-70867728950e}/join",
+            "/yatra/0f8fad5b-d9cb-469f-a165-70867728950e/join?x=1",
+            "/yatra/0f8fad5b-d9cb-469f-a165-70867728950e/join/x",
+        ] {
+            assert_eq!(invite_path(bad), None, "{bad}");
+        }
     }
 
     #[actix_rt::test]
