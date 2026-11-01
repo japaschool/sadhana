@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { ChartPanel, JapaTemplate, Panel, SleepTemplate, Stat } from '../../../api/charts'
 import type { UserPractice } from '../../../types/api'
-import { JAPA_SLOTS, japaPanels, numericVariants, pickerGroups, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, suggestFor } from './templates'
+import { DURATION_SLOT, durationPanels, JAPA_SLOTS, japaPanels, numericVariants, pickerGroups, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, suggestFor } from './templates'
 
 const T: SleepTemplate = { bedtime: 'bed', wake: 'wake', nap: 'nap', min: 360, max: 540 }
 const charts = (ps: Panel[]) => ps.filter((p): p is Extract<Panel, { kind: 'Chart' }> => p.kind === 'Chart') as (ChartPanel & { kind: 'Chart' })[]
@@ -186,5 +186,42 @@ describe('numeric practices', () => {
     const { compatible, cant } = pickerGroups(quality, [p('i', 'Int', 'Int'), { ...dd('1,2'), id: 'n' }, { ...dd('a,b'), id: 't' }, p('b', 'Bool', 'Bool')])
     expect(compatible.map((p) => p.id)).toEqual(['i', 'n'])
     expect(cant.map((c) => c.practice.id)).toEqual(['t', 'b'])
+  })
+})
+
+describe('durationPanels', () => {
+  const ids = ['a', 'b', 'c']
+  it('one practice with a goal: states and a goal line', () => {
+    const r = durationPanels({ practices: ['a'], goal: 60 })
+    const [c] = charts(r.panels)
+    expect(r.template).toEqual({ Duration: { practices: ['a'], goal: 60 } })
+    expect(c.series).toHaveLength(1)
+    expect(c.target).toMatchObject({ min: 60, max: null, lines: true, colour: true })
+  })
+  it('several practices: stacked by practice, the goal only as a line', () => {
+    const [c] = charts(durationPanels({ practices: ids, goal: 120 }).panels)
+    expect(c.bar_layout).toBe('Stacked')
+    expect(c.series.map((s) => s.source)).toEqual(ids.map((practice) => ({ Practice: { practice } })))
+    expect(c.series.every((s) => s.label === null)).toBe(true)
+    expect(c.target).toMatchObject({ lines: true, colour: false })
+  })
+  it('the daily total is optional on every term', () => {
+    const [c] = charts(durationPanels({ practices: ids, goal: null }).panels)
+    expect(c.target?.of).toEqual({ Calc: { terms: ids.map((practice) => ({ sign: 1, practice, day_offset: 0, optional: true })) } })
+  })
+  it('average per day; days on goal only with a goal', () => {
+    const scope = { today: false, missing_zero: true }
+    const withGoal = statsOf(durationPanels({ practices: ids, goal: 120 }).panels)
+    expect(withGoal.map((s) => Object.keys(s.value)[0])).toEqual(['Average', 'OnTarget'])
+    for (const s of withGoal) expect(scopeOf(s)).toEqual(scope)
+    expect(statsOf(durationPanels({ practices: ids, goal: null }).panels)).toHaveLength(1)
+  })
+  it('requires each practice, under one label', () => {
+    const r = durationPanels({ practices: ids, goal: null })
+    expect(r.required.map((x) => x.practice)).toEqual(ids)
+    expect(new Set(r.required.map((x) => JSON.stringify(x.label))).size).toBe(1)
+  })
+  it('a multi-select slot of Duration practices', () => {
+    expect(DURATION_SLOT).toMatchObject({ many: true, types: ['Duration'], required: true })
   })
 })

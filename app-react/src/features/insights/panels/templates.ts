@@ -1,4 +1,4 @@
-import type { ChartPanel, JapaTemplate, Label, Panel, PanelsReport, Scope, SleepTemplate, Source, Stat, Target } from '../../../api/charts'
+import type { ChartPanel, DurationTemplate, JapaTemplate, Label, Panel, PanelsReport, Scope, SleepTemplate, Source, Stat, Target } from '../../../api/charts'
 import type { PracticeDataType, UserPractice } from '../../../types/api'
 
 const key = (k: string): Label => ({ Key: `reportPanels.${k}` })
@@ -115,10 +115,40 @@ export function japaPanels(t: JapaTemplate): PanelsReport {
   }
 }
 
-/** The word a report's own strings go by. */
-export const templateSlug = (def: PanelsReport) => (def.template && 'Japa' in def.template ? 'japa' : 'sleep')
+/** Builds the Panels report of the Duration template from its settings. */
+export function durationPanels(t: DurationTemplate): PanelsReport {
+  // Every term optional: a day with nothing logged totals 0, which is how a missing day counts here.
+  const total: Source = { Calc: { terms: t.practices.map((id) => term(1, id, 0, true)) } }
+  const several = t.practices.length > 1
+  const stats: Stat[] = [
+    { label: key('avgPerDay'), value: { Average: { of: total, pick: null, format: 'Duration', scope: past } }, under: null },
+    ...(t.goal === null ? [] : [{ label: key('daysOnGoal'), value: { OnTarget: { of: total, min: t.goal, max: null, scope: past } }, under: null }]),
+  ]
+  const chart: ChartPanel = {
+    title: key('dailyTotals'),
+    series: t.practices.map((id) => ({ label: null, mark: 'Bar', source: practice(id), axis: 'Left', only_with: null })),
+    bar_layout: several ? 'Stacked' : 'Grouped',
+    format: 'Duration',
+    reversed: false,
+    // With several practices the colours name them, so only the line shows the goal.
+    target: { min: t.goal, max: null, of: total, lines: t.goal !== null, colour: !several, label: key('goal') },
+    lines: [],
+  }
+  return {
+    version: 1,
+    template: { Duration: t },
+    required: t.practices.map((id) => ({ practice: id, label: key('dailyTotals') })),
+    panels: [{ kind: 'Stats', stats }, { kind: 'Chart', ...chart }],
+  }
+}
 
-export interface Slot { key: string; types: PracticeDataType[]; required: boolean; hints: string[] }
+/** The word a report's own strings go by. */
+export const templateSlug = (def: PanelsReport) => {
+  const t = def.template
+  return t && 'Duration' in t ? 'duration' : t && 'Japa' in t ? 'japa' : 'sleep'
+}
+
+export interface Slot { key: string; types: PracticeDataType[]; required: boolean; hints: string[]; many?: boolean }
 
 export const SLEEP_SLOTS: Slot[] = [
   { key: 'bedtime', types: ['Time'], required: true, hints: ['bed', 'sleep', 'сон', 'сну', 'отбой', 'отбій', 'спать', 'спат', 'сп'] },
@@ -134,6 +164,10 @@ export const JAPA_SLOTS: Slot[] = [
   { key: 'quality', types: ['Int', 'Text'], required: false, hints: ['quality', 'качеств', 'якіст'] },
   { key: 'attunement', types: ['Bool'], required: false, hints: ['attun', 'настр', 'налаш'] },
 ]
+
+export const DURATION_SLOT: Slot = { key: 'practices', types: ['Duration'], required: true, hints: [], many: true }
+/** The server's MAX_SERIES: one series a practice. */
+export const MAX_PRACTICES = 12
 
 /** A dropdown whose every option is a number, so its values can be charted. */
 export function numericVariants(p: UserPractice): boolean {

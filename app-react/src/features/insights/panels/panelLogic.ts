@@ -89,8 +89,8 @@ export function resolve(source: Source, cob: string, l: Lookup): Resolved {
     }
     used.push({ sign: t.sign, type, value: v, optional: t.optional })
   }
-  // A retyped optional term beside clock times counts as 0: the night is still known.
-  const kept = used.some((u) => u.type === 'Time' && !u.optional) ? used.filter((u) => !u.optional || u.type === 'Duration') : used
+  // A retyped optional term counts as 0: the night or the day's total is still known.
+  const kept = used.filter((u) => !u.optional || u.type === 'Duration')
   const time = kept.filter((u) => u.type === 'Time')
   if (time.length === 0) return kept.reduce((s, u) => s + u.sign * u.value, 0)
   if (time.reduce((s, u) => s + u.sign, 0) !== 0) return null
@@ -151,7 +151,7 @@ export function statResult(
 const refsOk = (s: Source, l: Lookup): boolean => {
   if ('Practice' in s) return l.available(s.Practice.practice)
   if ('Range' in s) return l.available(s.Range.from.practice, 'Time') && l.available(s.Range.to.practice, 'Time')
-  return s.Calc.terms.every((t) => t.optional || l.available(t.practice))
+  return s.Calc.terms.every((t) => t.optional || l.available(t.practice)) && s.Calc.terms.some((t) => l.available(t.practice))
 }
 
 const typedOk = (s: Source, want: PracticeDataType[] | null, l: Lookup) =>
@@ -304,10 +304,16 @@ export function tipLines(panels: Panel[], cob: string, l: Lookup, t: TFunction, 
   if ('Practice' in of || ('Calc' in of && of.Calc.terms.length === 1)) return lines
   // A clock chart still judges a length.
   const format = judged.format === 'NoonClock' ? 'Duration' : judged.format
+  const { min } = judged.target
+  const met = min === null || judged.target.colour ? null : total >= min
+  const goal: TipLine[] = met === null ? [] : [{
+    key: 'goal', text: '', state: null, colour: 'transparent',
+    name: met ? t('reportPanels.goalMet') : t('reportPanels.goalShort', { value: formatValue(min! - total, judged.format, u) }),
+  }]
   return [...lines, {
     key: 'target',
-    name: labelText(judged.target.label, t, t('reportPanels.total')),
+    name: t('reportPanels.total'),
     text: formatValue(total, format, u),
     state: stateOf(total, judged.target),
-  }]
+  }, ...goal]
 }

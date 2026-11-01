@@ -15,7 +15,7 @@ import { InsightsTabletScreen } from '../tablet/InsightsTablet'
 import { SharedDesktop, SharedMobile, SharedTablet } from '../../shared/SharedReports'
 import { PanelsReportView } from './PanelsReportView'
 import { labelText } from './panelLogic'
-import { japaPanels, sleepPanels } from './templates'
+import { durationPanels, japaPanels, sleepPanels } from './templates'
 
 // Recharts measures its container, which jsdom can't: give it a fixed size.
 vi.mock('recharts', async (importOriginal) => ({
@@ -306,6 +306,47 @@ describe('a Japa report', () => {
   it('five figures sit in one row on wide layouts', () => {
     show(full)
     expect((screen.getByText('Average rounds').parentElement?.parentElement as HTMLElement).style.gridTemplateColumns).toBe('repeat(5, minmax(0, 1fr))')
+  })
+})
+
+describe('a Duration report', () => {
+  afterEach(cleanup)
+  const A = P('a', 'Reading', 'Duration')
+  const B = P('b', 'Listening', 'Duration')
+  const days = Array.from({ length: 7 }, (_, i) => dayAt(TODAY, i - 6))
+  const entries = days.flatMap((d, i) => [e(d, A.practice, { Duration: i % 2 ? 90 : 30 }), e(d, B.practice, { Duration: 90 })])
+  const show = (def: PanelsReport, practices = [A, B]) => render(
+    <MemoryRouter>
+      <PanelsReportView report={report(def)} definition={def} entries={entries} previous={undefined} practices={practices} todayCob={TODAY} chartHeight={300} formLink="/f" />
+    </MemoryRouter>,
+  )
+  const legend = () => within(screen.getByRole('list', { name: 'Key' })).getAllByRole('listitem').map((x) => x.textContent)
+
+  it('one practice: goal met, missed and the line', () => {
+    const { container } = show(durationPanels({ practices: ['a'], goal: 60 }))
+    expect(legend()).toEqual(['Goal met', 'Missed', 'Goal 1 h'])
+    expect(container.querySelectorAll('.recharts-bar-rectangle [fill="var(--ui-state-under-fill)"]').length).toBeGreaterThan(0)
+  })
+  it('one practice, no goal: neutral bars and no legend', () => {
+    const { container } = show(durationPanels({ practices: ['a'], goal: null }))
+    expect(screen.queryByRole('list', { name: 'Key' })).not.toBeInTheDocument()
+    expect(container.querySelectorAll('.recharts-bar-rectangle [fill="var(--ui-state-none)"]').length).toBeGreaterThan(0)
+  })
+  it('several practices: series colours, practice names and the goal', () => {
+    const { container } = show(durationPanels({ practices: ['a', 'b'], goal: 120 }))
+    expect(legend()).toEqual(['Reading', 'Listening', 'Goal 2 h'])
+    expect(container.querySelectorAll('.recharts-bar-rectangle [fill="var(--ui-chart-2)"]').length).toBeGreaterThan(0)
+    expect(container.querySelectorAll('.recharts-bar-rectangle [fill="var(--ui-state-under-fill)"]')).toHaveLength(0)
+  })
+  it('the axis reaches the stack, not just its tallest part', () => {
+    const { container } = show(durationPanels({ practices: ['a', 'b'], goal: null }))
+    const ticks = [...container.querySelectorAll('.recharts-yAxis-tick-labels text')].map((x) => x.textContent)
+    expect(ticks.at(-1)).toBe('3h')
+  })
+  it('a deleted practice: the other draws, the message shows once', () => {
+    show(durationPanels({ practices: ['a', 'b', 'c', 'd'], goal: null }), [A, B])
+    expect(screen.getByRole('heading', { name: 'This report needs a practice for “Daily totals”' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Daily totals', level: 2 })).toBeInTheDocument()
   })
 })
 

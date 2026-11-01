@@ -724,7 +724,10 @@
     "tickToSee": "Tick a practice below and it appears here",
     "japa": "Japa",
     "japaDesc": "Rounds each day against your target",
-    "japaSubtitle": "Japa report · saved as you edit"
+    "japaSubtitle": "Japa report · saved as you edit",
+    "duration": "Duration",
+    "durationDesc": "Time per day across practices, with a goal",
+    "durationSubtitle": "Duration report · saved as you edit"
   },
   "practices": {
     "add": "Add",
@@ -928,7 +931,14 @@
     "target": "Target",
     "targetMet": "On target",
     "targetLine": "Target {{value}}",
-    "missed": "Missed"
+    "missed": "Missed",
+    "avgPerDay": "Average per day",
+    "daysOnGoal": "Days on goal",
+    "dailyTotals": "Daily totals",
+    "goal": "Goal",
+    "goalMet": "Goal met",
+    "goalLine": "Goal {{value}}",
+    "goalShort": "{{value}} short of the goal"
   },
   "templateForm": {
     "sleepName": "Sleep",
@@ -1006,6 +1016,18 @@
     "why_attunement": "attunement needs yes or no",
     "no_morning": "No morning rounds",
     "no_quality": "No quality",
-    "no_attunement": "No attunement"
+    "no_attunement": "No attunement",
+    "durationName": "Duration",
+    "newDuration": "New duration report",
+    "readyDuration": "Ready-made report · Duration",
+    "needsDuration": "Choose at least one practice to create the report.",
+    "noneDuration": "You have no duration practice",
+    "onlyDurationHint": "Only duration practices are listed. Pick one or more.",
+    "tooMany": "A report can show up to {{count}} practices.",
+    "dailyGoal": "Daily goal",
+    "goal": "Goal per day",
+    "noGoal": "No goal",
+    "goalHint": "With one practice, bars show goal met or missed. With several, practices keep their colours and a line marks the goal.",
+    "practicesSelected": "Practices · {{count}} selected"
   }
 }

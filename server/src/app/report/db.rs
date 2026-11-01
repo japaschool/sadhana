@@ -843,6 +843,65 @@ mod tests {
         });
     }
 
+    fn duration_report(practices: Vec<Uuid>, goal: Option<i32>) -> PanelsReport {
+        use super::super::panels::*;
+        let mut r = chart_with(|c| c.series.clear());
+        r.template = Some(Template::Duration(DurationTemplate { practices, goal }));
+        r
+    }
+
+    #[test]
+    fn duration_round_trips() {
+        run(|conn| {
+            let (u, [a, b, _, _]) = user_with_practices(conn);
+            let sent = duration_report(vec![a, b], Some(120));
+            Report::create(conn, &u, "r", &panels(sent.clone()))?;
+            match ApiReport::get_all(conn, &u, true)?.remove(0).definition {
+                ReportDefinition::Panels(got) => assert_eq!(got, sent),
+                _ => panic!("not panels"),
+            }
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn duration_rejects_no_practices() {
+        run(|conn| {
+            let (u, _) = user_with_practices(conn);
+            unprocessable(Report::create(conn, &u, "r", &panels(duration_report(vec![], None))));
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn duration_rejects_too_many_practices() {
+        run(|conn| {
+            let (u, [a, _, _, _]) = user_with_practices(conn);
+            let r = duration_report(vec![a; 13], None);
+            unprocessable(Report::create(conn, &u, "r", &panels(r)));
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn duration_rejects_a_negative_goal() {
+        run(|conn| {
+            let (u, [a, _, _, _]) = user_with_practices(conn);
+            unprocessable(Report::create(conn, &u, "r", &panels(duration_report(vec![a], Some(-1)))));
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn duration_rejects_someone_elses_practice() {
+        run(|conn| {
+            let (u, [a, _, _, _]) = user_with_practices(conn);
+            let r = duration_report(vec![a, Uuid::new_v4()], None);
+            unprocessable(Report::create(conn, &u, "r", &panels(r)));
+            Ok(())
+        });
+    }
+
     #[test]
     fn rejects_too_many_panels() {
         run(|conn| {

@@ -78,7 +78,8 @@ export type Panel = { kind: 'Stats'; stats: Stat[] } | ({ kind: 'Chart' } & Char
 
 export interface SleepTemplate { bedtime: string; wake: string; nap: string | null; min: number | null; max: number | null }
 export interface JapaTemplate { total: string; target: number; morning: string | null; quality: string | null; attunement: string | null }
-export type Template = { Sleep: SleepTemplate } | { Japa: JapaTemplate }
+export interface DurationTemplate { practices: string[]; goal: number | null }
+export type Template = { Sleep: SleepTemplate } | { Japa: JapaTemplate } | { Duration: DurationTemplate }
 export interface Required { practice: string; label: Label }
 
 export interface PanelsReport {

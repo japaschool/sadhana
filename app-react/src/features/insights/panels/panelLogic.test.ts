@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest'
 import type { Panel, PanelsReport, ReportDataEntry, Source, Stat, Term } from '../../../api/charts'
 import type { PracticeDataType, UserPractice } from '../../../types/api'
 import type { TFunction } from 'i18next'
-import { japaPanels, sleepPanels } from './templates'
+import { durationPanels, japaPanels, sleepPanels } from './templates'
+import { averageDailyTotal } from '../insightsLogic'
 import {
   figureDuration, makeLookup, windowDays, resolve, stateOf, statResult, visiblePanels, missingRequired, fitHours, chartRows, tipLines,
 } from './panelLogic'
@@ -356,3 +357,53 @@ describe('tipLines on a Japa day', () => {
     expect(lines).toHaveLength(2)
   })
 })
+
+describe('a Duration report', () => {
+  const ps = [P('a', 'Reading', 'Duration'), P('b', 'Listening', 'Duration'), P('c', 'Service', 'Duration')]
+  const days = ['2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04']
+  const today = '2026-10-04'
+  const rows = [
+    e(days[0], 'Reading', D(60)), e(days[0], 'Listening', D(70)), e(days[1], 'Reading', null), e(days[2], 'Service', D(25)),
+    e(today, 'Reading', D(500)), e(days[1], 'Listening', null),
+  ]
+  const def = durationPanels({ practices: ['a', 'b', 'c'], goal: 120 })
+  const avg = (d = def) => (d.panels[0] as Extract<Panel, { kind: 'Stats' }>).stats[0].value
+  const chart = (v: Panel[]) => v.find((x) => x.kind === 'Chart') as Extract<Panel, { kind: 'Chart' }>
+
+  it('the average per day equals Insights’ own', () => {
+    const l = makeLookup(rows, undefined, ps)
+    const insights = averageDailyTotal(rows, ps.map((p) => ({ name: p.practice, dataType: p.data_type })) as never, today)
+    expect(statResult(avg(), days, l, today).value).toBe(insights)
+  })
+  it('nothing logged reads as no data', () => {
+    expect(statResult(avg(), days, makeLookup([], undefined, ps), today).value).toBeNull()
+  })
+  it('with one of several deleted, the others draw and its message shows', () => {
+    const l = makeLookup(rows, undefined, ps.slice(0, 2))
+    expect(chart(visiblePanels(def, l)).series).toHaveLength(2)
+    expect(missingRequired(def, l).map((r) => r.practice)).toEqual(['c'])
+    expect(resolve(chart(visiblePanels(def, l)).target!.of, days[0], l)).toBe(130)
+  })
+  it('with all deleted, no figure is left', () => {
+    expect(visiblePanels(def, makeLookup(rows, undefined, []))).toEqual([])
+  })
+  it('a practice retyped to Int leaves the bars and the total', () => {
+    const retyped = [ps[0], ps[1], P('c', 'Service', 'Int')]
+    const l = makeLookup([...rows, e(days[0], 'Service', { Int: 500 })], undefined, retyped)
+    expect(chart(visiblePanels(def, l)).series).toHaveLength(2)
+    expect(resolve(chart(def.panels).target!.of, days[0], l)).toBe(130)
+  })
+  it('a tapped day lists the practices, the total and the goal', () => {
+    const l = makeLookup(rows, undefined, ps)
+    const t = ((k: string, o?: { value: string }) => (o ? `${k}:${o.value}` : k)) as unknown as TFunction
+    const lines = tipLines(visiblePanels(def, l), days[2], l, t, { h: 'h', min: 'm' })
+    expect(lines.map((x) => x.name)).toEqual(['Service', 'reportPanels.total', 'reportPanels.goalShort:1 h 35 m'])
+    expect(lines[0].colour).toBe('var(--ui-chart-3)')
+    expect(tipLines(visiblePanels(def, l), days[0], l, t, { h: 'h', min: 'm' }).at(-1)?.name).toBe('reportPanels.goalMet')
+  })
+  it('a day with nothing logged has no tip', () => {
+    const l = makeLookup(rows, undefined, ps)
+    expect(tipLines(visiblePanels(def, l), days[1], l, t0, { h: 'h', min: 'm' })).toEqual([])
+  })
+})
+const t0 = ((k: string) => k) as unknown as TFunction

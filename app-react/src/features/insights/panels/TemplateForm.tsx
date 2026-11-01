@@ -10,21 +10,24 @@ import { useDebouncedCommit } from '../../yatras/settings/useDebouncedCommit'
 import { parseTime } from '../../today/inputFormat'
 import { typeTime } from '../../today/values'
 import { SlotPickerSheet } from './SlotPickerSheet'
-import { fits, JAPA_SLOTS, japaPanels, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, suggestFor, type Slot } from './templates'
+import { DURATION_SLOT, durationPanels, fits, JAPA_SLOTS, japaPanels, MAX_PRACTICES, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, suggestFor, type Slot } from './templates'
 
 export type TemplateDraft =
   | { kind: 'Sleep'; bedtime: string | null; wake: string | null; nap: string | null; min: number | null; max: number | null }
   | { kind: 'Japa'; total: string | null; target: number | null; morning: string | null; quality: string | null; attunement: string | null }
+  | { kind: 'Duration'; practices: string[]; goal: number | null }
 
 export const NEW_DRAFTS = {
   sleep: (): TemplateDraft => ({ kind: 'Sleep', bedtime: null, wake: null, nap: null, ...SLEEP_DEFAULTS }),
   japa: (): TemplateDraft => ({ kind: 'Japa', total: null, target: null, morning: null, quality: null, attunement: null }),
+  duration: (): TemplateDraft => ({ kind: 'Duration', practices: [], goal: null }),
 }
 
-const slotsOf = (d: TemplateDraft) => (d.kind === 'Sleep' ? SLEEP_SLOTS : JAPA_SLOTS)
+const slotsOf = (d: TemplateDraft) => (d.kind === 'Sleep' ? SLEEP_SLOTS : d.kind === 'Japa' ? JAPA_SLOTS : [])
 const slotValue = (d: TemplateDraft, slot: Slot) => (d as unknown as Record<string, string | null>)[slot.key]
 
-export function draftProblem(d: TemplateDraft): 'required' | 'minMax' | null {
+export function draftProblem(d: TemplateDraft): 'required' | 'minMax' | 'tooMany' | null {
+  if (d.kind === 'Duration') return d.practices.length === 0 ? 'required' : d.practices.length > MAX_PRACTICES ? 'tooMany' : null
   if (d.kind === 'Japa') return !d.total || d.target === null ? 'required' : null
   if (!d.bedtime || !d.wake) return 'required'
   return d.min !== null && d.max !== null && d.min > d.max ? 'minMax' : null
@@ -32,6 +35,7 @@ export function draftProblem(d: TemplateDraft): 'required' | 'minMax' | null {
 
 export function draftToDefinition(d: TemplateDraft): { Panels: PanelsReport } | null {
   if (draftProblem(d)) return null
+  if (d.kind === 'Duration') return { Panels: durationPanels({ practices: d.practices, goal: d.goal }) }
   if (d.kind === 'Japa') {
     const { kind: _, ...t } = d
     return { Panels: japaPanels({ ...t, total: d.total!, target: d.target! }) }
@@ -46,6 +50,11 @@ export function draftToDefinition(d: TemplateDraft): { Panels: PanelsReport } | 
 export function draftOf(def: PanelsReport, practices: UserPractice[]): TemplateDraft | null {
   const template = def.template
   if (!template) return null
+  // Unlike a single slot, the list can drop what's gone and carry on with the rest.
+  if ('Duration' in template) {
+    const { practices: ids, goal } = template.Duration
+    return { kind: 'Duration', goal, practices: ids.filter((id) => practices.some((p) => p.id === id && fits(DURATION_SLOT, p))) }
+  }
   const draft: TemplateDraft = 'Sleep' in template ? { kind: 'Sleep', ...template.Sleep } : { kind: 'Japa', ...template.Japa }
   const empty = slotsOf(draft).filter((s) => s.required && !practices.some((p) => p.id === slotValue(draft, s) && fits(s, p)))
   return { ...draft, ...Object.fromEntries(empty.map((s) => [s.key, null])) }
@@ -101,6 +110,42 @@ function LimitField({ id, label, placeholder, value, onChange, suffix }: {
         )}
       </div>
     </div>
+  )
+}
+
+/** Every duration practice, ticked in or out (15m14): one or more, so no picker to open. */
+function PracticeChecks({ value, onChange, practices, flagMissing }: {
+  value: string[]; onChange: (ids: string[]) => void; practices: UserPractice[]; flagMissing?: boolean
+}) {
+  const { t } = useTranslation()
+  const list = practices.filter((p) => fits(DURATION_SLOT, p))
+  const toggle = (id: string) => onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id])
+  return (
+    <section className="flex flex-col gap-2">
+      <div className="flex items-baseline justify-between gap-2 px-1">
+        <h2 className={GROUP.replace('px-1 ', '')}>{t('templateForm.practicesSelected', { count: value.length })}</h2>
+        <span className="text-xs font-bold whitespace-nowrap text-ui-accent">{t('templateForm.required')}</span>
+      </div>
+      {list.length === 0 ? (
+        <div className={`${CARD} flex flex-col gap-1 p-4`}>
+          <p className="text-sm leading-snug font-semibold text-ui-muted">{t('templateForm.noneDuration')}</p>
+          <Link to="/settings/practices" className="text-[13px] leading-snug font-bold text-ui-accent">{t('templateForm.addOne')}</Link>
+        </div>
+      ) : (
+        <div className={`${CARD} flex flex-col divide-y divide-ui-hairline overflow-hidden`}>
+          {list.map((p) => (
+            <label key={p.id} className="flex min-h-[52px] items-center gap-3 px-3.5 py-1.5">
+              <input type="checkbox" checked={value.includes(p.id)} onChange={() => toggle(p.id)} className="h-5 w-5 shrink-0 accent-[var(--ui-accent-fill)]" />
+              <span className="text-ui-ink2"><TypeIcon type="Duration" /></span>
+              <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-ui-ink">{p.practice}</span>
+            </label>
+          ))}
+        </div>
+      )}
+      {flagMissing && value.length === 0 && <p className="px-1 text-[13px] leading-snug font-bold text-ui-danger">{t('templateForm.missing')}</p>}
+      {value.length > MAX_PRACTICES && <p role="alert" className="px-1 text-[13px] font-semibold text-ui-danger">{t('templateForm.tooMany', { count: MAX_PRACTICES })}</p>}
+      <p className={`${HINT} px-1`}>{t('templateForm.onlyDurationHint')}</p>
+    </section>
   )
 }
 
@@ -249,6 +294,21 @@ export function TemplateForm({ value, onChange, practices, name, flagMissing }: 
           <section className="flex flex-col gap-2">
             <h2 className={GROUP}>{t('templateForm.extras')}</h2>
             {rows(JAPA_SLOTS.filter((s) => !s.required))}
+          </section>
+        </>
+      )}
+      {value.kind === 'Duration' && (
+        <>
+          <PracticeChecks value={value.practices} practices={practices} flagMissing={flagMissing} onChange={(ids) => onChange({ ...value, practices: ids })} />
+          <section className="flex flex-col gap-2">
+            <div className="flex items-baseline justify-between gap-2 px-1">
+              <h2 className={GROUP.replace('px-1 ', '')}>{t('templateForm.dailyGoal')}</h2>
+              <span className="text-xs font-bold whitespace-nowrap text-ui-faint">{t('templateForm.optional')}</span>
+            </div>
+            <div className={`${CARD} flex flex-col gap-2 p-4`}>
+              <LimitField id="duration-goal" label={t('templateForm.goal')} placeholder={t('templateForm.noGoal')} value={value.goal} onChange={(goal) => onChange({ ...value, goal })} />
+              <p className={HINT}>{t('templateForm.goalHint')}</p>
+            </div>
           </section>
         </>
       )}

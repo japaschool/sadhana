@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup as cleanupForm, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -9,7 +9,7 @@ import { setViewportWidth } from '../../../test/viewport'
 import { REPORTS_KEY } from '../useReports'
 import { NewTemplateScreen } from './NewTemplateScreen'
 import { draftOf, draftProblem, draftToDefinition, TemplateForm, type TemplateDraft } from './TemplateForm'
-import { japaPanels, sleepPanels } from './templates'
+import { durationPanels, japaPanels, sleepPanels } from './templates'
 
 vi.mock('../../../api/charts', () => ({
   chartsApi: { getReports: vi.fn(), getReportData: vi.fn(), updateReport: vi.fn(), createReport: vi.fn(), deleteReport: vi.fn() },
@@ -370,5 +370,65 @@ describe('the new Japa screen', () => {
     expect(await screen.findByText('Insights')).toBeInTheDocument()
     const def = charts.createReport.mock.calls[0][1] as { Panels: { template: unknown } }
     expect(def.Panels.template).toEqual({ Japa: { total: 'japa', target: 16, morning: null, quality: null, attunement: null } })
+  })
+})
+
+describe('the Duration template', () => {
+  const DUR: TemplateDraft = { kind: 'Duration', practices: ['nap'], goal: 120 }
+  const ALL = [...PRACTICES, p('r', 'Reading', 'Duration')]
+  function DurationForm({ start, flagMissing, practices = ALL }: { start: TemplateDraft; flagMissing?: boolean; practices?: UserPractice[] }) {
+    const [v, setV] = useState(start)
+    return (
+      <MemoryRouter>
+        <TemplateForm value={v} onChange={setV} practices={practices} flagMissing={flagMissing} />
+        <output data-testid="draft">{JSON.stringify(v)}</output>
+      </MemoryRouter>
+    )
+  }
+
+  it('needs a practice and no more than a report can hold', () => {
+    expect(draftProblem(DUR)).toBeNull()
+    expect(draftProblem({ ...DUR, practices: [] })).toBe('required')
+    expect(draftProblem({ ...DUR, practices: Array.from({ length: 13 }, (_, i) => `p${i}`) })).toBe('tooMany')
+    expect(draftProblem({ ...DUR, practices: Array.from({ length: 12 }, (_, i) => `p${i}`) })).toBeNull()
+  })
+  it('builds the report', () => {
+    expect(draftToDefinition(DUR)).toEqual({ Panels: durationPanels({ practices: ['nap'], goal: 120 }) })
+  })
+  it('reads back, dropping practices that can’t be used', () => {
+    const def = durationPanels({ practices: ['nap', 'r'], goal: null })
+    expect(draftOf(def, ALL)).toEqual({ kind: 'Duration', practices: ['nap', 'r'], goal: null })
+    expect(draftOf(def, ALL.filter((x) => x.id !== 'r'))).toEqual({ kind: 'Duration', practices: ['nap'], goal: null })
+  })
+  it('lists duration practices with checkboxes, and only those', () => {
+    render(<DurationForm start={DUR} />)
+    expect(screen.getByRole('checkbox', { name: 'Nap' })).toBeChecked()
+    expect(screen.queryByRole('checkbox', { name: 'Bed time' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Reading' }))
+    expect(shown()).toMatchObject({ practices: ['nap', 'r'] })
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Nap' }))
+    expect(shown()).toMatchObject({ practices: ['r'] })
+  })
+  it('the goal is hours and minutes and can be cleared', () => {
+    render(<DurationForm start={DUR} />)
+    const goal = screen.getByLabelText('Goal per day')
+    expect(goal).toHaveValue('02:00')
+    fireEvent.change(goal, { target: { value: '0130' } })
+    fireEvent.blur(goal)
+    expect(shown()).toMatchObject({ goal: 90 })
+    fireEvent.click(screen.getByRole('button', { name: 'Clear Goal per day' }))
+    expect(shown()).toMatchObject({ goal: null })
+  })
+  it('says when there are too many, and links out when there are none', () => {
+    const many = Array.from({ length: 13 }, (_, i) => p(`d${i}`, `D${i}`, 'Duration'))
+    render(<DurationForm start={{ kind: 'Duration', practices: many.map((x) => x.id), goal: null }} practices={many} />)
+    expect(screen.getByRole('alert')).toHaveTextContent('12')
+    cleanupForm()
+    render(<DurationForm start={{ kind: 'Duration', practices: [], goal: null }} practices={[]} />)
+    expect(screen.getByRole('link', { name: /My practices/ })).toBeInTheDocument()
+  })
+  it('flags an empty saved report', () => {
+    render(<DurationForm start={{ kind: 'Duration', practices: [], goal: null }} flagMissing />)
+    expect(screen.getByText(/deleted or hidden/)).toBeInTheDocument()
   })
 })

@@ -29,6 +29,7 @@ pub struct Required {
 pub enum Template {
     Sleep(SleepTemplate),
     Japa(JapaTemplate),
+    Duration(DurationTemplate),
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -49,6 +50,13 @@ pub struct JapaTemplate {
     pub morning: Option<Uuid>,
     pub quality: Option<Uuid>,
     pub attunement: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DurationTemplate {
+    pub practices: Vec<Uuid>,
+    pub goal: Option<i32>,
 }
 
 /// Key: translated at display, so shared pages follow the viewer's language. Text: a user's own words.
@@ -311,6 +319,16 @@ impl PanelsReport {
                 check_bounds(Some(j.target), None)?;
                 out.insert(j.total);
                 out.extend([j.morning, j.quality, j.attunement].into_iter().flatten());
+            }
+            Some(Template::Duration(d)) => {
+                if d.practices.is_empty() {
+                    return Err(invalid("Choose at least one practice"));
+                }
+                if d.practices.len() > MAX_SERIES {
+                    return Err(invalid("Too many series"));
+                }
+                check_bounds(d.goal, None)?;
+                out.extend(d.practices.iter().copied());
             }
             None => {}
         }
