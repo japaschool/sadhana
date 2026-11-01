@@ -66,7 +66,7 @@ export function resolve(source: Source, cob: string, l: Lookup): Resolved {
   }
 
   // Calc. Guarded so a retyped practice never yields a guessed number.
-  const used: { sign: number; type: PracticeDataType; value: number }[] = []
+  const used: { sign: number; type: PracticeDataType; value: number; optional: boolean }[] = []
   for (const t of source.Calc.terms) {
     if (!l.available(t.practice)) {
       if (t.optional) continue
@@ -79,12 +79,14 @@ export function resolve(source: Source, cob: string, l: Lookup): Resolved {
       if (t.optional) continue
       return null
     }
-    used.push({ sign: t.sign, type, value: v })
+    used.push({ sign: t.sign, type, value: v, optional: t.optional })
   }
-  const time = used.filter((u) => u.type === 'Time')
-  if (time.length === 0) return used.reduce((s, u) => s + u.sign * u.value, 0)
+  // A retyped optional term beside clock times counts as 0: the night is still known.
+  const kept = used.some((u) => u.type === 'Time' && !u.optional) ? used.filter((u) => !u.optional || u.type === 'Duration') : used
+  const time = kept.filter((u) => u.type === 'Time')
+  if (time.length === 0) return kept.reduce((s, u) => s + u.sign * u.value, 0)
   if (time.reduce((s, u) => s + u.sign, 0) !== 0) return null
-  const rest = used.filter((u) => u.type !== 'Time')
+  const rest = kept.filter((u) => u.type !== 'Time')
   if (rest.some((u) => u.type !== 'Duration')) return null
   const clock = mod(time.reduce((s, u) => s + u.sign * u.value, 0))
   if (clock === 0) return null
@@ -179,8 +181,17 @@ export function visiblePanels(def: PanelsReport, l: Lookup): Panel[] {
   return out
 }
 
+function panelSources(def: PanelsReport): Source[] {
+  const ofStat = (s: Stat): Source[] => [statParts(s.value)[1].of, ...(s.under ? ofStat(s.under) : [])]
+  return def.panels.flatMap((p) => (p.kind === 'Stats'
+    ? p.stats.flatMap(ofStat)
+    : [...p.series.map((s) => s.source), ...(p.target ? [p.target.of] : []), ...p.lines.map((r) => r.of)]))
+}
+
+/** Deleted, hidden, or retyped so that a Range can no longer use it as a time. */
 export function missingRequired(def: PanelsReport, l: Lookup): Required[] {
-  return def.required.filter((r) => !l.available(r.practice))
+  const ends = new Set(panelSources(def).flatMap((s) => ('Range' in s ? [s.Range.from.practice, s.Range.to.practice] : [])))
+  return def.required.filter((r) => !l.available(r.practice) || (ends.has(r.practice) && !l.available(r.practice, 'Time')))
 }
 
 /** Whole hours around the data, in minutes. */
@@ -201,6 +212,14 @@ export const clockText = (afterNoon: number) => formatMinutesAsHHMM(afterNoon + 
 export function formatValue(v: number, format: Format, u: DurationUnits): string {
   if (format === 'Duration') return formatDuration(v, u)
   return format === 'NoonClock' ? clockText(v) : String(v)
+}
+
+/** A figure tile's duration: the short form that fits a tile on one line (15m6, 15m24). */
+export function figureDuration(total: number, t: TFunction): string {
+  const h = Math.floor(total / 60)
+  const m = String(total % 60).padStart(2, '0')
+  if (h === 0) return t('reportPanels.figMinutes', { m: total })
+  return total % 60 === 0 ? t('reportPanels.figHours', { h }) : t('reportPanels.figHoursMinutes', { h, m })
 }
 
 export type PanelRow = { cob: string; state: BarState | null } & Record<`s${number}`, Resolved>

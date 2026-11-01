@@ -1,6 +1,6 @@
 import { Trans, useTranslation } from 'react-i18next'
 import type { Format, Stat, StatValue } from '../../../api/charts'
-import { formatValue, labelText, statResult, type Lookup } from './panelLogic'
+import { figureDuration, formatValue, labelText, statResult, type Lookup } from './panelLogic'
 
 interface StatsPanelProps { stats: Stat[]; days: string[]; lookup: Lookup; todayCob: string; cols: 2 | 4 }
 
@@ -16,10 +16,13 @@ function useStatText(days: string[], lookup: Lookup, todayCob: string) {
     return {
       ...r,
       // A count of nothing reads as no data (15m20), not as 0 of 7.
-      text: r.value === null || (r.of !== undefined && r.value === 0 && noneLogged(s, r.of)) ? '—' : formatValue(r.value, formatOf(s.value), units),
+      text: r.value === null || (r.of !== undefined && r.value === 0 && noneLogged(s, r.of)) ? '—' : formatOf(s.value) === 'Duration' ? figureDuration(r.value, t) : formatValue(r.value, formatOf(s.value), units),
     }
   }
 }
+
+/** ru and uk spell units out: at four across, a long duration drops a size to stay inside its tile. */
+const LONG = 8
 
 /** Values stay on one line, because ru and uk spell units out; labels wrap. */
 export function StatsPanelView({ stats, days, lookup, todayCob, cols }: StatsPanelProps) {
@@ -35,7 +38,7 @@ export function StatsPanelView({ stats, days, lookup, todayCob, cols }: StatsPan
           <div key={i} className="flex min-w-0 flex-col gap-1 bg-ui-surface px-3.5 py-3"
             style={left && i === stats.length - 1 ? { gridColumn: `span ${cols - left + 1}` } : undefined}>
             <span className="text-xs leading-[1.3] font-bold text-ui-muted">{labelText(s.label, t)}</span>
-            <span className={`font-ui-mono leading-[1.15] font-semibold tracking-[-0.02em] whitespace-nowrap text-ui-ink ${cols === 2 ? 'text-[22px]' : 'text-[26px]'}`}>
+            <span className={`font-ui-mono leading-[1.15] font-semibold tracking-[-0.02em] whitespace-nowrap text-ui-ink ${cols === 2 ? 'text-[22px]' : r.text.length > LONG ? 'text-[20px]' : 'text-[26px]'}`}>
               {r.of === undefined || r.text === '—' ? r.text : (
                 <Trans i18nKey="reportPanels.ofTotal" values={{ value: r.value, total: r.of }}
                   components={{ muted: <span className="text-[.6em] font-medium text-ui-muted" /> }} />

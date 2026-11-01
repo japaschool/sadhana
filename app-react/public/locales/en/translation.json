@@ -901,6 +901,9 @@
     "max": "max",
     "missingTitle": "This report needs a practice for “{{labels}}”",
     "missingBody": "It was deleted or hidden, so this can’t be worked out. Your other entries are kept.",
-    "choosePractice": "Choose a practice"
+    "choosePractice": "Choose a practice",
+    "figHours": "{{h}}h",
+    "figMinutes": "{{m}}m",
+    "figHoursMinutes": "{{h}}h {{m}}m"
   }
 }

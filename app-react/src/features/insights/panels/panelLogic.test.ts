@@ -4,7 +4,7 @@ import type { PracticeDataType, UserPractice } from '../../../types/api'
 import type { TFunction } from 'i18next'
 import { sleepPanels } from './templates'
 import {
-  makeLookup, windowDays, resolve, stateOf, statResult, visiblePanels, missingRequired, fitHours, chartRows, tipLines,
+  figureDuration, makeLookup, windowDays, resolve, stateOf, statResult, visiblePanels, missingRequired, fitHours, chartRows, tipLines,
 } from './panelLogic'
 
 const P = (id: string, practice: string, data_type: PracticeDataType, is_active = true): UserPractice =>
@@ -235,5 +235,37 @@ describe('chart rows and tips', () => {
     const scope = { today: true, missing_zero: false }
     expect(statResult({ Logged: { of: range, scope } }, ['2026-10-04', day], lk(night([7, 0], [23, 0])), day))
       .toEqual({ value: 1, of: 2 })
+  })
+})
+
+describe('retyped practices', () => {
+  const sleep = (nap: string | null) => sleepPanels({ bedtime: 'bed', wake: 'wake', nap, min: 360, max: 540 })
+  const total = calc([...sleepTerms, term(1, 'nap', 0, true)])
+  const retype = (id: string, data_type: PracticeDataType) => practices.map((p) => (p.id === id ? { ...p, data_type } : p))
+
+  it('an optional term retyped beside Time counts as 0', () => {
+    const entries = [...night([7, 0], [23, 0]), e('2026-10-05', 'Nap', { Int: 45 })]
+    expect(resolve(total, '2026-10-05', lk(entries, undefined, retype('nap', 'Int')))).toBe(480)
+    expect(resolve(total, '2026-10-05', lk([...night([7, 0], [23, 0]), e('2026-10-05', 'Nap', T(1, 0))], undefined, retype('nap', 'Time')))).toBe(480)
+  })
+
+  it('a required term still has to be right', () => {
+    const entries = [...night([7, 0], [23, 0]), e('2026-10-05', 'Count', { Int: 45 })]
+    expect(resolve(calc([...sleepTerms, term(1, 'n', 0)]), '2026-10-05', lk(entries))).toBeNull()
+  })
+
+  it('a required Range end retyped away from Time is missing', () => {
+    expect(missingRequired(sleep(null), lk([], undefined, retype('wake', 'Int'))).map((r) => r.practice)).toEqual(['wake'])
+    expect(missingRequired(sleep('nap'), lk([], undefined, retype('nap', 'Int')))).toEqual([])
+    expect(missingRequired(sleep(null), lk([]))).toEqual([])
+  })
+})
+
+describe('figureDuration', () => {
+  const t = ((k: string, o: Record<string, unknown>) => `${k.split('.')[1]}:${Object.values(o).join(',')}`) as unknown as TFunction
+  it('pads minutes and leaves out a zero part', () => {
+    expect(figureDuration(364, t)).toBe('figHoursMinutes:6,04')
+    expect(figureDuration(360, t)).toBe('figHours:6')
+    expect(figureDuration(45, t)).toBe('figMinutes:45')
   })
 })

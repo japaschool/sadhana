@@ -234,7 +234,7 @@ export function SharedTablet() {
                 <span className="flex-1" />
                 {!s.panels && <CsvButton onClick={csv} />}
               </div>
-              {s.panelsReady ? <Panels s={s} height={300} /> : (
+              {s.panelsReady ? <Panels s={s} height={300} cols={2} /> : (
                 <section className={`${CARD} flex flex-col gap-3.5 p-5`}>
                   <div className="flex items-start justify-between gap-3">
                     {!s.isLoading && !s.isError && <Headline s={s} size={34} delta={false} />}

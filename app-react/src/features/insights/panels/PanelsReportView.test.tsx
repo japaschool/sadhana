@@ -1,10 +1,11 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cloneElement, type ReactElement, type ReactNode } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import i18n from 'i18next'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ru from '../../../../public/locales/ru/translation.json'
+import uk from '../../../../public/locales/uk/translation.json'
 import type { PanelsReport, Report, ReportDataEntry, SleepTemplate } from '../../../api/charts'
 import type { PracticeDataType, UserPractice } from '../../../types/api'
 import { setViewportWidth } from '../../../test/viewport'
@@ -82,8 +83,8 @@ describe('PanelsReportView', () => {
 
   it('a Sleep report shows its figures', () => {
     view()
-    expect(screen.getByText('Average sleep').parentElement).toHaveTextContent('7 h 18 min')
-    expect(screen.getByText('Night alone: 7 h 16 min')).toBeInTheDocument()
+    expect(screen.getByText('Average sleep').parentElement).toHaveTextContent('7h 18m')
+    expect(screen.getByText('Night alone: 7h 16m')).toBeInTheDocument()
     expect(screen.getAllByText('Average bedtime')[0].parentElement).toHaveTextContent('23:43')
     expect(screen.getAllByText('Average wake-up')[0].parentElement).toHaveTextContent('07:00')
     expect(screen.getByText('Nights in range').parentElement).toHaveTextContent('22 of 29')
@@ -166,6 +167,37 @@ describe('PanelsReportView', () => {
     expect(screen.getByText(/needs a practice for “Wake-up”/)).toBeInTheDocument()
   })
 
+  it('a required practice retyped away from Time reads as missing, with the form link', () => {
+    view({ practices: [BED, { ...WAKE, data_type: 'Int' }, NAP] })
+    expect(screen.getByText(/needs a practice for “Wake-up”/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Choose a practice' })).toHaveAttribute('href', '/settings/charts/r1')
+  })
+
+  it('a nap retyped to a number keeps the night total, in the averages too', () => {
+    const def = sleepPanels(tmpl())
+    const { entries, previous } = nights()
+    const retyped = entries.map((x) => (x.practice === NAP.practice ? { ...x, value: { Int: 60 } } : x))
+    render(
+      <MemoryRouter>
+        <PanelsReportView report={report(def)} definition={def} entries={retyped} previous={previous}
+          practices={[BED, WAKE, { ...NAP, data_type: 'Int' }]} todayCob={TODAY} chartHeight={300} formLink="/f" />
+      </MemoryRouter>,
+    )
+    expect(screen.queryByText(/needs a practice/)).toBeNull()
+    expect(screen.getByText('Average sleep').parentElement).toHaveTextContent('7h 16m')
+    expect(screen.getByText('Nights in range').parentElement).toHaveTextContent('22 of 29')
+  })
+
+  it('four across: a long duration drops a size, a short one keeps it', async () => {
+    view()
+    expect(screen.getByText('7h 18m')).toHaveClass('text-[26px]')
+    cleanup()
+    i18n.addResourceBundle('uk', 'translation', uk, true, true)
+    await i18n.changeLanguage('uk')
+    view()
+    expect(screen.getByText('7 год 18 хв')).toHaveClass('text-[20px]')
+  })
+
   it('no form link on shared pages', () => {
     view({ practices: [BED, NAP], formLink: null })
     expect(screen.getByText(/needs a practice for “Wake-up”/)).toBeInTheDocument()
@@ -203,6 +235,7 @@ describe('PanelsReportView', () => {
     await i18n.changeLanguage('ru')
     view()
     expect(screen.getAllByText('Средний отбой')).toHaveLength(2) // figure and legend
+    expect(screen.getByText('Средний сон').parentElement).toHaveTextContent('7 ч 18 мин')
     expect(screen.getByText('Ночей в норме').parentElement).toHaveTextContent('22 из 29')
   })
 
@@ -280,6 +313,8 @@ describe('panels reports on each screen', () => {
     renderAt(<SharedTablet />, '/shared/u1')
     await figures()
     hidesGeneric()
+    // The report list leaves too little width for four figures.
+    expect(screen.getByText('Nights in range').parentElement?.parentElement).toHaveClass('grid-cols-2')
     expect(screen.queryByRole('button', { name: 'Download CSV' })).toBeNull()
     expect(screen.queryByRole('heading', { name: 'Table' })).toBeNull()
   })
