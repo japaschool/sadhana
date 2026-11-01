@@ -21,6 +21,7 @@ const LinkPracticesScreen = lazy(() => import('./features/yatras/settings/mobile
 const AdminSectionMobile = lazy(() => import('./features/yatras/settings/mobile/AdminSectionMobile').then((m) => ({ default: m.AdminSectionMobile })))
 const ChartEditorMobileScreen = lazy(() => import('./features/insights/settings/mobile/ChartEditorMobile').then((m) => ({ default: m.ChartEditorMobileScreen })))
 const ChartEditorWide = lazy(() => import('./features/insights/settings/wide/ChartEditorWide').then((m) => ({ default: m.ChartEditorWide })))
+const NewTemplateScreen = lazy(() => import('./features/insights/panels/NewTemplateScreen').then((m) => ({ default: m.NewTemplateScreen })))
 const PracticesMobileScreen = lazy(() => import('./features/practices/mobile/PracticesMobile').then((m) => ({ default: m.PracticesMobileScreen })))
 const PracticesWide = lazy(() => import('./features/practices/wide/PracticesWide').then((m) => ({ default: m.PracticesWide })))
 const ChartsSettings = lazy(() => import('./features/settings/SettingsLists').then((m) => ({ default: m.ChartsSettings })))
@@ -122,6 +123,7 @@ export const router = createBrowserRouter([
       { path: '/settings/charts', element: ui(<ChartsSettings />) },
       { path: '/settings/yatras', element: ui(<YatrasSettings />) },
       { path: '/charts/:id/edit', element: <ToChartSettings /> },
+      { path: '/settings/charts/new/:template', element: ui(<NewTemplateScreen />) },
       { path: '/settings/charts/:id', element: <ByLayout mobile={<ChartEditorMobileScreen />} tablet={<ChartEditorWide />} desktop={<ChartEditorWide />} /> },
       { path: '/yatra/:id/settings', element: ui(<YatraSettingsHome />) },
       { path: '/yatra/:id/links', element: ui(<LinkPracticesScreen />) },

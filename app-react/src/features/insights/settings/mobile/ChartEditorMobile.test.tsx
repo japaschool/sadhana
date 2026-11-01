@@ -2,10 +2,12 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import type { Report } from '../../../../api/charts'
+import type { PanelsReport, Report } from '../../../../api/charts'
+import { useToastStore } from '../../../../hooks/useToast'
 import { setViewportWidth } from '../../../../test/viewport'
 import { ChartEditorMobileScreen } from './ChartEditorMobile'
 import { NewChartSheet } from './NewChartSheet'
+import { sleepPanels } from '../../panels/templates'
 
 vi.mock('../../../../api/charts', () => ({
   chartsApi: { getReports: vi.fn(), getReportData: vi.fn(), updateReport: vi.fn(), createReport: vi.fn(), deleteReport: vi.fn() },
@@ -40,6 +42,7 @@ function renderAt(path: string) {
       <MemoryRouter initialEntries={[path]}>
         <Routes>
           <Route path="/charts" element={<NewChartSheet onClose={() => {}} />} />
+          <Route path="/settings/charts/new/:template" element={<p>Sleep form</p>} />
           <Route path="/settings/charts/:id" element={<ChartEditorMobileScreen />} />
         </Routes>
       </MemoryRouter>
@@ -162,9 +165,147 @@ describe('ChartEditorMobile', () => {
   it('creating a graph opens its settings with the practice picker up', async () => {
     charts.createReport.mockResolvedValue('r9')
     renderAt('/charts')
+    fireEvent.click(screen.getByRole('radio', { name: /Graph/ }))
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: ' Evening ' } })
     fireEvent.click(screen.getByRole('button', { name: 'Create graph' }))
     expect(await screen.findByRole('dialog', { name: 'Add the first series' })).toBeInTheDocument()
     expect(charts.createReport).toHaveBeenCalledWith('Evening', { Graph: { bar_layout: 'Grouped', traces: [] } })
+  })
+
+  it('the new chart sheet leads with Sleep; Graph and Table keep their name-and-Create step', async () => {
+    renderAt('/charts')
+    expect(screen.getByText('Ready-made reports')).toBeInTheDocument()
+    expect(screen.getByText('Build your own')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Name')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('radio', { name: /Table/ }))
+    expect(screen.getByRole('button', { name: 'Create table' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('link', { name: /Sleep/ }))
+    expect(await screen.findByText('Sleep form')).toBeInTheDocument()
+    expect(charts.createReport).not.toHaveBeenCalled()
+  })
+})
+
+const practice = (id: string, name: string, data_type: 'Time' | 'Duration') => ({ id, practice: name, data_type, is_active: true })
+const BED = practice('bed', 'Bed time', 'Time')
+const WAKE = practice('wake', 'Wake-up time', 'Time')
+const OTHER = practice('late', 'Evening time', 'Time')
+const NAP = practice('nap', 'Nap', 'Duration')
+const SLEEP_T = { bedtime: 'bed', wake: 'wake', nap: null as string | null, min: 360, max: 540 }
+const sleepReport = (t = SLEEP_T): Report => ({ id: 's1', name: 'Sleep', definition: { Panels: sleepPanels(t) } })
+const sentPanels = (call = 0) => (charts.updateReport.mock.calls[call][2] as { Panels: PanelsReport }).Panels
+const setLimit = (label: string, value: string) => {
+  const el = screen.getByLabelText(label)
+  fireEvent.change(el, { target: { value } })
+  fireEvent.blur(el)
+}
+
+it('choosing Sleep closes the sheet, which can already be on the form’s page (the wide charts column)', () => {
+  const onClose = vi.fn()
+  render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><NewChartSheet onClose={onClose} /></MemoryRouter></QueryClientProvider>)
+  fireEvent.click(screen.getByRole('link', { name: /Sleep/ }))
+  expect(onClose).toHaveBeenCalled()
+})
+
+describe('ChartEditorMobile, a template report', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    useToastStore.setState({ toasts: [] }) // They outlive a test.
+    setViewportWidth(390)
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([BED, WAKE, OTHER, NAP])
+    vi.mocked(practicesApi.getGroups).mockResolvedValue([{ id: null, name: '', is_default: true }])
+    charts.getReports.mockResolvedValue([sleepReport()])
+    charts.getReportData.mockResolvedValue([])
+    charts.updateReport.mockResolvedValue()
+  })
+
+  it('shows the form, name card and delete, not graph or table sections, and saves nothing by itself', async () => {
+    renderAt('/settings/charts/s1')
+    expect(await screen.findByRole('button', { name: 'Bedtime: Bed time' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Name')).toHaveValue('Sleep')
+    expect(screen.getByRole('button', { name: 'Delete chart' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '+ Add series' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: 'Group columns' })).not.toBeInTheDocument()
+    await act(() => new Promise((r) => setTimeout(r, 20)))
+    expect(charts.updateReport).not.toHaveBeenCalled()
+  })
+
+  it('deleting says it is a report, not a table', async () => {
+    renderAt('/settings/charts/s1')
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete chart' }))
+    expect(screen.getByRole('dialog')).toHaveTextContent('The report is removed')
+  })
+
+  it('changing max sends a PUT carrying it in the template and the regenerated panels', async () => {
+    renderAt('/settings/charts/s1')
+    await screen.findByLabelText('Maximum sleep')
+    setLimit('Maximum sleep', '8:00')
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledTimes(1))
+    const p = sentPanels()
+    expect(p.template).toEqual({ Sleep: { ...SLEEP_T, max: 480 } })
+    expect(p).toEqual(sleepPanels({ ...SLEEP_T, max: 480 }))
+  })
+
+  it('min above max shows the error and sends nothing; fixing it sends one', async () => {
+    renderAt('/settings/charts/s1')
+    await screen.findByLabelText('Maximum sleep')
+    setLimit('Maximum sleep', '5:00')
+    expect(await screen.findByRole('alert')).toHaveTextContent('can’t be above')
+    await act(() => new Promise((r) => setTimeout(r, 20)))
+    expect(charts.updateReport).not.toHaveBeenCalled()
+    setLimit('Minimum sleep', '4:00')
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledTimes(1))
+    expect(sentPanels().template).toEqual({ Sleep: { ...SLEEP_T, min: 240, max: 300 } })
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it.each([
+    ['deleted', [BED, OTHER, NAP]],
+    ['hidden', [BED, { ...WAKE, is_active: false }, OTHER, NAP]],
+    ['retyped', [BED, { ...WAKE, data_type: 'Int' as const }, OTHER, NAP]],
+  ])('a %s required practice shows as missing, holds a limit back, and choosing another saves both', async (_, practices) => {
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue(practices)
+    renderAt('/settings/charts/s1')
+    expect(await screen.findByText(/deleted or hidden/i)).toBeInTheDocument()
+    setLimit('Maximum sleep', '8:00')
+    await act(() => new Promise((r) => setTimeout(r, 20)))
+    expect(charts.updateReport).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: /^Wake-up: / }))
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Wake-up' })).getByRole('radio', { name: /Evening time/ }))
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledTimes(1))
+    expect(sentPanels().template).toEqual({ Sleep: { ...SLEEP_T, wake: 'late', max: 480 } })
+    expect(screen.queryByText(/deleted or hidden/i)).not.toBeInTheDocument()
+  })
+
+  it('a report whose nap was deleted still saves a limit change, keeping the old id', async () => {
+    const t = { ...SLEEP_T, nap: 'gone' }
+    charts.getReports.mockResolvedValue([sleepReport(t)])
+    renderAt('/settings/charts/s1')
+    await screen.findByLabelText('Maximum sleep')
+    expect(screen.queryByText(/deleted or hidden/i)).not.toBeInTheDocument()
+    setLimit('Maximum sleep', '8:00')
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledTimes(1))
+    expect(sentPanels().template).toEqual({ Sleep: { ...t, max: 480 } })
+  })
+
+  it('slow practices neither blank the slots nor save anything', async () => {
+    let arrive = (_: typeof BED[]) => {}
+    vi.mocked(practicesApi.getUserPractices).mockReturnValue(new Promise((r) => { arrive = r }))
+    renderAt('/settings/charts/s1')
+    await act(() => new Promise((r) => setTimeout(r, 20)))
+    expect(screen.queryByText(/deleted or hidden/i)).not.toBeInTheDocument()
+    expect(charts.updateReport).not.toHaveBeenCalled()
+    await act(async () => arrive([BED, WAKE, NAP]))
+    expect(await screen.findByRole('button', { name: 'Wake-up: Wake-up time' })).toBeInTheDocument()
+    expect(screen.queryByText(/deleted or hidden/i)).not.toBeInTheDocument()
+    expect(charts.updateReport).not.toHaveBeenCalled()
+  })
+
+  it('Undo brings the old limit back into the form', async () => {
+    renderAt('/settings/charts/s1')
+    await screen.findByLabelText('Maximum sleep')
+    setLimit('Maximum sleep', '8:00')
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledTimes(1))
+    fireEvent.click(await screen.findByRole('button', { name: 'Undo' }))
+    await waitFor(() => expect(screen.getByLabelText('Maximum sleep')).toHaveValue('9:00'))
   })
 })

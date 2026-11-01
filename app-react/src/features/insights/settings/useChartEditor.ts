@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { chartsApi } from '../../../api/charts'
-import { REPORTS_KEY, useReports } from '../useReports'
+import { isPanels, REPORTS_KEY, useReports } from '../useReports'
 import type { GraphReport, PracticeTrace, Report } from '../../../api/charts'
 import { practicesApi } from '../../../api/practices'
 import { useToast } from '../../../hooks/useToast'
@@ -130,6 +130,7 @@ export function useChartEditor(id: string) {
   const practices = practicesQ.data ?? []
   const byId = new Map(practices.map((p) => [p.id, p]))
   const graph = report && graphOf(report)
+  const panels = isPanels(report) ? report.definition.Panels : null
   const all = report ? tracesFor(report, practices, COLORS) : []
   const series: Series[] = (graph?.traces ?? []).map((trace, index) => {
     const practice = byId.get(trace.practice)
@@ -144,12 +145,14 @@ export function useChartEditor(id: string) {
   const entries = dataQ.data ?? []
 
   return {
-    report, reports: reportsQ.data ?? [], graph, practices, series, traces, failed, retry, update, setTraces, removeSeries, remove, turnBackOn, todayCob,
+    report, reports: reportsQ.data ?? [], graph, panels, practices, series, traces, failed, retry, update, setTraces, removeSeries, remove, turnBackOn, todayCob,
     entries,
     rows: buildChartData(entries, traces, i18n.language || 'en'),
     averages: graph ? averageLines(traces, entries, graph.bar_layout, todayCob) : [],
     dataLoading: dataQ.isLoading,
     isLoading: reportsQ.isLoading || practicesQ.isLoading,
+    /** Also false while offline with nothing cached, when isLoading is false too. */
+    practicesLoaded: practicesQ.data !== undefined,
     isError: reportsQ.isError || practicesQ.isError,
   }
 }

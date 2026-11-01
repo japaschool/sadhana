@@ -79,7 +79,7 @@ export const SLEEP_SLOTS: Slot[] = [
 
 export const SLEEP_DEFAULTS = { min: 360, max: 540 }
 
-const fits = (slot: Slot, p: UserPractice) => p.is_active && slot.types.includes(p.data_type)
+export const fits = (slot: Slot, p: UserPractice) => p.is_active && slot.types.includes(p.data_type)
 
 /** A hint only: the first active, same-type, untaken practice whose name contains one of the slot's hints. */
 export function suggestFor(slot: Slot, practices: UserPractice[], taken: Set<string>): UserPractice | null {

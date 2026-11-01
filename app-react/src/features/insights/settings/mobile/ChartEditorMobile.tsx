@@ -8,7 +8,7 @@ import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, us
 import type { DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { BarLayout } from '../../../../api/charts'
+import type { BarLayout, PanelsReport } from '../../../../api/charts'
 import { practicesApi } from '../../../../api/practices'
 import type { UserPractice } from '../../../../types/api'
 import { Toggle } from '../../../../ui/primitives/Toggle'
@@ -21,6 +21,9 @@ import { TypeChip, TypeIcon } from '../../../yatras/settings/mobile/TypeChip'
 import { AXES } from '../../axes'
 import { cellText, formatDay } from '../../insightsLogic'
 import { InsightsChart } from '../../mobile/InsightsChart'
+import { PanelsReportView } from '../../panels/PanelsReportView'
+import { draftOf, draftToDefinition, TemplateForm, type TemplateDraft } from '../../panels/TemplateForm'
+import { KindGlyph } from '../../ReportGlyph'
 import { useChartEditor, type Series } from '../useChartEditor'
 import { axisName, kindName, LegendMark, onAxis, SaveDot, SeriesTile, StyleIcon, styleOf } from './parts'
 import { PracticePickerSheet, SeriesFields, SeriesSheet } from './SeriesSheets'
@@ -99,13 +102,18 @@ export function ChartEditorMobile() {
       <div className="flex flex-col gap-4 px-4 pb-8">
         <FailedBanner ed={ed} />
 
-        <section ref={preview} className={`${CARD} flex flex-col gap-3 p-4`}>
-          <Preview ed={ed} picking={sheet?.kind === 'add'} />
-        </section>
+        {/* Report Templates: the live preview is for tablet and desktop. */}
+        {!ed.panels && (
+          <section ref={preview} className={`${CARD} flex flex-col gap-3 p-4`}>
+            <Preview ed={ed} picking={sheet?.kind === 'add'} />
+          </section>
+        )}
 
         <NameCard ed={ed} />
 
-        {graph ? <><GraphSections ed={ed} setSheet={setSheet} /><AxesCard ed={ed} /></> : <TableColumns ed={ed} />}
+        {graph ? <><GraphSections ed={ed} setSheet={setSheet} /><AxesCard ed={ed} /></>
+          : ed.panels ? <TemplateSections ed={ed} />
+          : <TableColumns ed={ed} />}
 
         <Footer ed={ed} onDelete={() => setSheet({ kind: 'delete' })} />
       </div>
@@ -156,8 +164,10 @@ export function NameCard({ ed }: { ed: Editor }) {
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-[13px] font-bold text-ui-muted">{t('chartSettings.type')}</span>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-ui-chip py-1 pr-2.5 pl-2 text-xs font-bold text-ui-ink2">
-          {ed.graph ? <StyleIcon style="Bar" className="h-3.5 w-3.5" /> : <span aria-hidden className="text-[13px] leading-none">▦</span>}
-          {t(ed.graph ? 'chartSettings.graph' : 'chartSettings.table')}
+          {ed.graph ? <StyleIcon style="Bar" className="h-3.5 w-3.5" />
+            : ed.panels ? <KindGlyph kind="template" className="" />
+            : <span aria-hidden className="text-[13px] leading-none">▦</span>}
+          {t(ed.graph ? 'chartSettings.graph' : ed.panels ? 'chartSettings.sleep' : 'chartSettings.table')}
         </span>
         <span className={HINT}>{t('chartSettings.typeSet')}</span>
       </div>
@@ -182,7 +192,7 @@ export function DeleteChartSheet({ ed, onClose }: { ed: Editor; onClose: () => v
   const report = ed.report!
   return (
     <ConfirmSheet title={t('chartSettings.deleteTitle', { name: report.name })} confirm={t('chartSettings.deleteChart')}
-      text={ed.graph ? t('chartSettings.deleteGraph', { count: ed.graph.traces.length }) : t('chartSettings.deleteTable')}
+      text={ed.graph ? t('chartSettings.deleteGraph', { count: ed.graph.traces.length }) : t(ed.panels ? 'chartSettings.deleteTemplate' : 'chartSettings.deleteTable')}
       busy={ed.remove.isPending} onClose={onClose}
       onConfirm={() => ed.remove.mutate(undefined, { onSuccess: () => navigate('/settings/charts', { replace: true }) })} />
   )
@@ -190,6 +200,7 @@ export function DeleteChartSheet({ ed, onClose }: { ed: Editor; onClose: () => v
 
 export const subtitle = (ed: Editor, t: TFunction) => ed.graph
   ? ed.graph.traces.length ? t('chartSettings.graphSeries', { count: ed.graph.traces.length }) : t('chartSettings.graphEmpty')
+  : ed.panels ? t('chartSettings.sleepSubtitle')
   : t('chartSettings.tableColumns', { count: ed.traces.length })
 
 function Placeholder({ text, sub, busy }: { text: string; sub?: string; busy?: boolean }) {
@@ -212,12 +223,18 @@ export function Preview({ ed, header = true, height = 170, picking, focus }: { e
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-0.5">
             <h2 className="text-[17px] font-extrabold text-ui-ink">{t('chartSettings.preview')}</h2>
-            <p className="text-xs text-ui-muted">{t(graph ? 'chartSettings.last30' : 'chartSettings.last30Table')}</p>
+            <p className="text-xs text-ui-muted">{t(graph || ed.panels ? 'chartSettings.last30' : 'chartSettings.last30Table')}</p>
           </div>
           {hidden > 0 && <span className="text-xs font-bold text-ui-danger">{t('chartSettings.hidden', { count: hidden })}</span>}
         </div>
       )}
-      {!graph ? <TablePreview ed={ed} />
+      {ed.panels ? (
+        ed.dataLoading ? <Placeholder busy text={t('chartSettings.loadingEntries')} /> : (
+          // ponytail: the preview has no previous window, so its first night has no bar; pass it through if that reads as wrong.
+          <PanelsReportView report={ed.report!} definition={ed.panels} entries={ed.entries} previous={undefined} practices={ed.practices}
+            todayCob={ed.todayCob} chartHeight={height} formLink={null} cols={2} />
+        ))
+        : !graph ? <TablePreview ed={ed} />
         : ed.dataLoading ? <Placeholder busy text={t('chartSettings.loadingEntries')} />
         : !ed.traces.length ? <Placeholder text={t('chartSettings.nothingToPlot')} sub={picking ? undefined : t('chartSettings.addToSee')} />
         : !ed.rows.length ? <Placeholder text={t('chartSettings.noEntries')} />
@@ -238,6 +255,27 @@ export function Preview({ ed, header = true, height = 170, picking, focus }: { e
       )}
     </>
   )
+}
+
+/**
+ * A template report's form. A change that makes a report saves at once; one that doesn't (min above max, a required
+ * practice still missing) stays here, on top of the report it was made from, until it does. Opening saves nothing.
+ */
+export function TemplateSections({ ed }: { ed: Editor }) {
+  const { t } = useTranslation()
+  const [held, setHeld] = useState<{ base: PanelsReport; draft: TemplateDraft } | null>(null)
+  // A practice can only be called missing once the list has arrived.
+  if (!ed.practicesLoaded) return <div className="flex h-40 items-center justify-center"><span role="status" aria-label={t('common.loading')} className={SPINNER} /></div>
+  const base = ed.panels!
+  const value = held?.base === base ? held.draft : draftOf(base, ed.practices)
+  if (!value) return null
+  const change = (draft: TemplateDraft) => {
+    const definition = draftToDefinition(draft)
+    if (!definition) return setHeld({ base, draft })
+    setHeld(null)
+    ed.update((r) => ({ ...r, definition }))
+  }
+  return <TemplateForm key={ed.report!.id} value={value} onChange={change} practices={ed.practices} flagMissing />
 }
 
 const seriesName = (s: Series, t: (k: string) => string) => s.trace.label || s.practice?.practice || t('chartSettings.deletedPractice')

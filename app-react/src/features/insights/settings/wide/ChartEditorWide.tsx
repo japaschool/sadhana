@@ -7,7 +7,7 @@ import { useLayout } from '../../../../layouts/useLayout'
 import { CARD } from '../../../yatras/settings/mobile/AdminPage'
 import { graphOf, useChartEditor } from '../useChartEditor'
 import {
-  AxesCard, DeleteChartSheet, FailedBanner, Footer, GraphSections, GROUP, NameCard, Preview, SPINNER, subtitle, TableColumns,
+  AxesCard, DeleteChartSheet, FailedBanner, Footer, GraphSections, GROUP, NameCard, Preview, SPINNER, subtitle, TableColumns, TemplateSections,
 } from '../mobile/ChartEditorMobile'
 import type { Sheet } from '../mobile/ChartEditorMobile'
 import { NewChartSheet } from '../mobile/NewChartSheet'
@@ -19,7 +19,7 @@ type Editor = ReturnType<typeof useChartEditor>
 const ITEM = 'flex min-h-11 items-center gap-2.5 rounded-xl px-3 text-[15px]'
 
 /** Your charts beside the editor; picking one opens its settings. */
-function ChartsColumn({ id, reports }: { id: string; reports: NonNullable<Editor['reports']> }) {
+export function ChartsColumn({ id, reports, newOn }: { id: string; reports: NonNullable<Editor['reports']>; newOn?: boolean }) {
   const { t } = useTranslation()
   const [creating, setCreating] = useState(false)
   return (
@@ -46,7 +46,7 @@ function ChartsColumn({ id, reports }: { id: string; reports: NonNullable<Editor
           </Link>
         )
       })}
-      <button type="button" onClick={() => setCreating(true)} className={`${ITEM} font-bold text-ui-accent`}>
+      <button type="button" onClick={() => setCreating(true)} className={`${ITEM} font-bold text-ui-accent ${newOn ? 'bg-ui-accent-soft' : ''}`}>
         <span aria-hidden>+</span>{t('chartSettings.newChart')}
       </button>
       {creating && <NewChartSheet onClose={() => setCreating(false)} />}
@@ -83,9 +83,10 @@ export function ChartEditorWide() {
   else if (ed.isError) content = <p role="alert" className="py-10 text-center text-sm text-ui-danger">{t('common.error')}</p>
   else if (!ed.report) return <Navigate to="/settings/charts" replace />
   else {
+    // A template report brings its own cards, so on desktop's panel it needs none around it.
     const preview = (header: boolean) => (
-      <section className={`${CARD} flex flex-col gap-3 p-4`}>
-        <Preview ed={ed} header={header} height={desktop ? 240 : 190} picking={sheet?.kind === 'add'} focus={focus} />
+      <section className={ed.panels && desktop ? 'flex flex-col' : `${CARD} flex flex-col gap-3 p-4`}>
+        <Preview ed={ed} header={header} height={ed.panels ? (desktop ? 220 : 180) : desktop ? 240 : 190} picking={sheet?.kind === 'add'} focus={focus} />
       </section>
     )
     content = (
@@ -101,6 +102,7 @@ export function ChartEditorWide() {
           <NameCard ed={ed} />
           {ed.graph
             ? <><GraphSections ed={ed} setSheet={setSheet} inline={sheet} />{!desktop && <AxesCard ed={ed} />}</>
+            : ed.panels ? <TemplateSections ed={ed} />
             : <TableColumns ed={ed} />}
           <Footer ed={ed} onDelete={() => setSheet({ kind: 'delete' })} />
         </main>
@@ -110,7 +112,7 @@ export function ChartEditorWide() {
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="text-[11px] font-bold uppercase tracking-[.1em] text-ui-accent">{t('chartSettings.preview')}</span>
               <h2 className="text-xl font-extrabold break-words text-ui-ink">{ed.report.name}</h2>
-              <p className="text-xs text-ui-muted">{t(ed.graph ? 'chartSettings.last30' : 'chartSettings.last30Table')}</p>
+              <p className="text-xs text-ui-muted">{t(ed.graph || ed.panels ? 'chartSettings.last30' : 'chartSettings.last30Table')}</p>
             </div>
             {preview(false)}
             {ed.graph && <AxesCard ed={ed} />}

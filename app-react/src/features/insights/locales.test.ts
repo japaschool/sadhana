@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { sleepPanels } from './panels/templates'
 
-type Dict = { insights?: Record<string, string>; reportPanels?: Record<string, string> }
+type Dict = { insights?: Record<string, string>; reportPanels?: Record<string, string>; templateForm?: Record<string, string> }
 const files = import.meta.glob<Dict>('../../../public/locales/*/translation.json', { eager: true, import: 'default' })
 
 const KEYS = [
@@ -43,5 +43,14 @@ describe('reportPanels.* translations', () => {
         expect(dict.reportPanels?.[k.slice('reportPanels.'.length)], `${path} ${k}`).toBeTruthy()
       }
     }
+  })
+})
+
+describe('templateForm.* translations', () => {
+  it('has the same keys in en, ru and uk', () => {
+    const dicts = Object.values(files)
+    const keys = Object.keys(dicts[0].templateForm ?? {}).sort()
+    expect(keys.length).toBeGreaterThan(30)
+    for (const d of dicts) expect(Object.keys(d.templateForm ?? {}).sort()).toEqual(keys)
   })
 })
