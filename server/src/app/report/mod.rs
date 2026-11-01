@@ -200,8 +200,7 @@ pub async fn get_reports(
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
 
-    let res =
-        web::block(move || Report::get_all(&mut conn, &user_id, query.panels)).await??;
+    let res = web::block(move || Report::get_all(&mut conn, &user_id, query.panels)).await??;
 
     Ok(HttpResponse::Ok().json(GetAllReportsResponse { reports: res }))
 }
@@ -231,15 +230,18 @@ pub async fn create_report(
 /// Updates report name and definition
 pub async fn update_report(
     state: web::Data<AppState>,
+    req: HttpRequest,
     path: web::Path<ReportIdSlug>,
     form: web::Json<NewReportForm>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
     let report_id = path.into_inner();
 
     web::block(move || {
         DBReport::update(
             &mut conn,
+            &user_id,
             &report_id,
             &form.report.name,
             &form.report.definition,
@@ -250,15 +252,17 @@ pub async fn update_report(
     Ok(HttpResponse::Ok().json(()))
 }
 
-/// Updates report name and definition
+/// Deletes a report
 pub async fn delete_report(
     state: web::Data<AppState>,
+    req: HttpRequest,
     path: web::Path<ReportIdSlug>,
 ) -> Result<HttpResponse, AppError> {
     let mut conn = state.get_conn()?;
+    let user_id = auth::get_current_user(&req)?.id;
     let report_id = path.into_inner();
 
-    web::block(move || DBReport::delete(&mut conn, &report_id)).await??;
+    web::block(move || DBReport::delete(&mut conn, &user_id, &report_id)).await??;
 
     Ok(HttpResponse::Ok().json(()))
 }

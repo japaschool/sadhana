@@ -1,4 +1,7 @@
 //! The "panels" report format, stored as JSON in `reports.definition`.
+use std::collections::HashSet;
+
+use common::error::AppError;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -190,4 +193,134 @@ pub enum StatValue {
 pub struct Scope {
     pub today: bool,
     pub missing_zero: bool,
+}
+
+pub const MAX_PANELS: usize = 8;
+pub const MAX_SERIES: usize = 12;
+pub const MAX_STATS: usize = 8;
+pub const MAX_TERMS: usize = 16;
+pub const MAX_BYTES: usize = 32 * 1024;
+
+fn invalid<S: Into<String>>(msg: S) -> AppError {
+    AppError::UnprocessableEntity(vec![msg.into()])
+}
+
+fn check_bounds(min: Option<i32>, max: Option<i32>) -> Result<(), AppError> {
+    if min.is_some_and(|v| v < 0) || max.is_some_and(|v| v < 0) {
+        return Err(invalid("Target values can't be negative"));
+    }
+    if let (Some(min), Some(max)) = (min, max) {
+        if min > max {
+            return Err(invalid("Target min is above max"));
+        }
+    }
+    Ok(())
+}
+
+impl Source {
+    fn collect(&self, out: &mut HashSet<Uuid>) -> Result<(), AppError> {
+        match self {
+            Source::Practice { practice } => {
+                out.insert(*practice);
+            }
+            Source::Calc { terms } => {
+                if terms.len() > MAX_TERMS {
+                    return Err(invalid("Too many terms"));
+                }
+                out.extend(terms.iter().map(|t| t.practice));
+            }
+            Source::Range { from, to } => {
+                out.insert(from.practice);
+                out.insert(to.practice);
+            }
+        }
+        Ok(())
+    }
+}
+
+impl Stat {
+    fn walk(&self, out: &mut HashSet<Uuid>) -> Result<(), AppError> {
+        match &self.value {
+            StatValue::OnTarget { of, min, max, .. } => {
+                check_bounds(*min, *max)?;
+                of.collect(out)?;
+            }
+            StatValue::Average { of, .. }
+            | StatValue::Logged { of, .. }
+            | StatValue::CountTrue { of, .. } => of.collect(out)?,
+        }
+        if let Some(under) = &self.under {
+            under.walk(out)?;
+        }
+        Ok(())
+    }
+}
+
+impl PanelsReport {
+    /// Every practice the definition refers to.
+    pub fn practice_ids(&self) -> HashSet<Uuid> {
+        let mut out = HashSet::new();
+        // Limits are checked by `validate`; a stored definition is walked as it is.
+        let _ = self.walk(&mut out);
+        out
+    }
+
+    /// Checks limits and values, and that every practice is in `allowed`.
+    pub fn validate(&self, allowed: &HashSet<Uuid>) -> Result<(), AppError> {
+        if self.version != 1 {
+            return Err(invalid("Unsupported report version"));
+        }
+        if self.panels.len() > MAX_PANELS {
+            return Err(invalid("Too many panels"));
+        }
+        let size = serde_json::to_vec(self)
+            .map_err(|_| invalid("Invalid definition"))?
+            .len();
+        if size > MAX_BYTES {
+            return Err(invalid("Report definition is too large"));
+        }
+        let mut used = HashSet::new();
+        self.walk(&mut used)?;
+        if used.iter().any(|p| !allowed.contains(p)) {
+            return Err(invalid("Report uses a practice that isn't yours"));
+        }
+        Ok(())
+    }
+
+    fn walk(&self, out: &mut HashSet<Uuid>) -> Result<(), AppError> {
+        out.extend(self.required.iter().map(|r| r.practice));
+        if let Some(Template::Sleep(s)) = &self.template {
+            check_bounds(s.min, s.max)?;
+            out.extend([s.bedtime, s.wake]);
+            out.extend(s.nap);
+        }
+        for panel in &self.panels {
+            match panel {
+                Panel::Stats { stats } => {
+                    if stats.len() > MAX_STATS {
+                        return Err(invalid("Too many stats"));
+                    }
+                    for stat in stats {
+                        stat.walk(out)?;
+                    }
+                }
+                Panel::Chart(chart) => {
+                    if chart.series.len() > MAX_SERIES {
+                        return Err(invalid("Too many series"));
+                    }
+                    for series in &chart.series {
+                        series.source.collect(out)?;
+                    }
+                    if let Some(t) = &chart.target {
+                        check_bounds(t.min, t.max)?;
+                        t.of.collect(out)?;
+                    }
+                    for line in &chart.lines {
+                        line.of.collect(out)?;
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
 }

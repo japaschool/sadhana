@@ -6,7 +6,18 @@ use diesel::{result::Error as DieselError, PgConnection, RunQueryDsl};
 use std::collections::HashSet;
 use uuid::Uuid;
 
+use super::panels::PanelsReport;
 use super::{GridReport, ReportDefinition};
+
+/// Ids of all the user's practices, hidden ones included.
+fn owned_practices(conn: &mut PgConnection, user_id: &Uuid) -> Result<HashSet<Uuid>, AppError> {
+    Ok(
+        crate::app::user_practices::UserPractice::all_user_practices(conn, user_id)?
+            .into_iter()
+            .map(|p| p.id)
+            .collect(),
+    )
+}
 
 #[derive(Debug, PartialEq, Queryable, Identifiable, Selectable)]
 #[diesel(table_name = reports)]
@@ -27,6 +38,9 @@ impl Report {
         report_definition: &ReportDefinition,
     ) -> Result<Uuid, AppError> {
         let report_id = conn.transaction(|conn| {
+            if let ReportDefinition::Panels(p) = report_definition {
+                p.validate(&owned_practices(conn, user_id)?)?;
+            }
             let report_id = diesel::insert_into(reports::table)
                 .values((
                     reports::user_id.eq(user_id),
@@ -41,7 +55,7 @@ impl Report {
 
             ReportTrace::update(conn, &report_id, report_definition, None)?;
 
-            Ok::<_, DieselError>(report_id)
+            Ok::<_, AppError>(report_id)
         })?;
 
         Ok(report_id)
@@ -49,11 +63,35 @@ impl Report {
 
     pub fn update(
         conn: &mut PgConnection,
+        user_id: &Uuid,
         report_id: &Uuid,
         report_name: &str,
         report_definition: &ReportDefinition,
     ) -> Result<(), AppError> {
         conn.transaction(|conn| {
+            let (stored_type, stored) = reports::table
+                .select((reports::report_type, reports::definition))
+                .filter(reports::id.eq(report_id))
+                .filter(reports::user_id.eq(user_id))
+                .first::<(ReportType, Option<serde_json::Value>)>(conn)
+                .optional()?
+                .ok_or(AppError::NotFound)?;
+            if stored_type != report_definition.report_type() {
+                return Err(AppError::UnprocessableEntity(vec![
+                    "A report can't change its type".into(),
+                ]));
+            }
+            if let ReportDefinition::Panels(p) = report_definition {
+                // Practices deleted since the report was saved may stay in it.
+                let mut allowed = owned_practices(conn, user_id)?;
+                if let Some(old) =
+                    stored.and_then(|v| serde_json::from_value::<PanelsReport>(v).ok())
+                {
+                    allowed.extend(old.practice_ids());
+                }
+                p.validate(&allowed)?;
+            }
+
             // An old client sends no flag: keep the stored setting and column order.
             let kept_order = match report_definition {
                 ReportDefinition::Grid(GridReport {
@@ -73,24 +111,39 @@ impl Report {
                     reports::definition.eq(&report_definition.definition_json()),
                 ))
                 .filter(reports::id.eq(&report_id))
+                .filter(reports::user_id.eq(user_id))
                 .execute(conn)?;
 
-            ReportTrace::update(conn, report_id, report_definition, kept_order.as_deref())
+            ReportTrace::update(conn, report_id, report_definition, kept_order.as_deref())?;
+            Ok::<_, AppError>(())
         })?;
 
         Ok(())
     }
 
-    pub fn delete(conn: &mut PgConnection, report_id: &Uuid) -> Result<(), AppError> {
+    pub fn delete(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        report_id: &Uuid,
+    ) -> Result<(), AppError> {
         conn.transaction(|conn| {
+            // Traces go with the row (checked first so another user's report is untouched).
+            let owned = reports::table
+                .filter(reports::id.eq(report_id))
+                .filter(reports::user_id.eq(user_id))
+                .select(reports::id)
+                .first::<Uuid>(conn)
+                .optional()?;
+            if owned.is_none() {
+                return Err(AppError::NotFound);
+            }
             ReportTrace::delete(conn, report_id)?;
 
             diesel::delete(reports::table)
-                .filter(reports::id.eq(&report_id))
-                .execute(conn)
-        })?;
-
-        Ok(())
+                .filter(reports::id.eq(report_id))
+                .execute(conn)?;
+            Ok::<_, AppError>(())
+        })
     }
 
     pub fn get_all(
@@ -350,7 +403,7 @@ mod tests {
         run(|conn| {
             let (u, [a, b, c, d]) = user_with_practices(conn);
             let id = Report::create(conn, &u, "r", &grid(vec![b, a, c], Some(false)))?;
-            Report::update(conn, &id, "r", &grid(vec![a, b, d], None))?;
+            Report::update(conn, &u, &id, "r", &grid(vec![a, b, d], None))?;
             assert_eq!(only_grid(conn, &u), (vec![b, a, d], Some(false)));
             Ok(())
         });
@@ -361,7 +414,7 @@ mod tests {
         run(|conn| {
             let (u, [a, b, c, _]) = user_with_practices(conn);
             let id = Report::create(conn, &u, "r", &grid(vec![b, a, c], Some(false)))?;
-            Report::update(conn, &id, "r", &grid(vec![a, c], Some(true)))?;
+            Report::update(conn, &u, &id, "r", &grid(vec![a, c], Some(true)))?;
             assert_eq!(only_grid(conn, &u), (vec![a, c], Some(true)));
             Ok(())
         });
@@ -509,5 +562,307 @@ mod tests {
         assert!(serde_json::from_value::<PanelsReport>(value.clone()).is_ok());
         value["panels"][0]["series"][0]["extra"] = serde_json::json!(1);
         assert!(serde_json::from_value::<PanelsReport>(value).is_err());
+    }
+
+    fn panels(r: PanelsReport) -> ReportDefinition {
+        ReportDefinition::Panels(r)
+    }
+
+    fn chart_with(f: impl FnOnce(&mut super::super::panels::ChartPanel)) -> PanelsReport {
+        use super::super::panels::*;
+        let mut r = sleep_report(Uuid::new_v4(), Uuid::new_v4());
+        r.template = None;
+        r.required = vec![];
+        if let Panel::Chart(c) = &mut r.panels[0] {
+            f(c);
+        }
+        r
+    }
+
+    fn practice_source(p: Uuid) -> super::super::panels::Source {
+        super::super::panels::Source::Practice { practice: p }
+    }
+
+    fn unprocessable(r: Result<Uuid, AppError>) {
+        assert!(matches!(r, Err(AppError::UnprocessableEntity(_))), "{r:?}");
+    }
+
+    /// An owner with a report built from their practices, and another user.
+    fn other_user_report(
+        conn: &mut PgConnection,
+        make: impl FnOnce([Uuid; 4]) -> ReportDefinition,
+    ) -> (Uuid, Uuid, Uuid, ReportDefinition) {
+        let (owner, ids) = user_with_practices(conn);
+        let (intruder, _) = user_with_practices(conn);
+        let def = make(ids);
+        let id = Report::create(conn, &owner, "mine", &def).unwrap();
+        (owner, intruder, id, def)
+    }
+
+    type Make = fn([Uuid; 4]) -> ReportDefinition;
+    const MAKERS: [Make; 2] = [
+        |[a, _, _, _]| grid(vec![a], Some(true)),
+        |[a, b, _, _]| panels(sleep_report(a, b)),
+    ];
+
+    #[test]
+    fn update_of_another_users_report_is_not_found() {
+        run(|conn| {
+            for make in MAKERS {
+                let (owner, intruder, id, def) = other_user_report(conn, make);
+                let r = Report::update(conn, &intruder, &id, "hacked", &def);
+                assert!(matches!(r, Err(AppError::NotFound)), "{r:?}");
+                let stored = Report::get_all(conn, &owner, true)?.remove(0).0;
+                assert_eq!(stored.name, "mine");
+            }
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn delete_of_another_users_report_is_not_found() {
+        run(|conn| {
+            for make in MAKERS {
+                let (owner, intruder, id, _) = other_user_report(conn, make);
+                let r = Report::delete(conn, &intruder, &id);
+                assert!(matches!(r, Err(AppError::NotFound)), "{r:?}");
+                assert_eq!(Report::get_all(conn, &owner, true)?.len(), 1);
+            }
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn put_cannot_change_type() {
+        run(|conn| {
+            let (u, [a, b, _, _]) = user_with_practices(conn);
+            let g = Report::create(conn, &u, "g", &grid(vec![a], Some(true)))?;
+            let r = Report::update(conn, &u, &g, "g", &panels(sleep_report(a, b)));
+            assert!(matches!(r, Err(AppError::UnprocessableEntity(_))), "{r:?}");
+
+            let p = Report::create(conn, &u, "p", &panels(sleep_report(a, b)))?;
+            let graph = ReportDefinition::Graph(GraphReport {
+                bar_layout: BarLayout::Grouped,
+                traces: vec![],
+            });
+            let r = Report::update(conn, &u, &p, "p", &graph);
+            assert!(matches!(r, Err(AppError::UnprocessableEntity(_))), "{r:?}");
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn rejects_foreign_practice() {
+        use super::super::panels::*;
+        run(|conn| {
+            let (u, [a, b, _, _]) = user_with_practices(conn);
+            let (_, [foreign, _, _, _]) = user_with_practices(conn);
+            unprocessable(Report::create(
+                conn,
+                &u,
+                "r",
+                &panels(sleep_report(foreign, b)),
+            ));
+            unprocessable(Report::create(
+                conn,
+                &u,
+                "r",
+                &panels(sleep_report(a, foreign)),
+            ));
+            let calc = chart_with(|c| {
+                c.series[0].source = Source::Calc {
+                    terms: vec![Term {
+                        sign: 1,
+                        practice: foreign,
+                        day_offset: 0,
+                        optional: false,
+                    }],
+                }
+            });
+            unprocessable(Report::create(conn, &u, "r", &panels(calc)));
+            Ok(())
+        });
+    }
+
+    fn on_target_stats(of: Uuid, min: Option<i32>, max: Option<i32>) -> PanelsReport {
+        use super::super::panels::*;
+        let mut r = chart_with(|_| {});
+        r.panels = vec![Panel::Stats {
+            stats: vec![Stat {
+                label: Label::Key("x".into()),
+                value: StatValue::OnTarget {
+                    of: practice_source(of),
+                    min,
+                    max,
+                    scope: Scope {
+                        today: true,
+                        missing_zero: false,
+                    },
+                },
+                under: None,
+            }],
+        }];
+        r
+    }
+
+    fn target(of: Uuid, min: Option<i32>, max: Option<i32>) -> super::super::panels::Target {
+        super::super::panels::Target {
+            min,
+            max,
+            of: practice_source(of),
+            lines: false,
+            colour: false,
+            label: None,
+        }
+    }
+
+    fn sleep_with(a: Uuid, b: Uuid, min: Option<i32>, max: Option<i32>) -> PanelsReport {
+        use super::super::panels::*;
+        let mut r = sleep_report(a, b);
+        if let Some(Template::Sleep(s)) = &mut r.template {
+            s.min = min;
+            s.max = max;
+        }
+        r
+    }
+
+    #[test]
+    fn rejects_negative_target() {
+        run(|conn| {
+            let (u, [a, b, _, _]) = user_with_practices(conn);
+            for (min, max) in [(Some(-1), None), (None, Some(-1))] {
+                let t = target(a, min, max);
+                unprocessable(Report::create(
+                    conn,
+                    &u,
+                    "r",
+                    &panels(chart_with(|c| c.target = Some(t))),
+                ));
+                unprocessable(Report::create(
+                    conn,
+                    &u,
+                    "r",
+                    &panels(on_target_stats(a, min, max)),
+                ));
+                unprocessable(Report::create(
+                    conn,
+                    &u,
+                    "r",
+                    &panels(sleep_with(a, b, min, max)),
+                ));
+            }
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn rejects_min_above_max() {
+        run(|conn| {
+            let (u, [a, b, _, _]) = user_with_practices(conn);
+            let t = target(a, Some(10), Some(5));
+            unprocessable(Report::create(
+                conn,
+                &u,
+                "r",
+                &panels(chart_with(|c| c.target = Some(t))),
+            ));
+            unprocessable(Report::create(
+                conn,
+                &u,
+                "r",
+                &panels(on_target_stats(a, Some(10), Some(5))),
+            ));
+            unprocessable(Report::create(
+                conn,
+                &u,
+                "r",
+                &panels(sleep_with(a, b, Some(600), Some(300))),
+            ));
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn rejects_wrong_version() {
+        run(|conn| {
+            let (u, [a, b, _, _]) = user_with_practices(conn);
+            let mut r = sleep_report(a, b);
+            r.version = 2;
+            unprocessable(Report::create(conn, &u, "r", &panels(r)));
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn rejects_too_many_panels() {
+        run(|conn| {
+            let (u, [a, b, _, _]) = user_with_practices(conn);
+            let mut r = sleep_report(a, b);
+            let p = r.panels[0].clone();
+            r.panels = vec![p; 9];
+            unprocessable(Report::create(conn, &u, "r", &panels(r)));
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn rejects_too_many_series() {
+        run(|conn| {
+            let (u, [a, _, _, _]) = user_with_practices(conn);
+            let r = chart_with(|c| {
+                let mut s = c.series[0].clone();
+                s.source = practice_source(a);
+                c.series = vec![s; 13];
+            });
+            unprocessable(Report::create(conn, &u, "r", &panels(r)));
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn rejects_oversized_definition() {
+        use super::super::panels::Label;
+        run(|conn| {
+            let (u, [a, _, _, _]) = user_with_practices(conn);
+            let r = chart_with(|c| {
+                c.series[0].source = practice_source(a);
+                c.title = Some(Label::Text("x".repeat(40_000)));
+            });
+            unprocessable(Report::create(conn, &u, "r", &panels(r)));
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn keeps_a_deleted_practice_already_in_the_report() {
+        use super::super::panels::*;
+        run(|conn| {
+            let (u, [a, b, nap, _]) = user_with_practices(conn);
+            let mut r = sleep_report(a, b);
+            if let Some(Template::Sleep(s)) = &mut r.template {
+                s.nap = Some(nap);
+            }
+            let id = Report::create(conn, &u, "r", &panels(r.clone()))?;
+
+            diesel::delete(crate::schema::user_practices::table)
+                .filter(crate::schema::user_practices::id.eq(nap))
+                .execute(conn)?;
+
+            if let Some(Template::Sleep(s)) = &mut r.template {
+                s.max = Some(600);
+            }
+            Report::update(conn, &u, &id, "r", &panels(r.clone()))?;
+
+            let (_, [foreign, _, _, _]) = user_with_practices(conn);
+            if let Some(Template::Sleep(s)) = &mut r.template {
+                s.bedtime = foreign;
+            }
+            let res = Report::update(conn, &u, &id, "r", &panels(r));
+            assert!(
+                matches!(res, Err(AppError::UnprocessableEntity(_))),
+                "{res:?}"
+            );
+            Ok(())
+        });
     }
 }
