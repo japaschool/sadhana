@@ -11,7 +11,7 @@ import {
 } from '../mobile/ChartEditorMobile'
 import type { Sheet } from '../mobile/ChartEditorMobile'
 import { NewChartSheet } from '../mobile/NewChartSheet'
-import { StyleIcon } from '../mobile/parts'
+import { ReportGlyph } from '../../ReportGlyph'
 import { PracticePickerSheet } from '../mobile/SeriesSheets'
 
 type Editor = ReturnType<typeof useChartEditor>
@@ -22,9 +22,6 @@ const ITEM = 'flex min-h-11 items-center gap-2.5 rounded-xl px-3 text-[15px]'
 function ChartsColumn({ id, reports }: { id: string; reports: NonNullable<Editor['reports']> }) {
   const { t } = useTranslation()
   const [creating, setCreating] = useState(false)
-  const icon = (graph: boolean) => graph
-    ? <StyleIcon style="Bar" className="h-3.5 w-3.5" />
-    : <span aria-hidden className="w-3.5 text-center text-[13px] leading-none">▦</span>
   return (
     <nav aria-label={t('insights.title')}
       className="sticky top-0 flex h-dvh w-[232px] shrink-0 flex-col gap-1 overflow-y-auto border-r border-ui-control px-3 pt-[calc(32px+env(safe-area-inset-top))] pb-[calc(24px+env(safe-area-inset-bottom))]">
@@ -38,13 +35,14 @@ function ChartsColumn({ id, reports }: { id: string; reports: NonNullable<Editor
       {reports.map((r) => {
         const active = r.id === id
         const g = graphOf(r)
-        const count = g ? g.traces.length : 'Grid' in r.definition ? r.definition.Grid.practices.length : 0
+        // A panels report's practice count isn't known here, so it shows none.
+        const count = g ? g.traces.length : 'Grid' in r.definition ? r.definition.Grid.practices.length : null
         return (
           <Link key={r.id} to={`/settings/charts/${r.id}`} aria-current={active ? 'page' : undefined}
             className={`${ITEM} ${active ? 'bg-ui-accent-pill font-bold text-ui-ink' : 'font-semibold text-ui-ink2'}`}>
-            {icon(!!g)}
+            <ReportGlyph report={r} />
             <span className="min-w-0 flex-1 truncate">{r.name}</span>
-            <span className="shrink-0 font-ui-mono text-xs font-semibold text-ui-muted">{count}</span>
+            {count !== null && <span className="shrink-0 font-ui-mono text-xs font-semibold text-ui-muted">{count}</span>}
           </Link>
         )
       })}

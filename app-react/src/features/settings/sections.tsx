@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { chartsApi } from '../../api/charts'
+import { useReports } from '../insights/useReports'
 import { practicesApi } from '../../api/practices'
 import { yatrasApi } from '../../api/yatras'
 import { useServiceWorkerUpdate } from '../../hooks/useServiceWorkerUpdate'
@@ -117,7 +117,7 @@ export function YatraRows() {
   )
 }
 
-export const useMyCharts = () => useQuery({ queryKey: ['reports'], queryFn: chartsApi.getReports }).data ?? []
+export const useMyCharts = () => useReports().data ?? []
 
 /** One row per chart, to its settings, with its kind. */
 export function ChartRows() {
@@ -126,7 +126,7 @@ export function ChartRows() {
     <>
       {useMyCharts().map((r) => (
         <SettingsRow key={r.id} label={r.name} to={`/settings/charts/${r.id}`}
-          value={t('Graph' in r.definition ? 'chartSettings.graph' : 'chartSettings.table')} />
+          value={t('Graph' in r.definition ? 'chartSettings.graph' : 'Grid' in r.definition ? 'chartSettings.table' : 'chartSettings.template')} />
       ))}
     </>
   )

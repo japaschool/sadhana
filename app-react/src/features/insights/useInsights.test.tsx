@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { useInsights, ALL } from './useInsights'
 
-vi.mock('../../api/charts', () => ({ chartsApi: { getReports: vi.fn(), getReportData: vi.fn() } }))
+vi.mock('../../api/charts', () => ({ chartsApi: { getReports: vi.fn(), getSharedReports: vi.fn(), getSharedPractices: vi.fn(), getSharedReportData: vi.fn(), getReportData: vi.fn() } }))
 vi.mock('../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn() } }))
 import { chartsApi } from '../../api/charts'
 import { practicesApi } from '../../api/practices'
@@ -15,6 +15,8 @@ const GRAPH = { id: 'r1', name: 'Japa', definition: { Graph: { bar_layout: 'Grou
   { label: null, type_: 'Bar' as const, practice: 'p1', y_axis: null, show_average: true },
 ] } } }
 const GRID = { id: 'g1', name: 'Grid', definition: { Grid: { practices: ['p1'] } } }
+
+const PANELS = { id: 'a1', name: 'Sleep', definition: { Panels: { version: 1, template: null, required: [], panels: [] } } }
 
 function setup() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -40,6 +42,36 @@ describe('useInsights', () => {
     expect(result.current.reports.map((r) => r.id)).toEqual(['r1'])
     expect(result.current.selectedId).toBe(ALL)
     expect(result.current.traces.map((t) => t.name)).toEqual(['Japa'])
+  })
+
+  it.each([true, false])('lists and selects a panels report (withTables %s)', async (withTables) => {
+    charts.getReports.mockResolvedValue([GRAPH, GRID, PANELS])
+    localStorage.setItem('insights-report', 'a1')
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    const { result } = renderHook(() => useInsights(undefined, withTables), { wrapper })
+    await waitFor(() => expect(result.current.report?.id).toBe('a1'))
+    expect(result.current.reports.map((r) => r.id)).toEqual(withTables ? ['g1', 'r1', 'a1'] : ['r1', 'a1'])
+    expect(result.current.panels).toEqual(PANELS.definition.Panels)
+    expect(result.current.traces).toEqual([])
+  })
+
+  it('a shared user defaults to the alphabetically first report', async () => {
+    charts.getSharedReports.mockResolvedValue([PANELS, GRAPH])
+    charts.getSharedPractices.mockResolvedValue([])
+    charts.getSharedReportData.mockResolvedValue([])
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    const { result } = renderHook(() => useInsights(undefined, true, 'u1'), { wrapper })
+    await waitFor(() => expect(result.current.report?.id).toBe('r1'))
+    expect(result.current.reports.map((r) => r.id)).toEqual(['r1', 'a1'])
+  })
+
+  it('exposes the previous window’s entries', async () => {
+    const { result } = setup()
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    await waitFor(() => expect(result.current.previousEntries).toBeDefined())
+    expect(result.current.panels).toBeNull()
   })
 
   it('restores a stored id', async () => {

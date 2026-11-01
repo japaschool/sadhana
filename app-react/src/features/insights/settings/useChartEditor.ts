@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { chartsApi } from '../../../api/charts'
+import { REPORTS_KEY, useReports } from '../useReports'
 import type { GraphReport, PracticeTrace, Report } from '../../../api/charts'
 import { practicesApi } from '../../../api/practices'
 import { useToast } from '../../../hooks/useToast'
@@ -33,7 +34,7 @@ export function useChartEditor(id: string) {
   const { t, i18n } = useTranslation()
   const qc = useQueryClient()
   const { showToast } = useToast()
-  const reportsQ = useQuery({ queryKey: ['reports'], queryFn: chartsApi.getReports })
+  const reportsQ = useReports()
   const practicesQ = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices })
   const todayCob = toDateStr(new Date())
   // The same query as Insights' default 30 days, so the preview is usually cached already.
@@ -61,7 +62,7 @@ export function useChartEditor(id: string) {
       batch.current = null
       try {
         await chartsApi.updateReport(r.id, r.name, r.definition)
-        qc.setQueryData<Report[]>(['reports'], (list) => list?.map((x) => (x.id === r.id ? r : x)))
+        qc.setQueryData<Report[]>([...REPORTS_KEY], (list) => list?.map((x) => (x.id === r.id ? r : x)))
       } catch {
         pending.current ??= r
         // Changes made meanwhile join this batch, so Undo still goes back to before all of them.
@@ -113,7 +114,7 @@ export function useChartEditor(id: string) {
 
   const remove = useMutation({
     mutationFn: () => chartsApi.deleteReport(id),
-    onSuccess: () => qc.setQueryData<Report[]>(['reports'], (list) => list?.filter((r) => r.id !== id)),
+    onSuccess: () => qc.setQueryData<Report[]>([...REPORTS_KEY], (list) => list?.filter((r) => r.id !== id)),
     onError: () => showToast({ message: t('common.error'), variant: 'error' }),
   })
 

@@ -154,6 +154,11 @@ const P: UserPractice[] = [
 const COLORS = ['c1', 'c2']
 
 describe('tracesFor', () => {
+  it('Panels report: no traces', () => {
+    const report: Report = { id: 'p', name: 'Sleep', definition: { Panels: { version: 1, template: null, required: [], panels: [] } } }
+    expect(tracesFor(report, P, COLORS)).toEqual([])
+  })
+
   it('All practices: every active practice as a regular line, no averages, each type on its own axis', () => {
     expect(tracesFor(null, P, COLORS)).toEqual([
       { name: 'Japa', dataType: 'Duration', type_: { Line: { style: 'Regular' } }, color: 'c1', showAverage: false, yAxis: 'Y' },

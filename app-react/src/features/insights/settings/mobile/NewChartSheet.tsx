@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { chartsApi } from '../../../../api/charts'
+import { REPORTS_KEY } from '../../useReports'
 import type { Report, ReportDefinition } from '../../../../api/charts'
 import { useToast } from '../../../../hooks/useToast'
 import { BottomSheet } from '../../../../ui/primitives/BottomSheet'
@@ -48,7 +49,7 @@ export function NewChartSheet({ onClose }: { onClose: () => void }) {
       return { id, name: name.trim(), definition } satisfies Report
     },
     onSuccess: (r) => {
-      qc.setQueryData<Report[]>(['reports'], (list) => [...(list ?? []), r])
+      qc.setQueryData<Report[]>([...REPORTS_KEY], (list) => [...(list ?? []), r])
       // Back on Insights, the new chart is the one shown.
       writeStored(r.id)
       navigate(`/settings/charts/${r.id}`, { state: { pick: kind === 'Graph' } })

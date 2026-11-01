@@ -6,6 +6,7 @@ import { chartsApi } from '../../api/charts'
 import type { GraphReport, Report, ReportDuration } from '../../api/charts'
 import { practicesApi } from '../../api/practices'
 import { buildChartData, tracesFor } from './chartLogic'
+import { isPanels, REPORTS_KEY, useReportSort } from './useReports'
 import { addDays, fromDateStr, toDateStr } from '../today/date'
 import { averageLines, headline } from './insightsLogic'
 
@@ -35,6 +36,7 @@ export function writeStored(id: string) {
 export function useInsights(logDate?: Date, withTables = false, sharedUser?: string) {
   const { i18n } = useTranslation()
   const locale = i18n.language || 'en'
+  const sortReports = useReportSort()
   const src = sharedUser
     ? {
       key: ['shared', sharedUser],
@@ -43,7 +45,7 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
       data: (cob: string, d: ReportDuration) => chartsApi.getSharedReportData(sharedUser, cob, d),
     }
     : { key: [], reports: chartsApi.getReports, practices: practicesApi.getUserPractices, data: chartsApi.getReportData }
-  const reportsQ = useQuery({ queryKey: [...src.key, 'reports'], queryFn: src.reports, retry: !sharedUser })
+  const reportsQ = useQuery({ queryKey: sharedUser ? [...src.key, 'reports', 'panels'] : [...REPORTS_KEY], queryFn: src.reports, select: sortReports, retry: !sharedUser })
   const practicesQ = useQuery({ queryKey: [...src.key, 'practices'], queryFn: src.practices })
   const [stored, setStored] = useState(sharedUser ? '' : readStored)
   const [range, setRange] = useState<Range>('30d')
@@ -51,7 +53,7 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
   // Legend toggles, per report: switching reports starts with every series shown.
   const [hiddenFor, setHiddenFor] = useState<{ id: string; set: Set<number> }>({ id: '', set: new Set() })
 
-  const reports = (reportsQ.data ?? []).filter((r) => withTables || isGraph(r))
+  const reports = (reportsQ.data ?? []).filter((r) => withTables || !('Grid' in r.definition))
   // An unknown or deleted id (or a Grid one, without tables) simply isn't found, so the screen shows All practices.
   const report = reports.find((r) => r.id === stored) ?? (sharedUser ? reports[0] ?? null : null)
   const duration = DURATION[range]
@@ -92,6 +94,8 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     entries,
     rows: buildChartData(entries, traces, locale),
     barLayout,
+    previousEntries: previous.data,
+    panels: report && isPanels(report) ? report.definition.Panels : null,
     /** A table's Group columns setting (on unless the report says otherwise). */
     grouped: !(report && 'Grid' in report.definition && report.definition.Grid.group_columns === false),
     headline: headline(traces, barLayout, entries, previous.data, todayCob),
