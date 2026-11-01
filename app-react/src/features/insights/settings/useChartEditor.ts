@@ -84,8 +84,9 @@ export function useChartEditor(id: string) {
   }
 
   function update(change: (r: Report) => Report, message = t('common.saved'), undoable = true) {
-    if (!latest.current) return
-    const prev = latest.current
+    // A flush from a form that outlived a route change must edit its own report, not the one now showing.
+    const prev = latest.current?.id === id ? latest.current : report
+    if (!prev) return
     const next = change(prev)
     batch.current = { prev: batch.current?.prev ?? prev, message, undoable: undoable && (batch.current?.undoable ?? true) }
     latest.current = next
