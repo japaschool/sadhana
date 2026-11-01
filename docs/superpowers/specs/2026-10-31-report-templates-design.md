@@ -1,6 +1,6 @@
 # Report templates — design
 
-No mockups yet. New screens are derived from the Insights and Today design language, and this needs a mockup pass in the "Sadhana Redesign" project before the UI is built. *(my call)* Visual inspiration: Garmin Connect's Sleep Consistency and Sleep Duration charts.
+Mockups (claude.ai/design project "Sadhana Redesign"): [`Report Templates.dc.html`](https://claude.ai/design/p/cccefa4d-5554-41b1-be47-2704b1233b68?file=Report+Templates.dc.html), frames `15m*` (mobile), `15t*` (tablet) and `15d*` (desktop). Where this spec and the mock differ on layout or visuals, the mock wins. Visual inspiration: Garmin Connect's Sleep Consistency and Sleep Duration charts.
 
 ## Intent
 
@@ -42,11 +42,12 @@ Insights also makes people assemble every chart from parts. Most people want the
 
 ### Creating and editing
 
-- The New chart sheet offers Sleep, Japa and Duration alongside the existing Graph and Table.
-- Each template opens a short form: name, practices and targets. Saved reports appear with all others in the Insights report menu and Settings' chart list.
-- Both lists sort **alphabetically by name, whatever the report type**, using the current language's collation. This reorders existing reports too. All practices stays first in the Insights menu, as it isn't a report. On shared pages, the default report becomes the first alphabetically.
-- Editing a template report reopens its form. It can be deleted like any report.
-- Each practice picker lists only compatible active practices (types below). `get_report_data` returns active practices only, so a hidden one would have no values.
+- The New chart sheet opens on Sleep, Japa and Duration, each with one line of description. Graph and Table sit below under "Build your own" and keep their name-and-Create step (15m1).
+- Each template opens a short form: name, practices and targets. A new report needs **Create**, so half-filled reports never appear in Insights. Saved reports appear with all others in the Insights report menu and Settings' chart list.
+- Both lists sort **alphabetically by name, whatever the report type**, using the current language's collation. A muted type glyph before each name helps scanning, and All practices sits above a divider (15m17). This reorders existing reports too. All practices stays first in the Insights menu, as it isn't a report. On shared pages, the default report becomes the first alphabetically.
+- Editing a template report reopens its form, and changes save as you go, like chart settings (15d13). Tablet and desktop show a live preview beside the form. A report can be deleted like any other.
+- Forms suggest the likely practice with a **Use** button, as yatra links do, but never fill it in (15m2).
+- Each practice picker lists only compatible active practices (types below), and say why the others can't be used (15m3). `get_report_data` returns active practices only, so a hidden one would have no values.
 
 ### Sleep template
 
@@ -69,13 +70,22 @@ This replaces the 15:00/12:00 majority guess in `computeTimeOverflow` for these 
 - The first night in the window needs the bedtime from the day before it. Use the window's `previous` data where there is one. With All data, the earliest night has no bar.
 
 Report contents:
-1. **Summary figures:** average sleep, average bedtime, average wake-up, and nights in range when a target is set. Averages use complete nights only. The range includes today, because last night is finished once the wake-up is logged.
-2. **Sleep times chart:** one range bar per night from `start` to `end`. The Y axis runs top to bottom in time order, as in Garmin's chart, fitted to the data. Solid line for average bedtime, dashed for average wake-up.
+1. **Summary figures:** average sleep (`total`, naps included) with the night-only average under it, average bedtime, average wake-up, and nights in range, counted against logged nights (22 of 29, not of 30). With no limits set, that figure becomes **Nights logged** (15m9). Averages use complete nights only. The range includes today, because last night is finished once the wake-up is logged.
+2. **Sleep times chart:** one range bar per night from `start` to `end`. The Y axis runs top to bottom in time order, fitted to whole hours around the data (15m6). Missing nights are gaps. Solid line for average bedtime, dashed for average wake-up.
 3. **Duration chart:** bars from zero showing `duration`, with `nap` stacked on top when there's a Nap practice, and the minimum and maximum as reference lines.
 
-Bars in both charts are coloured by `total`, and "in range" is inclusive:
-- **In range** (or no target set): the theme's positive colour.
-- **Below minimum** and **above maximum**: two further distinct colours. A single target is allowed: only that side can miss.
+Bars in both charts show a state based on `total`, and "in range" is inclusive. States differ by texture as well as colour, so they read apart in greyscale and with colour blindness:
+
+| State | Texture | Light | Dark |
+|---|---|---|---|
+| In range, or met | Solid | `#B9790F` (new) | `#F0B54A` |
+| Under minimum, or missed | Outlined, pale fill | `#C2412D`, fill at 13% | `#F08A74`, fill at 16% |
+| Over maximum | Striped | `#5F4FA3`, stripes `#A99BD6` | `#9C8CE6` (new), stripes `#3A3448` |
+| No target | Solid, neutral | `#8A8174` | `#8F88A0` |
+
+Clearing a limit removes that state, and the legend follows (15m10). With both cleared, bars are neutral (15m9).
+
+At 1y, bars are about 1px wide and textures can't render, so states use solid colours that also differ in lightness. See 15m8 for values. The hours chart still shows the state by bar height against the limit lines.
 
 Tooltip: date, bedtime → wake-up, night duration, nap if any, total.
 
@@ -87,7 +97,7 @@ Japa quality accepts an Int practice, or a Text practice whose `dropdown_variant
 
 Report contents:
 1. **Summary figures:** average rounds, days on target, plus average morning rounds, average quality and attunement days when those inputs are set.
-2. **Rounds chart:** total-rounds bars coloured by target met or missed, a target line, morning rounds overlaid, and attunement as a marker above the bars on days it's true.
+2. **Rounds chart:** total-rounds bars showing the met and missed states, a target line, morning rounds overlaid, and attunement as a marker above the bars on days it's true.
 3. **Quality chart**, only with a quality input: a line on its own axis.
 
 ### Duration template
@@ -96,13 +106,13 @@ Inputs: **Practices** (one or more Duration, required), **Daily goal** (optional
 
 Report contents:
 1. **Summary figures:** average per day, and days on goal when set.
-2. **Daily totals chart:** bars stacked by practice, with a goal line when set. Single-practice reports colour bars by goal met or missed. With several practices, series colours identify the practice, so only the line shows the goal. *(my call: the user asked for daily totals; multiple practices is an extension)*
+2. **Daily totals chart:** bars stacked by practice, with a goal line when set. Single-practice reports show the met and missed states. With several practices, series colours identify the practice, so only the line shows the goal. *(my call: the user asked for daily totals; multiple practices is an extension)*
 
 Japa and Duration averages match existing Insights: today is excluded and a missing day counts as 0. Days on target count past days only.
 
 ### Missing practices
 
-A report can reference a practice that was later deleted or hidden from Today. Hidden practices return no report data, so both cases are handled alike. The report still opens with whatever it can draw; if a required practice is missing, it shows a message with a link to the form. An optional missing practice is left out. It must never crash, or show ids as names.
+A report can reference a practice that was later deleted or hidden from Today. Hidden practices return no report data, so both cases are handled alike. The report still opens with whatever it can draw; if a required practice is missing, it shows a message with a link to the form. An optional missing practice is left out, along with its figure and chart, with no message (15m19, 15t7, 15t10). It must never crash, or show ids as names.
 
 ## Report format
 
@@ -147,8 +157,9 @@ The exact JSON shape is the builder's. The requirement is that the renderer read
 
 - `api/charts.ts`: new types, and `getReports` and `getSharedReports` send `panels=true`. `tracesFor` and other code that assumes Grid or Graph must handle the third kind. Sort once, where the lists are read.
 - Pure logic in `features/insights`, tested like `chartLogic.ts`: resolving sources (note `ReportDataEntry.practice` is a practice **name**, so map id → name via practices), night calculation, target colouring and stats.
-- One renderer per panel kind, reused by the layouts. `InsightsChart` stays as it is. Reuse its tick, tooltip and formatting helpers rather than copying them. Recharts draws a Range with a `<Bar>` whose value is `[low, high]`, and per-bar colours with `<Cell>`.
-- Colour states are new theme tokens with light and dark values in `src/ui/theme.css`.
+- One renderer per panel kind, reused by the layouts. `InsightsChart` stays as it is. Reuse its tick, tooltip and formatting helpers rather than copying them. Recharts draws a Range with a `<Bar>` whose value is `[low, high]`, and per-bar states with `<Cell>`. Outlines use `stroke`, and stripes an SVG `<pattern>` fill.
+- State colours are theme tokens with the light and dark values above, in `src/ui/theme.css`.
+- Russian and Ukrainian spell units out, so figure tiles keep values on one line and let labels wrap. Range chips and legends wrap rather than truncate (15m22–15m27).
 - Existing Insights controls (range, end date, desktop log date, shared pages) apply to template reports. Legend toggles and CSV export are the builder's call: keep them where they work without a special case, otherwise hide them.
 
 ## Phases
@@ -160,7 +171,7 @@ The exact JSON shape is the builder's. The requirement is that the renderer read
 ## Testing
 
 - Sleep logic: 23:00→07:00, 01:00→07:00, a missing time on either side, nap with and without a night, `duration = 0`, the window's first night, average bedtime across midnight (23:30 and 00:30 average to 00:00), and in-range boundaries.
-- Colouring with min only, max only, both, and neither.
+- States with min only, max only, both, and neither.
 - Text-to-number conversion for japa quality, and non-numeric values.
 - Deleted required and optional practices.
 - Server (`make test`): CRUD, ownership, each validation, a type-changing `PUT` rejected, and both `GET`s returning panels reports only with `panels=true`.
