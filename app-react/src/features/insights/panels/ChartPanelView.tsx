@@ -75,10 +75,10 @@ function PanelLegend({ panel, first }: { panel: ChartPanel; first: boolean }) {
     }
   }
   panel.lines.forEach((l, i) => {
-    if (l.pick === null) return
+    if (l.pick === null || !l.label) return
     items.push({
       key: `line${i}`, glyph: <Line dashed={l.dashed} />,
-      text: t(l.pick === 'From' ? 'reportPanels.avgBedtime' : 'reportPanels.avgWake'),
+      text: labelText(l.label, t),
     })
   })
   if (panel.bar_layout === 'Stacked') {
@@ -126,6 +126,9 @@ export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, 
   // Tall enough for a label an hour, otherwise every other hour still gets its grid line.
   const every = hours > 6 && height < 240 ? 2 : 1
   const hourTicks = Array.from({ length: hours + 1 }, (_, k) => lo + k * 60)
+  const maxHour = Math.ceil(Math.max(0, ...values) / 60)
+  const hourStep = Math.ceil(maxHour / 6) || 1
+  const durationTicks = Array.from({ length: Math.floor(maxHour / hourStep) + 1 }, (_, k) => k * hourStep * 60)
   const yTick = clock
     ? (v: number) => ((v - lo) / 60 % every === 0 ? clockText(v) : '')
     : panel.format === 'Duration' ? (v: number) => formatDurationTick(v, tickUnits) : (v: number) => String(v)
@@ -159,7 +162,7 @@ export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, 
             <XAxis dataKey="cob" ticks={xTicks} interval={0} tickFormatter={(c: string) => formatTick(c, locale, multiYear)} {...AXIS} />
             {overlayAxes.map((id) => <XAxis key={id} xAxisId={id} dataKey="cob" hide />)}
             <YAxis reversed={panel.reversed} width={44} domain={clock ? [lo, hi] : [0, 'auto']} tickFormatter={yTick}
-              {...(clock ? { ticks: hourTicks, interval: 0 as const } : {})} {...AXIS} />
+              {...(clock ? { ticks: hourTicks, interval: 0 as const } : panel.format === 'Duration' ? { ticks: durationTicks, interval: 0 as const } : {})} {...AXIS} />
             {panel.series.map((_, i) => {
               const bar = placement[i]
               if (!bar) return null
