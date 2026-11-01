@@ -288,6 +288,7 @@ export function TemplateForm({ value, onChange, practices, name, flagMissing }: 
                 <span className="text-xs font-bold whitespace-nowrap text-ui-accent">{t('templateForm.required')}</span>
               </div>
               <LimitField id="japa-target" label="" placeholder="" suffix={t('templateForm.targetSuffix')} value={value.target} onChange={(target) => onChange({ ...value, target })} />
+              {flagMissing && value.target === null && <p role="alert" className="text-[13px] font-semibold text-ui-danger">{t('templateForm.targetMissing')}</p>}
               <p className={HINT}>{t('templateForm.targetHint')}</p>
             </div>
           </section>

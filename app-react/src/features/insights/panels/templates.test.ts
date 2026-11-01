@@ -225,3 +225,14 @@ describe('durationPanels', () => {
     expect(DURATION_SLOT).toMatchObject({ many: true, types: ['Duration'], required: true })
   })
 })
+
+describe('suggestions for Japa', () => {
+  const [total, , , attunement] = JAPA_SLOTS
+  it('an earlier hint beats list order', () => {
+    const ps = [p('q', 'Japa quality', 'Int'), p('m', 'Rounds in the morning', 'Int'), p('t', 'Total rounds', 'Int')]
+    expect(suggestFor(total, ps, new Set())?.id).toBe('t')
+  })
+  it('knows attunement by its other name', () => {
+    expect(suggestFor(attunement, [p('a', 'Japa affirmation', 'Bool')], new Set())?.id).toBe('a')
+  })
+})

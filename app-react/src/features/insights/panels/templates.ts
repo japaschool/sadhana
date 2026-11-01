@@ -159,10 +159,10 @@ export const SLEEP_SLOTS: Slot[] = [
 export const SLEEP_DEFAULTS = { min: 360, max: 540 }
 
 export const JAPA_SLOTS: Slot[] = [
-  { key: 'total', types: ['Int'], required: true, hints: ['japa', 'round', 'джап', 'круг', 'кол'] },
+  { key: 'total', types: ['Int'], required: true, hints: ['total', 'всего', 'усього', 'round', 'круг', 'кол', 'japa', 'джап'] },
   { key: 'morning', types: ['Int'], required: false, hints: ['morning', 'утр', 'ранк', 'ранн'] },
   { key: 'quality', types: ['Int', 'Text'], required: false, hints: ['quality', 'качеств', 'якіст'] },
-  { key: 'attunement', types: ['Bool'], required: false, hints: ['attun', 'настр', 'налаш'] },
+  { key: 'attunement', types: ['Bool'], required: false, hints: ['attun', 'affirm', 'настр', 'налаш'] },
 ]
 
 export const DURATION_SLOT: Slot = { key: 'practices', types: ['Duration'], required: true, hints: [], many: true }
@@ -179,10 +179,14 @@ const typeFits = (slot: Slot, p: UserPractice) => slot.types.includes(p.data_typ
 
 export const fits = (slot: Slot, p: UserPractice) => p.is_active && typeFits(slot, p)
 
-/** A hint only: the first active, same-type, untaken practice whose name contains one of the slot's hints. */
+/** A hint only: an active, same-type, untaken practice whose name contains the earliest possible of the slot's hints. */
 export function suggestFor(slot: Slot, practices: UserPractice[], taken: Set<string>): UserPractice | null {
-  return practices.find((p) => fits(slot, p) && !taken.has(p.id)
-    && slot.hints.some((h) => p.practice.toLowerCase().includes(h))) ?? null
+  const open = practices.filter((p) => fits(slot, p) && !taken.has(p.id))
+  for (const h of slot.hints) {
+    const hit = open.find((p) => p.practice.toLowerCase().includes(h))
+    if (hit) return hit
+  }
+  return null
 }
 
 export function pickerGroups(slot: Slot, practices: UserPractice[]): { compatible: UserPractice[]; cant: { practice: UserPractice; reason: 'type' }[] } {

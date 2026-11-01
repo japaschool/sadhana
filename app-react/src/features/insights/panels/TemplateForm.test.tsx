@@ -333,6 +333,11 @@ describe('the Japa template', () => {
     expect(shown()).toMatchObject({ quality: 'dd' })
   })
 
+  it('says why a cleared target isn’t saved on a saved report', () => {
+    render(<JapaForm start={{ ...JAPA, target: null }} flagMissing />)
+    expect(screen.getByRole('alert')).toHaveTextContent('Set a target to save your changes.')
+  })
+
   it('flags a deleted total on a saved report', () => {
     render(<JapaForm start={{ ...JAPA, total: null }} flagMissing />)
     expect(screen.getByText(/deleted or hidden/)).toBeInTheDocument()

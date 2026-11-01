@@ -1028,6 +1028,7 @@
     "goal": "Goal per day",
     "noGoal": "No goal",
     "goalHint": "With one practice, bars show goal met or missed. With several, practices keep their colours and a line marks the goal.",
-    "practicesSelected": "Practices · {{count}} selected"
+    "practicesSelected": "Practices · {{count}} selected",
+    "targetMissing": "Set a target to save your changes."
   }
 }
