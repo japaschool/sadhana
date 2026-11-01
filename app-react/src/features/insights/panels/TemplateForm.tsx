@@ -7,6 +7,8 @@ import type { UserPractice } from '../../../types/api'
 import { CARD, FIELD, HINT } from '../../yatras/settings/mobile/AdminPage'
 import { TypeIcon, typeLabelKey } from '../../yatras/settings/mobile/TypeChip'
 import { useDebouncedCommit } from '../../yatras/settings/useDebouncedCommit'
+import { parseTime } from '../../today/inputFormat'
+import { typeTime } from '../../today/values'
 import { SlotPickerSheet } from './SlotPickerSheet'
 import { fits, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, suggestFor, type Slot } from './templates'
 
@@ -38,14 +40,12 @@ export function draftOf(def: PanelsReport, practices: UserPractice[]): TemplateD
   return { kind: 'Sleep', ...sleep, bedtime: usable(bedtime) ? sleep.bedtime : null, wake: usable(wake) ? sleep.wake : null }
 }
 
-/** Empty is no limit; `6` is 6:00. */
-function parseLimit(text: string): number | null | 'invalid' {
-  const s = text.trim()
-  if (!s) return null
-  const hm = /^(\d{1,2})(?::([0-5]\d))?$/.exec(s)
-  return hm ? Number(hm[1]) * 60 + Number(hm[2] ?? 0) : 'invalid'
+/** Empty is no limit; `6:` is 6:00. */
+function parseLimit(text: string): number | null {
+  const hm = parseTime(text)
+  return hm ? hm.h * 60 + hm.m : null
 }
-const limitText = (v: number | null) => (v === null ? '' : `${Math.floor(v / 60)}:${String(v % 60).padStart(2, '0')}`)
+const limitText = (v: number | null) => (v === null ? '' : `${String(Math.floor(v / 60)).padStart(2, '0')}:${String(v % 60).padStart(2, '0')}`)
 
 const GROUP = 'px-1 text-[11px] font-bold uppercase tracking-[.1em] text-ui-muted'
 
@@ -63,18 +63,17 @@ function LimitField({ id, label, placeholder, value, onChange }: {
   }
   const parsed = parseLimit(text)
   const { schedule, flush } = useDebouncedCommit(() => {
-    if (parsed !== 'invalid' && parsed !== value) onChange(parsed)
+    if (parsed !== value) onChange(parsed)
   })
-  const bad = parsed === 'invalid' && !focused
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
       <label htmlFor={id} className="text-xs leading-snug font-bold text-ui-muted">{label}</label>
       <div className="relative">
-        <input id={id} value={text} placeholder={placeholder} inputMode="numeric" autoComplete="off" aria-invalid={bad}
+        <input id={id} value={text} placeholder={placeholder} inputMode="numeric" autoComplete="off"
           className={`${FIELD} pr-11 font-ui-mono placeholder:font-[Manrope] placeholder:text-[15px] placeholder:font-semibold`}
           onFocus={() => setFocused(true)}
           onBlur={() => { setFocused(false); flush() }}
-          onChange={(e) => { setText(e.target.value); schedule() }} />
+          onChange={(e) => { setText(typeTime(e.target.value, text)); schedule() }} />
         {text && (
           <button type="button" aria-label={t('templateForm.clear', { label })} onClick={() => { setText(''); onChange(null) }}
             className="absolute inset-y-0 right-0.5 my-auto flex h-11 w-11 items-center justify-center">
@@ -82,7 +81,6 @@ function LimitField({ id, label, placeholder, value, onChange }: {
           </button>
         )}
       </div>
-      {bad && <p role="alert" className="text-xs font-semibold text-ui-danger">{t('templateForm.limitFormat')}</p>}
     </div>
   )
 }

@@ -945,7 +945,6 @@
     "addPractice": "Add a practice",
     "missing": "Its practice was deleted or hidden. Choose another to save your changes.",
     "minMax": "Minimum sleep can’t be above maximum.",
-    "limitFormat": "Enter hours as h:mm, like 6:30.",
     "onlyTime": "Time-of-day practices only",
     "onlyDuration": "Duration practices only",
     "cant_bedtime": "Can’t be a bedtime",
