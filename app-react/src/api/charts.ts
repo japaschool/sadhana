@@ -46,7 +46,7 @@ export interface Target {
   colour: boolean
   label: Label | null
 }
-export interface RefLine { of: Source; pick: End | null; dashed: boolean }
+export interface RefLine { of: Source; pick: End | null; dashed: boolean; label: Label | null }
 export interface Series {
   label: Label | null
   mark: Mark

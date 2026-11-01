@@ -146,6 +146,16 @@ describe('PanelsReportView', () => {
     expect(within(legends()[1]).getByText('Nap, stacked on top')).toBeInTheDocument()
   })
 
+  it('a line without a label has no legend row', () => {
+    const def = sleepPanels(tmpl())
+    for (const p of def.panels) if (p.kind === 'Chart') p.lines.forEach((l) => { l.label = null })
+    view({ def })
+    const key = within(legends()[0])
+    expect(key.queryByText('Average bedtime')).toBeNull()
+    expect(key.queryByText('Average wake-up')).toBeNull()
+    expect(key.getByText('Under 6 h')).toBeInTheDocument()
+  })
+
   it('a long range drops outlines and stripes for solid colours', () => {
     const { container } = view({ days: 121, def: sleepPanels(tmpl({ min: 400, max: 450 })) })
     const bars = [...container.querySelectorAll('.recharts-bar-rectangle path')]

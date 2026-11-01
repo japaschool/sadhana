@@ -28,7 +28,10 @@ describe('sleepPanels', () => {
     expect(times.series[0].source).toEqual({ Range: { from: { practice: 'bed', day_offset: -1 }, to: { practice: 'wake', day_offset: 0 } } })
     expect(times.reversed).toBe(true)
     expect(times.format).toBe('NoonClock')
-    expect(times.lines.map((l) => [l.pick, l.dashed])).toEqual([['From', false], ['To', true]])
+    expect(times.lines.map((l) => [l.pick, l.dashed, l.label])).toEqual([
+      ['From', false, { Key: 'reportPanels.avgBedtime' }],
+      ['To', true, { Key: 'reportPanels.avgWake' }],
+    ])
     expect(times.target).toMatchObject({ min: 360, max: 540, of: total, colour: true, lines: false })
   })
 

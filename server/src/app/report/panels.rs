@@ -145,6 +145,7 @@ pub struct RefLine {
     pub of: Source,
     pub pick: Option<End>,
     pub dashed: bool,
+    pub label: Option<Label>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

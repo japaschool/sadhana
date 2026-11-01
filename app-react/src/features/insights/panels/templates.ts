@@ -39,8 +39,8 @@ export function sleepPanels(t: SleepTemplate): PanelsReport {
     reversed: true,
     target: { min: t.min, max: t.max, of: total, lines: false, colour: true, label: null } satisfies Target,
     lines: [
-      { of: range, pick: 'From', dashed: false },
-      { of: range, pick: 'To', dashed: true },
+      { of: range, pick: 'From', dashed: false, label: key('avgBedtime') },
+      { of: range, pick: 'To', dashed: true, label: key('avgWake') },
     ],
   }
 
