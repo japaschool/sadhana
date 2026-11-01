@@ -172,6 +172,30 @@ describe('ChartEditorMobile', () => {
     expect(charts.createReport).toHaveBeenCalledWith('Evening', { Graph: { bar_layout: 'Grouped', traces: [] } })
   })
 
+  it('a taken name blocks Create in the sheet and says why', async () => {
+    renderAt('/charts')
+    fireEvent.click(screen.getByRole('radio', { name: /Graph/ }))
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: ' Monthly table ' } })
+    expect(await screen.findByRole('alert')).toHaveTextContent('A report with this name already exists.')
+    expect(screen.getByRole('button', { name: 'Create graph' })).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Monthly table 2' } })
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Create graph' })).toBeEnabled()
+  })
+
+  it('renaming to a taken name shows why and sends nothing; its own name is fine', async () => {
+    renderAt('/settings/charts/r1')
+    const field = await screen.findByLabelText('Name')
+    await screen.findByRole('button', { name: 'Edit Book reading' })
+    fireEvent.change(field, { target: { value: 'Monthly table' } })
+    fireEvent.blur(field)
+    expect(await screen.findByText('A report with this name already exists.')).toBeInTheDocument()
+    expect(charts.updateReport).not.toHaveBeenCalled()
+    fireEvent.change(field, { target: { value: 'Morning sadhana' } })
+    fireEvent.blur(field)
+    await waitFor(() => expect(screen.queryByText('A report with this name already exists.')).not.toBeInTheDocument())
+  })
+
   it('the new chart sheet leads with Sleep; Graph and Table keep their name-and-Create step', async () => {
     renderAt('/charts')
     expect(screen.getByText('Ready-made reports')).toBeInTheDocument()

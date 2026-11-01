@@ -17,7 +17,7 @@ import { SPINNER } from '../settings/mobile/ChartEditorMobile'
 import { ChartsColumn } from '../settings/wide/ChartEditorWide'
 import { KindGlyph } from '../ReportGlyph'
 import { writeStored } from '../useInsights'
-import { REPORTS_KEY, useReports } from '../useReports'
+import { nameTaken, REPORTS_KEY, useReports } from '../useReports'
 import { PanelsReportView } from './PanelsReportView'
 import { draftProblem, draftToDefinition, newSleepDraft, TemplateForm } from './TemplateForm'
 
@@ -52,7 +52,8 @@ function NewSleep() {
   const [name, setName] = useState(() => t('templateForm.sleepName'))
   const [draft, setDraft] = useState(newSleepDraft)
   const definition = draftToDefinition(draft)
-  const ready = !!name.trim() && !!definition
+  const taken = nameTaken(reportsQ.data ?? [], name)
+  const ready = !!name.trim() && !!definition && !taken
   const create = useMutation({
     mutationFn: async () => {
       const id = await chartsApi.createReport(name.trim(), definition!)
@@ -71,7 +72,8 @@ function NewSleep() {
   const nameCard = (
     <section className={`${CARD} flex flex-col gap-1.5 p-4`}>
       <label htmlFor="report-name" className="text-[13px] font-bold text-ui-muted">{t('chartSettings.name')}</label>
-      <input id="report-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" className={FIELD} />
+      <input id="report-name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" aria-invalid={taken} className={FIELD} />
+      {taken && <p role="alert" className="text-[13px] text-ui-danger">{t('chartSettings.nameTaken')}</p>}
     </section>
   )
   const form = practicesQ.isError ? <p role="alert" className="py-10 text-center text-sm text-ui-danger">{t('common.error')}</p>

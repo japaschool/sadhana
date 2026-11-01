@@ -153,6 +153,18 @@ describe('NewTemplateScreen', () => {
     charts.createReport.mockResolvedValue('r9')
   })
 
+  it('holds Create when the default name is taken, and says why until it changes', async () => {
+    charts.getReports.mockResolvedValue([{ id: 'r1', name: 'Sleep', definition: { Grid: { practices: [], group_columns: true } } }])
+    renderNew()
+    fireEvent.click(await screen.findByRole('button', { name: 'Use Bed time' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Use Wake-up time' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('A report with this name already exists.')
+    expect(create()).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Sleep times' } })
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(create()).toBeEnabled()
+  })
+
   it('suggests but fills nothing until Use is pressed', async () => {
     renderNew()
     expect(await screen.findByRole('button', { name: 'Use Bed time' })).toBeInTheDocument()
