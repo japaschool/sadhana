@@ -257,6 +257,13 @@ export function Preview({ ed, header = true, height = 170, picking, focus }: { e
   )
 }
 
+/** The server accepts a practice no longer yours only while the report still stores it, so a save that drops one can't be sent back. */
+function canUndo(base: PanelsReport, draft: TemplateDraft, practices: UserPractice[]) {
+  const was = base.template?.Sleep
+  const kept = [draft.bedtime, draft.wake, draft.nap]
+  return [was?.bedtime, was?.wake, was?.nap].every((id) => !id || kept.includes(id) || practices.some((p) => p.id === id))
+}
+
 /**
  * A template report's form. A change that makes a report saves at once; one that doesn't (min above max, a required
  * practice still missing) stays here, on top of the report it was made from, until it does. Opening saves nothing.
@@ -273,7 +280,7 @@ export function TemplateSections({ ed }: { ed: Editor }) {
     const definition = draftToDefinition(draft)
     if (!definition) return setHeld({ base, draft })
     setHeld(null)
-    ed.update((r) => ({ ...r, definition }))
+    ed.update((r) => ({ ...r, definition }), undefined, canUndo(base, draft, ed.practices))
   }
   return <TemplateForm key={ed.report!.id} value={value} onChange={change} practices={ed.practices} flagMissing />
 }

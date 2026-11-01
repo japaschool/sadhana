@@ -300,6 +300,69 @@ describe('ChartEditorMobile, a template report', () => {
     expect(charts.updateReport).not.toHaveBeenCalled()
   })
 
+  const chooseWake = (name: RegExp) => {
+    fireEvent.click(screen.getByRole('button', { name: /^Wake-up: / }))
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Wake-up' })).getByRole('radio', { name }))
+  }
+  const saved = async () => {
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalled())
+    expect(await screen.findByText('Saved')).toBeInTheDocument()
+  }
+
+  it('replacing a deleted required practice offers no Undo: the server would refuse its id once replaced', async () => {
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([BED, OTHER, NAP])
+    renderAt('/settings/charts/s1')
+    await screen.findByText(/deleted or hidden/i)
+    chooseWake(/Evening time/)
+    await saved()
+    expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument()
+  })
+
+  it.each([
+    ['replacing', (sheet: HTMLElement) => within(sheet).getByRole('radio', { name: /^Nap/ })],
+    ['clearing', (sheet: HTMLElement) => within(sheet).getByRole('radio', { name: 'No nap' })],
+  ])('%s a deleted nap offers no Undo', async (_, option) => {
+    charts.getReports.mockResolvedValue([sleepReport({ ...SLEEP_T, nap: 'gone' })])
+    renderAt('/settings/charts/s1')
+    fireEvent.click(await screen.findByRole('button', { name: /^Nap: / }))
+    fireEvent.click(option(screen.getByRole('dialog', { name: 'Nap' })))
+    await saved()
+    expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument()
+  })
+
+  it('a change joining a failed save that dropped a deleted id offers no Undo either', async () => {
+    charts.getReports.mockResolvedValue([sleepReport({ ...SLEEP_T, nap: 'gone' })])
+    charts.updateReport.mockRejectedValueOnce(new Error('offline'))
+    renderAt('/settings/charts/s1')
+    fireEvent.click(await screen.findByRole('button', { name: /^Nap: / }))
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Nap' })).getByRole('radio', { name: 'No nap' }))
+    await screen.findByRole('alert')
+    setLimit('Maximum sleep', '8:00')
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledTimes(2))
+    expect(await screen.findByText('Saved')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument()
+  })
+
+  it.each([
+    ['hidden', { ...WAKE, is_active: false }],
+    ['retyped', { ...WAKE, data_type: 'Int' as const }],
+  ])('replacing a %s practice keeps Undo: it is still owned', async (_, wake) => {
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([BED, wake, OTHER, NAP])
+    renderAt('/settings/charts/s1')
+    await screen.findByText(/deleted or hidden/i)
+    chooseWake(/Evening time/)
+    await saved()
+    expect(await screen.findByRole('button', { name: 'Undo' })).toBeInTheDocument()
+  })
+
+  it('a limit change on a report with a deleted nap keeps Undo: the id stays stored', async () => {
+    charts.getReports.mockResolvedValue([sleepReport({ ...SLEEP_T, nap: 'gone' })])
+    renderAt('/settings/charts/s1')
+    await screen.findByLabelText('Maximum sleep')
+    setLimit('Maximum sleep', '8:00')
+    expect(await screen.findByRole('button', { name: 'Undo' })).toBeInTheDocument()
+  })
+
   it('Undo brings the old limit back into the form', async () => {
     renderAt('/settings/charts/s1')
     await screen.findByLabelText('Maximum sleep')

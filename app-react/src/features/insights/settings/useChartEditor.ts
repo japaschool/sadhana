@@ -66,7 +66,8 @@ export function useChartEditor(id: string) {
       } catch {
         pending.current ??= r
         // Changes made meanwhile join this batch, so Undo still goes back to before all of them.
-        batch.current = { ...(batch.current ?? b), prev: b.prev }
+        const later = batch.current as typeof b | null
+        batch.current = { ...(later ?? b), prev: b.prev, undoable: b.undoable && (later?.undoable ?? true) }
         sending.current = false
         setFailed(true)
         return
@@ -86,7 +87,7 @@ export function useChartEditor(id: string) {
     if (!latest.current) return
     const prev = latest.current
     const next = change(prev)
-    batch.current = { prev: batch.current?.prev ?? prev, message, undoable }
+    batch.current = { prev: batch.current?.prev ?? prev, message, undoable: undoable && (batch.current?.undoable ?? true) }
     latest.current = next
     setDraft(next)
     pending.current = next
