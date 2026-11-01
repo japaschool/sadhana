@@ -28,6 +28,7 @@ pub struct Required {
 #[serde(deny_unknown_fields)]
 pub enum Template {
     Sleep(SleepTemplate),
+    Japa(JapaTemplate),
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -38,6 +39,16 @@ pub struct SleepTemplate {
     pub nap: Option<Uuid>,
     pub min: Option<i32>,
     pub max: Option<i32>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct JapaTemplate {
+    pub total: Uuid,
+    pub target: i32,
+    pub morning: Option<Uuid>,
+    pub quality: Option<Uuid>,
+    pub attunement: Option<Uuid>,
 }
 
 /// Key: translated at display, so shared pages follow the viewer's language. Text: a user's own words.
@@ -290,10 +301,18 @@ impl PanelsReport {
 
     fn walk(&self, out: &mut HashSet<Uuid>) -> Result<(), AppError> {
         out.extend(self.required.iter().map(|r| r.practice));
-        if let Some(Template::Sleep(s)) = &self.template {
-            check_bounds(s.min, s.max)?;
-            out.extend([s.bedtime, s.wake]);
-            out.extend(s.nap);
+        match &self.template {
+            Some(Template::Sleep(s)) => {
+                check_bounds(s.min, s.max)?;
+                out.extend([s.bedtime, s.wake]);
+                out.extend(s.nap);
+            }
+            Some(Template::Japa(j)) => {
+                check_bounds(Some(j.target), None)?;
+                out.insert(j.total);
+                out.extend([j.morning, j.quality, j.attunement].into_iter().flatten());
+            }
+            None => {}
         }
         for panel in &self.panels {
             match panel {

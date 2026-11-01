@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { sleepPanels } from './panels/templates'
+import { japaPanels, sleepPanels } from './panels/templates'
 
 type Dict = { insights?: Record<string, string>; reportPanels?: Record<string, string>; templateForm?: Record<string, string> }
 const files = import.meta.glob<Dict>('../../../public/locales/*/translation.json', { eager: true, import: 'default' })
@@ -36,6 +36,7 @@ describe('reportPanels.* translations', () => {
     const t = { bedtime: 'a', wake: 'b', min: 1, max: 2 }
     walk(sleepPanels({ ...t, nap: 'c' }))
     walk(sleepPanels({ ...t, nap: null, min: null, max: null }))
+    walk(japaPanels({ total: 'a', target: 16, morning: 'b', quality: 'c', attunement: 'd' }))
     expect(keys.size).toBeGreaterThan(5)
     for (const [path, dict] of Object.entries(files)) {
       for (const k of keys) {

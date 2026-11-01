@@ -223,6 +223,11 @@ const setLimit = (label: string, value: string) => {
   fireEvent.blur(el)
 }
 
+it('the new chart sheet offers Japa', () => {
+  render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><NewChartSheet onClose={() => {}} /></MemoryRouter></QueryClientProvider>)
+  expect(screen.getByRole('link', { name: /Japa/ })).toHaveAttribute('href', '/settings/charts/new/japa')
+})
+
 it('choosing Sleep closes the sheet, which can already be on the form’s page (the wide charts column)', () => {
   const onClose = vi.fn()
   render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><NewChartSheet onClose={onClose} /></MemoryRouter></QueryClientProvider>)

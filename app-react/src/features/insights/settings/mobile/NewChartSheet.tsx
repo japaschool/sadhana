@@ -14,6 +14,8 @@ import { writeStored } from '../../useInsights'
 
 type Kind = 'Graph' | 'Grid'
 
+const TEMPLATES = ['sleep', 'japa'] as const
+
 const GROUP = 'px-1 text-[11px] font-bold uppercase tracking-[.1em] text-ui-muted'
 
 /**
@@ -63,16 +65,19 @@ export function NewChartSheet({ onClose }: { onClose: () => void }) {
       <div className="flex flex-col gap-2">
         <h3 className={GROUP}>{t('chartSettings.readyMade')}</h3>
         <div className={`${CARD} overflow-hidden`}>
-          <Link to="/settings/charts/new/sleep" onClick={onClose} className="flex min-h-[72px] items-center gap-3 py-2.5 pr-3.5 pl-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ui-accent-soft">
-              <span className="flex scale-150"><KindGlyph kind="template" className="text-ui-accent" /></span>
-            </span>
-            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span className="text-base font-extrabold text-ui-ink">{t('chartSettings.sleep')}</span>
-              <span className="text-[13px] leading-snug text-ui-muted">{t('chartSettings.sleepDesc')}</span>
-            </span>
-            <span aria-hidden className="text-lg text-ui-faint2">›</span>
-          </Link>
+          {TEMPLATES.map((k, i) => (
+            <Link key={k} to={`/settings/charts/new/${k}`} onClick={onClose}
+              className={`flex min-h-[72px] items-center gap-3 py-2.5 pr-3.5 pl-3 ${i ? 'border-t border-ui-hairline' : ''}`}>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ui-accent-soft">
+                <span className="flex scale-150"><KindGlyph kind={k} className="text-ui-accent" /></span>
+              </span>
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="text-base font-extrabold text-ui-ink">{t(`chartSettings.${k}`)}</span>
+                <span className="text-[13px] leading-snug text-ui-muted">{t(`chartSettings.${k}Desc`)}</span>
+              </span>
+              <span aria-hidden className="text-lg text-ui-faint2">›</span>
+            </Link>
+          ))}
         </div>
         <p className={`${HINT} px-1`}>{t('chartSettings.readyMadeHint')}</p>
       </div>

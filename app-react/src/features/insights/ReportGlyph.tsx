@@ -1,9 +1,10 @@
 import type { Report } from '../../api/charts'
+import { templateSlug } from './panels/templates'
 
 const BOX = 'inline-flex shrink-0'
 
-/** Bars for a graph, cells for a table, staggered bars for a template. Colour comes from `className`. */
-export function KindGlyph({ kind, className = 'text-ui-faint' }: { kind: 'graph' | 'table' | 'template'; className?: string }) {
+/** Bars for a graph, cells for a table, staggered bars for sleep, a ring of beads for japa. Colour comes from `className`. */
+export function KindGlyph({ kind, className = 'text-ui-faint' }: { kind: 'graph' | 'table' | 'sleep' | 'japa'; className?: string }) {
   if (kind === 'graph') {
     return (
       <span aria-hidden data-glyph={kind} className={`${BOX} ${className} h-3 w-3.5 items-end gap-0.5`}>
@@ -11,7 +12,14 @@ export function KindGlyph({ kind, className = 'text-ui-faint' }: { kind: 'graph'
       </span>
     )
   }
-  if (kind === 'template') {
+  if (kind === 'japa') {
+    return (
+      <span aria-hidden data-glyph={kind} className={`${BOX} ${className} h-3 w-3.5 items-center justify-center`}>
+        <span className="box-border h-3 w-3 rounded-full border-[2.5px] border-dotted border-current" />
+      </span>
+    )
+  }
+  if (kind === 'sleep') {
     return (
       <span aria-hidden data-glyph={kind} className={`${BOX} ${className} h-3 w-3.5 items-start gap-0.5`}>
         {[[1, 8], [3, 8], [0, 10]].map(([m, h], i) => (
@@ -32,5 +40,5 @@ export function ReportGlyph({ report }: { report: Report | null }) {
   // All practices is a table of every practice (15m17).
   if (report === null) return <KindGlyph kind="table" />
   const d = report.definition
-  return <KindGlyph kind={'Graph' in d ? 'graph' : 'Panels' in d ? 'template' : 'table'} />
+  return <KindGlyph kind={'Graph' in d ? 'graph' : 'Panels' in d ? templateSlug(d.Panels) : 'table'} />
 }

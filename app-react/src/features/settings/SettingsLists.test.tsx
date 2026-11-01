@@ -53,7 +53,7 @@ describe('Settings lists', () => {
     expect(grid.firstElementChild).not.toHaveClass('inline-flex')
     expect(within(grid).getByText('Table')).toBeInTheDocument()
     const tpl = screen.getByRole('link', { name: /Sleep/ })
-    expect(tpl.firstElementChild).toHaveAttribute('data-glyph', 'template')
+    expect(tpl.firstElementChild).toHaveAttribute('data-glyph', 'sleep')
     expect(within(tpl).getByText('Template')).toBeInTheDocument()
   })
 

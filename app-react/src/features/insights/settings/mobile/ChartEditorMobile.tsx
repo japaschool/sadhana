@@ -24,6 +24,7 @@ import { cellText, formatDay } from '../../insightsLogic'
 import { InsightsChart } from '../../mobile/InsightsChart'
 import { PanelsReportView } from '../../panels/PanelsReportView'
 import { draftOf, draftToDefinition, TemplateForm, type TemplateDraft } from '../../panels/TemplateForm'
+import { templateSlug } from '../../panels/templates'
 import { KindGlyph } from '../../ReportGlyph'
 import { useChartEditor, type Series } from '../useChartEditor'
 import { axisName, kindName, LegendMark, onAxis, SaveDot, SeriesTile, StyleIcon, styleOf } from './parts'
@@ -166,9 +167,9 @@ export function NameCard({ ed }: { ed: Editor }) {
         <span className="text-[13px] font-bold text-ui-muted">{t('chartSettings.type')}</span>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-ui-chip py-1 pr-2.5 pl-2 text-xs font-bold text-ui-ink2">
           {ed.graph ? <StyleIcon style="Bar" className="h-3.5 w-3.5" />
-            : ed.panels ? <KindGlyph kind="template" className="" />
+            : ed.panels ? <KindGlyph kind={templateSlug(ed.panels)} className="" />
             : <span aria-hidden className="text-[13px] leading-none">▦</span>}
-          {t(ed.graph ? 'chartSettings.graph' : ed.panels ? 'chartSettings.sleep' : 'chartSettings.table')}
+          {t(ed.graph ? 'chartSettings.graph' : ed.panels ? `chartSettings.${templateSlug(ed.panels)}` : 'chartSettings.table')}
         </span>
         <span className={HINT}>{t('chartSettings.typeSet')}</span>
       </div>
@@ -201,7 +202,7 @@ export function DeleteChartSheet({ ed, onClose }: { ed: Editor; onClose: () => v
 
 export const subtitle = (ed: Editor, t: TFunction) => ed.graph
   ? ed.graph.traces.length ? t('chartSettings.graphSeries', { count: ed.graph.traces.length }) : t('chartSettings.graphEmpty')
-  : ed.panels ? t('chartSettings.sleepSubtitle')
+  : ed.panels ? t(`chartSettings.${templateSlug(ed.panels)}Subtitle`)
   : t('chartSettings.tableColumns', { count: ed.traces.length })
 
 function Placeholder({ text, sub, busy }: { text: string; sub?: string; busy?: boolean }) {
@@ -260,9 +261,9 @@ export function Preview({ ed, header = true, height = 170, picking, focus }: { e
 
 /** The server accepts a practice no longer yours only while the report still stores it, so a save that drops one can't be sent back. */
 function canUndo(base: PanelsReport, draft: TemplateDraft, practices: UserPractice[]) {
-  const was = base.template?.Sleep
-  const kept = [draft.bedtime, draft.wake, draft.nap]
-  return [was?.bedtime, was?.wake, was?.nap].every((id) => !id || kept.includes(id) || practices.some((p) => p.id === id))
+  const was = Object.values(Object.values(base.template ?? {})[0] ?? {}).flat()
+  const kept = Object.values(draft).flat()
+  return was.every((id) => typeof id !== 'string' || kept.includes(id) || practices.some((p) => p.id === id))
 }
 
 /**

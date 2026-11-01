@@ -15,7 +15,7 @@ import { InsightsTabletScreen } from '../tablet/InsightsTablet'
 import { SharedDesktop, SharedMobile, SharedTablet } from '../../shared/SharedReports'
 import { PanelsReportView } from './PanelsReportView'
 import { labelText } from './panelLogic'
-import { sleepPanels } from './templates'
+import { japaPanels, sleepPanels } from './templates'
 
 // Recharts measures its container, which jsdom can't: give it a fixed size.
 vi.mock('recharts', async (importOriginal) => ({
@@ -254,6 +254,58 @@ describe('PanelsReportView', () => {
     expect(labelText({ Key: 'reportPanels.nap' }, t)).toBe('Nap')
     expect(labelText({ Text: 'Mine' }, t)).toBe('Mine')
     expect(labelText(null, t, 'Total')).toBe('Total')
+  })
+})
+
+describe('a Japa report', () => {
+  afterEach(cleanup)
+  const ROUNDS = P('r', 'Japa rounds', 'Int')
+  const MORNING = P('m', 'Morning rounds', 'Int')
+  const QUALITY = P('q', 'Quality', 'Text')
+  const ATT = P('a', 'Attunement', 'Bool')
+  const days = Array.from({ length: 7 }, (_, i) => dayAt(TODAY, i - 6))
+  const entries = days.flatMap((d, i) => [
+    e(d, ROUNDS.practice, { Int: i % 2 ? 16 : 8 }), e(d, MORNING.practice, { Int: 4 }),
+    e(d, QUALITY.practice, { Text: String(i) }), e(d, ATT.practice, { Bool: i === 2 }),
+  ])
+  const show = (def: PanelsReport, practices = [ROUNDS, MORNING, QUALITY, ATT]) => render(
+    <MemoryRouter>
+      <PanelsReportView report={report(def)} definition={def} entries={entries} previous={undefined} practices={practices} todayCob={TODAY} chartHeight={300} formLink="/f" />
+    </MemoryRouter>,
+  )
+  const full = japaPanels({ total: 'r', target: 16, morning: 'm', quality: 'q', attunement: 'a' })
+
+  it('names the states, extras and target in the legend', () => {
+    show(full)
+    const legend = screen.getByRole('list', { name: 'Key' })
+    expect(within(legend).getAllByRole('listitem').map((x) => x.textContent)).toEqual(['On target', 'Missed', 'Morning rounds', 'Attunement done', 'Target 16'])
+  })
+
+  it('states come from the target, and the morning bars stay out of them', () => {
+    const { container } = show(full)
+    expect(container.querySelectorAll('.recharts-bar-rectangle [fill="var(--ui-state-under-fill)"]').length).toBeGreaterThan(0)
+    expect(container.querySelectorAll('rect[fill="var(--ui-ink)"]')).toHaveLength(7)
+  })
+
+  it('draws one attunement dot, above its bar', () => {
+    const { container } = show(full)
+    expect(container.querySelectorAll('circle[data-mark="dot"]')).toHaveLength(1)
+  })
+
+  it('draws quality as a line in its own card', () => {
+    const { container } = show(full)
+    expect(screen.getByRole('heading', { name: 'Japa quality' })).toBeInTheDocument()
+    expect(container.querySelectorAll('.recharts-line-curve').length).toBeGreaterThan(0)
+  })
+
+  it('with total and target only, the legend has just the states and the line', () => {
+    show(japaPanels({ total: 'r', target: 16, morning: null, quality: null, attunement: null }))
+    expect(within(screen.getByRole('list', { name: 'Key' })).getAllByRole('listitem').map((x) => x.textContent)).toEqual(['On target', 'Missed', 'Target 16'])
+  })
+
+  it('five figures sit in one row on wide layouts', () => {
+    show(full)
+    expect((screen.getByText('Average rounds').parentElement?.parentElement as HTMLElement).style.gridTemplateColumns).toBe('repeat(5, minmax(0, 1fr))')
   })
 })
 

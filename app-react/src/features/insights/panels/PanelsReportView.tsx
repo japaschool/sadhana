@@ -45,16 +45,17 @@ export function PanelsReportView({ report, definition, entries, previous, practi
   const panels = visiblePanels(definition, lookup)
   const missing = missingRequired(definition, lookup)
   const firstChart = panels.findIndex((p) => p.kind === 'Chart')
+  const labels = [...new Set(missing.map((r) => labelText(r.label, t)))].join(', ')
 
   return (
     <div aria-label={report.name} role="group" className="flex flex-col gap-3">
-      {missing.length > 0 && <MissingCard labels={missing.map((r) => labelText(r.label, t)).join(', ')} formLink={formLink} />}
+      {missing.length > 0 && <MissingCard labels={labels} formLink={formLink} />}
       {panels.map((p, i) => (p.kind === 'Stats' ? (
         <StatsPanelView key={i} stats={p.stats} days={days} lookup={lookup} todayCob={todayCob} cols={cols} />
       ) : (
-        // The clock chart leads; the rest are shorter (15m6).
+        // The first chart leads; the rest are shorter (15m6, 15m12).
         <ChartPanelView key={i} panel={p} panels={panels} days={days} lookup={lookup} todayCob={todayCob}
-          height={p.format === 'NoonClock' ? chartHeight : Math.round(chartHeight * 0.72)} first={i === firstChart} compact={cols === 2} />
+          height={i === firstChart ? chartHeight : Math.round(chartHeight * 0.72)} first={i === firstChart} compact={cols === 2} />
       )))}
     </div>
   )

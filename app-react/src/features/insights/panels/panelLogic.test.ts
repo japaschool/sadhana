@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import type { PanelsReport, ReportDataEntry, Source, Stat, Term } from '../../../api/charts'
+import type { Panel, PanelsReport, ReportDataEntry, Source, Stat, Term } from '../../../api/charts'
 import type { PracticeDataType, UserPractice } from '../../../types/api'
 import type { TFunction } from 'i18next'
-import { sleepPanels } from './templates'
+import { japaPanels, sleepPanels } from './templates'
 import {
   figureDuration, makeLookup, windowDays, resolve, stateOf, statResult, visiblePanels, missingRequired, fitHours, chartRows, tipLines,
 } from './panelLogic'
@@ -267,5 +267,92 @@ describe('figureDuration', () => {
     expect(figureDuration(364, t)).toBe('figHoursMinutes:6,04')
     expect(figureDuration(360, t)).toBe('figHours:6')
     expect(figureDuration(45, t)).toBe('figMinutes:45')
+  })
+})
+
+describe('japa values', () => {
+  const ps = [P('q', 'Quality', 'Text'), P('i', 'Rounds', 'Int'), P('b', 'Attune', 'Bool')]
+  const day = '2026-10-01'
+  const q = (v: unknown) => makeLookup([e(day, 'Quality', v)], undefined, ps).value('q', day)
+  it('reads a numeric text as a number', () => {
+    expect(q({ Text: '4' })).toBe(4)
+    expect(q('7.5')).toBe(7.5)
+  })
+  it('reads non-numeric or empty text as empty', () => {
+    expect(q({ Text: 'good' })).toBeNull()
+    expect(q({ Text: '' })).toBeNull()
+    expect(q({ Text: '  ' })).toBeNull()
+  })
+  it('passes Int through', () => {
+    expect(makeLookup([e(day, 'Rounds', { Int: 16 })], undefined, ps).value('i', day)).toBe(16)
+  })
+})
+
+describe('past-day stats', () => {
+  const ps = [P('r', 'Rounds', 'Int'), P('b', 'Attune', 'Bool')]
+  const rounds: Source = { Practice: { practice: 'r' } }
+  const attune: Source = { Practice: { practice: 'b' } }
+  const scope = { today: false, missing_zero: true }
+  const days = ['2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04']
+  const l = makeLookup([
+    e('2026-10-01', 'Rounds', { Int: 16 }), e('2026-10-02', 'Rounds', { Int: 8 }), e('2026-10-04', 'Rounds', { Int: 16 }),
+    e('2026-10-01', 'Attune', { Bool: true }), e('2026-10-02', 'Attune', { Bool: false }), e('2026-10-04', 'Attune', { Bool: true }),
+  ], undefined, ps)
+  const today = '2026-10-04'
+  it('days on target count past days only, a missing day as missed', () => {
+    expect(statResult({ OnTarget: { of: rounds, min: 16, max: null, scope } }, days, l, today)).toEqual({ value: 1, of: 3 })
+  })
+  it('today does not move the average', () => {
+    expect(statResult({ Average: { of: rounds, pick: null, format: 'Count', scope } }, days, l, today).value).toBe(8)
+  })
+  it('counts true days of the past days', () => {
+    expect(statResult({ CountTrue: { of: attune, scope } }, days, l, today)).toEqual({ value: 1, of: 3 })
+  })
+  it('nothing logged reads as no data', () => {
+    const none = makeLookup([], undefined, ps)
+    expect(statResult({ OnTarget: { of: rounds, min: 16, max: null, scope } }, days, none, today)).toEqual({ value: 0, of: 0 })
+    expect(statResult({ Average: { of: rounds, pick: null, format: 'Count', scope } }, days, none, today).value).toBeNull()
+  })
+})
+
+describe('japa missing and retyped practices', () => {
+  const ALL = [P('t', 'Rounds', 'Int'), P('m', 'Morning', 'Int'), P('q', 'Quality', 'Int'), P('a', 'Attune', 'Bool')]
+  const def = japaPanels({ total: 't', target: 16, morning: 'm', quality: 'q', attunement: 'a' })
+  const view = (ps: UserPractice[]) => visiblePanels(def, makeLookup([], undefined, ps))
+  const chartsOf = (ps: Panel[]) => ps.filter((x) => x.kind === 'Chart') as Extract<Panel, { kind: 'Chart' }>[]
+  const statLabels = (ps: Panel[]) => (ps[0] as Extract<Panel, { kind: 'Stats' }>).stats.map((s) => (s.label as { Key: string }).Key)
+
+  it('leaves out a deleted optional practice, its figure and its chart', () => {
+    const v = view(ALL.filter((p) => p.id !== 'q'))
+    expect(chartsOf(v)).toHaveLength(1)
+    expect(statLabels(v)).not.toContain('reportPanels.avgQuality')
+    expect(missingRequired(def, makeLookup([], undefined, ALL.filter((p) => p.id !== 'q')))).toEqual([])
+  })
+  it('treats attunement retyped to Int as missing', () => {
+    const v = view([...ALL.filter((p) => p.id !== 'a'), P('a', 'Attune', 'Int')])
+    expect(chartsOf(v)[0].series.map((s) => s.mark)).toEqual(['Bar', 'Bar'])
+    expect(statLabels(v)).not.toContain('reportPanels.attunementDays')
+  })
+  it('reports total rounds retyped to Time as a missing required practice', () => {
+    const ps = [...ALL.filter((p) => p.id !== 't'), P('t', 'Rounds', 'Time')]
+    expect(missingRequired(def, makeLookup([], undefined, ps)).map((r) => r.practice)).toEqual(['t'])
+  })
+})
+
+describe('tipLines on a Japa day', () => {
+  const ps = [P('t', 'Rounds', 'Int'), P('a', 'Attune', 'Bool')]
+  const def = japaPanels({ total: 't', target: 16, morning: null, quality: null, attunement: 'a' })
+  const day = '2026-10-01'
+  const l = makeLookup([e(day, 'Rounds', { Int: 18 }), e(day, 'Attune', { Bool: true })], undefined, ps)
+  const t = ((k: string) => k) as unknown as TFunction
+  const lines = tipLines(visiblePanels(def, l), day, l, t, { h: 'h', min: 'm' })
+  it('names a series without a label by its practice', () => {
+    expect(lines[0]).toMatchObject({ name: 'Rounds', text: '18', state: 'ok' })
+  })
+  it('shows a true day as a tick, not a 1', () => {
+    expect(lines[1]).toMatchObject({ name: 'reportPanels.attunementDone', text: '✓' })
+  })
+  it('adds no total row when the target judges the one series', () => {
+    expect(lines).toHaveLength(2)
   })
 })
