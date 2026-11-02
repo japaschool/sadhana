@@ -18,7 +18,9 @@ const REFRESH_WAIT = 5000
 
 const api: GuideApi = {
   getPractices: () => practicesApi.getUserPractices(),
-  createPractice: (p) => practicesApi.createUserPractice({ practice: p.name, data_type: p.data_type, dropdown_variants: p.dropdown_variants }),
+  createPractice: (p, group_id) => practicesApi.createUserPractice({ practice: p.name, data_type: p.data_type, dropdown_variants: p.dropdown_variants, group_id }),
+  getGroups: () => practicesApi.getGroups(),
+  createGroup: (name) => practicesApi.createGroup(name),
   getReports: () => chartsApi.getReports(),
   createReport: (name, d) => chartsApi.createReport(name, d),
 }
@@ -44,13 +46,12 @@ export function FinishStep({ guide }: { guide: Guide }) {
     setRows({})
     try {
       if (!plan.current || owed.current) {
-        // Read fresh: the cache is persisted and can be stale. Reports an earlier attempt planned keep their names, not "Sleep 2".
+        // Read fresh: the cache is persisted and can be stale. Names an earlier attempt planned don't count as taken, so its reports aren't "Sleep 2", and a count edited since renames its report.
         const prev = plan.current
         const [practices, reports] = await Promise.all([api.getPractices(), api.getReports()])
         guide.existed.current ??= new Set(practices.map((p) => p.practice))
         const taken = new Set(prev?.reports.map((r) => r.name))
-        const built = buildPlan(chosen, practices, reports.filter((r) => !taken.has(r.name)), (slug) => t(`templateForm.${slug}Name`))
-        for (const r of built.reports) r.name = prev?.reports.find((o) => o.kind === r.kind)?.name ?? r.name
+        const built = buildPlan(chosen, practices, reports.filter((r) => !taken.has(r.name)), (slug) => t(`templateForm.${slug}Name`), guide.existed.current)
         plan.current = built
         owed.current = false
       }
@@ -60,6 +61,7 @@ export function FinishStep({ guide }: { guide: Guide }) {
       await Promise.race([
         Promise.all([
           qc.invalidateQueries({ queryKey: ['practices'], refetchType: 'all' }),
+          qc.invalidateQueries({ queryKey: ['practice-groups'], refetchType: 'all' }),
           qc.invalidateQueries({ queryKey: REPORTS_KEY, refetchType: 'all' }),
         ]),
         new Promise((r) => setTimeout(r, REFRESH_WAIT)),
@@ -68,6 +70,7 @@ export function FinishStep({ guide }: { guide: Guide }) {
     } catch (e) {
       // Set up gates on this list: a name that failed here mustn't pass there on the old one.
       void qc.invalidateQueries({ queryKey: ['practices'], refetchType: 'all' })
+      void qc.invalidateQueries({ queryKey: ['practice-groups'], refetchType: 'all' })
       setFailure(isAxiosError(e) ? 'connection' : 'names')
       setCreating(null)
     }

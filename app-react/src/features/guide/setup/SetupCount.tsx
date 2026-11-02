@@ -4,10 +4,19 @@ import { CARD, HINT } from '../../yatras/settings/mobile/AdminPage'
 import { LimitField } from '../../insights/panels/TemplateForm'
 import { typeLabelKey } from '../../yatras/settings/mobile/TypeChip'
 import { JAPA_SLOTS } from '../../insights/panels/templates'
+import { scaleVariants } from '../guideLogic'
 import { Chip, FitList, PracticeRow, RowList, Section } from './PracticeRow'
 import type { Setup } from './useSetup'
 
 const SUGGESTIONS = [1, 2, 3, 4]
+
+function ScaleField({ label, value, onChange }: { label: string; value: number | null; onChange: (v: number | null) => void }) {
+  return (
+    <input aria-label={label} value={value ?? ''} inputMode="numeric" autoComplete="off" maxLength={3}
+      onChange={(e) => { const n = e.target.value.replace(/\D/g, ''); onChange(n ? Number(n) : null) }}
+      className="h-11 w-[52px] rounded-[10px] border border-ui-control bg-ui-surface text-center font-ui-mono text-[15px] font-semibold outline-none focus:border-2 focus:border-ui-accent-fill" />
+  )
+}
 
 /** One count, a required daily target that starts empty, and two optional extras that start unticked. */
 export function SetupCount({ setup }: { setup: Setup<'count'> }) {
@@ -20,6 +29,9 @@ export function SetupCount({ setup }: { setup: Setup<'count'> }) {
   const mine = fitting(JAPA_SLOTS[0])
   const early = t('templateForm.morning')
   const how = t('templateForm.quality')
+  // A practice of the person's own already has its options.
+  const newHow = !check(v.how ?? how, JAPA_SLOTS[2]).existing
+  const scaled = newHow && !!scaleVariants(v.scaleFrom, v.scaleTo)
   return (
     <>
       {mine.length > 0 && (
@@ -55,9 +67,23 @@ export function SetupCount({ setup }: { setup: Setup<'count'> }) {
           <PracticeRow name={v.early ?? early} label={early} type="Int" note={t('guide.setup.earlyNote')}
             tick={{ on: v.early !== null, onChange: (on) => set({ early: on ? early : null }) }}
             onRename={(e) => set({ early: e })} check={v.early === null ? undefined : check(v.early, JAPA_SLOTS[1])} fit={{ options: fitting(JAPA_SLOTS[1]), fallback: early }} />
-          <PracticeRow name={v.how ?? how} label={how} type="Text" note={t('guide.setup.howNote')}
+          <PracticeRow name={v.how ?? how} label={how} type="Text" note={scaled ? t('guide.setup.howNote', { from: v.scaleFrom, to: v.scaleTo }) : t('guide.setup.howNotePlain')}
             tick={{ on: v.how !== null, onChange: (on) => set({ how: on ? how : null }) }}
-            onRename={(h) => set({ how: h })} check={v.how === null ? undefined : check(v.how, JAPA_SLOTS[2])} fit={{ options: fitting(JAPA_SLOTS[2]), fallback: how }} />
+            onRename={(h) => set({ how: h })} check={v.how === null ? undefined : check(v.how, JAPA_SLOTS[2])} fit={{ options: fitting(JAPA_SLOTS[2]), fallback: how }}>
+            {newHow && (
+              <div className="mt-1.5 flex flex-col gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[13px] font-bold text-ui-ink2">{t('guide.setup.scaleLabel')}</span>
+                  <ScaleField label={t('guide.setup.scaleFrom')} value={v.scaleFrom} onChange={(scaleFrom) => set({ scaleFrom })} />
+                  <span className="text-[13px] text-ui-muted">{t('guide.setup.scaleSep')}</span>
+                  <ScaleField label={t('guide.setup.scaleTo')} value={v.scaleTo} onChange={(scaleTo) => set({ scaleTo })} />
+                </div>
+                {scaled
+                  ? <span className="text-xs leading-snug text-ui-muted">{t('guide.setup.scaleHint')}</span>
+                  : <span role="alert" className="text-xs leading-snug font-semibold text-ui-danger">{t('guide.setup.scaleWrong')}</span>}
+              </div>
+            )}
+          </PracticeRow>
         </RowList>
       </Section>
     </>

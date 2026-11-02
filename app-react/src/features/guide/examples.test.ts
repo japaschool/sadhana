@@ -83,7 +83,7 @@ describe('example reports with the choices applied', () => {
   })
 
   it('an empty count target draws no target line and no days-on-target figure; a typed one draws it', () => {
-    const none = { count: 'Pages', target: null, early: null, how: null }
+    const none = { count: 'Pages', target: null, early: null, how: null, scaleFrom: 1, scaleTo: 5 }
     const c = chart('count', none)
     expect(c && 'target' in c && c.target).toBeNull()
     expect(JSON.stringify(stats('count', none))).not.toContain('daysOnTarget')
@@ -93,7 +93,7 @@ describe('example reports with the choices applied', () => {
   })
 
   it('a cleared goal and unticked extras leave them out; more names than the example has still draw', () => {
-    expect(exampleReport('count', TODAY, t, { count: 'A', target: 1, early: null, how: null }).practices).toHaveLength(1)
+    expect(exampleReport('count', TODAY, t, { count: 'A', target: 1, early: null, how: null, scaleFrom: 1, scaleTo: 5 }).practices).toHaveLength(1)
     const c = chart('time', { names: ['a', 'b', 'c', 'd', 'e'], goal: null })
     expect(c && 'series' in c && c.series).toHaveLength(5)
     expect(c && 'target' in c && c.target?.min).toBeNull()

@@ -10,7 +10,7 @@ const LINK = 'flex min-h-11 items-center px-1 text-[13px] font-bold text-ui-acce
 const SMALL = 'flex min-h-9 items-center justify-center rounded-[10px] px-3.5 py-1.5 text-[13px] font-extrabold'
 
 /** A practice the report needs: its name can be changed in place, an optional one has a tick. */
-export function PracticeRow({ name, label, type, note, needed, tick, onRename, onRemove, check, fit, vanish, startEditing = false }: {
+export function PracticeRow({ name, label, type, note, needed, tick, onRename, onRemove, check, fit, vanish, startEditing = false, children }: {
   name: string
   /** What the tick is called, whatever the practice is named. */
   label?: string
@@ -30,6 +30,8 @@ export function PracticeRow({ name, label, type, note, needed, tick, onRename, o
   /** For a row in a list of new practices: one that is theirs belongs to the list above, so it isn't shown (unless being typed). */
   vanish?: boolean
   startEditing?: boolean
+  /** More of the row, under its note. */
+  children?: ReactNode
 }) {
   const { t } = useTranslation()
   const [editing, setEditing] = useState(startEditing)
@@ -69,6 +71,7 @@ export function PracticeRow({ name, label, type, note, needed, tick, onRename, o
           )}
           {needed && <span className="self-start rounded-full bg-ui-accent-soft px-2 py-[3px] text-[11px] leading-tight font-extrabold text-ui-accent">{t('guide.setup.needed')}</span>}
           <span className="text-xs leading-snug text-ui-muted">{note ?? t(typeLabelKey(type))}</span>
+          {children}
         </div>
         {!off && (editing
           ? <button type="button" onClick={() => setEditing(false)} className={`${LINK} font-extrabold`}>{t('guide.setup.done')}</button>

@@ -71,13 +71,22 @@ describe('MiniReport', () => {
     expect(document.querySelectorAll('[data-cob]').length).toBeGreaterThan(40)
   })
 
-  it('compact sleep shows two figures where the wide one shows four', () => {
-    const { unmount } = render(<MiniReport kind="sleep" compact />)
-    expect(screen.getByText('Nights in range')).toBeInTheDocument()
-    const compact = screen.getAllByText('Average bedtime').length
+  it.each([true, false])('shows no summary figures or time label (compact: %s)', (compact) => {
+    render(<MiniReport kind="sleep" compact={compact} />)
+    expect(screen.queryByText('Nights in range')).toBeNull()
+    expect(screen.queryByText('Average sleep')).toBeNull()
+    expect(screen.queryByText('After 4 weeks')).toBeNull()
+  })
+
+  it('days shows its grids without the month figures; a real report keeps them', () => {
+    const { unmount } = render(<MiniReport kind="days" />)
+    expect(screen.queryByText('This month')).toBeNull()
+    expect(screen.queryByText('Last 90 days')).toBeNull()
+    expect(document.querySelectorAll('[data-cob]').length).toBeGreaterThan(0)
     unmount()
-    render(<MiniReport kind="sleep" />)
-    expect(screen.getAllByText('Average bedtime').length).toBe(compact + 1)
+    const e = exampleReport('days', today(), i18n.t.bind(i18n))
+    render(<PanelsReportView report={{ id: 'r', name: 'Days', definition: { Panels: e.definition } }} definition={e.definition} entries={e.entries} previous={undefined} practices={e.practices} todayCob={today()} chartHeight={100} formLink={null} />)
+    expect(screen.getAllByText('This month').length).toBeGreaterThan(0)
   })
 
   it('is not interactive: no tooltip', () => {

@@ -25,6 +25,8 @@ interface PanelsReportViewProps {
   interactive?: boolean
   /** The month legend under the grids, as in examples and form previews (17m3, 17t16); a report has it above them (17m23). */
   legendLast?: boolean
+  /** Off in examples: month panels show only their grid. */
+  monthFigures?: boolean
 }
 
 /** A required practice was deleted or hidden (15m19, 15t10). */
@@ -66,7 +68,7 @@ function MonthLegend() {
   )
 }
 
-export function PanelsReportView({ report, definition, entries, previous, practices, todayCob, chartHeight, formLink, cols = 4, month = todayCob.slice(0, 7), interactive = true, legendLast = false }: PanelsReportViewProps) {
+export function PanelsReportView({ report, definition, entries, previous, practices, todayCob, chartHeight, formLink, cols = 4, month = todayCob.slice(0, 7), interactive = true, legendLast = false, monthFigures = true }: PanelsReportViewProps) {
   const { t } = useTranslation()
   const lookup = makeLookup(entries, previous, practices)
   const days = windowDays(entries)
@@ -81,7 +83,7 @@ export function PanelsReportView({ report, definition, entries, previous, practi
       {missing.length > 0 && <MissingCard labels={labels} formLink={formLink} />}
       {!legendLast && legend}
       {panels.map((p, i) => (p.kind === 'Month' ? (
-        <MonthPanelView key={i} practice={p.practice} month={month} end={monthEnd(month, todayCob)} todayCob={todayCob} lookup={lookup} />
+        <MonthPanelView key={i} practice={p.practice} month={month} end={monthEnd(month, todayCob)} todayCob={todayCob} lookup={lookup} figures={monthFigures} />
       ) : p.kind === 'Stats' ? (
         <StatsPanelView key={i} stats={p.stats} days={days} lookup={lookup} todayCob={todayCob} cols={cols} />
       ) : (

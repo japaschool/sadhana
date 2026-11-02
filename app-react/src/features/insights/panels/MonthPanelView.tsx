@@ -3,12 +3,12 @@ import { addDays, fromDateStr, toDateStr } from '../../today/date'
 import { formatDay } from '../insightsLogic'
 import { monthCells, monthCounts, monthName, type Lookup } from './panelLogic'
 
-interface MonthPanelProps { practice: string; month: string; end: string; todayCob: string; lookup: Lookup }
+interface MonthPanelProps { practice: string; month: string; end: string; todayCob: string; lookup: Lookup; figures?: boolean }
 
 const DAY = 'flex h-[34px] items-center justify-center rounded-lg font-ui-mono text-xs font-medium'
 
-/** A practice's month: three counts, then a Monday-first grid. A day is done or it isn't; empty and false look the same, and nothing is red. */
-export function MonthPanelView({ practice, month, end, todayCob, lookup }: MonthPanelProps) {
+/** A practice's month: three counts (unless `figures` is off), then a Monday-first grid. A day is done or it isn't; empty and false look the same, and nothing is red. */
+export function MonthPanelView({ practice, month, end, todayCob, lookup, figures = true }: MonthPanelProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const name = lookup.name(practice) ?? ''
@@ -29,7 +29,7 @@ export function MonthPanelView({ practice, month, end, todayCob, lookup }: Month
   return (
     <section role="group" aria-label={name} className="flex flex-col gap-3.5 rounded-[20px] border border-ui-hairline bg-ui-surface p-4">
       <h2 className="text-[17px] leading-[1.3] font-extrabold text-ui-ink">{name}</h2>
-      <div className="grid grid-cols-3 gap-px overflow-hidden rounded-[14px] border border-ui-hairline bg-ui-hairline">
+      {figures && <div className="grid grid-cols-3 gap-px overflow-hidden rounded-[14px] border border-ui-hairline bg-ui-hairline">
         {figs.map((f, i) => (
           <div key={i} className="flex min-w-0 flex-col gap-1 bg-ui-surface px-3 py-2.5">
             <span className="text-xs leading-[1.3] font-bold text-ui-muted">{f.label}</span>
@@ -37,7 +37,7 @@ export function MonthPanelView({ practice, month, end, todayCob, lookup }: Month
             <span className="text-[11px] leading-[1.35] text-ui-faint2">{f.sub}</span>
           </div>
         ))}
-      </div>
+      </div>}
       <div role="img" aria-label={t('reportPanels.daysDone', { name, count: c.thisMonth, month: monthName(month, locale) })}
         className="flex flex-col gap-1">
         <div className="grid grid-cols-7 gap-1">
