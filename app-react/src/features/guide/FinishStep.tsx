@@ -43,6 +43,7 @@ export function FinishStep({ guide }: { guide: Guide }) {
         // Read fresh: the cache is persisted and can be stale. Reports an earlier attempt planned keep their names, not "Sleep 2".
         const prev = plan.current
         const [practices, reports] = await Promise.all([api.getPractices(), api.getReports()])
+        guide.existed.current ??= new Set(practices.map((p) => p.practice))
         const taken = new Set(prev?.reports.map((r) => r.name))
         const built = buildPlan(chosen, practices, reports.filter((r) => !taken.has(r.name)), (slug) => t(`templateForm.${slug}Name`))
         for (const r of built.reports) r.name = prev?.reports.find((o) => o.kind === r.kind)?.name ?? r.name
@@ -74,6 +75,7 @@ export function FinishStep({ guide }: { guide: Guide }) {
   const names = (k: GuideKind) => itemsOf(k, chosen[k]!).map((it) => it.name)
   const practices = new Set(kinds.flatMap(names)).size
   const link = guide.reader ? shareUrl() : null
+  const hasHistory = (k: GuideKind) => names(k).every((n) => guide.existed.current?.has(n))
   const rowNote = (k: GuideKind) => {
     const s = rows[k]
     return s === 'done' ? t('guide.finish.created') : s === 'working' && !failure ? t('guide.finish.working') : failure ? t('guide.finish.notSaved') : t('guide.finish.waiting')
@@ -88,7 +90,7 @@ export function FinishStep({ guide }: { guide: Guide }) {
             <span className="text-[13px] leading-snug text-ui-ink2">{names(k).join(', ')}</span>
             {done && (
               <span className="text-xs leading-snug text-ui-muted text-pretty">
-                <b className="text-ui-accent">{t(k === 'sleep' ? 'guide.finish.second' : 'guide.finish.first')} · </b>{t(`guide.finish.note.${k}`)}
+                {hasHistory(k) ? t('guide.finish.note.past') : <><b className="text-ui-accent">{t(k === 'sleep' ? 'guide.finish.second' : 'guide.finish.first')} · </b>{t(`guide.finish.note.${k}`)}</>}
               </span>
             )}
           </div>

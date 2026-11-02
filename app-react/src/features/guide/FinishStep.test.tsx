@@ -293,6 +293,34 @@ describe('the closing screen', () => {
     expect(screen.getByText(/day one has nothing to show yet/)).toBeInTheDocument()
   })
 
+  it('a report on practices that were already there says their past entries are in it', async () => {
+    for (const [practice, data_type] of [['Bedtime', 'Time'], ['Wake-up', 'Time'], ['Nap', 'Duration']] as const) have.push({ id: practice, practice, data_type, is_active: true })
+    await open({ back: '/settings' })
+    await screen.findByText('Here’s what’s set up')
+    expect(screen.getByText('Your past entries are already in it.')).toBeInTheDocument()
+    expect(screen.queryByText(/^Second day/)).not.toBeInTheDocument()
+  })
+
+  it('with one new practice among them, keeps the note about starting', async () => {
+    have.push({ id: 'b', practice: 'Bedtime', data_type: 'Time', is_active: true }, { id: 'w', practice: 'Wake-up', data_type: 'Time', is_active: true })
+    await open({ back: '/settings' })
+    await screen.findByText('Here’s what’s set up')
+    expect(screen.getByText(/^Second day/)).toBeInTheDocument()
+    expect(screen.queryByText('Your past entries are already in it.')).not.toBeInTheDocument()
+  })
+
+  it('practices created by an earlier attempt of this run are not past entries', async () => {
+    vi.mocked(chartsApi.createReport).mockRejectedValueOnce(offline())
+    const user = await open({ firstRun: true })
+    await answer('No', user)
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    await user.click(await screen.findByRole('button', { name: 'Review my choices' }))
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    await screen.findByText('Here’s what’s set up')
+    expect(screen.getByText(/^Second day/)).toBeInTheDocument()
+    expect(screen.queryByText('Your past entries are already in it.')).not.toBeInTheDocument()
+  })
+
   it('shows the whole share link only after Yes, and says who can see it', async () => {
     const user = await open({ firstRun: true })
     await answer('Yes', user)

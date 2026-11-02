@@ -1245,7 +1245,8 @@
         "sleep": "A night needs a bedtime and the next morning’s wake-up, so day one has nothing to show yet.",
         "count": "Starts with your first log.",
         "time": "Starts with your first log.",
-        "days": "The month grid fills in day by day."
+        "days": "The month grid fills in day by day.",
+        "past": "Your past entries are already in it."
       },
       "linkTitle": "Link for your reader",
       "copy": "Copy",
