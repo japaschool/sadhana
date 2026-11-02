@@ -1049,5 +1049,24 @@
     "goalHint": "With one practice, bars show goal met or missed. With several, practices keep their colours and a line marks the goal.",
     "practicesSelected": "Practices · {{count}} selected",
     "targetMissing": "Set a target to save your changes."
+  },
+  "guide": {
+    "suggest": {
+      "count1": "Mantra rounds",
+      "count2": "Prayers",
+      "count3": "Pages read",
+      "count4": "Push-ups",
+      "time1": "Reading",
+      "time2": "Meditation",
+      "time3": "Exercise",
+      "time4": "Listening",
+      "time5": "Study",
+      "time6": "Service",
+      "days1": "Morning prayer",
+      "days2": "Evening prayer",
+      "days3": "Group gathering",
+      "days4": "Journaling",
+      "days5": "Walk"
+    }
   }
 }
