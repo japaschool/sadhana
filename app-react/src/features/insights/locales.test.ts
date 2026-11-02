@@ -62,7 +62,12 @@ describe('templateForm.* translations', () => {
 
 describe('neutral report names', () => {
   // Daily count and Time spent aren't tied to one tradition. japaDesc names rounds as one example, on purpose.
-  const TRADITIONAL = /japa|джап|rounds|круг|кола|кіл\b/i
+  const TRADITIONAL = /japa|джап|rounds|круг|кола|(?<![\p{L}])кіл(?![\p{L}])/iu
+  it('catches a standalone Ukrainian кіл but not Кількість', () => {
+    expect('Середнє кіл').toMatch(TRADITIONAL)
+    expect('Усього кіл').toMatch(TRADITIONAL)
+    expect('Кількість').not.toMatch(TRADITIONAL)
+  })
   it('keeps japa and rounds out of the report copy', () => {
     for (const [path, dict] of Object.entries(files)) {
       for (const group of ['reportPanels', 'templateForm', 'chartSettings'] as const) {
