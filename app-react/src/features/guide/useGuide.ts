@@ -83,6 +83,8 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
     navigate(firstRun ? '/' : '/settings/practices/new', { replace: true })
   }, [run, navigate, firstRun])
   const finish = () => navigate(firstRun ? '/' : backTo, { replace: true })
+  const setUp = KINDS.some((k) => tracked.includes(k) && choices[k])
+  const leave = () => (creating === 'done' ? finish() : setUp ? setConfirming(true) : exit('left'))
 
   return {
     firstRun, carousel, step, exitKey: firstRun ? 'guide.exit' : 'home.addOneMyself', pos, reader, setReader, creating, setCreating, plan, setPos, tracked, skipped, choices, nothing, confirming,
@@ -94,11 +96,17 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
     toggle, decide,
     next: () => advance(tracked),
     back: goBack,
+    /** The system Back. At the start there is no step to go back to, so it means leaving, and asks if anything would be lost. */
+    popBack: () => {
+      if (confirming) setConfirming(false)
+      else if (step.at === 'choose' && pos === 0 && !nothing && (firstRun || setUp)) leave()
+      else goBack()
+    },
     /** From the nothing-chosen screen: track just this one. */
     pick: (kind: GuideKind) => { setTracked([kind]); setNothing(false); setStep(after({ at: 'choose' }, [kind])) },
     lookAgain: () => { setNothing(false); setPos(0); setSkipped([]) },
     /** "Build my own list", at any step: asks first once a report has been set up. */
-    leave: () => (creating === 'done' ? finish() : KINDS.some((k) => tracked.includes(k) && choices[k]) ? setConfirming(true) : exit('left')),
+    leave,
     keepGoing: () => setConfirming(false),
     confirmLeave: () => exit('left'),
     /** Recorded once, when everything is created, so closing the app on the closing screen still counts. */

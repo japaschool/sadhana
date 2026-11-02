@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
@@ -28,6 +28,70 @@ beforeEach(() => {
   setViewportWidth(390)
 })
 afterEach(cleanup)
+
+describe('the system Back button', () => {
+  const opened = (state?: unknown, from = '/settings/practices') =>
+    createMemoryRouter([...routes, { path: from, element: <p>Where it came from</p> }], { initialEntries: [from, { pathname: '/guide', state }], initialIndex: 1 })
+  const back = (r: ReturnType<typeof opened>) => act(async () => { await r.navigate(-1) })
+  const toReader = async (user: ReturnType<typeof userEvent.setup>) => {
+    await user.click(screen.getByRole('button', { name: 'Track this' }))
+    for (let i = 0; i < 3; i++) await user.click(screen.getByRole('button', { name: 'Skip' }))
+    await screen.findByRole('heading', { name: 'Sleep' })
+    await user.click(await screen.findByRole('button', { name: /^Next/ }))
+    await screen.findByRole('radio', { name: /^Yes/ })
+  }
+
+  it('steps back inside the guide, staying there and marking nothing', async () => {
+    const user = userEvent.setup()
+    const r = opened({ firstRun: true })
+    render(<Providers><RouterProvider router={r} /></Providers>)
+    await toReader(user)
+    await back(r)
+    expect(screen.getByRole('heading', { name: 'Sleep' })).toBeInTheDocument()
+    expect(r.state.location.pathname).toBe('/guide')
+    await back(r)
+    pos(1)
+    expect(r.state.location.pathname).toBe('/guide')
+    expect(api.update).not.toHaveBeenCalledWith('run-1', { outcome: 'left' })
+  })
+
+  it('on the first card of a sign-up guide with something set up, asks before leaving; Back again keeps going', async () => {
+    const user = userEvent.setup()
+    const r = opened({ firstRun: true })
+    render(<Providers><RouterProvider router={r} /></Providers>)
+    await toReader(user)
+    await back(r)
+    await back(r)
+    await back(r)
+    expect(screen.getByText('Leave setup?')).toBeInTheDocument()
+    await back(r)
+    expect(screen.queryByText('Leave setup?')).not.toBeInTheDocument()
+    expect(r.state.location.pathname).toBe('/guide')
+  })
+
+  it('on the first card of a sign-up guide with nothing set up, leaves for Today and marks left', async () => {
+    const r = opened({ firstRun: true })
+    render(<Providers><RouterProvider router={r} /></Providers>)
+    await back(r)
+    expect(await screen.findByText('Today')).toBeInTheDocument()
+    await vi.waitFor(() => expect(api.update).toHaveBeenCalledWith('run-1', { outcome: 'left' }))
+  })
+
+  it('from Add practice with nothing set up, goes back to where it was opened', async () => {
+    const r = opened({ back: '/settings/practices' })
+    render(<Providers><RouterProvider router={r} /></Providers>)
+    await back(r)
+    expect(await screen.findByText('Where it came from')).toBeInTheDocument()
+  })
+
+  it('does not get in the way of the guide’s own exit', async () => {
+    const user = userEvent.setup()
+    const r = opened({ firstRun: true })
+    render(<Providers><RouterProvider router={r} /></Providers>)
+    await user.click(screen.getAllByRole('button', { name: 'Build my own list' })[0])
+    expect(await screen.findByText('Today')).toBeInTheDocument()
+  })
+})
 
 describe('GuideScreen on mobile', () => {
   it('a swipe back during a Track scroll moves the position back, not stuck on the target', async () => {

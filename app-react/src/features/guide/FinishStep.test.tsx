@@ -24,6 +24,7 @@ import { practicesApi } from '../../api/practices'
 let have: UserPractice[]
 let made: string[]
 let qc: QueryClient
+let router: ReturnType<typeof createMemoryRouter>
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -44,8 +45,8 @@ afterEach(cleanup)
 async function open(state: unknown, days = false) {
   const user = userEvent.setup()
   qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  const r = createMemoryRouter([{ path: '/guide', element: <GuideScreen /> }, { path: '/', element: <p>Today</p> }, { path: '/settings', element: <p>Settings</p> }], { initialEntries: [{ pathname: '/guide', state }] })
-  render(<QueryClientProvider client={qc}><RouterProvider router={r} /></QueryClientProvider>)
+  router = createMemoryRouter([{ path: '/guide', element: <GuideScreen /> }, { path: '/', element: <p>Today</p> }, { path: '/settings', element: <p>Settings</p> }], { initialEntries: ['/settings', { pathname: '/guide', state }], initialIndex: 1 })
+  render(<QueryClientProvider client={qc}><RouterProvider router={router} /></QueryClientProvider>)
   await user.click(screen.getByRole('switch', { name: 'Sleep' }))
   if (days) await user.click(screen.getByRole('switch', { name: 'Days I did it' }))
   await user.click(screen.getByRole('button', { name: /^(Next|Create report)/ }))
@@ -152,6 +153,40 @@ describe('creating', () => {
 })
 
 describe('leaving during and after creating', () => {
+  async function opened(state: unknown) {
+    const user = await open(state)
+    await answer('No', user)
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    return router
+  }
+
+  it('the system Back is not held while creating: nobody is stranded, and the work carries on', async () => {
+    let release!: () => void
+    vi.mocked(chartsApi.createReport).mockImplementationOnce(async (name) => { await new Promise<void>((r) => { release = r }); made.push(name); return 'r' })
+    const r = await opened({ firstRun: true })
+    await screen.findByText('Creating…')
+    await act(async () => { await r.navigate(-1) })
+    expect(await screen.findByText('Settings')).toBeInTheDocument()
+    await act(async () => release())
+    await vi.waitFor(() => expect(made).toEqual(['Sleep']))
+  })
+
+  it('the system Back on the closing screen leaves, it does not reopen the steps', async () => {
+    const r = await opened({ firstRun: true })
+    await screen.findByText('Here’s what’s set up')
+    await act(async () => { await r.navigate(-1) })
+    expect(await screen.findByText('Settings')).toBeInTheDocument()
+  })
+
+  it('the system Back after a failure reviews the choices', async () => {
+    vi.mocked(chartsApi.createReport).mockRejectedValueOnce(offline())
+    const r = await opened({ firstRun: true })
+    await screen.findByText('Setup didn’t finish')
+    await act(async () => { await r.navigate(-1) })
+    expect(await screen.findByRole('radio', { name: /^No/ })).toBeInTheDocument()
+    expect(r.state.location.pathname).toBe('/guide')
+  })
+
   it('has no exit link while creating', async () => {
     let release!: () => void
     vi.mocked(chartsApi.createReport).mockImplementationOnce(async (name) => { await new Promise<void>((r) => { release = r }); made.push(name); return 'r' })

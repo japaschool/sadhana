@@ -1,5 +1,6 @@
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router-dom'
+import { useBlocker, useLocation } from 'react-router-dom'
 import { ByLayout } from '../../layouts/ByLayout'
 import { useLayout } from '../../layouts/useLayout'
 import { BottomSheet } from '../../ui/primitives/BottomSheet'
@@ -18,6 +19,16 @@ export function GuideScreen() {
   const state = useLocation().state as { firstRun?: boolean; back?: string } | null
   const guide = useGuide({ firstRun: state?.firstRun === true, back: state?.back ?? '/', carousel: useLayout() === 'mobile' })
   const { step } = guide
+
+  // Steps have no history entries, so the system Back would leave the guide without asking. Only POP is held: the guide's
+  // own navigations pass. Neither is it held once creating has started: there is no step to return to, and the run finishes on its own.
+  const blocker = useBlocker(({ historyAction }) => historyAction === 'POP' && guide.creating === null)
+  useEffect(() => {
+    if (blocker.state !== 'blocked') return
+    blocker.reset()
+    guide.popBack()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per Back: the router's update is a transition, so `blocked` outlives popBack's own re-render
+  }, [blocker.state])
 
   return (
     <>
