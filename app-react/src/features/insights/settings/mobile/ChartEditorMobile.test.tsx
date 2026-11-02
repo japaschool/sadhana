@@ -7,7 +7,7 @@ import { useToastStore } from '../../../../hooks/useToast'
 import { setViewportWidth } from '../../../../test/viewport'
 import { ChartEditorMobileScreen } from './ChartEditorMobile'
 import { NewChartSheet } from './NewChartSheet'
-import { sleepPanels } from '../../panels/templates'
+import { daysPanels, sleepPanels } from '../../panels/templates'
 
 vi.mock('../../../../api/charts', () => ({
   chartsApi: { getReports: vi.fn(), getReportData: vi.fn(), updateReport: vi.fn(), createReport: vi.fn(), deleteReport: vi.fn() },
@@ -51,6 +51,14 @@ function renderAt(path: string) {
 }
 
 describe('ChartEditorMobile', () => {
+  it('a report with month grids reads half a year, so its Last 90 days are whole', async () => {
+    charts.getReports.mockResolvedValue([{ id: 'd1', name: 'Days', definition: { Panels: daysPanels({ practices: ['wake'] }) } }])
+    charts.getReportData.mockReset().mockResolvedValue([])
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([])
+    renderAt('/settings/charts/d1')
+    await waitFor(() => expect(charts.getReportData.mock.calls.map((c) => c[1])).toContain('HalfYear'))
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
     setViewportWidth(390)
@@ -223,10 +231,17 @@ const setLimit = (label: string, value: string) => {
   fireEvent.blur(el)
 }
 
-it('the new chart sheet offers Japa and Duration', () => {
+it('the new chart sheet offers Daily count and Time spent', () => {
   render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><NewChartSheet onClose={() => {}} /></MemoryRouter></QueryClientProvider>)
-  expect(screen.getByRole('link', { name: /Japa/ })).toHaveAttribute('href', '/settings/charts/new/japa')
-  expect(screen.getByRole('link', { name: /Duration/ })).toHaveAttribute('href', '/settings/charts/new/duration')
+  expect(screen.getByRole('link', { name: /Daily count/ })).toHaveAttribute('href', '/settings/charts/new/japa')
+  expect(screen.getByRole('link', { name: /Time spent/ })).toHaveAttribute('href', '/settings/charts/new/duration')
+})
+
+it('the new chart sheet lists Days I did it fourth', () => {
+  render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><NewChartSheet onClose={() => {}} /></MemoryRouter></QueryClientProvider>)
+  const links = screen.getAllByRole('link').map((a) => a.getAttribute('href'))
+  expect(links).toEqual(['/settings/charts/new/sleep', '/settings/charts/new/japa', '/settings/charts/new/duration', '/settings/charts/new/days'])
+  expect(screen.getByRole('link', { name: /Days I did it/ })).toBeInTheDocument()
 })
 
 it('choosing Sleep closes the sheet, which can already be on the form’s page (the wide charts column)', () => {

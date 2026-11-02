@@ -33,7 +33,7 @@ export function useMoreMenu(report: Report | null): { actions: AppBarAction[]; s
         onSelect: () => navigate(`/settings/charts/${report.id}`),
       }]
       : []),
-    { label: t('charts.shareLink'), onSelect: () => { if (copyShareLink()) showToast({ message: t('charts.copied'), variant: 'success' }) } },
+    { label: t('charts.shareLink'), onSelect: () => { void copyShareLink().then((ok) => { if (ok) showToast({ message: t('charts.copied'), variant: 'success' }) }) } },
     { label: t('charts.downloadCsv'), onSelect: () => { downloadCsv().catch(() => showToast({ message: t('common.error'), variant: 'error' })) } },
     ...(report ? [{ label: t('insights.deleteReport'), onSelect: () => setConfirming(true) }] : []),
   ]

@@ -33,7 +33,8 @@ export function TodayTablet() {
     + (today.summary.requiredLeft ? ` · ${t('today.requiredLeft', { count: today.summary.requiredLeft })}` : '')
 
   const more = [
-    { label: t('home.addPractice'), onSelect: () => navigate('/settings/practices/new') },
+    { label: t('home.helpChoose'), onSelect: () => navigate('/guide', { state: { back: '/' } }) },
+    { label: t('home.addOneMyself'), onSelect: () => navigate('/settings/practices/new') },
     { label: t('home.editPractices'), onSelect: () => navigate('/settings/practices') },
   ]
 

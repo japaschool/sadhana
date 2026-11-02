@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { DayFailedNote, SyncBanner } from '../SyncBanner'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
@@ -23,6 +23,7 @@ function isEditable(el: EventTarget | null) {
 export function LogPanel({ date, onDate }: { date: Date; onDate: (d: Date) => void }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const [calendarAnchor, setCalendarAnchor] = useState<HTMLElement | null>(null)
   const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null)
   const today = useToday(date)
@@ -40,7 +41,8 @@ export function LogPanel({ date, onDate }: { date: Date; onDate: (d: Date) => vo
   }, [date, onDate])
 
   const more = [
-    { label: t('home.addPractice'), onSelect: () => navigate('/settings/practices/new') },
+    { label: t('home.helpChoose'), onSelect: () => navigate('/guide', { state: { back: pathname } }) },
+    { label: t('home.addOneMyself'), onSelect: () => navigate('/settings/practices/new') },
     { label: t('home.editPractices'), onSelect: () => navigate('/settings/practices') },
   ]
 

@@ -30,6 +30,7 @@ pub enum Template {
     Sleep(SleepTemplate),
     Japa(JapaTemplate),
     Duration(DurationTemplate),
+    Days(DaysTemplate),
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -59,6 +60,12 @@ pub struct DurationTemplate {
     pub goal: Option<i32>,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DaysTemplate {
+    pub practices: Vec<Uuid>,
+}
+
 /// Key: translated at display, so shared pages follow the viewer's language. Text: a user's own words.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -70,8 +77,14 @@ pub enum Label {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", deny_unknown_fields)]
 pub enum Panel {
-    Stats { stats: Vec<Stat> },
+    Stats {
+        stats: Vec<Stat>,
+    },
     Chart(ChartPanel),
+    /// A month grid of one practice. Older clients draw every non-Stats panel as a chart, so they must not get it.
+    Month {
+        practice: Uuid,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -277,6 +290,10 @@ impl Stat {
 }
 
 impl PanelsReport {
+    pub fn has_month(&self) -> bool {
+        self.panels.iter().any(|p| matches!(p, Panel::Month { .. }))
+    }
+
     /// Every practice the definition refers to.
     pub fn practice_ids(&self) -> HashSet<Uuid> {
         let mut out = HashSet::new();
@@ -330,6 +347,12 @@ impl PanelsReport {
                 check_bounds(d.goal, None)?;
                 out.extend(d.practices.iter().copied());
             }
+            Some(Template::Days(d)) => {
+                if d.practices.is_empty() {
+                    return Err(invalid("Choose at least one practice"));
+                }
+                out.extend(d.practices.iter().copied());
+            }
             None => {}
         }
         for panel in &self.panels {
@@ -341,6 +364,9 @@ impl PanelsReport {
                     for stat in stats {
                         stat.walk(out)?;
                     }
+                }
+                Panel::Month { practice } => {
+                    out.insert(*practice);
                 }
                 Panel::Chart(chart) => {
                     if chart.series.len() > MAX_SERIES {

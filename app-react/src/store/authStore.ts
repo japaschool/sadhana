@@ -31,7 +31,9 @@ interface AuthState {
   user: UserInfo | null
   token: string | null
   isLoading: boolean
-  setAuth: (user: UserInfo) => void
+  /** Just signed up: GuestRoute sends the person to the guide. In memory only. */
+  newAccount: boolean
+  setAuth: (user: UserInfo, newAccount?: boolean) => void
   logout: () => void
   setLoading: (v: boolean) => void
 }
@@ -47,15 +49,18 @@ export const useAuthStore = create<AuthState>((set) => {
     user: token ? readUser(token) : null,
     token,
     isLoading: true,
-    setAuth: (user) => {
+    newAccount: false,
+    setAuth: (info, newAccount) => {
+      const { created: _created, ...user } = info
       writeToken(user.token)
       localStorage.setItem(USER_KEY, JSON.stringify(user))
-      set({ user, token: user.token })
+      // Strict: a mutation's variables (a Google token) can arrive as the second argument.
+      set({ user, token: user.token, newAccount: newAccount === true })
     },
     logout: () => {
       writeToken(null)
       localStorage.removeItem(USER_KEY)
-      set({ user: null, token: null })
+      set({ user: null, token: null, newAccount: false })
     },
     setLoading: (isLoading) => set({ isLoading }),
   }

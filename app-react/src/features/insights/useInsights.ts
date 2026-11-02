@@ -9,6 +9,7 @@ import { buildChartData, tracesFor } from './chartLogic'
 import { isPanels, REPORTS_KEY, useReportSort } from './useReports'
 import { addDays, fromDateStr, toDateStr } from '../today/date'
 import { averageLines, headline } from './insightsLogic'
+import { monthEnd } from './panels/panelLogic'
 
 export const ALL = '__all__'
 const KEY = 'insights-report'
@@ -50,22 +51,26 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
   const [stored, setStored] = useState(sharedUser ? '' : readStored)
   const [range, setRange] = useState<Range>('30d')
   const [end, setEndState] = useState<Date | null>(null)
+  const [picked, setPicked] = useState<string | null>(null)
   // Legend toggles, per report: switching reports starts with every series shown.
   const [hiddenFor, setHiddenFor] = useState<{ id: string; set: Set<number> }>({ id: '', set: new Set() })
 
   const reports = (reportsQ.data ?? []).filter((r) => withTables || !('Grid' in r.definition))
   // An unknown or deleted id (or a Grid one, without tables) simply isn't found, so the screen shows All practices.
   const report = reports.find((r) => r.id === stored) ?? (sharedUser ? reports[0] ?? null : null)
-  const duration = DURATION[range]
   const todayCob = toDateStr(new Date())
-  const endCob = toDateStr(logDate ?? end ?? new Date())
+  // A month report has no range or end date: it reads half a year to the shown month's end, which covers that month, the one before and any 90 days.
+  const hasMonth = !!report && isPanels(report) && report.definition.Panels.panels.some((p) => p.kind === 'Month')
+  const month = hasMonth ? picked ?? todayCob.slice(0, 7) : null
+  const duration = hasMonth ? 'HalfYear' : DURATION[range]
+  const endCob = month ? monthEnd(month, todayCob) : toDateStr(logDate ?? end ?? new Date())
 
   const current = useQuery({
     queryKey: [...src.key, 'report-data', endCob, duration],
     queryFn: () => src.data(endCob, duration),
   })
   // From the response, so it matches the server's calendar-month/-year arithmetic. All data has no previous window.
-  const first = range === 'all' ? undefined : current.data?.[0]?.cob_date
+  const first = range === 'all' || hasMonth ? undefined : current.data?.[0]?.cob_date
   const prevEnd = first ? toDateStr(addDays(fromDateStr(first), -1)) : null
   const previous = useQuery({
     queryKey: [...src.key, 'report-data', prevEnd, duration],
@@ -84,12 +89,15 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     reports,
     report,
     selectedId,
-    select: (id: string) => { setStored(id); if (!sharedUser) writeStored(id) },
+    select: (id: string) => { setStored(id); setPicked(null); if (!sharedUser) writeStored(id) },
     range,
     setRange,
     end,
     setEnd: (d: Date | null) => setEndState(d && toDateStr(d) !== todayCob ? d : null),
     todayCob,
+    /** yyyy-mm shown by a month report; null for any other. */
+    month,
+    setMonth: setPicked,
     traces,
     entries,
     rows: buildChartData(entries, traces, locale),

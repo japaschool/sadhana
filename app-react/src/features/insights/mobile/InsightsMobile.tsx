@@ -10,6 +10,7 @@ import { DaySheet } from './DaySheet'
 import { EndDateControl } from './EndDateControl'
 import { InsightsChart } from './InsightsChart'
 import { InsightsTable } from './InsightsTable'
+import { MonthNav } from './MonthNav'
 import { useMoreMenu } from './MoreMenu'
 import { ReportMenu } from './ReportMenu'
 
@@ -39,19 +40,21 @@ export function InsightsMobile() {
           <span aria-hidden className="shrink-0">▾</span>
         </button>
 
-        <div className="flex items-center justify-between gap-2">
-          <div className="font-ui-mono [&_button]:px-2.5 [&_button]:text-xs">
-            <SegmentedControl label={t('insights.range')} value={ins.range} onChange={ins.setRange}
-              options={RANGES.map((r) => ({ value: r, label: t(`insights.range${r}`) }))} />
+        {ins.month ? <MonthNav month={ins.month} todayCob={ins.todayCob} onChange={ins.setMonth} /> : (
+          <div className="flex items-center justify-between gap-2">
+            <div className="font-ui-mono [&_button]:px-2.5 [&_button]:text-xs">
+              <SegmentedControl label={t('insights.range')} value={ins.range} onChange={ins.setRange}
+                options={RANGES.map((r) => ({ value: r, label: t(`insights.range${r}`) }))} />
+            </div>
+            <EndDateControl end={ins.end} onChange={ins.setEnd} />
           </div>
-          <EndDateControl end={ins.end} onChange={ins.setEnd} />
-        </div>
+        )}
 
         {table ? (
           <InsightsTable grouped={ins.grouped} traces={ins.traces} entries={ins.entries} todayCob={ins.todayCob} onOpenDay={setOpenDay} />
         ) : panels ? (
           <PanelsReportView key={ins.selectedId} report={ins.report!} definition={panels} entries={ins.entries} previous={ins.previousEntries}
-            practices={ins.practices} todayCob={ins.todayCob} chartHeight={230} formLink={`/settings/charts/${ins.selectedId}`} cols={2} />
+            practices={ins.practices} todayCob={ins.todayCob} chartHeight={230} formLink={`/settings/charts/${ins.selectedId}`} cols={2} month={ins.month ?? undefined} />
         ) : (
           <section className={`${CARD} p-4`}>
             {ins.isLoading ? (

@@ -22,8 +22,8 @@ export function Login() {
   const setAuth = useAuthStore((s) => s.setAuth)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const signIn = useMutation({ mutationFn: () => authApi.login(email.trim(), password), onSuccess: setAuth })
-  const google = useMutation({ mutationFn: (token: string) => authApi.googleSignin(token, (i18n.resolvedLanguage || 'en').slice(0, 2)), onSuccess: (u: UserInfo) => setAuth(u) })
+  const signIn = useMutation({ mutationFn: () => authApi.login(email.trim(), password), onSuccess: (u: UserInfo) => setAuth(u) })
+  const google = useMutation({ mutationFn: (token: string) => authApi.googleSignin(token, (i18n.resolvedLanguage || 'en').slice(0, 2)), onSuccess: (u: UserInfo) => setAuth(u, u.created === true) })
   const [googleFailed, setGoogleFailed] = useState(false)
   const busy = signIn.isPending || google.isPending
   const err = signIn.error ? failure(signIn.error, true) : google.error ? failure(google.error, true) : googleFailed ? { key: 'auth.serverError', wrong: false } : null

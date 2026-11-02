@@ -25,6 +25,26 @@ describe('authStore', () => {
     expect(useAuthStore.getState().user?.name).toBe('Alice')
   })
 
+  it('setAuth keeps newAccount in memory only, true only for exactly true, and drops created', () => {
+    const user = { id: '1', email: 'a@b.com', token: 'tok', name: 'Alice', created: true }
+    act(() => useAuthStore.getState().setAuth(user, true))
+    expect(useAuthStore.getState().newAccount).toBe(true)
+    expect(useAuthStore.getState().user).not.toHaveProperty('created')
+    expect(localStorage.getItem('sadhana.user')).not.toContain('created')
+    expect(localStorage.getItem('sadhana.user')).not.toContain('newAccount')
+    // a mutation variable (a Google token) landing in the second argument must not count
+    act(() => useAuthStore.getState().setAuth(user, 'g-token' as unknown as boolean))
+    expect(useAuthStore.getState().newAccount).toBe(false)
+    act(() => useAuthStore.getState().setAuth(user))
+    expect(useAuthStore.getState().newAccount).toBe(false)
+  })
+
+  it('logout clears newAccount', () => {
+    act(() => useAuthStore.getState().setAuth({ id: '1', email: 'a@b.com', token: 'tok', name: 'A' }, true))
+    act(() => useAuthStore.getState().logout())
+    expect(useAuthStore.getState().newAccount).toBe(false)
+  })
+
   it('reads the Rust UI token (JSON-quoted) and a raw one', () => {
     localStorage.setItem('yew.token', '"eyJ.a.b"')
     expect(readToken()).toBe('eyJ.a.b')

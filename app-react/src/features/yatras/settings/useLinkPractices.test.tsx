@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useToastStore } from '../../../hooks/useToast'
 import { useAuthStore } from '../../../store/authStore'
-import type { YatraUserPracticeItem } from '../../../types/api'
+import type { UserPractice, YatraUserPracticeItem } from '../../../types/api'
 import { useLinkPractices } from './useLinkPractices'
 
 vi.mock('../../../api/yatras', () => ({
@@ -20,8 +20,9 @@ const items: YatraUserPracticeItem[] = [
   { yatra_practice: { id: 'b', practice: 'Lectures', data_type: 'Duration' }, user_practice: null },
 ]
 
-function setup() {
+function setup(cached?: UserPractice[]) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  if (cached) qc.setQueryData(['practices'], cached)
   const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>
   return renderHook(() => useLinkPractices('y1'), { wrapper })
 }
@@ -37,6 +38,19 @@ describe('useLinkPractices', () => {
     api.getYatraUserPractices.mockResolvedValue(items)
     api.getYatraUsers.mockResolvedValue([{ user_id: 'u1', user_name: 'Me', is_admin: false }])
     vi.mocked(practicesApi.getUserPractices).mockResolvedValue([])
+  })
+
+  it('does not make the create offer from a stale empty list that is being refetched', async () => {
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([{ id: 'p1', practice: 'Reading', data_type: 'Duration', is_active: true }])
+    const { result } = setup([])
+    await waitFor(() => expect(result.current.practices).toHaveLength(1))
+    expect(result.current.canCreate).toBe(false)
+  })
+
+  it('makes the offer once the list is confirmed empty', async () => {
+    const { result } = setup([])
+    await waitFor(() => expect(vi.mocked(practicesApi.getUserPractices)).toHaveBeenCalled())
+    await waitFor(() => expect(result.current.canCreate).toBe(true))
   })
 
   it('sends quick successive links in order, each carrying the links on screen', async () => {

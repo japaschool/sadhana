@@ -37,13 +37,13 @@ export function useChartEditor(id: string) {
   const reportsQ = useReports()
   const practicesQ = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices })
   const todayCob = toDateStr(new Date())
-  // The same query as Insights' default 30 days, so the preview is usually cached already.
-  const dataQ = useQuery({ queryKey: ['report-data', todayCob, 'Month'], queryFn: () => chartsApi.getReportData(todayCob, 'Month') })
-
   // ponytail: edits not yet saved live in memory only; they're lost if the app is closed while offline.
   const [draft, setDraft] = useState<Report | null>(null)
   // Tablet and desktop keep the editor mounted while another chart is picked; a draft is only for its own chart.
   const report = (draft?.id === id ? draft : null) ?? reportsQ.data?.find((r) => r.id === id) ?? null
+  // The same query as Insights, so the preview is usually cached already: 30 days, or half a year for month grids.
+  const duration = isPanels(report) && report.definition.Panels.panels.some((p) => p.kind === 'Month') ? 'HalfYear' : 'Month'
+  const dataQ = useQuery({ queryKey: ['report-data', todayCob, duration], queryFn: () => chartsApi.getReportData(todayCob, duration) })
   const latest = useRef(report)
   latest.current = report
   const [failed, setFailed] = useState(false)

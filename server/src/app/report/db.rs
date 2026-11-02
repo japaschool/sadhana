@@ -341,7 +341,7 @@ mod tests {
     }
 
     fn only_grid(conn: &mut PgConnection, user_id: &Uuid) -> (Vec<Uuid>, Option<bool>) {
-        match ApiReport::get_all(conn, user_id, false)
+        match ApiReport::get_all(conn, user_id, false, false)
             .unwrap()
             .remove(0)
             .definition
@@ -387,7 +387,10 @@ mod tests {
                 traces: vec![trace(c), trace(a)],
             });
             Report::create(conn, &u, "r", &def)?;
-            match ApiReport::get_all(conn, &u, false)?.remove(0).definition {
+            match ApiReport::get_all(conn, &u, false, false)?
+                .remove(0)
+                .definition
+            {
                 ReportDefinition::Graph(g) => {
                     let order: Vec<_> = g.traces.iter().map(|t| t.practice).collect();
                     assert_eq!(order, vec![c, a]);
@@ -528,7 +531,10 @@ mod tests {
             let sent = sleep_report(a, b);
             let id = Report::create(conn, &u, "r", &ReportDefinition::Panels(sent.clone()))?;
 
-            match ApiReport::get_all(conn, &u, true)?.remove(0).definition {
+            match ApiReport::get_all(conn, &u, true, true)?
+                .remove(0)
+                .definition
+            {
                 ReportDefinition::Panels(got) => assert_eq!(got, sent),
                 _ => panic!("not panels"),
             }
@@ -547,10 +553,74 @@ mod tests {
             Report::create(conn, &u, "g", &grid(vec![a], Some(true)))?;
             Report::create(conn, &u, "p", &ReportDefinition::Panels(sleep_report(a, b)))?;
 
-            let hidden = ApiReport::get_all(conn, &u, false)?;
+            let hidden = ApiReport::get_all(conn, &u, false, false)?;
             assert_eq!(hidden.len(), 1);
             assert!(matches!(hidden[0].definition, ReportDefinition::Grid(_)));
-            assert_eq!(ApiReport::get_all(conn, &u, true)?.len(), 2);
+            assert_eq!(ApiReport::get_all(conn, &u, true, true)?.len(), 2);
+            Ok(())
+        });
+    }
+
+    fn days_report(practice: Uuid, practices: Vec<Uuid>, months: usize) -> PanelsReport {
+        use super::super::panels::*;
+        PanelsReport {
+            version: 1,
+            template: Some(Template::Days(DaysTemplate { practices })),
+            required: vec![],
+            panels: vec![Panel::Month { practice }; months],
+        }
+    }
+
+    #[test]
+    fn days_report_is_hidden_without_months() {
+        run(|conn| {
+            let (u, [a, b, _, _]) = user_with_practices(conn);
+            Report::create(conn, &u, "s", &ReportDefinition::Panels(sleep_report(a, b)))?;
+            Report::create(
+                conn,
+                &u,
+                "d",
+                &ReportDefinition::Panels(days_report(a, vec![a], 1)),
+            )?;
+
+            // What a cached build with panels=true gets: the Sleep report only.
+            let old = ApiReport::get_all(conn, &u, true, false)?;
+            assert_eq!(old.len(), 1);
+            assert_eq!(old[0].name, "s");
+            assert_eq!(ApiReport::get_all(conn, &u, true, true)?.len(), 2);
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn days_validate() {
+        run(|conn| {
+            let (u, [a, b, _, _]) = user_with_practices(conn);
+            unprocessable(Report::create(
+                conn,
+                &u,
+                "r",
+                &panels(days_report(a, vec![], 1)),
+            ));
+            unprocessable(Report::create(
+                conn,
+                &u,
+                "r",
+                &panels(days_report(a, vec![a], 9)),
+            ));
+            unprocessable(Report::create(
+                conn,
+                &u,
+                "r",
+                &panels(days_report(a, vec![Uuid::new_v4()], 1)),
+            ));
+            unprocessable(Report::create(
+                conn,
+                &u,
+                "r",
+                &panels(days_report(Uuid::new_v4(), vec![a], 1)),
+            ));
+            Report::create(conn, &u, "r", &panels(days_report(a, vec![a, b], 8)))?;
             Ok(())
         });
     }
@@ -812,7 +882,10 @@ mod tests {
             let (u, [a, _, _, _]) = user_with_practices(conn);
             let sent = japa_report(a, 16);
             Report::create(conn, &u, "r", &panels(sent.clone()))?;
-            match ApiReport::get_all(conn, &u, true)?.remove(0).definition {
+            match ApiReport::get_all(conn, &u, true, true)?
+                .remove(0)
+                .definition
+            {
                 ReportDefinition::Panels(got) => assert_eq!(got, sent),
                 _ => panic!("not panels"),
             }
@@ -856,7 +929,10 @@ mod tests {
             let (u, [a, b, _, _]) = user_with_practices(conn);
             let sent = duration_report(vec![a, b], Some(120));
             Report::create(conn, &u, "r", &panels(sent.clone()))?;
-            match ApiReport::get_all(conn, &u, true)?.remove(0).definition {
+            match ApiReport::get_all(conn, &u, true, true)?
+                .remove(0)
+                .definition
+            {
                 ReportDefinition::Panels(got) => assert_eq!(got, sent),
                 _ => panic!("not panels"),
             }
@@ -868,7 +944,12 @@ mod tests {
     fn duration_rejects_no_practices() {
         run(|conn| {
             let (u, _) = user_with_practices(conn);
-            unprocessable(Report::create(conn, &u, "r", &panels(duration_report(vec![], None))));
+            unprocessable(Report::create(
+                conn,
+                &u,
+                "r",
+                &panels(duration_report(vec![], None)),
+            ));
             Ok(())
         });
     }
@@ -887,7 +968,12 @@ mod tests {
     fn duration_rejects_a_negative_goal() {
         run(|conn| {
             let (u, [a, _, _, _]) = user_with_practices(conn);
-            unprocessable(Report::create(conn, &u, "r", &panels(duration_report(vec![a], Some(-1)))));
+            unprocessable(Report::create(
+                conn,
+                &u,
+                "r",
+                &panels(duration_report(vec![a], Some(-1))),
+            ));
             Ok(())
         });
     }

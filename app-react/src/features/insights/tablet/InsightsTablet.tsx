@@ -9,6 +9,7 @@ import { PanelsReportView } from '../panels/PanelsReportView'
 import { isTable, RANGES, useInsights } from '../useInsights'
 import { DaySheet } from '../mobile/DaySheet'
 import { EndDateControl } from '../mobile/EndDateControl'
+import { MonthNav } from '../mobile/MonthNav'
 import { InsightsChart } from '../mobile/InsightsChart'
 import { InsightsTable } from '../mobile/InsightsTable'
 import { useMoreMenu } from '../mobile/MoreMenu'
@@ -56,13 +57,15 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300, panelHei
         </button>
       </header>
 
-      <div className="flex items-center justify-between gap-3">
-        <div className="font-ui-mono [&_button]:px-3.5 [&_button]:text-[13px]">
-          <SegmentedControl label={t('insights.range')} value={ins.range} onChange={ins.setRange}
-            options={RANGES.map((r) => ({ value: r, label: t(`insights.range${r}`) }))} />
+      {ins.month ? <MonthNav month={ins.month} todayCob={ins.todayCob} onChange={ins.setMonth} /> : (
+        <div className="flex items-center justify-between gap-3">
+          <div className="font-ui-mono [&_button]:px-3.5 [&_button]:text-[13px]">
+            <SegmentedControl label={t('insights.range')} value={ins.range} onChange={ins.setRange}
+              options={RANGES.map((r) => ({ value: r, label: t(`insights.range${r}`) }))} />
+          </div>
+          {!logDate && <EndDateControl end={ins.end} onChange={ins.setEnd} />}
         </div>
-        {!logDate && <EndDateControl end={ins.end} onChange={ins.setEnd} />}
-      </div>
+      )}
 
       {table ? (
         // The table stops at the screen's 36px bottom padding, so the page itself doesn't scroll.
@@ -70,7 +73,7 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300, panelHei
           onOpenDay={(cob) => (onLogDate ? onLogDate(fromDateStr(cob)) : setOpenDay(cob))} />
       ) : panels ? (
         <PanelsReportView key={ins.selectedId} report={ins.report!} definition={panels} entries={ins.entries} previous={ins.previousEntries}
-          practices={ins.practices} todayCob={ins.todayCob} chartHeight={panelHeight} formLink={`/settings/charts/${ins.selectedId}`} />
+          practices={ins.practices} todayCob={ins.todayCob} chartHeight={panelHeight} formLink={`/settings/charts/${ins.selectedId}`} month={ins.month ?? undefined} />
       ) : (
         <section className="flex flex-col gap-[18px] rounded-[24px] border border-ui-hairline bg-ui-surface p-6">
           {ins.isLoading ? (

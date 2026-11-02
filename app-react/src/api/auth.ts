@@ -17,7 +17,7 @@ export const authApi = {
     lang: string,
   ): Promise<UserInfo> {
     const res = await apiClient.post<{ user: UserInfo }>('/users', {
-      user: { confirmation_id: confirmationId, email, password, name, lang },
+      user: { confirmation_id: confirmationId, email, password, name, lang, skip_defaults: true },
     })
     return res.data.user
   },
@@ -66,11 +66,12 @@ export const authApi = {
     })
   },
 
-  /** lang picks the default practices of a new account. */
+  /** A new account starts empty: the guide sets up its practices. */
   async googleSignin(accessToken: string, lang: string): Promise<UserInfo> {
     const res = await apiClient.post<{ user: UserInfo }>('/oauth/google', {
       access_token: accessToken,
       lang,
+      skip_defaults: true,
     })
     return res.data.user
   },

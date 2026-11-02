@@ -75,11 +75,13 @@ export type StatValue =
 export interface Stat { label: Label; value: StatValue; under: Stat | null }
 
 export type Panel = { kind: 'Stats'; stats: Stat[] } | ({ kind: 'Chart' } & ChartPanel)
+  | { kind: 'Month'; practice: string }
 
 export interface SleepTemplate { bedtime: string; wake: string; nap: string | null; min: number | null; max: number | null }
 export interface JapaTemplate { total: string; target: number; morning: string | null; quality: string | null; attunement: string | null }
 export interface DurationTemplate { practices: string[]; goal: number | null }
-export type Template = { Sleep: SleepTemplate } | { Japa: JapaTemplate } | { Duration: DurationTemplate }
+export interface DaysTemplate { practices: string[] }
+export type Template = { Sleep: SleepTemplate } | { Japa: JapaTemplate } | { Duration: DurationTemplate } | { Days: DaysTemplate }
 export interface Required { practice: string; label: Label }
 
 export interface PanelsReport {
@@ -100,7 +102,7 @@ export interface Report {
 
 export const chartsApi = {
   async getReports(): Promise<Report[]> {
-    const res = await apiClient.get<{ reports: Report[] }>('/reports', { params: { panels: true } })
+    const res = await apiClient.get<{ reports: Report[] }>('/reports', { params: { panels: true, months: true } })
     return res.data.reports
   },
   async createReport(name: string, definition: ReportDefinition): Promise<string> {
@@ -114,7 +116,7 @@ export const chartsApi = {
     await apiClient.delete(`/report/${id}`)
   },
   async getSharedReports(userId: string): Promise<Report[]> {
-    const res = await apiClient.get<{ reports: Report[] }>(`/share/${userId}/reports`, { params: { panels: true } })
+    const res = await apiClient.get<{ reports: Report[] }>(`/share/${userId}/reports`, { params: { panels: true, months: true } })
     return res.data.reports
   },
   /** The owner's name for a shared reports link; fails for an unknown user. */

@@ -9,7 +9,7 @@ import { setViewportWidth } from '../../../test/viewport'
 import { REPORTS_KEY } from '../useReports'
 import { NewTemplateScreen } from './NewTemplateScreen'
 import { draftOf, draftProblem, draftToDefinition, TemplateForm, type TemplateDraft } from './TemplateForm'
-import { durationPanels, japaPanels, sleepPanels } from './templates'
+import { daysPanels, durationPanels, japaPanels, sleepPanels } from './templates'
 
 vi.mock('../../../api/charts', () => ({
   chartsApi: { getReports: vi.fn(), getReportData: vi.fn(), updateReport: vi.fn(), createReport: vi.fn(), deleteReport: vi.fn() },
@@ -308,7 +308,7 @@ describe('the Japa template', () => {
 
   it('takes a whole number of rounds and nothing else', () => {
     render(<JapaForm start={{ ...JAPA, target: null }} />)
-    const target = screen.getByLabelText('Target rounds')
+    const target = screen.getByLabelText('Daily target')
     fireEvent.change(target, { target: { value: '1a6' } })
     expect(target).toHaveValue('16')
     fireEvent.blur(target)
@@ -324,8 +324,8 @@ describe('the Japa template', () => {
 
   it('offers a numeric dropdown for quality and says why words can’t be used', () => {
     render(<JapaForm start={JAPA} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Japa quality: Choose a practice' }))
-    const sheet = within(screen.getByRole('dialog', { name: 'Japa quality' }))
+    fireEvent.click(screen.getByRole('button', { name: 'How it went: Choose a practice' }))
+    const sheet = within(screen.getByRole('dialog', { name: 'How it went' }))
     expect(sheet.getByRole('radio', { name: /Quality/ })).toBeInTheDocument()
     expect(sheet.queryByRole('radio', { name: /Mood/ })).not.toBeInTheDocument()
     expect(sheet.getByText('Mood')).toBeInTheDocument()
@@ -341,6 +341,20 @@ describe('the Japa template', () => {
   it('flags a deleted total on a saved report', () => {
     render(<JapaForm start={{ ...JAPA, total: null }} flagMissing />)
     expect(screen.getByText(/deleted or hidden/)).toBeInTheDocument()
+  })
+})
+
+describe('the live preview', () => {
+  beforeEach(() => {
+    setViewportWidth(1200)
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue(PRACTICES)
+    charts.getReports.mockResolvedValue([])
+    charts.getReportData.mockReset().mockResolvedValue([])
+  })
+  it.each([['days', 'HalfYear'], ['sleep', 'Month']])('of %s reads %s', async (slug, duration) => {
+    renderNew(`/settings/charts/new/${slug}`)
+    await waitFor(() => expect(charts.getReportData).toHaveBeenCalled())
+    expect(charts.getReportData.mock.calls[0][1]).toBe(duration)
   })
 })
 
@@ -362,14 +376,14 @@ describe('the new Japa screen', () => {
         </MemoryRouter>
       </QueryClientProvider>,
     )
-    expect(await screen.findByRole('heading', { name: 'New japa report' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'New daily count report' })).toBeInTheDocument()
     await screen.findByRole('button', { name: 'Use Japa rounds' })
-    expect(screen.getByLabelText('Name')).toHaveValue('Japa')
+    expect(screen.getByLabelText('Name')).toHaveValue('Daily count')
     const create = screen.getByRole('button', { name: 'Create report' })
     expect(create).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: 'Use Japa rounds' }))
-    fireEvent.change(screen.getByLabelText('Target rounds'), { target: { value: '16' } })
-    fireEvent.blur(screen.getByLabelText('Target rounds'))
+    fireEvent.change(screen.getByLabelText('Daily target'), { target: { value: '16' } })
+    fireEvent.blur(screen.getByLabelText('Daily target'))
     expect(create).toBeEnabled()
     fireEvent.click(create)
     expect(await screen.findByText('Insights')).toBeInTheDocument()
@@ -435,5 +449,46 @@ describe('the Duration template', () => {
   it('flags an empty saved report', () => {
     render(<DurationForm start={{ kind: 'Duration', practices: [], goal: null }} flagMissing />)
     expect(screen.getByText(/deleted or hidden/)).toBeInTheDocument()
+  })
+})
+
+describe('the Days template', () => {
+  const ALL = [...PRACTICES, p('walk', 'Walk', 'Bool'), p('pray', 'Prayer', 'Bool'), p('hid', 'Hidden', 'Bool', false)]
+  const DAYS: TemplateDraft = { kind: 'Days', practices: ['walk'] }
+  function DaysForm({ start, practices = ALL }: { start: TemplateDraft; practices?: UserPractice[] }) {
+    const [v, setV] = useState(start)
+    return (
+      <MemoryRouter>
+        <TemplateForm value={v} onChange={setV} practices={practices} />
+        <output data-testid="draft">{JSON.stringify(v)}</output>
+      </MemoryRouter>
+    )
+  }
+  it('needs a practice and no more than eight', () => {
+    expect(draftProblem(DAYS)).toBeNull()
+    expect(draftProblem({ kind: 'Days', practices: [] })).toBe('required')
+    expect(draftProblem({ kind: 'Days', practices: Array.from({ length: 9 }, (_, i) => `p${i}`) })).toBe('tooMany')
+    expect(draftProblem({ kind: 'Days', practices: Array.from({ length: 8 }, (_, i) => `p${i}`) })).toBeNull()
+  })
+  it('builds the report, and reads back dropping hidden or retyped practices', () => {
+    expect(draftToDefinition(DAYS)).toEqual({ Panels: daysPanels({ practices: ['walk'] }) })
+    const def = daysPanels({ practices: ['walk', 'hid', 'nap', 'pray'] })
+    expect(draftOf(def, ALL)).toEqual({ kind: 'Days', practices: ['walk', 'pray'] })
+  })
+  it('lists yes/no practices with checkboxes, and only those', () => {
+    render(<DaysForm start={DAYS} />)
+    expect(screen.getByRole('checkbox', { name: 'Walk' })).toBeChecked()
+    expect(screen.queryByRole('checkbox', { name: 'Nap' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('checkbox', { name: 'Hidden' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Prayer' }))
+    expect(shown()).toMatchObject({ practices: ['walk', 'pray'] })
+  })
+  it('says when there are too many, and links out when there are none', () => {
+    const many = Array.from({ length: 9 }, (_, i) => p(`d${i}`, `D${i}`, 'Bool'))
+    render(<DaysForm start={{ kind: 'Days', practices: many.map((x) => x.id) }} practices={many} />)
+    expect(screen.getByRole('alert')).toHaveTextContent('8')
+    cleanupForm()
+    render(<DaysForm start={{ kind: 'Days', practices: [] }} practices={[]} />)
+    expect(screen.getByText('You have no yes/no practice')).toBeInTheDocument()
   })
 })

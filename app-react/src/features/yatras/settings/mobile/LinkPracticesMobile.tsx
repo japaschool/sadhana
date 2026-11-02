@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { MouseEvent, ReactNode } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { yatrasApi } from '../../../../api/yatras'
@@ -28,6 +28,7 @@ export function LinkPracticesMobile() {
   const { t, i18n } = useTranslation()
   const { id = '' } = useParams()
   const [params] = useSearchParams()
+  const here = useLocation()
   const layout = useLayout()
   const wide = layout !== 'mobile'
   const s = useLinkPractices(id)
@@ -38,6 +39,9 @@ export function LinkPracticesMobile() {
   const total = s.items.length
   const linked = total - missing.length
   const joined = params.get('joined') === '1' && s.yatra ? s.yatra.name : null
+
+  const offer = s.canCreate && missing.length > 0
+  const createBtn = 'min-h-12 self-stretch rounded-[14px] px-5 text-[15px] font-extrabold disabled:opacity-60 sm:self-start'
 
   const summary = (
     <section className={`${CARD} flex flex-col gap-3 p-4`}>
@@ -57,11 +61,31 @@ export function LinkPracticesMobile() {
       </div>
       <p className="text-sm leading-normal text-ui-ink2">
         {!total ? t('yatraSettings.noPracticesText')
+          : offer ? t('yatraSettings.createIntro', { count: missing.length })
+          : joined && s.created > 0 && !missing.length ? t('yatraSettings.createdMany', { count: s.created })
           : missing.length
             ? t('yatraSettings.wontAppear', { names: joinNames(missing.map((p) => p.practice), i18n.language || 'en') })
             : t('yatraSettings.allAppear')}
       </p>
-      {suggested.size > 0 && (
+      {offer && (
+        <>
+          <button type="button" disabled={s.creating} onClick={() => void s.createAndLink(missing)}
+            className={`${createBtn} bg-ui-primary text-ui-on-primary`}>
+            {t('yatraSettings.createAll')}
+          </button>
+          <p className="text-[13px] leading-normal text-ui-muted">{t('yatraSettings.createHint')}</p>
+        </>
+      )}
+      {joined && s.canCreate && !missing.length && total > 0 && (
+        <Link to="/" className={`${createBtn} flex items-center justify-center bg-ui-primary text-ui-on-primary`}>{t('yatraSettings.startLogging')}</Link>
+      )}
+      {joined && s.canCreate && (
+        <Link to="/guide" state={{ back: here.pathname + here.search }} className="flex flex-col gap-0.5 border-t border-ui-hairline pt-3 text-sm">
+          <span className="font-extrabold text-ui-accent">{t('home.helpChoose')}</span>
+          <span className="text-ui-muted">{t('home.helpChooseSub')}</span>
+        </Link>
+      )}
+      {!offer && suggested.size > 0 && (
         <button type="button" onClick={() => s.linkAll(suggested)}
           className="min-h-12 self-stretch rounded-[14px] bg-ui-accent-fill px-5 text-[15px] font-extrabold text-ui-ink sm:self-start">
           {t('yatraSettings.linkSuggested', { count: suggested.size })}
@@ -80,6 +104,8 @@ export function LinkPracticesMobile() {
       <ul className="flex flex-col gap-px overflow-hidden rounded-[18px] border border-ui-hairline bg-ui-hairline">
         {s.items.map((item) => (
           <LinkRow key={item.yatra_practice.id} item={item} suggestion={suggested.get(item.yatra_practice.id)} wide={wide} grid={grid}
+            canCreate={offer} busy={s.creating} note={s.notes.get(item.yatra_practice.id)}
+            onCreate={() => void s.createAndLink([item.yatra_practice])}
             hasCompatible={s.practices.some((p) => p.is_active && p.data_type === item.yatra_practice.data_type)}
             onLink={(name) => s.link(item.yatra_practice.id, name)} onPick={(anchor) => setPicker({ id: item.yatra_practice.id, anchor })} />
         ))}
@@ -161,9 +187,10 @@ function YourRowToday({ id, items }: { id: string; items: YatraUserPracticeItem[
   )
 }
 
-function LinkRow({ item, suggestion, hasCompatible, wide, grid, onLink, onPick }: {
+function LinkRow({ item, suggestion, hasCompatible, canCreate, busy, note, wide, grid, onLink, onPick, onCreate }: {
   item: YatraUserPracticeItem; suggestion?: UserPractice; hasCompatible: boolean; wide: boolean; grid: string
-  onLink: (name: string) => void; onPick: (anchor: HTMLElement) => void
+  canCreate: boolean; busy: boolean; note?: 'hidden' | 'type' | 'failed'
+  onLink: (name: string) => void; onPick: (anchor: HTMLElement) => void; onCreate: () => void
 }) {
   const { t } = useTranslation()
   const { yatra_practice: y, user_practice: mine } = item
@@ -185,6 +212,17 @@ function LinkRow({ item, suggestion, hasCompatible, wide, grid, onLink, onPick }
           {t('yatraSettings.statusLinked')}
         </span>
       </button>
+    )
+  } else if (canCreate) {
+    slot = (
+      <div className={`${slotCls} border-dashed`}>
+        <TypeIcon type={y.data_type} />
+        <span className="min-w-0 flex-1 text-[13px] font-bold text-ui-ink">{t('yatraSettings.noneOfType', { type: t(typeLabelKey(y.data_type)) })}</span>
+        <button type="button" disabled={busy} onClick={onCreate}
+          className="h-9 shrink-0 rounded-[10px] bg-ui-primary px-4 text-[13px] font-extrabold text-ui-on-primary disabled:opacity-60">
+          {t('yatraSettings.createAndLink')}
+        </button>
+      </div>
     )
   } else if (suggestion) {
     slot = (
@@ -225,7 +263,9 @@ function LinkRow({ item, suggestion, hasCompatible, wide, grid, onLink, onPick }
       </div>
     )
   }
-  const status = notLinked && <span className="text-xs font-semibold text-ui-muted">{t('yatraSettings.notLinked')}</span>
+  const status = note
+    ? <span className="text-xs font-semibold text-ui-muted">{t(`yatraSettings.note_${note}`, { name: y.practice })}</span>
+    : notLinked && <span className="text-xs font-semibold text-ui-muted">{t('yatraSettings.notLinked')}</span>
   const name = <span className="min-w-0 text-base leading-[1.3] font-extrabold text-ui-ink">{y.practice}</span>
 
   if (wide) {

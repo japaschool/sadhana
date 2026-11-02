@@ -7,10 +7,18 @@ export async function downloadCsv() {
   triggerCSVDownload(toCSV(await chartsApi.getReportData(toDateStr(new Date()), 'AllData')))
 }
 
-/** Copies the public charts link. Returns false when nobody is signed in. */
-export function copyShareLink(): boolean {
+/** The public charts link, or null when nobody is signed in. */
+export function shareUrl(): string | null {
   const user = useAuthStore.getState().user
-  if (!user) return false
-  void navigator.clipboard.writeText(`${window.location.origin}/shared/${user.id}`)
-  return true
+  return user ? `${window.location.origin}/shared/${user.id}` : null
+}
+
+/** Copies the public charts link. Resolves to false when nobody is signed in or the browser refuses. */
+export async function copyShareLink(): Promise<boolean> {
+  const url = shareUrl()
+  if (!url) return false
+  try {
+    await navigator.clipboard.writeText(url)
+    return true
+  } catch { return false }
 }

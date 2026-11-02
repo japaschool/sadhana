@@ -26,6 +26,7 @@ const PracticesMobileScreen = lazy(() => import('./features/practices/mobile/Pra
 const PracticesWide = lazy(() => import('./features/practices/wide/PracticesWide').then((m) => ({ default: m.PracticesWide })))
 const ChartsSettings = lazy(() => import('./features/settings/SettingsLists').then((m) => ({ default: m.ChartsSettings })))
 const YatrasSettings = lazy(() => import('./features/settings/SettingsLists').then((m) => ({ default: m.YatrasSettings })))
+const GuideScreen = lazy(() => import('./features/guide/GuideScreen').then((m) => ({ default: m.GuideScreen })))
 const PracticeEditorMobile = lazy(() => import('./features/yatras/settings/mobile/PracticeEditorMobile').then((m) => ({ default: m.PracticeEditorMobile })))
 
 /** One screen for every layout: just the loading state while the code arrives. */
@@ -108,6 +109,7 @@ export const router = createBrowserRouter([
     children: [
       // Each layout renders its own shell. Desktop has no Log screen: the log is a panel beside every screen.
       { path: '/', element: <ByLayout mobile={<TodayMobileScreen />} tablet={<TodayTabletScreen />} desktop={<Navigate to="/charts" replace />} /> },
+      { path: '/guide', element: ui(<GuideScreen />) },
       { path: '/settings', element: <ByLayout mobile={<SettingsMobileScreen />} tablet={<SettingsTabletScreen />} desktop={<SettingsDesktopScreen />} /> },
       { path: '/charts', element: <ByLayout mobile={<InsightsMobileScreen />} tablet={<InsightsTabletScreen />} desktop={<InsightsDesktopScreen />} /> },
       { path: '/yatras', element: <ByLayout mobile={<YatrasMobileScreen />} tablet={<YatrasTabletScreen />} desktop={<YatrasDesktopScreen />} /> },

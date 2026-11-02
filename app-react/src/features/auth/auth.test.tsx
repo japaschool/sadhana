@@ -2,15 +2,28 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { GuestRoute } from '../../layouts/GuestRoute'
 import { ProtectedRoute } from '../../layouts/ProtectedRoute'
 import { useAuthStore } from '../../store/authStore'
-import { server } from '../../test/handlers/auth.handlers'
+import { mockUser, server } from '../../test/handlers/auth.handlers'
 import { setViewportWidth } from '../../test/viewport'
 import { Login } from './Login'
 import { ConfirmRegistration, mismatch, Register } from './Register'
+
+// Google's popup is replaced by an immediate token.
+vi.mock('@react-oauth/google', () => ({
+  GoogleOAuthProvider: ({ children }: { children: React.ReactNode }) => children,
+  useGoogleLogin: ({ onSuccess }: { onSuccess: (r: { access_token: string }) => void }) => () => onSuccess({ access_token: 'g-token' }),
+}))
+vi.stubEnv('VITE_GOOGLE_CLIENT_ID', 'test-client')
+
+/** The guide route arrives in a later task: show where we landed. */
+function Landed() {
+  const { pathname, state } = useLocation()
+  return <p>{`landed ${pathname} ${JSON.stringify(state)}`}</p>
+}
 
 function renderAt(path: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -23,7 +36,9 @@ function renderAt(path: string) {
             <Route path="/register" element={<Register />} />
             <Route path="/register/:id" element={<ConfirmRegistration />} />
           </Route>
+          <Route path="/guide" element={<Landed />} />
           <Route element={<ProtectedRoute />}>
+            <Route path="/settings" element={<p>Settings</p>} />
             <Route path="/" element={<p>Today</p>} />
             <Route path="/yatras" element={<p>Yatras</p>} />
             <Route path="/yatra/:id/join" element={<p>Invite page</p>} />
@@ -42,6 +57,7 @@ const signIn = async () => {
 
 describe('auth screens', () => {
   beforeEach(() => {
+    localStorage.clear()
     setViewportWidth(390)
     useAuthStore.setState({ user: null, token: null, isLoading: false })
   })
@@ -100,7 +116,7 @@ describe('auth screens', () => {
     it.each(['https://evil.example/', '//evil.example', '/settings', `${INVITE}/x`, '/yatra/not-a-uuid/join'])('ignores next=%s', async (next) => {
       renderAt(`/register/conf-1?next=${encodeURIComponent(next)}`)
       await finishSignUp()
-      expect(await screen.findByText('Today')).toBeInTheDocument()
+      expect(await screen.findByText(/^landed \/guide/)).toBeInTheDocument()
     })
 
     it('an expired emailed link keeps the invite', async () => {
@@ -108,6 +124,77 @@ describe('auth screens', () => {
       renderAt(`/register/old?next=${encodeURIComponent(INVITE)}`)
       await userEvent.click(await screen.findByRole('link', { name: 'Sign up' }))
       expect(await sentNext()).toBe(INVITE)
+    })
+  })
+
+  describe('after sign-up', () => {
+    const google = async () => userEvent.click(await screen.findByRole('button', { name: /google/i }))
+    const GUIDE = 'landed /guide {"firstRun":true}'
+
+    it('a new email account opens the guide as first run', async () => {
+      renderAt('/register/conf-1')
+      await userEvent.type(await screen.findByLabelText('Your name'), 'Alex')
+      await userEvent.type(screen.getByLabelText('Password'), 'secret1')
+      await userEvent.type(screen.getByLabelText('Confirm password'), 'secret1')
+      await userEvent.click(screen.getByRole('button', { name: /create account/i }))
+      expect(await screen.findByText(GUIDE)).toBeInTheDocument()
+    })
+
+    it('registration asks the server to skip the default practices', async () => {
+      let body: { user: { skip_defaults?: boolean } } | undefined
+      server.use(http.post('/api/users', async ({ request }) => {
+        body = (await request.json()) as typeof body
+        return HttpResponse.json({ user: { id: 'u', email: 'a@b.c', token: 't', name: 'A' } })
+      }))
+      renderAt('/register/conf-1')
+      await userEvent.type(await screen.findByLabelText('Your name'), 'Alex')
+      await userEvent.type(screen.getByLabelText('Password'), 'secret1')
+      await userEvent.type(screen.getByLabelText('Confirm password'), 'secret1')
+      await userEvent.click(screen.getByRole('button', { name: /create account/i }))
+      await screen.findByText(GUIDE)
+      expect(body?.user.skip_defaults).toBe(true)
+    })
+
+    it('a new Google account opens the guide, and created is not stored', async () => {
+      let sent: { skip_defaults?: boolean } | undefined
+      server.use(http.post('/api/oauth/google', async ({ request }) => {
+        sent = (await request.json()) as typeof sent
+        return HttpResponse.json({ user: { ...mockUser, created: true } })
+      }))
+      renderAt('/register')
+      await google()
+      expect(await screen.findByText(GUIDE)).toBeInTheDocument()
+      expect(sent?.skip_defaults).toBe(true)
+      expect(localStorage.getItem('sadhana.user')).not.toContain('created')
+      expect(useAuthStore.getState().user).not.toHaveProperty('created')
+    })
+
+    it('a returning Google user goes to Today', async () => {
+      server.use(http.post('/api/oauth/google', () => HttpResponse.json({ user: mockUser })))
+      renderAt('/login')
+      await google()
+      expect(await screen.findByText('Today')).toBeInTheDocument()
+      expect(useAuthStore.getState().newAccount).toBe(false)
+    })
+
+    it('a new account with an invite goes to the join screen', async () => {
+      server.use(http.post('/api/oauth/google', () => HttpResponse.json({ user: { ...mockUser, created: true } })))
+      renderAt('/yatra/0f8fad5b-d9cb-469f-a165-70867728950e/join')
+      await google()
+      expect(await screen.findByText('Invite page')).toBeInTheDocument()
+    })
+
+    it('a new Google account that came from /settings still opens the guide', async () => {
+      server.use(http.post('/api/oauth/google', () => HttpResponse.json({ user: { ...mockUser, created: true } })))
+      renderAt('/settings')
+      await google()
+      expect(await screen.findByText(GUIDE)).toBeInTheDocument()
+    })
+
+    it('a returning user who came from /settings goes back to it', async () => {
+      renderAt('/settings')
+      await signIn()
+      expect(await screen.findByText('Settings')).toBeInTheDocument()
     })
   })
 

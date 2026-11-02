@@ -21,6 +21,8 @@ interface ChartPanelProps {
   /** The first chart carries the states legend and the no-data note. */
   first: boolean
   compact: boolean
+  /** Off in examples: no tooltip. */
+  interactive?: boolean
 }
 
 /** About 1px a bar: outlines and stripes can't render (15m8). */
@@ -142,7 +144,7 @@ function PanelLegend({ panel, first, lookup }: { panel: ChartPanel; first: boole
 
 const LINE_LABEL = { fontSize: 10, fontFamily: TICK.fontFamily, fill: 'var(--ui-ink)', stroke: 'var(--ui-surface)', strokeWidth: 3, paintOrder: 'stroke' }
 
-export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, first, compact }: ChartPanelProps) {
+export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, first, compact, interactive = true }: ChartPanelProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const stripes = `stripes-${useId().replace(/[^a-zA-Z0-9]/g, '')}`
@@ -240,7 +242,7 @@ export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, 
                 </Bar>
               )
             })}
-            <Tooltip isAnimationActive={false} cursor={{ fill: 'var(--ui-hairline)', stroke: 'var(--ui-hairline)' }}
+            {interactive && <Tooltip isAnimationActive={false} cursor={{ fill: 'var(--ui-hairline)', stroke: 'var(--ui-hairline)' }}
               content={({ active, label }) => {
                 if (!active || typeof label !== 'string') return null
                 const lines = tipLines(panels, label, lookup, t, tipUnits)
@@ -250,7 +252,7 @@ export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, 
                     {lines.map((l) => <TipRow key={l.key} color={l.colour ?? SOLID[l.state ?? 'neutral']} name={l.name} value={l.text} />)}
                   </TipShell>
                 )
-              }} />
+              }} />}
             {limits.map((l) => (
               <ReferenceLine key={l.key} y={l.value} ifOverflow="extendDomain" stroke="var(--ui-ink)" strokeWidth={1.3} strokeDasharray="4 3"
                 label={{ ...LINE_LABEL, value: limitText(l.key, l.value), position: l.position }} />

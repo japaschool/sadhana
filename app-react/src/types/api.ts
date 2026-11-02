@@ -5,6 +5,8 @@ export interface UserInfo {
   email: string
   token: string
   name: string
+  /** Google sign-in only: this call created the account. Never stored. */
+  created?: boolean
 }
 
 export type PracticeDataType = 'Int' | 'Bool' | 'Time' | 'Text' | 'Duration'

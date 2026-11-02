@@ -16,6 +16,7 @@ impl From<(User, String)> for UserResponse {
                 email: user.email,
                 token,
                 name: user.name,
+                created: None,
             },
         }
     }
@@ -27,6 +28,9 @@ pub struct AuthUser {
     pub email: String,
     pub token: String,
     pub name: String,
+    /// Set by Google sign-in only: whether this call made the account.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub created: Option<bool>,
 }
 
 #[derive(Serialize)]

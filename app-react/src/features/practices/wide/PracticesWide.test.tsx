@@ -55,6 +55,14 @@ describe('PracticesWide', () => {
     expect(await screen.findByText('Select a practice to edit it, or add a new one.')).toBeInTheDocument()
   })
 
+  it('Add offers Help me choose or Add one myself in a menu', async () => {
+    renderAt('/settings/practices')
+    fireEvent.click(await screen.findByRole('button', { name: 'Add' }))
+    expect(screen.getByRole('menuitem', { name: 'Help me choose' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Add one myself' }))
+    expect(await screen.findByRole('region', { name: 'New practice' })).toBeInTheDocument()
+  })
+
   it('opens Add beside an empty list', async () => {
     api.getUserPractices.mockResolvedValue([])
     renderAt('/settings/practices')
