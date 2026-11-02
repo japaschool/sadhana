@@ -153,6 +153,8 @@ fn api_scope() -> impl HttpServiceFactory {
                         )
                         .route("", web::put().to(app::user_practices::update_user_practice)),
                 )
+                .route("/guide-runs", web::post().to(app::guide::start_run))
+                .route("/guide-run/{id}", web::put().to(app::guide::update_run))
                 .route("", web::get().to(app::user::api::me))
                 .route("", web::put().to(app::user::api::update_user))
                 .route(
