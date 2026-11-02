@@ -154,7 +154,7 @@ function InlineInputRow({ practice, value, failed, onSave }: PracticeRowProps) {
           )}
         </>
       ) : (
-        <EmptyValue required={!!practice.is_required} name={practice.practice} onClick={() => setDraft('')} />
+        <EmptyValue className="pr-2" required={!!practice.is_required} name={practice.practice} onClick={() => setDraft('')} />
       )}
       {adding && (
         <AddTimeSheet anchor={adding} practice={practice.practice} current={minutes} initialMode="add" onSave={onSave} onClose={() => setAdding(null)} />
@@ -196,7 +196,7 @@ function ChoiceRow({ practice, value, failed, onSave, options }: PracticeRowProp
           <Chevron />
         </button>
       ) : (
-        <EmptyValue required={!!practice.is_required} name={practice.practice} onClick={(e) => setAnchor(e.currentTarget)} />
+        <EmptyValue className="pr-2" required={!!practice.is_required} name={practice.practice} onClick={(e) => setAnchor(e.currentTarget)} />
       )}
       {anchor && (
         <AnchoredMenu anchor={anchor} label={practice.practice} onClose={() => setAnchor(null)}>

@@ -11,11 +11,11 @@ export function RequiredBadge() {
   )
 }
 
-/** "+ Add", or "Required" for a required practice. Both open the row's editor. */
-export function EmptyValue({ required, name, onClick }: { required: boolean; name: string; onClick: (e: MouseEvent<HTMLButtonElement>) => void }) {
+/** "+ Add", or "Required" for a required practice. Both open the row's editor. Rows set their own right inset (`className`). */
+export function EmptyValue({ required, name, className, onClick }: { required: boolean; name: string; className?: string; onClick: (e: MouseEvent<HTMLButtonElement>) => void }) {
   const { t } = useTranslation()
   return (
-    <button type="button" aria-label={t('today.editValue', { name })} onClick={onClick} className="pr-2">
+    <button type="button" aria-label={t('today.editValue', { name })} onClick={onClick} className={className}>
       {required ? <RequiredBadge /> : <span className="text-[13px] font-bold text-ui-accent">{t('today.add')}</span>}
     </button>
   )
