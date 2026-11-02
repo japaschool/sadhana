@@ -219,6 +219,8 @@ if (!i18n.isInitialized) {
             viewYatras: 'View yatras',
             addStarters: 'Add starter practices',
             addCustom: 'or create a custom one',
+            helpChoose: 'Help me choose',
+            helpChooseSub: 'See example reports first, then pick what to track',
             addFirst: 'Add your first practice',
             offline: "You're offline — changes will sync when reconnected",
             addMinutes: 'Add minutes',

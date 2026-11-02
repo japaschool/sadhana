@@ -11,6 +11,10 @@ export function NoPractices({ onSeed, seeding }: { onSeed: () => void; seeding: 
         {t('home.addStarters')}
       </button>
       <Link to="/settings/practices/new" className="text-sm font-semibold text-ui-accent">{t('home.addCustom')}</Link>
+      <Link to="/guide" state={{ back: '/' }} className="flex flex-col gap-0.5 text-sm">
+        <span className="font-extrabold text-ui-accent">{t('home.helpChoose')}</span>
+        <span className="text-ui-muted">{t('home.helpChooseSub')}</span>
+      </Link>
     </div>
   )
 }

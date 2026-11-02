@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { TodayMobileScreen } from './TodayMobile'
 import { setViewportWidth } from '../../../test/viewport'
 
@@ -26,6 +26,10 @@ function renderScreen() {
       <MemoryRouter initialEntries={['/']}><TodayMobileScreen /></MemoryRouter>
     </QueryClientProvider>,
   )
+}
+
+function GuideProbe() {
+  return <p>guide state {JSON.stringify(useLocation().state)}</p>
 }
 
 describe('TodayMobile', () => {
@@ -78,6 +82,22 @@ describe('TodayMobile', () => {
     api.getUserPractices.mockResolvedValue([])
     renderScreen()
     expect(await screen.findByRole('button', { name: 'Add starter practices' })).toBeInTheDocument()
+  })
+
+  it('offers the guide from the empty state, without firstRun, next to starters and add-your-own', async () => {
+    api.getUserPractices.mockResolvedValue([])
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={['/']}>
+          <Routes><Route path="/" element={<TodayMobileScreen />} /><Route path="/guide" element={<GuideProbe />} /></Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+    expect(await screen.findByRole('button', { name: 'Add starter practices' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'or create a custom one' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('link', { name: /Help me choose/ }))
+    expect(await screen.findByText('guide state {"back":"/"}')).toBeInTheDocument()
   })
 
   it('shows the rows and a note when the day cannot be loaded', async () => {
