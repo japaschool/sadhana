@@ -308,7 +308,7 @@ describe('the Japa template', () => {
 
   it('takes a whole number of rounds and nothing else', () => {
     render(<JapaForm start={{ ...JAPA, target: null }} />)
-    const target = screen.getByLabelText('Target rounds')
+    const target = screen.getByLabelText('Daily target')
     fireEvent.change(target, { target: { value: '1a6' } })
     expect(target).toHaveValue('16')
     fireEvent.blur(target)
@@ -324,8 +324,8 @@ describe('the Japa template', () => {
 
   it('offers a numeric dropdown for quality and says why words can’t be used', () => {
     render(<JapaForm start={JAPA} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Japa quality: Choose a practice' }))
-    const sheet = within(screen.getByRole('dialog', { name: 'Japa quality' }))
+    fireEvent.click(screen.getByRole('button', { name: 'How it went: Choose a practice' }))
+    const sheet = within(screen.getByRole('dialog', { name: 'How it went' }))
     expect(sheet.getByRole('radio', { name: /Quality/ })).toBeInTheDocument()
     expect(sheet.queryByRole('radio', { name: /Mood/ })).not.toBeInTheDocument()
     expect(sheet.getByText('Mood')).toBeInTheDocument()
@@ -362,14 +362,14 @@ describe('the new Japa screen', () => {
         </MemoryRouter>
       </QueryClientProvider>,
     )
-    expect(await screen.findByRole('heading', { name: 'New japa report' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'New daily count report' })).toBeInTheDocument()
     await screen.findByRole('button', { name: 'Use Japa rounds' })
-    expect(screen.getByLabelText('Name')).toHaveValue('Japa')
+    expect(screen.getByLabelText('Name')).toHaveValue('Daily count')
     const create = screen.getByRole('button', { name: 'Create report' })
     expect(create).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: 'Use Japa rounds' }))
-    fireEvent.change(screen.getByLabelText('Target rounds'), { target: { value: '16' } })
-    fireEvent.blur(screen.getByLabelText('Target rounds'))
+    fireEvent.change(screen.getByLabelText('Daily target'), { target: { value: '16' } })
+    fireEvent.blur(screen.getByLabelText('Daily target'))
     expect(create).toBeEnabled()
     fireEvent.click(create)
     expect(await screen.findByText('Insights')).toBeInTheDocument()

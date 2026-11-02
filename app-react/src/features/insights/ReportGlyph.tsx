@@ -3,7 +3,7 @@ import { templateSlug } from './panels/templates'
 
 const BOX = 'inline-flex shrink-0'
 
-/** Bars for a graph, cells for a table, staggered bars for sleep, a ring of beads for japa, stacked bars for duration. Colour comes from `className`. */
+/** Bars for a graph, cells for a table, staggered bars for sleep, bars under a target line for japa (shown as Daily count), stacked bars for duration. Colour comes from `className`. */
 export function KindGlyph({ kind, className = 'text-ui-faint' }: { kind: 'graph' | 'table' | 'sleep' | 'japa' | 'duration'; className?: string }) {
   if (kind === 'graph') {
     return (
@@ -26,8 +26,11 @@ export function KindGlyph({ kind, className = 'text-ui-faint' }: { kind: 'graph'
   }
   if (kind === 'japa') {
     return (
-      <span aria-hidden data-glyph={kind} className={`${BOX} ${className} h-3 w-3.5 items-center justify-center`}>
-        <span className="box-border h-3 w-3 rounded-full border-[2.5px] border-dotted border-current" />
+      <span aria-hidden data-glyph={kind} className={`${BOX} ${className} relative h-3 w-3.5 items-end gap-0.5`}>
+        {[[9, 1], [5, 0.5], [11, 1]].map(([h, o], i) => (
+          <span key={i} className="w-[3px] rounded-[1px] bg-current" style={{ height: h, opacity: o }} />
+        ))}
+        <span className="absolute -left-px -right-px top-[3px] h-[1.4px] bg-current" />
       </span>
     )
   }

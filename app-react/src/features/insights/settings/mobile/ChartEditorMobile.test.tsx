@@ -223,10 +223,10 @@ const setLimit = (label: string, value: string) => {
   fireEvent.blur(el)
 }
 
-it('the new chart sheet offers Japa and Duration', () => {
+it('the new chart sheet offers Daily count and Time spent', () => {
   render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><NewChartSheet onClose={() => {}} /></MemoryRouter></QueryClientProvider>)
-  expect(screen.getByRole('link', { name: /Japa/ })).toHaveAttribute('href', '/settings/charts/new/japa')
-  expect(screen.getByRole('link', { name: /Duration/ })).toHaveAttribute('href', '/settings/charts/new/duration')
+  expect(screen.getByRole('link', { name: /Daily count/ })).toHaveAttribute('href', '/settings/charts/new/japa')
+  expect(screen.getByRole('link', { name: /Time spent/ })).toHaveAttribute('href', '/settings/charts/new/duration')
 })
 
 it('choosing Sleep closes the sheet, which can already be on the form’s page (the wide charts column)', () => {

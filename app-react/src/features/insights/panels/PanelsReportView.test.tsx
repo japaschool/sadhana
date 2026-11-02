@@ -278,7 +278,7 @@ describe('a Japa report', () => {
   it('names the states, extras and target in the legend', () => {
     show(full)
     const legend = screen.getByRole('list', { name: 'Key' })
-    expect(within(legend).getAllByRole('listitem').map((x) => x.textContent)).toEqual(['On target', 'Missed', 'Morning rounds', 'Attunement done', 'Target 16'])
+    expect(within(legend).getAllByRole('listitem').map((x) => x.textContent)).toEqual(['On target', 'Missed', 'Early part', 'Marked done', 'Target 16'])
   })
 
   it('states come from the target, and the morning bars stay out of them', () => {
@@ -294,7 +294,7 @@ describe('a Japa report', () => {
 
   it('draws quality as a line in its own card', () => {
     const { container } = show(full)
-    expect(screen.getByRole('heading', { name: 'Japa quality' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'How it went' })).toBeInTheDocument()
     expect(container.querySelectorAll('.recharts-line-curve').length).toBeGreaterThan(0)
   })
 
@@ -305,7 +305,7 @@ describe('a Japa report', () => {
 
   it('five figures sit in one row on wide layouts', () => {
     show(full)
-    expect((screen.getByText('Average rounds').parentElement?.parentElement as HTMLElement).style.gridTemplateColumns).toBe('repeat(5, minmax(0, 1fr))')
+    expect((screen.getByText('Average per day').parentElement?.parentElement as HTMLElement).style.gridTemplateColumns).toBe('repeat(5, minmax(0, 1fr))')
   })
 })
 

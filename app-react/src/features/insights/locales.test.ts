@@ -59,3 +59,18 @@ describe('templateForm.* translations', () => {
     for (const d of dicts) expect(Object.keys(d.templateForm ?? {}).sort()).toEqual(keys)
   })
 })
+
+describe('neutral report names', () => {
+  // Daily count and Time spent aren't tied to one tradition. japaDesc names rounds as one example, on purpose.
+  const TRADITIONAL = /japa|джап|rounds|круг|кола|кіл\b/i
+  it('keeps japa and rounds out of the report copy', () => {
+    for (const [path, dict] of Object.entries(files)) {
+      for (const group of ['reportPanels', 'templateForm', 'chartSettings'] as const) {
+        for (const [k, v] of Object.entries((dict as Record<string, Record<string, string>>)[group] ?? {})) {
+          if (group === 'chartSettings' && k === 'japaDesc') continue
+          expect(v, `${path} ${group}.${k}`).not.toMatch(TRADITIONAL)
+        }
+      }
+    }
+  })
+})

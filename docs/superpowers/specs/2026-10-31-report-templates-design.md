@@ -1,5 +1,7 @@
 # Report templates — design
 
+> **Superseded by guided setup** (`2026-11-01-guided-setup-design.md`, in part). Japa is presented as **Daily count** and Duration as **Time spent**, and a fourth template, **Days I did it**, is added. Stored identifiers don't change: `Template::Japa`, the `japa` and `duration` slugs and the translation keys stay as written below. Only the names people read changed.
+
 Mockups (claude.ai/design project "Sadhana Redesign"): [`Report Templates.dc.html`](https://claude.ai/design/p/cccefa4d-5554-41b1-be47-2704b1233b68?file=Report+Templates.dc.html), frames `15m*` (mobile), `15t*` (tablet) and `15d*` (desktop). Where this spec and the mock differ on layout or visuals, the mock wins. Visual inspiration: Garmin Connect's Sleep Consistency and Sleep Duration charts.
 
 ## Intent
