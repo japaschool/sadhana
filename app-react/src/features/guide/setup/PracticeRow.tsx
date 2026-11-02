@@ -71,7 +71,10 @@ export function PracticeRow({ name, label, type, note, needed, tick, onRename, o
         </div>
         {!off && (editing
           ? <button type="button" onClick={() => setEditing(false)} className={`${LINK} font-extrabold`}>{t('guide.setup.done')}</button>
-          : <button type="button" aria-label={t('guide.setup.rename', { name })} onClick={() => { setDraft(name); setEditing(true) }} className={LINK}>{t('guide.setup.renameShort')}</button>)}
+          : theirs && fit && !vanish
+            // Theirs isn't renamed: a new name is a new practice, and the button says so.
+            ? <button type="button" onClick={() => { setDraft(''); onRename(''); setEditing(true) }} className={LINK}>{t('guide.setup.startNew1')}</button>
+            : <button type="button" aria-label={t('guide.setup.rename', { name })} onClick={() => { setDraft(name); setEditing(true) }} className={LINK}>{t('guide.setup.renameShort')}</button>)}
         {onRemove && <button type="button" aria-label={t('guide.setup.remove', { name })} onClick={onRemove} className="flex h-11 w-11 shrink-0 items-center justify-center text-lg text-ui-muted">×</button>}
       </div>
       {!!fit?.options.length && !fit.elsewhere && !editing && (

@@ -222,9 +222,9 @@ describe('coming back to Finish after a failure', () => {
     await fail(user)
     await user.click(screen.getByRole('button', { name: 'Review my choices' }))
     await user.click(screen.getByRole('button', { name: 'Back' }))
-    await user.click(screen.getByRole('button', { name: 'Rename Bedtime' }))
+    // Bedtime was created by the first attempt, so it is theirs now: the way to another name is a new practice
+    await user.click(screen.getAllByRole('button', { name: 'Start a new one' })[0])
     const input = screen.getByRole('textbox', { name: 'Practice name' })
-    await user.clear(input)
     await user.type(input, 'Lights out')
     await user.click(screen.getByRole('button', { name: 'Done' }))
     await user.click(screen.getByRole('button', { name: /^(Next|Create report)/ }))

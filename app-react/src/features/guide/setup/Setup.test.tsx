@@ -454,6 +454,18 @@ describe('your practices that fit', () => {
     expect(applied('sleep').bedtime).toBe('Bedtime')
   })
 
+  it('a picked slot offers Start a new one, not Rename, and leaves their practice alone', async () => {
+    setup([mine('Lights out', 'Time')])
+    const user = await start(['sleep'])
+    await user.click(within((await screen.findAllByRole('group', { name: 'Lights out' }))[0]).getByRole('button', { name: 'Use' }))
+    expect(screen.queryByRole('button', { name: 'Rename Lights out' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Start a new one' }))
+    expect(screen.getByRole('textbox', { name: 'Practice name' })).toHaveValue('')
+    expect(applied('sleep').bedtime).toBe('')
+    await user.type(screen.getByRole('textbox', { name: 'Practice name' }), 'Early to bed')
+    expect(applied('sleep').bedtime).toBe('Early to bed')
+  })
+
   it('Daily count lists them too, and an unticked optional row can take one, which ticks it', async () => {
     setup([mine('Rounds', 'Int'), mine('Walk', 'Bool')])
     const user = await start(['count'])
@@ -470,10 +482,9 @@ describe('your practices that fit', () => {
   })
 
   it('on first run, with nothing of theirs, lists nothing', async () => {
-    const user = await start(['sleep'], { firstRun: true })
+    await start(['sleep'], { firstRun: true })
     expect(screen.queryByText('Your practices that fit')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Rename Bedtime' })).toBeInTheDocument()
-    expect(user).toBeTruthy()
   })
 })
 
