@@ -17,6 +17,9 @@ pub struct SignupUser {
     pub name: String,
     pub lang: String,
     pub confirmation_id: Uuid,
+    /// Skip the default practices. Older clients don't send it, so they still get them.
+    #[serde(default)]
+    pub skip_defaults: bool,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

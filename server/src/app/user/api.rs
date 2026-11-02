@@ -43,6 +43,7 @@ pub async fn signup(
             &form.user.name,
             &form.user.password,
             &form.user.lang,
+            form.user.skip_defaults,
         )
     })
     .await??;
@@ -272,6 +273,7 @@ mod tests {
                     name: "X Yz".into(),
                     lang: "ru".into(),
                     confirmation_id: confirmation_id(&mut conn, "xyz@gmail.com"),
+                    skip_defaults: false,
                 },
             },
         )
@@ -296,6 +298,7 @@ mod tests {
                     name: "a".into(),
                     lang: "ru".into(),
                     confirmation_id: Uuid::new_v4(),
+                    skip_defaults: false,
                 },
             },
         )
@@ -328,6 +331,7 @@ mod tests {
                 name: "X Yz".into(),
                 lang: "ru".into(),
                 confirmation_id: confirmation_id(&mut conn, test_email),
+                skip_defaults: false,
             },
         };
 
@@ -362,6 +366,7 @@ mod tests {
                 name: "X Yz".into(),
                 lang: "ru".into(),
                 confirmation_id: confirmation_id(&mut conn, test_email),
+                skip_defaults: false,
             },
         };
 
@@ -411,6 +416,7 @@ mod tests {
                 name: "X Yz".into(),
                 lang: "ru".into(),
                 confirmation_id: confirmation_id(&mut conn, test_email),
+                skip_defaults: false,
             },
         };
         let (status, signed_up): (u16, UserResponse) =

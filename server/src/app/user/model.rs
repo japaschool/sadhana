@@ -35,6 +35,7 @@ impl User {
         username: &'a str,
         naive_password: &'a str,
         lang: &'a str,
+        skip_defaults: bool,
     ) -> Result<(User, Token), AppError> {
         use diesel::prelude::*;
         let hashed_password = hasher::hash_password(naive_password)?;
@@ -52,17 +53,19 @@ impl User {
         let token = user.generate_token()?;
 
         conn.transaction(|conn| {
-            sql_query(
-                r#"
+            if !skip_defaults {
+                sql_query(
+                    r#"
             insert into user_practices (user_id, practice, data_type, is_active, order_key)
                 select $1, practice, data_type, true, order_key
                 from default_user_practices
                 where lang = $2
             "#,
-            )
-            .bind::<DieselUuid, _>(&user.id)
-            .bind::<Text, _>(&lang)
-            .execute(conn)?;
+                )
+                .bind::<DieselUuid, _>(&user.id)
+                .bind::<Text, _>(&lang)
+                .execute(conn)?;
+            }
 
             // Cleanup confirmations
             diesel::delete(confirmations::table)
@@ -103,13 +106,14 @@ impl User {
         email: &str,
         name: &str,
         lang: &str,
-    ) -> Result<(User, Token), AppError> {
+        skip_defaults: bool,
+    ) -> Result<(User, Token, bool), AppError> {
         if let Ok(user) = users::table
             .filter(users::email.eq(email))
             .first::<User>(conn)
         {
             let token = user.generate_token()?;
-            return Ok((user, token));
+            return Ok((user, token, false));
         }
 
         let hashed = hasher::hash_password(&uuid::Uuid::new_v4().to_string())?;
@@ -118,17 +122,19 @@ impl User {
             .values(&record)
             .get_result::<User>(conn)?;
 
-        sql_query(
-            r#"INSERT INTO user_practices (user_id, practice, data_type, is_active, order_key)
+        if !skip_defaults {
+            sql_query(
+                r#"INSERT INTO user_practices (user_id, practice, data_type, is_active, order_key)
                SELECT $1, practice, data_type, true, order_key
                FROM default_user_practices WHERE lang = $2"#,
-        )
-        .bind::<DieselUuid, _>(&user.id)
-        .bind::<Text, _>(lang)
-        .execute(conn)?;
+            )
+            .bind::<DieselUuid, _>(&user.id)
+            .bind::<Text, _>(lang)
+            .execute(conn)?;
+        }
 
         let token = user.generate_token()?;
-        Ok((user, token))
+        Ok((user, token, true))
     }
 
     pub fn find(conn: &mut PgConnection, id: &Uuid) -> Result<Self, AppError> {
@@ -255,5 +261,88 @@ impl Confirmation {
             .filter(confirmations::id.eq(id))
             .first(conn)?;
         Ok(res)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::User;
+    use crate::{app::user::request::SignupUser, schema::users, utils::db};
+    use diesel::{prelude::*, sql_query, sql_types::{BigInt, Text}};
+
+    #[derive(QueryableByName)]
+    struct Count {
+        #[diesel(sql_type = BigInt)]
+        n: i64,
+    }
+
+    fn practices(conn: &mut PgConnection, email: &str) -> i64 {
+        sql_query(
+            "select count(*) as n from user_practices where user_id in (select id from users where email = $1)",
+        )
+        .bind::<Text, _>(email)
+        .get_result::<Count>(conn)
+        .unwrap()
+        .n
+    }
+
+    fn delete_user(conn: &mut PgConnection, email: &str) {
+        sql_query("delete from user_practices where user_id in (select id from users where email = $1)")
+            .bind::<Text, _>(email)
+            .execute(conn)
+            .unwrap();
+        diesel::delete(users::table.filter(users::email.eq(email)))
+            .execute(conn)
+            .unwrap();
+    }
+
+    #[test]
+    fn signup_without_the_field_seeds() {
+        let body = r#"{"email":"a@b.co","password":"abcdef","name":"Abc","lang":"en","confirmation_id":"0f8fad5b-d9cb-469f-a165-70867728950e"}"#;
+        let parsed: SignupUser = serde_json::from_str(body).unwrap();
+        assert!(!parsed.skip_defaults);
+
+        let mut conn = db::establish_connection().get().unwrap();
+        let email = "skip_absent@test.co";
+        delete_user(&mut conn, email);
+        User::signup(&mut conn, email, "Skip", "abcdef", "en", parsed.skip_defaults).unwrap();
+        assert!(practices(&mut conn, email) > 0);
+        delete_user(&mut conn, email);
+    }
+
+    #[test]
+    fn signup_with_skip_defaults_seeds_nothing() {
+        let mut conn = db::establish_connection().get().unwrap();
+        let email = "skip_true@test.co";
+        delete_user(&mut conn, email);
+        User::signup(&mut conn, email, "Skip", "abcdef", "en", true).unwrap();
+        assert_eq!(practices(&mut conn, email), 0);
+        delete_user(&mut conn, email);
+    }
+
+    #[test]
+    fn oauth_created_only_once() {
+        let mut conn = db::establish_connection().get().unwrap();
+        let email = "oauth_once@test.co";
+        delete_user(&mut conn, email);
+
+        let (_, _, created) = User::signin_oauth(&mut conn, email, "Oa", "en", true).unwrap();
+        assert!(created);
+        assert_eq!(practices(&mut conn, email), 0);
+
+        // A returning user is untouched, whatever the flag says.
+        let (_, _, created) = User::signin_oauth(&mut conn, email, "Oa", "en", false).unwrap();
+        assert!(!created);
+        assert_eq!(practices(&mut conn, email), 0);
+
+        delete_user(&mut conn, email);
+        let (_, _, created) = User::signin_oauth(&mut conn, email, "Oa", "en", false).unwrap();
+        assert!(created);
+        let seeded = practices(&mut conn, email);
+        assert!(seeded > 0);
+        let (_, _, created) = User::signin_oauth(&mut conn, email, "Oa", "en", true).unwrap();
+        assert!(!created);
+        assert_eq!(practices(&mut conn, email), seeded);
+        delete_user(&mut conn, email);
     }
 }

@@ -14,6 +14,9 @@ pub struct GoogleBody {
     /// Picks a new account's default practices. Older clients don't send it.
     #[serde(default = "default_lang")]
     pub lang: String,
+    /// Only matters when the account is created. Older clients don't send it.
+    #[serde(default)]
+    pub skip_defaults: bool,
 }
 
 fn default_lang() -> String {
@@ -91,11 +94,14 @@ pub async fn google_signin(
         .or(info.given_name)
         .unwrap_or_else(|| info.email.split('@').next().unwrap_or("User").to_string());
     let email = info.email;
-    let lang = body.into_inner().lang;
+    let GoogleBody { lang, skip_defaults, .. } = body.into_inner();
 
     let mut conn = state.get_conn()?;
-    let (user, token) = web::block(move || User::signin_oauth(&mut conn, &email, &name, &lang)).await??;
-    Ok(HttpResponse::Ok().json(UserResponse::from((user, token))))
+    let (user, token, created) =
+        web::block(move || User::signin_oauth(&mut conn, &email, &name, &lang, skip_defaults)).await??;
+    let mut res = UserResponse::from((user, token));
+    res.user.created = Some(created);
+    Ok(HttpResponse::Ok().json(res))
 }
 
 #[cfg(test)]
