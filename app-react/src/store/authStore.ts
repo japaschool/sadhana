@@ -51,7 +51,7 @@ export const useAuthStore = create<AuthState>((set) => {
     isLoading: true,
     newAccount: false,
     setAuth: (info, newAccount) => {
-      const { created, ...user } = info
+      const { created: _created, ...user } = info
       writeToken(user.token)
       localStorage.setItem(USER_KEY, JSON.stringify(user))
       // Strict: a mutation's variables (a Google token) can arrive as the second argument.

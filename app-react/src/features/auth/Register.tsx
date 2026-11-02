@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { authApi } from '../../api/auth'
 import { useToastStore } from '../../hooks/useToast'
 import { invitePath, useReturnTo } from '../../layouts/returnTo'
+import type { UserInfo } from '../../types/api'
 import { useAuthStore } from '../../store/authStore'
 import { AuthFrame } from './AuthFrame'
 import {
