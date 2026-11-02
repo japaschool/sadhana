@@ -48,7 +48,7 @@ export function MonthPanelView({ practice, month, end, todayCob, lookup }: Month
           {days.map(({ cob, future }) => {
             const done = !future && c.done.has(cob)
             const tone = future ? 'text-ui-faint opacity-60 shadow-[inset_0_0_0_1px_var(--ui-hairline)]'
-              : done ? 'bg-ui-heat-3 text-ui-on-heat-3' : 'bg-ui-heat-0 text-ui-muted'
+              : done ? 'bg-ui-done text-ui-on-done' : 'bg-ui-heat-0 text-ui-muted'
             return (
               <span key={cob} data-cob={cob} data-done={done} data-future={future} aria-current={cob === todayCob ? 'date' : undefined}
                 className={`${DAY} ${tone} ${cob === todayCob ? 'outline-2 outline-offset-1 outline-ui-ink' : ''}`}>

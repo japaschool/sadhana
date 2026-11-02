@@ -235,7 +235,7 @@ export function SharedTablet() {
             <main className="flex min-w-0 flex-1 flex-col gap-4">
               <div className="flex items-center gap-2.5">
                 <RangeControl s={s} size="md" />
-                        <span className="flex-1" />
+                <span className="flex-1" />
                 {!s.panels && <CsvButton onClick={csv} />}
               </div>
               {s.panelsReady ? <Panels s={s} height={300} cols={2} /> : (
@@ -312,7 +312,7 @@ export function SharedDesktop() {
               </div>
               <div className="flex shrink-0 items-center gap-3">
                 <RangeControl s={s} size="lg" />
-                        {!s.panels && <CsvButton onClick={csv} />}
+                {!s.panels && <CsvButton onClick={csv} />}
               </div>
             </div>
             {s.panelsReady ? <Panels s={s} height={300} /> : (

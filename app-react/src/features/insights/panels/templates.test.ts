@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { ChartPanel, JapaTemplate, Panel, SleepTemplate, Stat } from '../../../api/charts'
 import type { UserPractice } from '../../../types/api'
-import { DURATION_SLOT, durationPanels, JAPA_SLOTS, japaPanels, numericVariants, pickerGroups, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, suggestFor } from './templates'
+import { DAYS_SLOT, daysPanels, DURATION_SLOT, durationPanels, MAX_DAYS, JAPA_SLOTS, japaPanels, numericVariants, pickerGroups, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, suggestFor } from './templates'
 
 const T: SleepTemplate = { bedtime: 'bed', wake: 'wake', nap: 'nap', min: 360, max: 540 }
 const charts = (ps: Panel[]) => ps.filter((p): p is Extract<Panel, { kind: 'Chart' }> => p.kind === 'Chart') as (ChartPanel & { kind: 'Chart' })[]
@@ -245,5 +245,19 @@ describe('suggestions for Japa', () => {
   })
   it('knows attunement by its other name', () => {
     expect(suggestFor(attunement, [p('a', 'Japa affirmation', 'Bool')], new Set())?.id).toBe('a')
+  })
+})
+
+describe('daysPanels', () => {
+  it('one required practice and one Month panel each, in order, with no Stats', () => {
+    const r = daysPanels({ practices: ['a', 'b', 'c'] })
+    expect(r.version).toBe(1)
+    expect(r.template).toEqual({ Days: { practices: ['a', 'b', 'c'] } })
+    expect(r.required.map((x) => x.practice)).toEqual(['a', 'b', 'c'])
+    expect(r.panels).toEqual([{ kind: 'Month', practice: 'a' }, { kind: 'Month', practice: 'b' }, { kind: 'Month', practice: 'c' }])
+  })
+  it('takes yes/no practices, several, up to 8', () => {
+    expect(DAYS_SLOT).toMatchObject({ types: ['Bool'], many: true })
+    expect(MAX_DAYS).toBe(8)
   })
 })

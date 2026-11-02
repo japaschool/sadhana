@@ -64,6 +64,9 @@
   --ui-heat-2: #E8A93A;
   --ui-heat-3: #B57A14;
   --ui-on-heat-3: #FFFFFF;
+  /* A done day in Days I did it: the mockup's amber with dark ink (dark theme keeps heat-3). */
+  --ui-done: #E8A93A;
+  --ui-on-done: #1F1B16;
   --ui-panel: #EFE7D9;
 
   color: var(--ui-ink);
@@ -132,6 +135,8 @@
   --ui-heat-2: #A57A2F;
   --ui-heat-3: #F0B54A;
   --ui-on-heat-3: #15121D;
+  --ui-done: #F0B54A;
+  --ui-on-done: #15121D;
   --ui-panel: #211D2C;
 }
 
@@ -194,6 +199,8 @@
     --ui-heat-2: #A57A2F;
     --ui-heat-3: #F0B54A;
     --ui-on-heat-3: #15121D;
+    --ui-done: #F0B54A;
+    --ui-on-done: #15121D;
     --ui-panel: #211D2C;
   }
 }
@@ -233,6 +240,8 @@
   --color-ui-heat-2: var(--ui-heat-2);
   --color-ui-heat-3: var(--ui-heat-3);
   --color-ui-on-heat-3: var(--ui-on-heat-3);
+  --color-ui-done: var(--ui-done);
+  --color-ui-on-done: var(--ui-on-done);
   --color-ui-panel: var(--ui-panel);
   --color-ui-state-ok: var(--ui-state-ok);
   --color-ui-state-under: var(--ui-state-under);

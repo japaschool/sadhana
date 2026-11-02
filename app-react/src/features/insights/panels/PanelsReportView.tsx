@@ -48,7 +48,7 @@ function MonthLegend() {
     <div className="flex flex-col gap-1.5 px-1">
       <ul aria-label={t('reportPanels.legend')} className="flex flex-wrap gap-x-3.5 gap-y-1.5">
         {([
-          [t('reportPanels.done'), 'bg-ui-heat-3'],
+          [t('reportPanels.done'), 'bg-ui-done'],
           [t('reportPanels.notDone'), 'bg-ui-heat-0'],
           [t('reportPanels.today'), 'outline-2 -outline-offset-1 outline-ui-ink'],
         ] as const).map(([text, cls]) => (

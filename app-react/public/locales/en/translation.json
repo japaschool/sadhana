@@ -728,7 +728,10 @@
     "japaSubtitle": "Daily count report · saved as you edit",
     "duration": "Time spent",
     "durationDesc": "Time each day across practices, with a goal",
-    "durationSubtitle": "Time spent report · saved as you edit"
+    "durationSubtitle": "Time spent report · saved as you edit",
+    "days": "Days I did it",
+    "daysDesc": "Done days for each practice, month by month",
+    "daysSubtitle": "Days I did it report · saved as you edit"
   },
   "practices": {
     "add": "Add",
@@ -1033,6 +1036,12 @@
     "needsDuration": "Choose at least one practice to create the report.",
     "noneDuration": "You have no duration practice",
     "onlyDurationHint": "Only duration practices are listed. Pick one or more.",
+    "daysName": "Days I did it",
+    "newDays": "New days I did it report",
+    "readyDays": "Ready-made report · Days I did it",
+    "needsDays": "Choose at least one practice to create the report.",
+    "noneBool": "You have no yes/no practice",
+    "onlyDaysHint": "Only yes/no practices fit. Each one gets its own section with counts and a month grid.",
     "tooMany": "A report can show up to {{count}} practices.",
     "dailyGoal": "Daily goal",
     "goal": "Goal per day",

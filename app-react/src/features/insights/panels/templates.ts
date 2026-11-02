@@ -1,4 +1,4 @@
-import type { ChartPanel, DurationTemplate, JapaTemplate, Label, Panel, PanelsReport, Scope, SleepTemplate, Source, Stat, Target } from '../../../api/charts'
+import type { ChartPanel, DaysTemplate, DurationTemplate, JapaTemplate, Label, Panel, PanelsReport, Scope, SleepTemplate, Source, Stat, Target } from '../../../api/charts'
 import type { PracticeDataType, UserPractice } from '../../../types/api'
 
 const key = (k: string): Label => ({ Key: `reportPanels.${k}` })
@@ -142,10 +142,20 @@ export function durationPanels(t: DurationTemplate): PanelsReport {
   }
 }
 
+/** Builds the Panels report of the Days I did it template: one Month panel a practice, in order. */
+export function daysPanels(t: DaysTemplate): PanelsReport {
+  return {
+    version: 1,
+    template: { Days: t },
+    required: t.practices.map((id) => ({ practice: id, label: key('done') })),
+    panels: t.practices.map((id) => ({ kind: 'Month' as const, practice: id })),
+  }
+}
+
 /** The word a report's own strings go by. */
 export const templateSlug = (def: PanelsReport) => {
   const t = def.template
-  return t && 'Duration' in t ? 'duration' : t && 'Japa' in t ? 'japa' : 'sleep'
+  return t && 'Duration' in t ? 'duration' : t && 'Japa' in t ? 'japa' : t && 'Days' in t ? 'days' : 'sleep'
 }
 
 export interface Slot { key: string; types: PracticeDataType[]; required: boolean; hints: string[]; many?: boolean }
@@ -168,6 +178,10 @@ export const JAPA_SLOTS: Slot[] = [
 export const DURATION_SLOT: Slot = { key: 'practices', types: ['Duration'], required: true, hints: [], many: true }
 /** The server's MAX_SERIES: one series a practice. */
 export const MAX_PRACTICES = 12
+
+export const DAYS_SLOT: Slot = { key: 'practices', types: ['Bool'], required: true, hints: [], many: true }
+/** One Month panel a practice, and the server allows 8 panels. */
+export const MAX_DAYS = 8
 
 /** A dropdown whose every option is a number, so its values can be charted. */
 export function numericVariants(p: UserPractice): boolean {

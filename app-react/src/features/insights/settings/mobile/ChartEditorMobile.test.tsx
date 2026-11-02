@@ -229,6 +229,13 @@ it('the new chart sheet offers Daily count and Time spent', () => {
   expect(screen.getByRole('link', { name: /Time spent/ })).toHaveAttribute('href', '/settings/charts/new/duration')
 })
 
+it('the new chart sheet lists Days I did it fourth', () => {
+  render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><NewChartSheet onClose={() => {}} /></MemoryRouter></QueryClientProvider>)
+  const links = screen.getAllByRole('link').map((a) => a.getAttribute('href'))
+  expect(links).toEqual(['/settings/charts/new/sleep', '/settings/charts/new/japa', '/settings/charts/new/duration', '/settings/charts/new/days'])
+  expect(screen.getByRole('link', { name: /Days I did it/ })).toBeInTheDocument()
+})
+
 it('choosing Sleep closes the sheet, which can already be on the form’s page (the wide charts column)', () => {
   const onClose = vi.fn()
   render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><NewChartSheet onClose={onClose} /></MemoryRouter></QueryClientProvider>)
