@@ -14,7 +14,7 @@ import { chartsApi } from '../../api/charts'
 import { guideApi } from '../../api/guide'
 const api = vi.mocked(guideApi)
 
-const routes = [{ path: '/guide', element: <GuideScreen /> }, { path: '/', element: <p>Today</p> }]
+const routes = [{ path: '/guide', element: <GuideScreen /> }, { path: '/', element: <p>Today</p> }, { path: '/settings/practices/new', element: <p>New practice form</p> }]
 const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 const Providers = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>
 const router = (state?: unknown) => createMemoryRouter(routes, { initialEntries: [{ pathname: '/guide', state }] })
@@ -72,7 +72,7 @@ describe('GuideScreen on mobile', () => {
 
   it('Build my own list goes to Today and marks left', async () => {
     const user = userEvent.setup()
-    render(<Providers><RouterProvider router={router()} /></Providers>)
+    render(<Providers><RouterProvider router={router({ firstRun: true })} /></Providers>)
     for (let i = 0; i < 4; i++) await user.click(screen.getByRole('button', { name: 'Skip' }))
     const exits = screen.getAllByRole('button', { name: 'Build my own list' })
     await user.click(exits[exits.length - 1])
@@ -158,5 +158,16 @@ describe('a report the person already has', () => {
     expect(screen.getAllByText('You already have this report')).toHaveLength(1)
     await user.click(screen.getByRole('switch', { name: 'Sleep' }))
     expect(screen.getByRole('button', { name: /^Next/ })).toBeEnabled()
+  })
+})
+
+describe('opened from Add practice', () => {
+  it('the way out is Add one myself, and it opens the form', async () => {
+    const user = userEvent.setup()
+    render(<Providers><RouterProvider router={router({ back: '/settings' })} /></Providers>)
+    expect(screen.queryByRole('button', { name: 'Build my own list' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Add one myself' }))
+    expect(screen.getByText('New practice form')).toBeInTheDocument()
+    await vi.waitFor(() => expect(api.update).toHaveBeenCalledWith('run-1', { outcome: 'left' }))
   })
 })

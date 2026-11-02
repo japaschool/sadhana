@@ -3,7 +3,7 @@ import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { practicesApi } from '../../../api/practices'
 import type { UserPractice } from '../../../types/api'
-import { fits, pickerGroups, SLEEP_DEFAULTS } from '../../insights/panels/templates'
+import { DAYS_SLOT, DURATION_SLOT, fits, JAPA_SLOTS, pickerGroups, SLEEP_DEFAULTS, SLEEP_SLOTS } from '../../insights/panels/templates'
 import type { Slot } from '../../insights/panels/templates'
 import { buildPlan, itemsOf, KINDS, nameProblem } from '../guideLogic'
 import type { Choices, GuideKind, NameProblem, PlannedPractice } from '../guideLogic'
@@ -59,6 +59,8 @@ export function useSetup<K extends GuideKind>(guide: Guide, kind: K) {
     return null
   })()
 
+  const slots = kind === 'sleep' ? SLEEP_SLOTS : kind === 'count' ? JAPA_SLOTS : [kind === 'time' ? DURATION_SLOT : DAYS_SLOT]
+  const hasMine = slots.some((s) => pickerGroups(s, practices).compatible.length)
   const at = guide.tracked.indexOf(kind)
   const after = guide.tracked[at + 1]
   return {
@@ -69,7 +71,10 @@ export function useSetup<K extends GuideKind>(guide: Guide, kind: K) {
     retry: loadFailed ? () => { void q.refetch() } : null,
     ready: q.isSuccess && !hint,
     position: t('guide.setup.label', { a: at + 1, b: guide.tracked.length }),
-    nextLabel: t('guide.setup.next', { what: after ? t(`guide.kinds.${after}.name`) : t(guide.firstRun ? 'guide.steps.sharing' : 'guide.steps.finish') }),
+    /** What the person is told under the title: from Add practice, with practices of theirs to use, say so. */
+    lead: t(!guide.firstRun && hasMine && kind !== 'sleep' ? 'guide.setup.lead.mine' : `guide.setup.lead.${kind}`),
+    /** From Add practice there is no sharing step, so the last button is the one that creates. */
+    nextLabel: !after && !guide.firstRun ? t('templateForm.create') : t('guide.setup.next', { what: after ? t(`guide.kinds.${after}.name`) : t(guide.firstRun ? 'guide.steps.sharing' : 'guide.steps.finish') }),
     /** Callers pass names already trimmed, so a name made of spaces is the empty one. */
     set: (patch: Partial<Value<K>>) => guide.setChoice(kind, { ...value, ...patch } as Choices[K]),
     /** Next also records an untouched screen, so its defaults are what gets built. */

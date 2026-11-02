@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AxiosError } from 'axios'
@@ -48,13 +48,13 @@ async function open(state: unknown, days = false) {
   render(<QueryClientProvider client={qc}><RouterProvider router={r} /></QueryClientProvider>)
   await user.click(screen.getByRole('switch', { name: 'Sleep' }))
   if (days) await user.click(screen.getByRole('switch', { name: 'Days I did it' }))
-  await user.click(screen.getByRole('button', { name: /^Next/ }))
+  await user.click(screen.getByRole('button', { name: /^(Next|Create report)/ }))
   await screen.findByText(/^Set up · /)
   await act(async () => {})
-  await user.click(screen.getByRole('button', { name: /^Next/ }))
+  await user.click(screen.getByRole('button', { name: /^(Next|Create report)/ }))
   if (days) {
     await user.click(screen.getByRole('button', { name: 'Walk' }))
-    await user.click(screen.getByRole('button', { name: /^Next/ }))
+    await user.click(screen.getByRole('button', { name: /^(Next|Create report)/ }))
   }
   return user
 }
@@ -198,7 +198,7 @@ describe('coming back to Finish after a failure', () => {
     await user.clear(input)
     await user.type(input, 'Lights out')
     await user.click(screen.getByRole('button', { name: 'Done' }))
-    await user.click(screen.getByRole('button', { name: /^Next/ }))
+    await user.click(screen.getByRole('button', { name: /^(Next|Create report)/ }))
     await user.click(screen.getByRole('button', { name: 'Finish setup' }))
     expect(await screen.findByText('Here’s what’s set up')).toBeInTheDocument()
     expect(have.map((p) => p.practice)).toContain('Lights out')
@@ -227,7 +227,7 @@ describe('coming back to Finish after a failure', () => {
     await user.clear(input)
     await user.type(input, 'Lights out')
     await user.click(screen.getByRole('button', { name: 'Done' }))
-    await user.click(screen.getByRole('button', { name: /^Next/ }))
+    await user.click(screen.getByRole('button', { name: /^(Next|Create report)/ }))
     vi.mocked(practicesApi.getUserPractices).mockRejectedValueOnce(offline())
     await user.click(screen.getByRole('button', { name: 'Finish setup' }))
     await screen.findByText('Setup didn’t finish')
@@ -291,12 +291,11 @@ describe('from Add practice, on practices the person already has', () => {
     const r = createMemoryRouter([{ path: '/guide', element: <GuideScreen /> }, { path: '/settings', element: <p>Settings</p> }], { initialEntries: [{ pathname: '/guide', state: { back: '/settings' } }] })
     render(<QueryClientProvider client={qc}><RouterProvider router={r} /></QueryClientProvider>)
     await user.click(await screen.findByRole('switch', { name: 'Sleep' }))
-    await user.click(screen.getByRole('button', { name: /^Next/ }))
+    await user.click(screen.getByRole('button', { name: /^(Next|Create report)/ }))
     await screen.findByText(/^Set up · /)
     await act(async () => {})
-    const [bed, wake] = screen.getAllByRole('combobox', { name: /Use one of mine/ })
-    await user.selectOptions(bed, 'Lights out')
-    await user.selectOptions(wake, 'Up')
+    await user.click(within(screen.getAllByRole('group', { name: 'Lights out' })[0]).getByRole('button', { name: 'Use' }))
+    await user.click(within(screen.getAllByRole('group', { name: 'Up' })[1]).getByRole('button', { name: 'Use' }))
     await user.click(screen.getByRole('button', { name: /^(Next|Create report)/ }))
     // no reader question, no new practice but Nap, the second Sleep report is numbered, with the existing ids
     expect(await screen.findByText('Here’s what’s set up')).toBeInTheDocument()

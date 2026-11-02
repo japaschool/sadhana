@@ -21,7 +21,7 @@ export function SetupMobile({ guide, kind }: { guide: Guide; kind: GuideKind }) 
           ))}
         </div>
         <h1 className="text-[28px] leading-[1.15] font-extrabold tracking-[-0.02em] text-pretty">{t(`guide.kinds.${kind}.name`)}</h1>
-        <p className="text-sm leading-normal text-ui-muted text-pretty">{t(`guide.setup.lead.${kind}`)}</p>
+        <p className="text-sm leading-normal text-ui-muted text-pretty">{setup.lead}</p>
       </div>
       <div className="flex flex-col gap-[18px] px-4 pb-44">
         <SetupBody kind={kind} setup={setup} />

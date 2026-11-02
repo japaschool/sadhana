@@ -1148,6 +1148,7 @@
       "label": "Set up · {{a}} of {{b}}",
       "next": "Next: {{what}}",
       "lead": {
+        "mine": "Use practices you already log, or start new ones.",
         "sleep": "These practices feed the report. Rename any of them; the names show on Today.",
         "count": "Pick what you count each day. The report works the same for any number.",
         "time": "Pick what you’d like to see time for. Each one becomes a practice you log in minutes.",

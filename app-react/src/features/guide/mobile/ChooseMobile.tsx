@@ -69,7 +69,7 @@ function Nothing({ guide }: { guide: Guide }) {
           ))}
         </ul>
         <SecondaryButton onClick={guide.lookAgain}>{t('guide.nothing.again')}</SecondaryButton>
-        <button type="button" onClick={guide.leave} className="min-h-[52px] text-base font-bold text-ui-accent">{t('guide.exit')}</button>
+        <button type="button" onClick={guide.leave} className="min-h-[52px] text-base font-bold text-ui-accent">{t(guide.exitKey)}</button>
       </div>
     </>
   )

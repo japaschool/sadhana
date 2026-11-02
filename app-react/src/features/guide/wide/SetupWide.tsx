@@ -30,7 +30,7 @@ export function SetupWide({ guide, kind }: { guide: Guide; kind: GuideKind }) {
           <div className="flex flex-col gap-2.5 pb-1">
             <span className="font-ui-mono text-xs font-semibold tracking-[.08em] text-ui-muted uppercase">{setup.position}</span>
             <h1 className={`${desktop ? 'text-4xl' : 'text-3xl'} leading-[1.15] font-extrabold tracking-[-0.02em] text-pretty`}>{t(`guide.kinds.${kind}.name`)}</h1>
-            <p className="text-sm leading-normal text-ui-muted text-pretty">{t(`guide.setup.lead.${kind}`)}</p>
+            <p className="text-sm leading-normal text-ui-muted text-pretty">{setup.lead}</p>
           </div>
           <SetupBody kind={kind} setup={setup} />
         </div>

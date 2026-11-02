@@ -79,12 +79,13 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
 
   const exit = useCallback((outcome: 'left') => {
     run.end(outcome)
-    navigate('/', { replace: true })
-  }, [run, navigate])
+    // From Add practice, the way out is the form for one practice; from sign-up it is Today.
+    navigate(firstRun ? '/' : '/settings/practices/new', { replace: true })
+  }, [run, navigate, firstRun])
   const finish = () => navigate(firstRun ? '/' : backTo, { replace: true })
 
   return {
-    firstRun, carousel, step, pos, reader, setReader, creating, setCreating, plan, setPos, tracked, skipped, choices, nothing, confirming,
+    firstRun, carousel, step, exitKey: firstRun ? 'guide.exit' : 'home.addOneMyself', pos, reader, setReader, creating, setCreating, plan, setPos, tracked, skipped, choices, nothing, confirming,
     /** What the plan is built from: only the reports still tracked, so skipping one after its set up drops it (re-tracking brings its values back). */
     chosen: Object.fromEntries(KINDS.map((k) => [k, tracked.includes(k) ? choices[k] : null])) as unknown as Choices,
     /** The first card of a sign-up guide is the start: nowhere to go back to. */

@@ -29,7 +29,7 @@ function setup(practices: UserPractice[] = []) {
   vi.mocked(practicesApi.getUserPractices).mockResolvedValue(practices)
 }
 
-const next = () => screen.getByRole('button', { name: /^Next/ })
+const next = () => screen.getByRole('button', { name: /^(Next|Create report)/ })
 const applied = (kind: GuideKind) => JSON.parse(screen.getByTestId(`applied-${kind}`).textContent!)
 
 /** Opens the guide on a wide layout with these reports tracked, on the first one's set up. */
@@ -274,14 +274,15 @@ describe('names that are taken', () => {
     expect(next()).toBeEnabled()
   })
 
-  it('Keep editing puts you back in the name', async () => {
+  it('a typed name that is one of theirs moves to the list above once done', async () => {
     setup([mine('Book reading', 'Duration')])
     const user = await start(['time'])
     await user.click(await screen.findByRole('button', { name: '+ Name your own' }))
     await user.type(screen.getByRole('textbox', { name: 'Practice name' }), 'Book reading')
     await user.click(screen.getByRole('button', { name: 'Done' }))
-    await user.click(screen.getByRole('button', { name: 'Keep editing' }))
-    expect(screen.getByRole('textbox', { name: 'Practice name' })).toHaveFocus()
+    // it is theirs now: the list above holds it, and the row is gone
+    expect(within(screen.getByRole('group', { name: 'Book reading' })).getByRole('button', { name: 'Using' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Rename Book reading' })).not.toBeInTheDocument()
   })
 
   it('shows the later screen a name used with two types, and cannot go on', async () => {
@@ -352,7 +353,7 @@ describe('layouts and leaving', () => {
     expect(await screen.findByText('Set up · 1 of 1')).toBeInTheDocument()
     expect(screen.queryByTestId('mini-sleep')).not.toBeInTheDocument()
     await rename(user, 'Bedtime', 'Lights out')
-    expect(screen.getByRole('button', { name: /^Next/ })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /^(Next|Create report)/ })).toBeEnabled()
   })
 
   it('the leave sheet appears once a set up is done, and Keep setting up stays', async () => {
@@ -418,24 +419,77 @@ describe('your practices that fit', () => {
     expect(screen.getByRole('button', { name: 'Reading' })).not.toHaveAccessibleDescription('You already track this')
   })
 
-  it('offers the compatible ones for a single slot, and picking one sets the name', async () => {
+  it('keeps Using when you go on and come back, with no question about the name', async () => {
+    setup(MINE)
+    const user = await start(['time', 'days'])
+    await user.click(within(await screen.findByRole('group', { name: 'Book reading' })).getByRole('button', { name: 'Use' }))
+    await user.click(next())
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    expect(within(await screen.findByRole('group', { name: 'Book reading' })).getByRole('button', { name: 'Using' })).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'You already have a practice with this name' })).not.toBeInTheDocument()
+    expect(applied('time').names).toEqual(['Book reading'])
+  })
+
+  it('a practice in use has no row of its own to rename, and a second press releases it', async () => {
+    setup(MINE)
+    const user = await start(['time'])
+    const list = await screen.findByRole('group', { name: 'Book reading' })
+    await user.click(within(list).getByRole('button', { name: 'Use' }))
+    expect(screen.queryByRole('button', { name: 'Rename Book reading' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Remove Book reading' })).not.toBeInTheDocument()
+    await user.click(within(list).getByRole('button', { name: 'Using' }))
+    expect(applied('time').names).toEqual([])
+  })
+
+  it('offers the compatible ones for a single slot, and Use sets the name and asks nothing more', async () => {
     setup([mine('Lights out', 'Time'), mine('Steps', 'Int')])
     const user = await start(['sleep'])
-    const pick = (await screen.findAllByRole('combobox', { name: /Use one of mine/ }))[0]
-    expect(within(pick).queryByRole('option', { name: 'Steps' })).not.toBeInTheDocument()
-    await user.selectOptions(pick, 'Lights out')
+    const [bed] = await screen.findAllByRole('group', { name: 'Lights out' })
+    expect(screen.queryByRole('group', { name: 'Steps' })).not.toBeInTheDocument()
+    await user.click(within(bed).getByRole('button', { name: 'Use' }))
     expect(applied('sleep').bedtime).toBe('Lights out')
     expect(screen.queryByRole('group', { name: 'You already have a practice with this name' })).not.toBeInTheDocument()
     expect(next()).toBeEnabled()
+    await user.click(within(screen.getAllByRole('group', { name: 'Lights out' })[0]).getByRole('button', { name: 'Using' }))
+    expect(applied('sleep').bedtime).toBe('Bedtime')
   })
 
-  it('does the same for Daily count', async () => {
+  it('Daily count lists them too, and an unticked optional row can take one, which ticks it', async () => {
     setup([mine('Rounds', 'Int'), mine('Walk', 'Bool')])
     const user = await start(['count'])
-    const rounds = await screen.findByRole('group', { name: 'Rounds' })
+    const [count, early] = await screen.findAllByRole('group', { name: 'Rounds' })
     expect(screen.queryByRole('group', { name: 'Walk' })).not.toBeInTheDocument()
-    await user.click(within(rounds).getByRole('button', { name: 'Use' }))
+    await user.click(within(count).getByRole('button', { name: 'Use' }))
     expect(applied('count').count).toBe('Rounds')
     expect(screen.queryByRole('group', { name: 'You already have a practice with this name' })).not.toBeInTheDocument()
+    await user.click(within(early).getByRole('button', { name: 'Use' }))
+    expect(applied('count').early).toBe('Rounds')
+    expect(screen.getByRole('checkbox', { name: 'Part done early' })).toBeChecked()
+    await user.click(within(screen.getAllByRole('group', { name: 'Rounds' })[1]).getByRole('button', { name: 'Using' }))
+    expect(applied('count').early).toBeNull()
+  })
+
+  it('on first run, with nothing of theirs, lists nothing', async () => {
+    const user = await start(['sleep'], { firstRun: true })
+    expect(screen.queryByText('Your practices that fit')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Rename Bedtime' })).toBeInTheDocument()
+    expect(user).toBeTruthy()
+  })
+})
+
+describe('from Add practice', () => {
+  it('the last button creates the report; on first run it goes on to sharing', async () => {
+    await start(['time'])
+    expect(screen.getByRole('button', { name: 'Create report' })).toBeInTheDocument()
+    cleanup()
+    await start(['time'], { firstRun: true })
+    expect(next()).toHaveTextContent('Next: Sharing')
+  })
+
+  it('says to use what you log, and tags the list with the type', async () => {
+    setup([mine('Book reading', 'Duration')])
+    await start(['time'])
+    expect(await screen.findByText('Use practices you already log, or start new ones.')).toBeInTheDocument()
+    expect(within(screen.getByRole('heading', { name: 'Your practices that fit' }).parentElement!).getByText('Duration')).toBeInTheDocument()
   })
 })

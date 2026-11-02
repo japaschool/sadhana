@@ -1,6 +1,6 @@
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CARD, HINT } from '../../yatras/settings/mobile/AdminPage'
+import { typeLabelKey } from '../../yatras/settings/mobile/TypeChip'
 import { LimitField } from '../../insights/panels/TemplateForm'
 import type { Slot } from '../../insights/panels/templates'
 import { Chip, FitList, PracticeRow, RowList, Section } from './PracticeRow'
@@ -13,8 +13,6 @@ import type { Setup } from './useSetup'
 export function SetupNames({ setup, slot, suggestions, max }: { setup: Setup<'time'> | Setup<'days'>; slot: Slot; suggestions: string[]; max: number }) {
   const { t } = useTranslation()
   const { value: v, set, check, fitting } = setup
-  // Names taken from the person's own list: their rows aren't asked whether to use them.
-  const [picked, setPicked] = useState<string[]>([])
   const mine = fitting(slot)
   const time = setup.kind === 'time'
   const full = v.names.length >= max
@@ -22,16 +20,16 @@ export function SetupNames({ setup, slot, suggestions, max }: { setup: Setup<'ti
   return (
     <>
       {mine.length > 0 && (
-        <Section title={t('guide.setup.fit')}>
-          <FitList options={mine} isOn={(n) => picked.includes(n) && v.names.includes(n)} disabled={full}
-            onUse={(n, on) => { setPicked(on ? [...picked, n] : picked.filter((x) => x !== n)); set_(on ? [...v.names.filter((x) => x !== n), n] : v.names.filter((x) => x !== n)) }} />
+        <Section title={t('guide.setup.fit')} tag={t(typeLabelKey(slot.types[0]))}>
+          <FitList options={mine} isOn={(n) => v.names.includes(n)} disabled={full}
+            onUse={(n, on) => set_(on ? [...v.names.filter((x) => x !== n), n] : v.names.filter((x) => x !== n))} />
         </Section>
       )}
       <Section title={t(mine.length ? 'guide.setup.startNew' : time ? 'guide.setup.whatTime' : 'guide.setup.whatDays')} tag={t('guide.setup.oneOrMore')}>
         <div className="flex flex-wrap gap-2">
           {suggestions.map((name) => {
             const on = v.names.includes(name)
-            return <Chip key={name} on={on} note={check(name, slot).have?.is_active ? t('guide.setup.tracked') : undefined} disabled={!on && full} onClick={() => set_(on ? v.names.filter((n) => n !== name) : [...v.names, name])}>{name}</Chip>
+            return <Chip key={name} on={on} note={check(name, slot).existing ? t('guide.setup.tracked') : undefined} disabled={!on && full} onClick={() => set_(on ? v.names.filter((n) => n !== name) : [...v.names, name])}>{name}</Chip>
           })}
           <Chip dashed disabled={full} onClick={() => set_([...v.names, ''])}>{t('guide.setup.ownName')}</Chip>
         </div>
@@ -39,8 +37,8 @@ export function SetupNames({ setup, slot, suggestions, max }: { setup: Setup<'ti
         {v.names.length > 0 && (
           <RowList>
             {v.names.map((name, i) => (
-              <PracticeRow key={i} name={name} label={name} type={slot.types[0]} startEditing={!name} picked={picked.includes(name)}
-                note={suggestions.includes(name) || picked.includes(name) ? undefined : t('guide.setup.ownType', { type: t(`yatraSettings.type${slot.types[0]}`) })}
+              <PracticeRow key={i} name={name} label={name} type={slot.types[0]} startEditing={!name} vanish fit={{ options: mine, fallback: '', elsewhere: true }}
+                note={suggestions.includes(name) ? undefined : t('guide.setup.ownType', { type: t(`yatraSettings.type${slot.types[0]}`) })}
                 onRename={(n) => set_(v.names.map((x, j) => (j === i ? n : x)))}
                 onRemove={() => set_(v.names.filter((_, j) => j !== i))} check={check(name, slot)} />
             ))}

@@ -9,7 +9,7 @@ const LINK = 'flex min-h-11 items-center px-1 text-[13px] font-bold text-ui-acce
 const SMALL = 'flex min-h-9 items-center justify-center rounded-[10px] px-3.5 py-1.5 text-[13px] font-extrabold'
 
 /** A practice the report needs: its name can be changed in place, an optional one has a tick. */
-export function PracticeRow({ name, label, type, note, needed, tick, onRename, onRemove, check, options, picked, startEditing = false }: {
+export function PracticeRow({ name, label, type, note, needed, tick, onRename, onRemove, check, fit, vanish, startEditing = false }: {
   name: string
   /** What the tick is called, whatever the practice is named. */
   label?: string
@@ -21,25 +21,28 @@ export function PracticeRow({ name, label, type, note, needed, tick, onRename, o
   onRemove?: () => void
   /** Missing while an optional practice is unticked. */
   check?: NameCheck
-  /** The person's practices this one could be; picking one sets the name to theirs. */
-  options?: UserPractice[]
-  /** The name was picked from a list of the person's practices: no need to ask whether to use it. */
-  picked?: boolean
+  /**
+   * The person's practices this one could be, listed with Use under the row. A name that is one of them is theirs, not a new
+   * practice: it isn't asked about or renamed. `fallback` is the name Using again goes back to.
+   */
+  fit?: { options: UserPractice[]; fallback: string; /** The list is shown elsewhere on the screen. */ elsewhere?: boolean }
+  /** For a row in a list of new practices: one that is theirs belongs to the list above, so it isn't shown (unless being typed). */
+  vanish?: boolean
   startEditing?: boolean
 }) {
   const { t } = useTranslation()
   const [editing, setEditing] = useState(startEditing)
   const [draft, setDraft] = useState(name)
   const [used, setUsed] = useState<string | null>(null)
-  const [pickedHere, setPickedHere] = useState<string | null>(null)
   const titleId = useId()
   const off = tick && !tick.on
   // The draft is what was typed, spaces and all; the choices get it trimmed. If the name changed from outside (a suggestion tapped) the name wins.
   const shown = draft.trim() === name ? draft : name
   const problem = !off && check?.problem
-  const fromList = picked || pickedHere === name
-  const usable = !off && !problem && !fromList && check?.existing && name ? check.existing : undefined
+  const theirs = !off && !!name && !!fit?.options.some((o) => o.practice === name)
+  const usable = !off && !problem && !(theirs && !editing) && check?.existing && name ? check.existing : undefined
 
+  if (vanish && theirs && !editing) return null
   return (
     <div className="bg-ui-surface">
       <div className="flex items-center gap-3 py-2.5 pr-3 pl-3.5">
@@ -65,20 +68,19 @@ export function PracticeRow({ name, label, type, note, needed, tick, onRename, o
           )}
           {needed && <span className="self-start rounded-full bg-ui-accent-soft px-2 py-[3px] text-[11px] leading-tight font-extrabold text-ui-accent">{t('guide.setup.needed')}</span>}
           <span className="text-xs leading-snug text-ui-muted">{note ?? t(typeLabelKey(type))}</span>
-          {!off && !editing && !!options?.length && (
-            <select aria-label={t('guide.setup.useOne', { name: label ?? name })} value={options.some((o) => o.practice === name) ? name : ''}
-              onChange={(e) => { setPickedHere(e.target.value); onRename(e.target.value) }}
-              className="mt-1 min-h-9 self-start rounded-[10px] border border-ui-control bg-ui-surface px-2 text-[13px] font-bold">
-              <option value="" disabled>{t('guide.setup.usePick')}</option>
-              {options.map((o) => <option key={o.id} value={o.practice}>{o.practice}</option>)}
-            </select>
-          )}
         </div>
         {!off && (editing
           ? <button type="button" onClick={() => setEditing(false)} className={`${LINK} font-extrabold`}>{t('guide.setup.done')}</button>
           : <button type="button" aria-label={t('guide.setup.rename', { name })} onClick={() => { setDraft(name); setEditing(true) }} className={LINK}>{t('guide.setup.renameShort')}</button>)}
         {onRemove && <button type="button" aria-label={t('guide.setup.remove', { name })} onClick={onRemove} className="flex h-11 w-11 shrink-0 items-center justify-center text-lg text-ui-muted">×</button>}
       </div>
+      {!!fit?.options.length && !fit.elsewhere && !editing && (
+        <div className="mx-3.5 mb-3 flex flex-col gap-1.5">
+          <span className="text-[11px] font-bold tracking-[.1em] text-ui-muted uppercase">{t('guide.setup.fit')}</span>
+          <FitList options={fit.options} isOn={(n) => !off && name === n}
+            onUse={(n, on) => { if (on) onRename(n); else if (tick) tick.onChange(false); else onRename(fit.fallback) }} />
+        </div>
+      )}
       {!off && !editing && !name && <p role="alert" className="mx-3.5 mb-3 text-[13px] font-semibold text-ui-danger">{t('guide.setup.clash.empty')}</p>}
       {problem && problem !== 'empty' && (
         <div role="alert" className="mx-3.5 mb-3 flex flex-col gap-1.5 rounded-xl border border-ui-accent-pill bg-ui-accent-soft px-3.5 py-3">
@@ -121,7 +123,7 @@ export function Section({ title, tag, accent, children }: { title: string; tag?:
 }
 
 export const RowList = ({ children }: { children: ReactNode }) => (
-  <div className="flex flex-col divide-y divide-ui-hairline overflow-hidden rounded-[18px] border border-ui-hairline">{children}</div>
+  <div className="flex flex-col divide-y divide-ui-hairline overflow-hidden rounded-[18px] border border-ui-hairline empty:hidden">{children}</div>
 )
 
 /** A suggestion, or "+ Name your own" (dashed). */
@@ -140,7 +142,7 @@ export function Chip({ on, dashed, disabled, note, onClick, children }: { on?: b
 }
 
 /** The person's own practices that fit this report, each with Use; a used one says Using and lets go on a second press. */
-export function FitList({ options, isOn, disabled, onUse }: { options: UserPractice[]; isOn: (name: string) => boolean; disabled: boolean; onUse: (name: string, on: boolean) => void }) {
+export function FitList({ options, isOn, disabled = false, onUse }: { options: UserPractice[]; isOn: (name: string) => boolean; disabled?: boolean; onUse: (name: string, on: boolean) => void }) {
   const { t } = useTranslation()
   return (
     <RowList>
