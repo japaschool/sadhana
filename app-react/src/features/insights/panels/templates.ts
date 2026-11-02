@@ -159,8 +159,8 @@ export const SLEEP_SLOTS: Slot[] = [
 export const SLEEP_DEFAULTS = { min: 360, max: 540 }
 
 export const JAPA_SLOTS: Slot[] = [
-  { key: 'total', types: ['Int'], required: true, hints: ['total', 'всего', 'усього', 'round', 'круг', 'кол', 'japa', 'джап'] },
-  { key: 'morning', types: ['Int'], required: false, hints: ['morning', 'утр', 'ранк', 'ранн'] },
+  { key: 'total', types: ['Int'], required: true, hints: ['total', 'всего', 'усього', 'за день', 'round', 'круг', 'кол', 'japa', 'джап'] },
+  { key: 'morning', types: ['Int'], required: false, hints: ['morning', 'by 7', 'утр', 'ранк', 'ранн'] },
   { key: 'quality', types: ['Int', 'Text'], required: false, hints: ['quality', 'качеств', 'якіст'] },
   { key: 'attunement', types: ['Bool'], required: false, hints: ['attun', 'affirm', 'настр', 'налаш'] },
 ]

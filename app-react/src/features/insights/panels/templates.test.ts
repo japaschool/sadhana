@@ -232,6 +232,17 @@ describe('suggestions for Japa', () => {
     const ps = [p('q', 'Japa quality', 'Int'), p('m', 'Rounds in the morning', 'Int'), p('t', 'Total rounds', 'Int')]
     expect(suggestFor(total, ps, new Set())?.id).toBe('t')
   })
+  it.each([
+    ['en', 'Rounds by 7am', 'Total Rounds'],
+    ['ru', 'Кругов до 7 утра', 'Кругов за день'],
+    ['uk', 'Кругів до 7 ранку', 'Кругів за день'],
+  ])('tells total from morning on the %s default practices', (_, morningName, totalName) => {
+    const ps = [p('m', morningName, 'Int'), p('t', totalName, 'Int')]
+    const [slot, morning] = JAPA_SLOTS
+    expect(suggestFor(slot, ps, new Set())?.id).toBe('t')
+    expect(suggestFor(morning, ps, new Set())?.id).toBe('m')
+    expect(suggestFor(morning, ps, new Set(['t']))?.id).toBe('m')
+  })
   it('knows attunement by its other name', () => {
     expect(suggestFor(attunement, [p('a', 'Japa affirmation', 'Bool')], new Set())?.id).toBe('a')
   })
