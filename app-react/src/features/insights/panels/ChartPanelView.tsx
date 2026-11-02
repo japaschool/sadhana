@@ -27,6 +27,8 @@ interface ChartPanelProps {
 
 /** About 1px a bar: outlines and stripes can't render (15m8). */
 const THIN_FROM = 120
+/** Recharts takes this off each side of a bar, so 19% leaves the design's 62% bar. */
+const BAR_GAP = '19%'
 
 const FILL: Record<BarState, string> = {
   ok: 'var(--ui-state-ok)', under: 'var(--ui-state-under-fill)', over: 'var(--ui-state-over)', neutral: 'var(--ui-state-none)',
@@ -200,7 +202,7 @@ export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, 
       {panel.title && <h2 className="text-base leading-[1.3] font-extrabold text-ui-ink">{labelText(panel.title, t)}</h2>}
       <div className="relative">
         <ResponsiveContainer width="100%" height={height}>
-          <ComposedChart data={rows} barCategoryGap={thin ? '10%' : '42%'} barGap={1} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
+          <ComposedChart data={rows} barCategoryGap={thin ? '10%' : BAR_GAP} barGap={1} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
             <defs>
               <pattern id={stripes} width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                 <rect width="4" height="4" fill="var(--ui-state-over)" />
