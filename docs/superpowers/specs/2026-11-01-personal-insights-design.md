@@ -36,6 +36,7 @@ So everything must work from those four practices alone, and the less regular ma
 - Calendar feeds. A Vaishnava calendar is a stretch goal, and could later feed marked periods.
 - Repeating marked days.
 - "What I work on" (weekly or monthly focus). Parked.
+- Weekly and monthly goals. They have their own spec, `2026-11-02-goals-design.md`.
 - Notifications and the Gayatri reminder. Separate project.
 - Guided new-user setup. Separate spec and mockups.
 - Shared pages. They're being reworked separately, and nothing here appears on them.
@@ -143,7 +144,7 @@ A report for practices where the gap matters. Built as a fourth template in the 
 - **The days around it:** one table for the selected option, with a switch between options when there are 2+, because different options can mean different things, with the day before, the same day, the next day and 2 days after, against usual. Colour a cell only when it's at least 0.3 standard deviations from usual. Show the table only with 10+ events; below that, show how many more are needed.
 - Wording stays factual, such as "around" rather than "after" or "because of".
 - **Private, for now** *(my call)*: these reports can hold sensitive practices, so `GET /share/{id}/reports` never returns them. Revisit in the shared page rework, which will let a person share a chosen report.
-- **Older clients:** builds that send `panels=true` can't draw the new kinds. The owner's `GET /reports` returns them only with a new `panels=2`, which new clients send, and the existing filter otherwise stays. *(my call)*
+- **Older clients:** builds that send `panels=true` can't draw the new kinds. The owner's `GET /reports` returns them only at `panels=3`, which new clients send. `panels` is a minimum level, as defined in `2026-11-02-goals-design.md`, where Goals takes level 2. *(my call)*
 - **Generic format:** the gap mark, split by option and "days around" table are new panel or source kinds in the `panels` format, not template-only code, so the generic editor can reach them later. This adds a template variant and panel kinds to the Rust type.
 
 ## How this fits report templates

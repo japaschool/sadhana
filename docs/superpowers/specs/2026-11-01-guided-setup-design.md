@@ -69,7 +69,7 @@ Report templates (`2026-10-31-report-templates-design.md`) must ship first, **wi
 
 Also rename the **Duration** template to **Time spent**, so the guide and the New chart sheet use one name.
 
-1. **Daily count** replaces the Japa template. It's the same report with neutral naming, so a count can be rounds, pages or push-ups. Its inputs become: **Count** (Int, required), **Target** (required), **Part done early** (Int, optional), **How it went** (optional, same rule as Japa quality) and the yes/no marker (Bool, optional). Every label is neutral.
+1. **Daily count** replaces the Japa template. It's the same report with neutral naming, so a count can be rounds, pages or push-ups. Its inputs become: **Count** (Int, required), **Target** (required), **Done in the morning** (Int, optional), **How it went** (optional, same rule as Japa quality) and the yes/no marker (Bool, optional). Every label is neutral.
 2. **Days I did it** is a new template. Inputs: one or more Bool practices. Each practice gets its own section: this month's count, last month's count, the last 90 days' count and a month grid, all for that practice alone. There's no combined total. *(my call)* A true value is a done day. False and empty look the same, with no red and no judging. The grid is a new panel kind in the generic `panels` format, so the generic editor can reach it later. Weeks start on Monday. The report shows one month, with back and forward arrows in place of the usual range controls. Mockups: 17m23, 17m24, 17t15, 17t16 and 17d15.
 
 Personal Insights (`2026-11-01-personal-insights-design.md`) comes after the guide and needs no change. Its Sleep lookup already uses a Sleep report's practices, so people who take the Sleep report skip that question.
@@ -97,7 +97,7 @@ Each shows what feeds the report. Every practice can be renamed in place. Every 
 | Report | Required | Optional | Aim |
 |---|---|---|---|
 | Sleep | Bedtime (Time), Wake-up (Time) | Nap (Duration) | Minimum 6h and maximum 9h, each editable and clearable |
-| Daily count | One count (Int): pick a suggestion or name your own | Part done early (Int), How it went (dropdown with options 1 to 5) | Daily target, required, starts empty |
+| Daily count | One count (Int): pick a suggestion or name your own | Done in the morning (Int), How it went (dropdown of whole numbers, a scale of 2 to 11 options, 1 to 5 by default) | Daily target, required, starts empty |
 | Time spent | One or more (Duration): pick suggestions or name your own | None | Daily goal, optional |
 | Days I did it | One or more (Bool): pick suggestions or name your own | None | None |
 

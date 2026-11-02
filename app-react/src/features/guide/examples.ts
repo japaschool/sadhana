@@ -156,7 +156,7 @@ export function exampleDay(kind: GuideKind, todayCob: string): string {
   return kind !== 'days' || d.getDate() >= 28 ? todayCob : toDateStr(new Date(d.getFullYear(), d.getMonth() - 1, 28))
 }
 
-/** What a screen reader gets in place of the picture: the same figures the report shows. */
+/** What a screen reader gets in place of the picture: the figures its charts draw. */
 export function exampleSummary(kind: GuideKind, todayCob: string, t: TFunction): string {
   const { definition, entries, practices } = exampleReport(kind, todayCob, t)
   const l = makeLookup(entries, undefined, practices)

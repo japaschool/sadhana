@@ -14,7 +14,7 @@ import { REPORTS_KEY } from '../insights/useReports'
 import { GuideScreen } from './GuideScreen'
 
 vi.mock('../../api/guide', () => ({ guideApi: { start: vi.fn(), update: vi.fn() } }))
-vi.mock('../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn(), createUserPractice: vi.fn(), updateUserPractice: vi.fn(), deleteUserPractice: vi.fn() } }))
+vi.mock('../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn(), createUserPractice: vi.fn(), updateUserPractice: vi.fn(), deleteUserPractice: vi.fn(), getGroups: vi.fn(), createGroup: vi.fn() } }))
 vi.mock('../../api/charts', () => ({ chartsApi: { getReports: vi.fn(), createReport: vi.fn(), updateReport: vi.fn(), deleteReport: vi.fn() } }))
 vi.mock('./MiniReport', () => ({ MiniReport: ({ head, footer }: { head?: React.ReactNode; footer?: React.ReactNode }) => <div>{head}{footer}</div> }))
 import { chartsApi } from '../../api/charts'
@@ -36,6 +36,8 @@ beforeEach(() => {
   vi.mocked(guideApi.update).mockResolvedValue(undefined)
   vi.mocked(practicesApi.getUserPractices).mockImplementation(async () => [...have])
   vi.mocked(practicesApi.createUserPractice).mockImplementation(async (p) => { have.push({ id: `id-${p.practice}`, practice: p.practice, data_type: p.data_type, is_active: true }) })
+  vi.mocked(practicesApi.getGroups).mockResolvedValue([{ id: null, name: '', is_default: true }])
+  vi.mocked(practicesApi.createGroup).mockImplementation(async (name) => `g-${name}`)
   vi.mocked(chartsApi.getReports).mockImplementation(async () => made.map((name) => ({ id: name, name, definition: { Panels: { panels: [] } } }) as never))
   vi.mocked(chartsApi.createReport).mockImplementation(async (name) => { made.push(name); return `r-${name}` })
 })
@@ -443,6 +445,9 @@ describe('from Add practice, on practices the person already has', () => {
     const [name, def] = vi.mocked(chartsApi.createReport).mock.calls[0]
     expect(name).toBe('Sleep 2')
     expect(JSON.stringify(def)).toContain('"bedtime":"p-sleep"')
+    // A reused practice: no group.
+    expect(practicesApi.createGroup).not.toHaveBeenCalled()
+    expect(practicesApi.createUserPractice).toHaveBeenCalledWith(expect.objectContaining({ group_id: null }))
     expect(JSON.stringify(def)).toContain('"wake":"p-wake"')
     expect(practicesApi.updateUserPractice).not.toHaveBeenCalled()
     expect(practicesApi.deleteUserPractice).not.toHaveBeenCalled()

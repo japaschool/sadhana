@@ -8,15 +8,10 @@ import { exampleDay, exampleReport, exampleSummary } from './examples'
 import type { Applied } from './examples'
 import type { GuideKind } from './guideLogic'
 
-/** Sleep's four figures are two in the carousel's narrow frame: average sleep and nights in range. */
-const COMPACT_SLEEP_FIGURES = [0, 3]
-
-/** A card holds one month grid, so it sits beside the others; with the person's own practices each one is shown. */
+/** No summary figures: the charts alone, so a first look stays light. A card holds one month grid, so it sits beside the others; with the person's own practices each one is shown. */
 function fit(kind: GuideKind, definition: PanelsReport, compact: boolean, own: boolean): PanelsReport {
-  if (!compact) return definition
-  if (kind === 'days') return own ? definition : { ...definition, panels: definition.panels.slice(0, 1) }
-  if (kind !== 'sleep') return definition
-  return { ...definition, panels: definition.panels.map((p) => (p.kind === 'Stats' ? { ...p, stats: COMPACT_SLEEP_FIGURES.map((i) => p.stats[i]) } : p)) }
+  const panels = definition.panels.filter((p) => p.kind !== 'Stats')
+  return { ...definition, panels: compact && kind === 'days' && !own ? panels.slice(0, 1) : panels }
 }
 
 /**
@@ -32,18 +27,17 @@ export function MiniReport({ kind, compact = false, head, footer, on = false, ap
   const definition = fit(kind, example.definition, compact, !!applied)
   return (
     <div className={`flex h-full flex-col overflow-hidden rounded-[20px] border bg-ui-surface ${on ? 'border-[1.5px] border-ui-accent-pill bg-ui-accent-soft' : 'border-ui-hairline'}`}>
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ui-hairline bg-ui-chip px-3 py-[7px]">
+      <div className="flex border-b border-ui-hairline bg-ui-chip px-3 py-[7px]">
         <span className="rounded-md border border-ui-hairline bg-ui-surface px-2 py-[3px] font-ui-mono text-[11px] leading-[1.3] font-semibold tracking-[.08em] text-ui-ink uppercase">
           {t('guide.example.band')}
         </span>
-        <span className="rounded-md bg-ui-surface px-[7px] py-[3px] font-ui-mono text-[11px] leading-[1.3] font-medium text-ui-muted">{t('guide.example.after')}</span>
       </div>
       <div className="flex flex-col gap-3 p-3">
         {head}
         <div role="img" aria-label={exampleSummary(kind, today, t)} className="pointer-events-none flex flex-col gap-3">
-          <PanelsReportView report={{ id: `example-${kind}`, name: t(`guide.example.after`), definition: { Panels: definition } }}
+          <PanelsReportView report={{ id: `example-${kind}`, name: t('guide.example.band'), definition: { Panels: definition } }}
             definition={definition} entries={example.entries} previous={undefined} practices={example.practices} todayCob={today}
-            chartHeight={compact ? 110 : 200} formLink={null} cols={compact ? 2 : 4} interactive={false} legendLast />
+            chartHeight={compact ? 110 : 200} formLink={null} cols={compact ? 2 : 4} interactive={false} legendLast monthFigures={false} />
         </div>
       </div>
       {footer}

@@ -278,7 +278,7 @@ describe('a Japa report', () => {
   it('names the states, extras and target in the legend', () => {
     show(full)
     const legend = screen.getByRole('list', { name: 'Key' })
-    expect(within(legend).getAllByRole('listitem').map((x) => x.textContent)).toEqual(['On target', 'Missed', 'Early part', 'Marked done', 'Target 16'])
+    expect(within(legend).getAllByRole('listitem').map((x) => x.textContent)).toEqual(['On target', 'Missed', 'Done in the morning', 'Marked done', 'Target 16'])
   })
 
   it('states come from the target, and the morning bars stay out of them', () => {
