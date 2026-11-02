@@ -16,7 +16,7 @@ export interface PlannedPractice { name: string; data_type: PracticeDataType; dr
 export interface GuidePlan { practices: PlannedPractice[]; reports: { kind: GuideKind; name: string; slug: string; choices: Choices[GuideKind] }[] }
 export type NameProblem = 'empty' | 'inUseHidden' | 'inUseOtherType' | 'twice'
 
-const KINDS: GuideKind[] = ['sleep', 'count', 'time', 'days']
+export const KINDS: GuideKind[] = ['sleep', 'count', 'time', 'days']
 const SLUGS: Record<GuideKind, string> = { sleep: 'sleep', count: 'japa', time: 'duration', days: 'days' }
 const HOW_VARIANTS = '1,2,3,4,5'
 

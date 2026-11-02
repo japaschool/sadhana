@@ -1051,6 +1051,54 @@
     "targetMissing": "Set a target to save your changes."
   },
   "guide": {
+    "title": "What would you like to see about your days?",
+    "intro": "This is how each report looks after a few weeks of logging.",
+    "exit": "Build my own list",
+    "back": "Back",
+    "skip": "Skip",
+    "track": "Track this",
+    "trackShort": "Track",
+    "next": "Next",
+    "done": "Done",
+    "position": "{{a}} of {{b}}",
+    "chosen": "{{n}} chosen",
+    "chooseOne": "Choose at least one, or build your own list",
+    "noneChosen": "None chosen",
+    "steps": {
+      "label": "Steps",
+      "choose": "Choose",
+      "setup": "Set up",
+      "sharing": "Sharing",
+      "finish": "Finish"
+    },
+    "kinds": {
+      "sleep": {
+        "name": "Sleep",
+        "desc": "Bedtime, wake-up and hours slept against your aim"
+      },
+      "count": {
+        "name": "Daily count",
+        "desc": "Any number you count each day: rounds, pages, push-ups"
+      },
+      "time": {
+        "name": "Time spent",
+        "desc": "Time each day across practices, with a goal"
+      },
+      "days": {
+        "name": "Days I did it",
+        "desc": "Which days you did each thing, month by month"
+      }
+    },
+    "nothing": {
+      "title": "Nothing picked yet",
+      "body": "That’s fine. You can pick one here, look through the examples again, or set up your practices without a report. Reports can be added later from Insights.",
+      "again": "Look through again"
+    },
+    "leave": {
+      "title": "Leave setup?",
+      "body": "Nothing has been created yet. If you leave now, what you set up here won’t be saved.",
+      "keep": "Keep going"
+    },
     "suggest": {
       "count1": "Mantra rounds",
       "count2": "Prayers",

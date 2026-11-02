@@ -1,0 +1,95 @@
+import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '../../store/authStore'
+import { KINDS } from './guideLogic'
+import type { Choices, GuideKind } from './guideLogic'
+import { useGuideRun } from './useGuideRun'
+
+export type GuideStep = { at: 'choose' } | { at: 'setup'; kind: GuideKind } | { at: 'reader' } | { at: 'finish' }
+export type Guide = ReturnType<typeof useGuide>
+
+const NONE: Choices = { sleep: null, count: null, time: null, days: null }
+/** `last_step` as the server records it: choose, setup_sleep, setup_count, setup_time, setup_days, reader, finish. ("creating" is Task 11's.) */
+const stepName = (s: GuideStep) => (s.at === 'setup' ? `setup_${s.kind}` : s.at)
+
+/**
+ * The guide's state. `firstRun` (new account) adds the reader question; `back` is where Back from the first
+ * card goes when the guide wasn't opened by sign-up.
+ */
+export function useGuide({ firstRun, back: backTo }: { firstRun: boolean; back: string }) {
+  const navigate = useNavigate()
+  const run = useGuideRun(firstRun ? 'signup' : 'add_practice')
+  const [step, setStep] = useState<GuideStep>({ at: 'choose' })
+  const [pos, setPos] = useState(0)
+  const [tracked, setTracked] = useState<GuideKind[]>([])
+  const [skipped, setSkipped] = useState<GuideKind[]>([])
+  const [choices, setChoices] = useState<Choices>(NONE)
+  const [nothing, setNothing] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+
+  // newAccount lasts the whole session; the first-run flag lives on in history state.
+  useEffect(() => { useAuthStore.setState({ newAccount: false }) }, [])
+  const name = stepName(step)
+  useEffect(() => { run.mark(name) }, [run, name])
+
+  const inOrder = (kinds: GuideKind[]) => KINDS.filter((k) => kinds.includes(k))
+  /** The step after `from`, given who is tracked. */
+  function after(from: GuideStep, list: GuideKind[]): GuideStep {
+    const rest = from.at === 'choose' ? list : from.at === 'setup' ? list.slice(list.indexOf(from.kind) + 1) : []
+    if (rest.length) return { at: 'setup', kind: rest[0] }
+    return from.at !== 'reader' && firstRun ? { at: 'reader' } : { at: 'finish' }
+  }
+
+  function advance(list: GuideKind[]) {
+    if (step.at === 'choose' && !list.length) { setNothing(true); return }
+    setStep(after(step, list))
+  }
+
+  function toggle(kind: GuideKind) {
+    setTracked((t) => (t.includes(kind) ? t.filter((k) => k !== kind) : inOrder([...t, kind])))
+    setSkipped((s) => s.filter((k) => k !== kind))
+  }
+
+  /** Track or Skip on the carousel's current card: the same position a swipe moves. */
+  function decide(kind: GuideKind, yes: boolean) {
+    const list = inOrder(yes ? [...tracked, kind] : tracked.filter((k) => k !== kind))
+    setTracked(list)
+    setSkipped(inOrder(yes ? skipped.filter((k) => k !== kind) : [...skipped, kind]))
+    if (pos < KINDS.length - 1) setPos(pos + 1)
+    else advance(list)
+  }
+
+  function goBack() {
+    const lastSetup: GuideStep = tracked.length ? { at: 'setup', kind: tracked[tracked.length - 1] } : { at: 'choose' }
+    if (nothing) setNothing(false)
+    else if (step.at === 'choose') { if (pos > 0) setPos(pos - 1); else navigate(backTo) }
+    else if (step.at === 'setup') {
+      const i = tracked.indexOf(step.kind)
+      if (i > 0) setStep({ at: 'setup', kind: tracked[i - 1] })
+      else { setStep({ at: 'choose' }); setPos(KINDS.indexOf(step.kind)) }
+    } else setStep(step.at === 'finish' && firstRun ? { at: 'reader' } : lastSetup)
+  }
+
+  const exit = useCallback((outcome: 'finished' | 'left', hasReader?: boolean) => {
+    run.end(outcome, hasReader)
+    navigate('/', { replace: true })
+  }, [run, navigate])
+
+  return {
+    firstRun, step, pos, setPos, tracked, skipped, choices, nothing, confirming,
+    /** The first card of a sign-up guide is the start: nowhere to go back to. */
+    canBack: !(firstRun && step.at === 'choose' && pos === 0 && !nothing),
+    setChoice: <K extends GuideKind>(kind: K, value: Choices[K]) => setChoices((c) => ({ ...c, [kind]: value })),
+    toggle, decide,
+    next: () => advance(tracked),
+    back: goBack,
+    /** From the nothing-chosen screen: track just this one. */
+    pick: (kind: GuideKind) => { setTracked([kind]); setNothing(false); setStep(after({ at: 'choose' }, [kind])) },
+    lookAgain: () => { setNothing(false); setPos(0); setSkipped([]) },
+    /** "Build my own list", at any step: asks first once a report has been set up. */
+    leave: () => (KINDS.some((k) => choices[k]) ? setConfirming(true) : exit('left')),
+    keepGoing: () => setConfirming(false),
+    confirmLeave: () => exit('left'),
+    finish: (hasReader?: boolean) => exit('finished', hasReader),
+  }
+}
