@@ -1067,6 +1067,14 @@
       "days3": "Group gathering",
       "days4": "Journaling",
       "days5": "Walk"
+    },
+    "example": {
+      "band": "Example · not your data",
+      "after": "After 4 weeks",
+      "summarySleep": "{{band}}. Sleep over a month: average {{avg}}, nights in range {{on}} of {{of}}. Some nights are missing.",
+      "summaryCount": "{{band}}. {{name}} each day over four weeks: average {{avg}} a day, days on target {{on}} of {{of}}. A few days are missing.",
+      "summaryTime": "{{band}}. Time spent over four weeks on {{names}}: average {{avg}} a day, days at the goal {{on}} of {{of}}.",
+      "summaryDays": "{{band}}. Days I did it, this month: {{list}}."
     }
   }
 }

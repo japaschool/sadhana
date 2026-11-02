@@ -21,6 +21,8 @@ interface PanelsReportViewProps {
   cols?: 2 | 4
   /** yyyy-mm shown by month panels; the current month when left out. */
   month?: string
+  /** Off in examples: charts show no tooltip. */
+  interactive?: boolean
 }
 
 /** A required practice was deleted or hidden (15m19, 15t10). */
@@ -62,7 +64,7 @@ function MonthLegend() {
   )
 }
 
-export function PanelsReportView({ report, definition, entries, previous, practices, todayCob, chartHeight, formLink, cols = 4, month = todayCob.slice(0, 7) }: PanelsReportViewProps) {
+export function PanelsReportView({ report, definition, entries, previous, practices, todayCob, chartHeight, formLink, cols = 4, month = todayCob.slice(0, 7), interactive = true }: PanelsReportViewProps) {
   const { t } = useTranslation()
   const lookup = makeLookup(entries, previous, practices)
   const days = windowDays(entries)
@@ -81,7 +83,7 @@ export function PanelsReportView({ report, definition, entries, previous, practi
       ) : (
         // The first chart leads; the rest are shorter (15m6, 15m12).
         <ChartPanelView key={i} panel={p} panels={panels} days={days} lookup={lookup} todayCob={todayCob}
-          height={i === firstChart ? chartHeight : Math.round(chartHeight * 0.72)} first={i === firstChart} compact={cols === 2} />
+          height={i === firstChart ? chartHeight : Math.round(chartHeight * 0.72)} first={i === firstChart} compact={cols === 2} interactive={interactive} />
       )))}
       {panels.some((p) => p.kind === 'Month') && <MonthLegend />}
     </div>
