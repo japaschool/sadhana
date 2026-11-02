@@ -244,4 +244,22 @@ describe('InsightsMobile', () => {
     expect(rows[0].textContent).toBe('DateReadingJapa')
     expect(within(table).queryByText('Morning')).toBeNull()
   })
+
+  it('a month report swaps the range control for month navigation', async () => {
+    charts.getReports.mockResolvedValue([
+      { id: 'm1', name: 'Days I did it', definition: { Panels: { version: 1, template: null, required: [], panels: [{ kind: 'Month', practice: 'p3' }] } } },
+    ])
+    practices.getUserPractices.mockResolvedValue([{ id: 'p3', practice: 'Walk', data_type: 'Bool', is_active: true }])
+    localStorage.setItem('insights-report', 'm1')
+    renderScreen()
+    expect(await screen.findByText('October 2026')).toBeInTheDocument()
+    expect(screen.queryByRole('radiogroup', { name: 'Range' })).toBeNull()
+    expect(screen.queryByText('Ending today')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Next month' })).toBeDisabled()
+    await waitFor(() => expect(charts.getReportData).toHaveBeenCalledWith('2026-10-06', 'HalfYear'))
+    fireEvent.click(screen.getByRole('button', { name: 'Previous month' }))
+    expect(await screen.findByText('September 2026')).toBeInTheDocument()
+    await waitFor(() => expect(charts.getReportData).toHaveBeenCalledWith('2026-09-30', 'HalfYear'))
+    expect(screen.getByRole('button', { name: 'Next month' })).toBeEnabled()
+  })
 })

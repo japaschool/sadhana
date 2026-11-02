@@ -5,7 +5,7 @@ import type { TFunction } from 'i18next'
 import { durationPanels, japaPanels, sleepPanels } from './templates'
 import { averageDailyTotal } from '../insightsLogic'
 import {
-  figureDuration, makeLookup, windowDays, resolve, stateOf, statResult, visiblePanels, missingRequired, fitHours, chartRows, tipLines,
+  figureDuration, makeLookup, windowDays, resolve, stateOf, statResult, visiblePanels, missingRequired, fitHours, chartRows, tipLines, monthCells, monthCounts,
 } from './panelLogic'
 
 const P = (id: string, practice: string, data_type: PracticeDataType, is_active = true): UserPractice =>
@@ -407,3 +407,45 @@ describe('a Duration report', () => {
   })
 })
 const t0 = ((k: string) => k) as unknown as TFunction
+
+describe('month panel', () => {
+  const yn = [P('yn', 'Walk', 'Bool'), P('off', 'Hidden', 'Bool', false), P('num', 'Count', 'Int')]
+  const b = (cob: string, v: boolean) => e(cob, 'Walk', { Bool: v })
+  const month = (practice: string): PanelsReport => ({ version: 1, template: null, required: [{ practice, label: { Text: 'Walk' } }], panels: [{ kind: 'Month', practice }] })
+
+  it('starts weeks on Monday', () => { expect(monthCells('2026-10', '2026-10-24').blanks).toBe(3) }) // 1 Oct 2026 is a Thursday
+  it('marks days after today as future', () => {
+    const { days } = monthCells('2026-10', '2026-10-24')
+    expect(days).toHaveLength(31)
+    expect(days.filter((d) => d.future).map((d) => d.cob)[0]).toBe('2026-10-25')
+    expect(days[23].future).toBe(false)
+    expect(monthCells('2026-09', '2026-10-24').days.some((d) => d.future)).toBe(false)
+  })
+  it('counts only true days', () => {
+    const l = lk([b('2026-10-01', true), b('2026-10-02', true), b('2026-10-03', false)], undefined, yn)
+    expect(monthCounts('yn', '2026-10', '2026-10-24', l).thisMonth).toBe(2)
+    expect([...monthCounts('yn', '2026-10', '2026-10-24', l).done].sort()).toEqual(['2026-10-01', '2026-10-02'])
+  })
+  it('counts last month and 90 days separately, ending at `end`', () => {
+    const l = lk([b('2026-09-30', true), b('2026-07-28', true), b('2026-07-26', true)], undefined, yn)
+    const c = monthCounts('yn', '2026-10', '2026-10-24', l)
+    expect([c.lastMonth, c.last90]).toEqual([1, 2])
+  })
+  it('a past month counts up to its own last day', () => {
+    const l = lk([b('2026-09-30', true), b('2026-10-02', true)], undefined, yn)
+    const c = monthCounts('yn', '2026-09', '2026-09-30', l)
+    expect([c.thisMonth, c.last90]).toEqual([1, 1])
+  })
+  it('drops a month panel whose practice is hidden, or no longer yes/no', () => {
+    const l = lk([], undefined, yn)
+    expect(visiblePanels(month('yn'), l)).toHaveLength(1)
+    expect(visiblePanels(month('off'), l)).toHaveLength(0)
+    expect(visiblePanels(month('num'), l)).toHaveLength(0)
+    expect(visiblePanels(month('gone'), l)).toHaveLength(0)
+  })
+  it('reports a hidden practice as missing', () => {
+    const l = lk([], undefined, yn)
+    expect(missingRequired(month('off'), l).map((r) => r.practice)).toEqual(['off'])
+    expect(missingRequired(month('yn'), l)).toEqual([])
+  })
+})

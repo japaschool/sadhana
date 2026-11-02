@@ -181,6 +181,10 @@ function visibleStat(s: Stat, l: Lookup): Stat | null {
 export function visiblePanels(def: PanelsReport, l: Lookup): Panel[] {
   const out: Panel[] = []
   for (const panel of def.panels) {
+    if (panel.kind === 'Month') {
+      if (l.available(panel.practice, 'Bool')) out.push(panel)
+      continue
+    }
     if (panel.kind === 'Stats') {
       const stats = panel.stats.map((s) => visibleStat(s, l)).filter((s): s is Stat => s !== null)
       if (stats.length) out.push({ ...panel, stats })
@@ -210,7 +214,7 @@ export function visiblePanels(def: PanelsReport, l: Lookup): Panel[] {
 
 function panelSources(def: PanelsReport): Source[] {
   const ofStat = (s: Stat): Source[] => [statParts(s.value)[1].of, ...(s.under ? ofStat(s.under) : [])]
-  return def.panels.flatMap((p) => (p.kind === 'Stats'
+  return def.panels.flatMap((p) => (p.kind === 'Month' ? [] : p.kind === 'Stats'
     ? p.stats.flatMap(ofStat)
     : [...p.series.map((s) => s.source), ...(p.target ? [p.target.of] : []), ...p.lines.map((r) => r.of)]))
 }
@@ -219,7 +223,9 @@ function panelSources(def: PanelsReport): Source[] {
 export function missingRequired(def: PanelsReport, l: Lookup): Required[] {
   const ends = new Set(panelSources(def).flatMap((s) => ('Range' in s ? [s.Range.from.practice, s.Range.to.practice] : [])))
   const charted = def.panels.flatMap((p) => (p.kind === 'Chart' ? p.series.map((s) => ({ s, want: seriesTypes(s, p.format) })) : []))
+  const months = new Set(def.panels.flatMap((p) => (p.kind === 'Month' ? [p.practice] : [])))
   return def.required.filter((r) => !l.available(r.practice)
+    || (months.has(r.practice) && !l.available(r.practice, 'Bool'))
     || (ends.has(r.practice) && !l.available(r.practice, 'Time'))
     || charted.some(({ s, want }) => 'Practice' in s.source && s.source.Practice.practice === r.practice && !typedOk(s.source, want, l)))
 }
@@ -316,4 +322,45 @@ export function tipLines(panels: Panel[], cob: string, l: Lookup, t: TFunction, 
     text: formatValue(total, format, u),
     state: stateOf(total, judged.target),
   }, ...goal]
+}
+
+const monthOf = (cob: string) => cob.slice(0, 7)
+
+/** A month's grid, Monday first: leading blanks, then every day, with those after today marked. */
+export function monthCells(month: string, todayCob: string): { blanks: number; days: { cob: string; future: boolean }[] } {
+  const [y, m] = month.split('-').map(Number)
+  return {
+    blanks: (new Date(y, m - 1, 1).getDay() + 6) % 7,
+    days: Array.from({ length: new Date(y, m, 0).getDate() }, (_, i) => {
+      const cob = `${month}-${String(i + 1).padStart(2, '0')}`
+      return { cob, future: cob > todayCob }
+    }),
+  }
+}
+
+/** Done days (value above 0) in the 90 days ending at `end`, counted for the shown month, the one before, and all 90. */
+export function monthCounts(practice: string, month: string, end: string, l: Lookup) {
+  const [y, m] = month.split('-').map(Number)
+  const prev = monthOf(toDateStr(new Date(y, m - 2, 1)))
+  const done = new Set<string>()
+  for (let i = 0; i < 90; i++) {
+    const cob = shift(end, -i)
+    if ((l.value(practice, cob) ?? 0) > 0) done.add(cob)
+  }
+  const inMonth = (mo: string) => [...done].filter((d) => monthOf(d) === mo).length
+  return { thisMonth: inMonth(month), lastMonth: inMonth(prev), last90: done.size, done }
+}
+
+/** The day a month's data runs to: its last day, or today while it is still going. */
+export function monthEnd(month: string, todayCob: string): string {
+  const [y, m] = month.split('-').map(Number)
+  const last = toDateStr(new Date(y, m, 0))
+  return last < todayCob ? last : todayCob
+}
+
+/** "October 2026" (capitalised where the language lowercases months). */
+export function monthName(month: string, locale: string, withYear = true): string {
+  const [y, m] = month.split('-').map(Number)
+  const s = new Date(y, m - 1, 1).toLocaleDateString(locale, { month: 'long', ...(withYear && { year: 'numeric' }) })
+  return s.charAt(0).toLocaleUpperCase(locale) + s.slice(1)
 }

@@ -324,6 +324,7 @@
     "endingToday": "Ending today",
     "endingOn": "Ending {{date}}",
     "resetEnd": "Back to today",
+    "upToToday": "Up to today, {{date}}",
     "dailyAverage": "Daily average · {{range}}",
     "average": "Average · {{range}}",
     "vsPrev7d": "{{delta}} vs previous 7 days",
@@ -938,7 +939,16 @@
     "goal": "Goal",
     "goalMet": "Goal met",
     "goalLine": "Goal {{value}}",
-    "goalShort": "{{value}} short of the goal"
+    "goalShort": "{{value}} short of the goal",
+    "thisMonth": "This month",
+    "lastMonth": "Last month",
+    "last90": "Last 90 days",
+    "daysDone_one": "{{name}}: {{count}} day done in {{month}}",
+    "daysDone_other": "{{name}}: {{count}} days done in {{month}}",
+    "done": "Done",
+    "notDone": "Not marked done",
+    "today": "Today",
+    "monthNote": "A day with no entry looks the same as one marked not done. Nothing is shown in red."
   },
   "templateForm": {
     "sleepName": "Sleep",

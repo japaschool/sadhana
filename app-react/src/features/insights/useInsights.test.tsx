@@ -134,4 +134,48 @@ describe('useInsights', () => {
     act(() => result.current.setEnd(new Date(2026, 9, 6, 18)))
     expect(result.current.end).toBeNull()
   })
+
+  describe('month panel', () => {
+    const MONTH = { id: 'm1', name: 'Days', definition: { Panels: { version: 1, template: null, required: [], panels: [{ kind: 'Month' as const, practice: 'p1' }] } } }
+    const setupMonth = async () => {
+      charts.getReports.mockResolvedValue([MONTH, PANELS])
+      localStorage.setItem('insights-report', 'm1')
+      const r = setup()
+      await waitFor(() => expect(r.result.current.report?.id).toBe('m1'))
+      return r
+    }
+
+    it('is null without a month panel', async () => {
+      const { result } = setup()
+      await waitFor(() => expect(result.current.isLoading).toBe(false))
+      expect(result.current.month).toBeNull()
+    })
+    it('asks for half a year ending today in the current month, with no previous window', async () => {
+      const { result } = await setupMonth()
+      expect(result.current.month).toBe('2026-10')
+      await waitFor(() => expect(charts.getReportData).toHaveBeenCalledWith('2026-10-06', 'HalfYear'))
+      // Only the one half-year window: no previous-window fetch.
+      await new Promise((r) => setTimeout(r, 20))
+      expect(charts.getReportData.mock.calls.filter(([, d]) => d === 'HalfYear')).toHaveLength(1)
+      expect(charts.getReportData.mock.calls.every(([cob]) => cob === '2026-10-06')).toBe(true)
+    })
+    it('a past month ends on its last day', async () => {
+      const { result } = await setupMonth()
+      act(() => result.current.setMonth('2026-02'))
+      expect(result.current.month).toBe('2026-02')
+      await waitFor(() => expect(charts.getReportData).toHaveBeenCalledWith('2026-02-28', 'HalfYear'))
+    })
+    it('ignores the log date, and select returns to the current month', async () => {
+      const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+      charts.getReports.mockResolvedValue([MONTH, PANELS])
+      localStorage.setItem('insights-report', 'm1')
+      const { result } = renderHook(() => useInsights(new Date(2026, 8, 3)), { wrapper })
+      await waitFor(() => expect(result.current.month).toBe('2026-10'))
+      await waitFor(() => expect(charts.getReportData).toHaveBeenCalledWith('2026-10-06', 'HalfYear'))
+      act(() => result.current.setMonth('2026-08'))
+      act(() => result.current.select('m1'))
+      expect(result.current.month).toBe('2026-10')
+    })
+  })
 })

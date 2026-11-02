@@ -7,6 +7,7 @@ import { AnchoredMenu, MenuItem } from '../../ui/primitives/AnchoredMenu'
 import { SegmentedControl } from '../../ui/primitives/SegmentedControl'
 import { UiToastContainer } from '../../ui/primitives/Toast'
 import { EndDateControl } from '../insights/mobile/EndDateControl'
+import { MonthNav } from '../insights/mobile/MonthNav'
 import { InsightsChart } from '../insights/mobile/InsightsChart'
 import { PanelsReportView } from '../insights/panels/PanelsReportView'
 import type { Range } from '../insights/useInsights'
@@ -31,11 +32,16 @@ function Root({ children, className = '' }: { children: ReactNode; className?: s
 function RangeControl({ s, size }: { s: Shared; size: 'sm' | 'md' | 'lg' }) {
   const { t } = useTranslation()
   const pad = { sm: '[&_button]:px-2.5 [&_button]:text-xs', md: '[&_button]:px-[11px] [&_button]:text-[13px]', lg: '[&_button]:px-3.5 [&_button]:text-[13px]' }[size]
+  // A month report has no range or end date, only a month to step through.
+  if (s.month) return <MonthNav month={s.month} todayCob={s.todayCob} onChange={s.setMonth} />
   return (
-    <div className={`font-ui-mono ${pad}`}>
-      <SegmentedControl<Range> label={t('insights.range')} value={s.range} onChange={s.setRange}
-        options={SHARED_RANGES.map((r) => ({ value: r, label: t(`insights.range${r}`) }))} />
-    </div>
+    <>
+      <div className={`font-ui-mono ${pad}`}>
+        <SegmentedControl<Range> label={t('insights.range')} value={s.range} onChange={s.setRange}
+          options={SHARED_RANGES.map((r) => ({ value: r, label: t(`insights.range${r}`) }))} />
+      </div>
+      <EndDateControl end={s.end} onChange={s.setEnd} />
+    </>
   )
 }
 
@@ -61,7 +67,7 @@ function ChartBody({ s, height, children }: { s: Shared; height: number; childre
 function Panels({ s, height, cols }: { s: Shared; height: number; cols?: 2 }) {
   return (
     <PanelsReportView key={s.selectedId} report={s.report!} definition={s.panels!} entries={s.entries} previous={s.previousEntries}
-      practices={s.practices} todayCob={s.todayCob} chartHeight={height} formLink={null} cols={cols} />
+      practices={s.practices} todayCob={s.todayCob} chartHeight={height} formLink={null} cols={cols} month={s.month ?? undefined} />
   )
 }
 
@@ -138,7 +144,6 @@ export function SharedMobile() {
       </div>
       <div className="flex items-center justify-between gap-2 px-4 pt-3">
         <RangeControl s={s} size="sm" />
-        <EndDateControl end={s.end} onChange={s.setEnd} />
       </div>
       <div className="px-4 pt-2.5" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         {s.panelsReady ? <Panels s={s} height={230} cols={2} /> : (
@@ -230,8 +235,7 @@ export function SharedTablet() {
             <main className="flex min-w-0 flex-1 flex-col gap-4">
               <div className="flex items-center gap-2.5">
                 <RangeControl s={s} size="md" />
-                <EndDateControl end={s.end} onChange={s.setEnd} />
-                <span className="flex-1" />
+                        <span className="flex-1" />
                 {!s.panels && <CsvButton onClick={csv} />}
               </div>
               {s.panelsReady ? <Panels s={s} height={300} cols={2} /> : (
@@ -308,8 +312,7 @@ export function SharedDesktop() {
               </div>
               <div className="flex shrink-0 items-center gap-3">
                 <RangeControl s={s} size="lg" />
-                <EndDateControl end={s.end} onChange={s.setEnd} />
-                {!s.panels && <CsvButton onClick={csv} />}
+                        {!s.panels && <CsvButton onClick={csv} />}
               </div>
             </div>
             {s.panelsReady ? <Panels s={s} height={300} /> : (

@@ -433,3 +433,60 @@ describe('panels reports on each screen', () => {
     hidesGeneric()
   })
 })
+
+describe('month panels', () => {
+  const WALK = P('44444444-dddd', 'Walk', 'Bool')
+  const JOURNAL = P('55555555-eeee', 'Journaling', 'Bool')
+  const def: PanelsReport = { version: 1, template: null, required: [], panels: [
+    { kind: 'Month', practice: WALK.id }, { kind: 'Month', practice: JOURNAL.id },
+  ] }
+  const b = (cob: string, practice: string, v: boolean) => e(cob, practice, { Bool: v })
+  const show = (practices = [WALK, JOURNAL]) => render(
+    <MemoryRouter>
+      <PanelsReportView report={report(def)} definition={def} month="2026-10" todayCob={TODAY}
+        entries={[b('2026-10-01', 'Walk', true), b('2026-10-02', 'Walk', true), b('2026-10-03', 'Walk', false), b('2026-09-30', 'Walk', true)]}
+        previous={undefined} practices={practices} chartHeight={300} formLink={null} />
+    </MemoryRouter>,
+  )
+
+  it('draws a section per practice with its counts and a described grid', () => {
+    show()
+    const walk = screen.getByRole('group', { name: 'Walk' })
+    expect(within(walk).getByText('This month').parentElement).toHaveTextContent('2')
+    expect(within(walk).getByText('Last month').parentElement).toHaveTextContent('1')
+    expect(within(walk).getByText('Last 90 days').parentElement).toHaveTextContent('3')
+    expect(within(walk).getByRole('img', { name: 'Walk: 2 days done in October 2026' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Journaling' })).toBeInTheDocument()
+  })
+  it('starts the week on Monday and rings today', () => {
+    show()
+    const grid = screen.getAllByRole('img', { name: /days done in/ })[0]
+    expect(Array.from(grid.querySelectorAll('[data-weekday]')).map((x) => x.textContent).join('')).toBe('MTWTFSS')
+    expect(grid.querySelector('[data-cob="2026-10-06"]')).toHaveAttribute('aria-current', 'date')
+    expect(grid.querySelector('[data-cob="2026-10-07"]')).toHaveAttribute('data-future', 'true')
+    expect(grid.querySelector('[data-cob="2026-10-01"]')).toHaveAttribute('data-done', 'true')
+  })
+  it('a false day and an empty day look the same', () => {
+    show()
+    const grid = screen.getAllByRole('img', { name: /days done in/ })[0]
+    expect(grid.querySelector('[data-cob="2026-10-03"]')!.className).toBe(grid.querySelector('[data-cob="2026-10-04"]')!.className)
+  })
+  it('one legend closes the report, with no red', () => {
+    show()
+    expect(screen.getAllByRole('list', { name: 'Key' })).toHaveLength(1)
+    expect(screen.getByText('Not marked done')).toBeInTheDocument()
+    expect(document.body.innerHTML).not.toMatch(/danger|under/)
+  })
+  it('a hidden practice leaves its section and shows the missing card', () => {
+    const r = { ...def, required: [{ practice: JOURNAL.id, label: { Text: 'Journaling' } }] }
+    render(
+      <MemoryRouter>
+        <PanelsReportView report={report(r)} definition={r} month="2026-10" todayCob={TODAY} entries={[]} previous={undefined}
+          practices={[WALK, { ...JOURNAL, is_active: false }]} chartHeight={300} formLink={null} />
+      </MemoryRouter>,
+    )
+    expect(screen.queryByRole('group', { name: 'Journaling' })).toBeNull()
+    expect(screen.getByText(/Journaling/)).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Walk' })).toBeInTheDocument()
+  })
+})

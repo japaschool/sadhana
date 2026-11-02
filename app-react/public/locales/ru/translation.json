@@ -346,6 +346,7 @@
     "endingToday": "По сегодня",
     "endingOn": "По {{date}}",
     "resetEnd": "Вернуться к сегодня",
+    "upToToday": "По сегодня, {{date}}",
     "dailyAverage": "В среднем за день · {{range}}",
     "average": "В среднем · {{range}}",
     "vsPrev7d": "{{delta}} к предыдущим 7 дням",
@@ -1007,7 +1008,18 @@
     "goal": "Цель",
     "goalMet": "Цель выполнена",
     "goalLine": "Цель {{value}}",
-    "goalShort": "До цели не хватило {{value}}"
+    "goalShort": "До цели не хватило {{value}}",
+    "thisMonth": "Этот месяц",
+    "lastMonth": "Прошлый месяц",
+    "last90": "Последние 90 дней",
+    "daysDone_one": "{{name}}: {{count}} день отмечен, {{month}}",
+    "daysDone_few": "{{name}}: {{count}} дня отмечено, {{month}}",
+    "daysDone_many": "{{name}}: {{count}} дней отмечено, {{month}}",
+    "daysDone_other": "{{name}}: {{count}} дня отмечено, {{month}}",
+    "done": "Сделано",
+    "notDone": "Не отмечено",
+    "today": "Сегодня",
+    "monthNote": "День без записи выглядит так же, как не отмеченный. Красным ничего не выделяется."
   },
   "templateForm": {
     "sleepName": "Сон",

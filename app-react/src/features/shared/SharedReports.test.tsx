@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -102,4 +102,25 @@ describe('shared reports', () => {
     expect(await screen.findByRole('button', { name: /Reading: 40 ?min/ })).toBeInTheDocument()
     expect(screen.getByText('2 reports · read-only')).toBeInTheDocument()
   })
+
+  it.each([['mobile', 390, SharedMobile], ['tablet', 834, SharedTablet], ['desktop', 1440, SharedDesktop]] as const)(
+    '%s: a month report shows month navigation instead of the range control', async (_n, width, Page) => {
+      setViewportWidth(width)
+      api.getSharedReports.mockResolvedValue([
+        { id: 'm', name: 'Days I did it', definition: { Panels: { version: 1, template: null, required: [], panels: [{ kind: 'Month', practice: 'walk' }] } } },
+      ])
+      api.getSharedPractices.mockResolvedValue([{ id: 'walk', practice: 'Walk', data_type: 'Bool', is_active: true }])
+      api.getSharedReportData.mockResolvedValue([{ cob_date: yesterday, practice: 'Walk', value: { Bool: true } }])
+      renderAt(<Page />)
+      const now = new Date()
+      const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      const last = toDateStr(new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0))
+      const todayCob = toDateStr(now)
+      expect(await screen.findByRole('button', { name: 'Previous month' })).toBeInTheDocument()
+      expect(screen.queryByRole('radiogroup', { name: 'Range' })).toBeNull()
+      await waitFor(() => expect(api.getSharedReportData).toHaveBeenCalledWith('u1', todayCob, 'HalfYear'))
+      await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
+      await waitFor(() => expect(api.getSharedReportData).toHaveBeenCalledWith('u1', last, 'HalfYear'))
+    },
+  )
 })

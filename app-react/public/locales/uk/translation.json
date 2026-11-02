@@ -346,6 +346,7 @@
     "endingToday": "По сьогодні",
     "endingOn": "По {{date}}",
     "resetEnd": "Повернутися до сьогодні",
+    "upToToday": "До сьогодні, {{date}}",
     "dailyAverage": "У середньому за день · {{range}}",
     "average": "У середньому · {{range}}",
     "vsPrev7d": "{{delta}} до попередніх 7 днів",
@@ -1007,7 +1008,18 @@
     "goal": "Мета",
     "goalMet": "Мету виконано",
     "goalLine": "Мета {{value}}",
-    "goalShort": "До мети бракує {{value}}"
+    "goalShort": "До мети бракує {{value}}",
+    "thisMonth": "Цей місяць",
+    "lastMonth": "Минулий місяць",
+    "last90": "Останні 90 днів",
+    "daysDone_one": "{{name}}: {{count}} день позначено, {{month}}",
+    "daysDone_few": "{{name}}: {{count}} дні позначено, {{month}}",
+    "daysDone_many": "{{name}}: {{count}} днів позначено, {{month}}",
+    "daysDone_other": "{{name}}: {{count}} дня позначено, {{month}}",
+    "done": "Зроблено",
+    "notDone": "Не позначено",
+    "today": "Сьогодні",
+    "monthNote": "День без запису виглядає так само, як непозначений. Червоним нічого не виділяється."
   },
   "templateForm": {
     "sleepName": "Сон",
