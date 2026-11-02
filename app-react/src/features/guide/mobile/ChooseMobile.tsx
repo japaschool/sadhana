@@ -123,10 +123,10 @@ export function ChooseMobile({ guide }: { guide: Guide }) {
     <GuideFrame guide={guide}>
       <Heading />
       <Dots guide={guide} label={t('guide.position', { a: pos + 1, b: KINDS.length })} />
-      <div ref={strip} onScroll={onScroll} onPointerDown={() => { goingTo.current = null }} onTouchStart={() => { goingTo.current = null }} className="flex snap-x snap-mandatory items-start gap-3 overflow-x-auto scroll-px-[22px] px-[22px] [scrollbar-width:none]">
+      <div ref={strip} onScroll={onScroll} onPointerDown={() => { goingTo.current = null }} onTouchStart={() => { goingTo.current = null }} className="flex snap-x snap-mandatory items-start gap-3 overflow-x-auto scroll-px-[22px] px-[22px] pb-24 [scrollbar-width:none]">
         {KINDS.map((k, i) => <Card key={k} kind={k} current={i === pos} />)}
       </div>
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-2.5 px-[22px] pt-3.5">
+      <div className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-2.5 border-t border-ui-hairline bg-ui-tabbar px-4 pt-3 pb-[max(30px,env(safe-area-inset-bottom))]">
         <SecondaryButton onClick={() => guide.decide(kind, false)}>{t('guide.skip')}</SecondaryButton>
         <PrimaryButton type="button" onClick={() => guide.decide(kind, true)}>{t('guide.track')}</PrimaryButton>
       </div>

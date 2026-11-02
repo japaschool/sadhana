@@ -58,7 +58,17 @@ describe('MiniReport', () => {
     expect(container.querySelectorAll('.recharts-surface')).toHaveLength(2)
     unmount()
     render(<MiniReport kind="days" compact />)
+    const cells = document.querySelectorAll('[data-cob]').length
+    expect(cells).toBeGreaterThanOrEqual(28)
+    expect(cells).toBeLessThanOrEqual(31) // one practice in a card, so it sits beside the other cards
+  })
+
+  it('wide, and with the person’s own practices, days shows each one', () => {
+    const { unmount } = render(<MiniReport kind="days" />)
     expect(document.querySelectorAll('[data-cob]').length).toBeGreaterThan(60)
+    unmount()
+    render(<MiniReport kind="days" compact applied={{ names: ['Walk', 'Read'] }} />)
+    expect(document.querySelectorAll('[data-cob]').length).toBeGreaterThan(40)
   })
 
   it('compact sleep shows two figures where the wide one shows four', () => {

@@ -11,8 +11,11 @@ import type { GuideKind } from './guideLogic'
 /** Sleep's four figures are two in the carousel's narrow frame: average sleep and nights in range. */
 const COMPACT_SLEEP_FIGURES = [0, 3]
 
-function fit(kind: GuideKind, definition: PanelsReport, compact: boolean): PanelsReport {
-  if (kind !== 'sleep' || !compact) return definition
+/** A card holds one month grid, so it sits beside the others; with the person's own practices each one is shown. */
+function fit(kind: GuideKind, definition: PanelsReport, compact: boolean, own: boolean): PanelsReport {
+  if (!compact) return definition
+  if (kind === 'days') return own ? definition : { ...definition, panels: definition.panels.slice(0, 1) }
+  if (kind !== 'sleep') return definition
   return { ...definition, panels: definition.panels.map((p) => (p.kind === 'Stats' ? { ...p, stats: COMPACT_SLEEP_FIGURES.map((i) => p.stats[i]) } : p)) }
 }
 
@@ -26,7 +29,7 @@ export function MiniReport({ kind, compact = false, head, footer, on = false, ap
   // i18n.language: the example's names and text are rebuilt when the language changes.
   const choices = JSON.stringify(applied)
   const example = useMemo(() => exampleReport(kind, today, t, applied), [kind, today, t, i18n.language, choices]) // eslint-disable-line react-hooks/exhaustive-deps
-  const definition = fit(kind, example.definition, compact)
+  const definition = fit(kind, example.definition, compact, !!applied)
   return (
     <div className={`flex h-full flex-col overflow-hidden rounded-[20px] border bg-ui-surface ${on ? 'border-[1.5px] border-ui-accent-pill bg-ui-accent-soft' : 'border-ui-hairline'}`}>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ui-hairline bg-ui-chip px-3 py-[7px]">
