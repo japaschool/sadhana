@@ -18,13 +18,12 @@ export type NameProblem = 'empty' | 'inUseHidden' | 'inUseOtherType' | 'twice'
 
 const KINDS: GuideKind[] = ['sleep', 'count', 'time', 'days']
 const SLUGS: Record<GuideKind, string> = { sleep: 'sleep', count: 'japa', time: 'duration', days: 'days' }
-/** How it went is a Text practice with a 1 to 5 dropdown, the quality slot of the Japa template. */
-export const HOW_SLOT: Slot = { ...JAPA_SLOTS[2], types: ['Text'] }
 const HOW_VARIANTS = '1,2,3,4,5'
 
 interface Item { name: string; slot: Slot; planned: PlannedPractice }
-const item = (name: string, slot: Slot, dropdown_variants?: string): Item =>
-  ({ name: name.trim(), slot, planned: { name: name.trim(), data_type: slot.types[0], ...(dropdown_variants && { dropdown_variants }) } })
+/** `type` is what gets created, which is the slot's first type unless said: How it went is Text, with a 1 to 5 dropdown. */
+const item = (name: string, slot: Slot, type: PracticeDataType = slot.types[0], dropdown_variants?: string): Item =>
+  ({ name: name.trim(), slot, planned: { name: name.trim(), data_type: type, ...(dropdown_variants && { dropdown_variants }) } })
 
 /** The practices a report needs, in order. */
 function itemsOf(kind: GuideKind, c: NonNullable<Choices[GuideKind]>): Item[] {
@@ -34,7 +33,7 @@ function itemsOf(kind: GuideKind, c: NonNullable<Choices[GuideKind]>): Item[] {
   }
   if (kind === 'count') {
     const k = c as NonNullable<Choices['count']>
-    return [item(k.count, JAPA_SLOTS[0]), ...(k.early ? [item(k.early, JAPA_SLOTS[1])] : []), ...(k.how ? [item(k.how, HOW_SLOT, HOW_VARIANTS)] : [])]
+    return [item(k.count, JAPA_SLOTS[0]), ...(k.early ? [item(k.early, JAPA_SLOTS[1])] : []), ...(k.how ? [item(k.how, JAPA_SLOTS[2], 'Text', HOW_VARIANTS)] : [])]
   }
   const { names } = c as { names: string[] }
   return names.map((n) => item(n, kind === 'time' ? DURATION_SLOT : DAYS_SLOT))
@@ -66,8 +65,9 @@ export function buildPlan(choices: Choices, practices: UserPractice[], reports: 
     const c = choices[kind]
     if (!c) continue
     for (const it of itemsOf(kind, c)) {
-      const covered = practices.some((p) => p.practice === it.name && fits(it.slot, p)) || plan.practices.some((p) => p.name === it.name)
-      if (!covered) plan.practices.push(it.planned)
+      const same = plan.practices.find((p) => p.name === it.name)
+      if (same && !it.slot.types.includes(same.data_type)) throw new Error(`${it.name} is asked for with two types`)
+      if (!same && !practices.some((p) => p.practice === it.name && fits(it.slot, p))) plan.practices.push(it.planned)
     }
     plan.reports.push({ kind, slug: SLUGS[kind], name: uniqueName(reportName(SLUGS[kind]), reports), choices: c })
   }
@@ -119,11 +119,12 @@ export async function runPlan(plan: GuidePlan, api: GuideApi, onStep: (kind: Gui
         }
       }
       if (created) practices = await api.getPractices()
-      const id = (name: string) => {
-        const p = practices.find((x) => x.practice === name.trim())
-        if (!p?.id) throw new Error(`practice not found: ${name}`)
-        return p.id
+      // Hidden ones come back too, and a name that exists is not created again, so check each can be used.
+      for (const it of itemsOf(kind, c)) {
+        const p = practices.find((x) => x.practice === it.name)
+        if (!p?.id || !fits(it.slot, p)) throw new Error(`${it.name} can't be used for ${kind}`)
       }
+      const id = (name: string) => practices.find((x) => x.practice === name.trim())!.id
       const def = draftToDefinition(draftOf(kind, c, id))
       if (!def) throw new Error(`incomplete ${kind} choices`)
       await api.createReport(r.name, def)

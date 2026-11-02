@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { Report } from '../../api/charts'
+import type { Report, ReportDefinition } from '../../api/charts'
 import type { UserPractice } from '../../types/api'
 import { DAYS_SLOT, DURATION_SLOT, JAPA_SLOTS, SLEEP_SLOTS } from '../insights/panels/templates'
 import { buildPlan, nameProblem, runPlan, uniqueName } from './guideLogic'
@@ -19,6 +19,7 @@ const plan = (c: Choices, ps: UserPractice[] = [], rs: Report[] = []) => buildPl
 /** A server in memory. `lose` makes the call at that number land and then fail, as a lost response would. */
 function fakeApi(practices: UserPractice[] = [], reports: Report[] = []) {
   const log: string[] = []
+  const defs: Record<string, ReportDefinition> = {}
   let calls = 0
   const state = { failAt: 0, lose: false }
   const tick = (what: string) => { log.push(what); calls++; return calls === state.failAt }
@@ -30,21 +31,26 @@ function fakeApi(practices: UserPractice[] = [], reports: Report[] = []) {
       if (!fail || state.lose) practices.push(prac(p.name, p.data_type, { dropdown_variants: p.dropdown_variants }))
       if (fail) throw new Error('network')
     },
-    createReport: async (name) => {
+    createReport: async (name, d) => {
+      defs[name] = d
       const fail = tick(`report:${name}`)
       if (!fail || state.lose) reports.push(report(name))
       if (fail) throw new Error('network')
       return `r-${name}`
     },
   }
-  return { api, log, state, practices, reports }
+  return { api, log, state, practices, reports, defs }
 }
 
 describe('buildPlan', () => {
   it('orders practices by report, Sleep first, no duplicates between reports', () => {
-    const p = plan({ ...all, time: { names: ['Reading', 'Walk'], goal: null }, days: { names: ['Walk', 'Journaling'] } })
+    const p = plan({ ...all, time: { names: ['Nap', 'Reading'], goal: null }, days: { names: ['Walk', 'Journaling'] } })
     expect(p.practices.map((x) => x.name)).toEqual(['Bedtime', 'Wake-up', 'Nap', 'Pages read', 'Early', 'How it went', 'Reading', 'Walk', 'Journaling'])
     expect(p.reports.map((r) => r.kind)).toEqual(['sleep', 'count', 'time', 'days'])
+  })
+
+  it('refuses one name asked for with two types', () => {
+    expect(() => plan({ ...none, time: { names: ['Walk'], goal: null }, days: { names: ['Walk'] } })).toThrow()
   })
 
   it('plans no practice for an active compatible name', () => {
@@ -147,6 +153,36 @@ describe('runPlan', () => {
     await expect(runPlan(p, f.api, (k, s) => steps.push(`${k}:${s}`))).rejects.toThrow()
     expect(f.log).toEqual(['practice:Reading', 'report:duration report'])
     expect(steps).toEqual(['time:working'])
+  })
+
+  it.each([
+    ['hidden', prac('Reading', 'Duration', { is_active: false })],
+    ['of another type', prac('Reading', 'Bool')],
+  ])('refuses to build a report on a practice that is %s', async (_, existing) => {
+    const f = fakeApi([existing])
+    await expect(runPlan(plan({ ...none, time: { names: ['Reading'], goal: null } }, f.practices), f.api, () => {})).rejects.toThrow()
+    expect(f.log).toEqual([])
+  })
+
+  it('reuses an active Int How it went as the plan does', async () => {
+    const f = fakeApi([prac('How it went', 'Int')])
+    const p = plan({ ...none, count }, f.practices)
+    expect(p.practices.map((x) => x.name)).toEqual(['Pages read', 'Early'])
+    await runPlan(p, f.api, () => {})
+    expect(f.practices.filter((x) => x.practice === 'How it went')).toHaveLength(1)
+  })
+
+  it('puts the right practices and numbers in each definition', async () => {
+    const reading = prac('Reading', 'Duration')
+    const f = fakeApi([reading])
+    await runPlan(plan(all, f.practices), f.api, () => {})
+    const id = (name: string) => f.practices.find((x) => x.practice === name)!.id
+    const tpl = (name: string) => (f.defs[name] as { Panels: { template: Record<string, unknown> } }).Panels.template
+    expect(tpl('sleep report')).toEqual({ Sleep: { bedtime: id('Bedtime'), wake: id('Wake-up'), nap: id('Nap'), min: 360, max: 540 } })
+    expect(tpl('japa report')).toEqual({ Japa: { total: id('Pages read'), target: 20, morning: id('Early'), quality: id('How it went'), attunement: null } })
+    expect(tpl('duration report')).toEqual({ Duration: { practices: [reading.id, id('Study')], goal: 90 } })
+    expect(tpl('days report')).toEqual({ Days: { practices: [id('Walk')] } })
+    expect(id('Bedtime')).not.toBe(id('Wake-up'))
   })
 
   it('links reports to existing practices and builds every kind', async () => {
