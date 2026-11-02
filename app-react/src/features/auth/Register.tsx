@@ -50,7 +50,7 @@ export function Register() {
   const [email, setEmail] = useState('')
   const next = invitePath(useReturnTo())
   const send = useMutation({ mutationFn: () => authApi.sendConfirmationLink(email.trim(), 'Registration', next) })
-  const google = useMutation({ mutationFn: (token: string) => authApi.googleSignin(token, (i18n.resolvedLanguage || 'en').slice(0, 2)), onSuccess: setAuth })
+  const google = useMutation({ mutationFn: (token: string) => authApi.googleSignin(token, (i18n.resolvedLanguage || 'en').slice(0, 2)), onSuccess: (u: UserInfo) => setAuth(u, u.created === true) })
   const [googleFailed, setGoogleFailed] = useState(false)
   const busy = send.isPending || google.isPending
   const err = send.error ?? google.error
@@ -104,7 +104,7 @@ export function ConfirmRegistration() {
   const [confirm, setConfirm] = useState('')
   const create = useMutation({
     mutationFn: () => authApi.register(id, details.data!.email, password, name.trim(), (i18n.resolvedLanguage || 'en').slice(0, 2)),
-    onSuccess: setAuth,
+    onSuccess: (u: UserInfo) => setAuth(u, true),
   })
   const expired = details.isError || (!!details.data && new Date(details.data.expires_at) < new Date())
   const ready = !!name.trim() && !!password && confirm === password
