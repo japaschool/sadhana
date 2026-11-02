@@ -3,7 +3,7 @@ import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { practicesApi } from '../../../api/practices'
 import type { UserPractice } from '../../../types/api'
-import { fits, SLEEP_DEFAULTS } from '../../insights/panels/templates'
+import { fits, pickerGroups, SLEEP_DEFAULTS } from '../../insights/panels/templates'
 import type { Slot } from '../../insights/panels/templates'
 import { buildPlan, itemsOf, KINDS, nameProblem } from '../guideLogic'
 import type { Choices, GuideKind, NameProblem, PlannedPractice } from '../guideLogic'
@@ -63,6 +63,8 @@ export function useSetup<K extends GuideKind>(guide: Guide, kind: K) {
   const after = guide.tracked[at + 1]
   return {
     kind, value, practices, check, hint,
+    /** The person's active practices this slot can use as they are. */
+    fitting: (slot: Slot) => pickerGroups(slot, practices).compatible,
     /** Without the person's practices names can't be checked, so Next waits; this tries again. */
     retry: loadFailed ? () => { void q.refetch() } : null,
     ready: q.isSuccess && !hint,

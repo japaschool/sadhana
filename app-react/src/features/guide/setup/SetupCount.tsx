@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { CARD, HINT } from '../../yatras/settings/mobile/AdminPage'
 import { LimitField } from '../../insights/panels/TemplateForm'
 import { JAPA_SLOTS } from '../../insights/panels/templates'
-import { Chip, PracticeRow, RowList, Section } from './PracticeRow'
+import { Chip, FitList, PracticeRow, RowList, Section } from './PracticeRow'
 import type { Setup } from './useSetup'
 
 const SUGGESTIONS = [1, 2, 3, 4]
@@ -11,24 +11,32 @@ const SUGGESTIONS = [1, 2, 3, 4]
 /** One count, a required daily target that starts empty, and two optional extras that start unticked. */
 export function SetupCount({ setup }: { setup: Setup<'count'> }) {
   const { t } = useTranslation()
-  const { value: v, set, check } = setup
+  const { value: v, set, check, fitting } = setup
   // Once the row is there it stays, even if its name is cleared while typing.
   const [own, setOwn] = useState(false)
+  const [listed, setListed] = useState<string | null>(null) // the count was taken from the person's own list
+  const mine = fitting(JAPA_SLOTS[0])
   const early = t('templateForm.morning')
   const how = t('templateForm.quality')
   return (
     <>
-      <Section title={t('guide.setup.whatCount')}>
+      {mine.length > 0 && (
+        <Section title={t('guide.setup.fit')}>
+          <FitList options={mine} isOn={(n) => v.count === n && listed === n} disabled={false}
+            onUse={(n, on) => { setListed(on ? n : null); set({ count: on ? n : '' }) }} />
+        </Section>
+      )}
+      <Section title={t(mine.length ? 'guide.setup.startNew' : 'guide.setup.whatCount')}>
         <div className="flex flex-wrap gap-2">
           {SUGGESTIONS.map((n) => {
             const name = t(`guide.suggest.count${n}`)
-            return <Chip key={n} on={v.count === name} onClick={() => { setOwn(true); set({ count: name }) }}>{name}</Chip>
+            return <Chip key={n} on={v.count === name} note={check(name, JAPA_SLOTS[0]).have?.is_active ? t('guide.setup.tracked') : undefined} onClick={() => { setOwn(true); set({ count: name }) }}>{name}</Chip>
           })}
           <Chip dashed onClick={() => { setOwn(true); set({ count: '' }) }}>{t('guide.setup.ownName')}</Chip>
         </div>
         {(v.count || own) && (
           <RowList>
-            <PracticeRow name={v.count} label={t('templateForm.total')} type="Int" note={t('guide.setup.countNote')} startEditing={!v.count}
+            <PracticeRow name={v.count} label={t('templateForm.total')} type="Int" note={t('guide.setup.countNote')} startEditing={!v.count} picked={!!v.count && listed === v.count}
               onRename={(count) => set({ count })} check={check(v.count, JAPA_SLOTS[0])} />
           </RowList>
         )}
@@ -44,10 +52,10 @@ export function SetupCount({ setup }: { setup: Setup<'count'> }) {
         <RowList>
           <PracticeRow name={v.early ?? early} label={early} type="Int" note={t('guide.setup.earlyNote')}
             tick={{ on: v.early !== null, onChange: (on) => set({ early: on ? early : null }) }}
-            onRename={(e) => set({ early: e })} check={v.early === null ? undefined : check(v.early, JAPA_SLOTS[1])} />
+            onRename={(e) => set({ early: e })} check={v.early === null ? undefined : check(v.early, JAPA_SLOTS[1])} options={fitting(JAPA_SLOTS[1])} />
           <PracticeRow name={v.how ?? how} label={how} type="Text" note={t('guide.setup.howNote')}
             tick={{ on: v.how !== null, onChange: (on) => set({ how: on ? how : null }) }}
-            onRename={(h) => set({ how: h })} check={v.how === null ? undefined : check(v.how, JAPA_SLOTS[2])} />
+            onRename={(h) => set({ how: h })} check={v.how === null ? undefined : check(v.how, JAPA_SLOTS[2])} options={fitting(JAPA_SLOTS[2])} />
         </RowList>
       </Section>
     </>

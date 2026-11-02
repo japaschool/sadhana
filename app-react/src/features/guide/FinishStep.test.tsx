@@ -14,8 +14,8 @@ import { REPORTS_KEY } from '../insights/useReports'
 import { GuideScreen } from './GuideScreen'
 
 vi.mock('../../api/guide', () => ({ guideApi: { start: vi.fn(), update: vi.fn() } }))
-vi.mock('../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn(), createUserPractice: vi.fn() } }))
-vi.mock('../../api/charts', () => ({ chartsApi: { getReports: vi.fn(), createReport: vi.fn() } }))
+vi.mock('../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn(), createUserPractice: vi.fn(), updateUserPractice: vi.fn(), deleteUserPractice: vi.fn() } }))
+vi.mock('../../api/charts', () => ({ chartsApi: { getReports: vi.fn(), createReport: vi.fn(), updateReport: vi.fn(), deleteReport: vi.fn() } }))
 vi.mock('./MiniReport', () => ({ MiniReport: ({ head, footer }: { head?: React.ReactNode; footer?: React.ReactNode }) => <div>{head}{footer}</div> }))
 import { chartsApi } from '../../api/charts'
 import { guideApi } from '../../api/guide'
@@ -278,6 +278,39 @@ describe('the closing screen', () => {
   it('outside first run, leaves to where the guide was opened from', async () => {
     const user = await open({ back: '/settings' })
     await user.click(await screen.findByRole('button', { name: 'Start logging' }))
+    expect(await screen.findByText('Settings')).toBeInTheDocument()
+  })
+})
+
+describe('from Add practice, on practices the person already has', () => {
+  it('uses them, skips the reader, numbers a report kind they have, leaves everything unchanged, and returns to where it came from', async () => {
+    have.push({ id: 'p-sleep', practice: 'Lights out', data_type: 'Time', is_active: true }, { id: 'p-wake', practice: 'Up', data_type: 'Time', is_active: true })
+    made.push('Sleep')
+    const user = userEvent.setup()
+    qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const r = createMemoryRouter([{ path: '/guide', element: <GuideScreen /> }, { path: '/settings', element: <p>Settings</p> }], { initialEntries: [{ pathname: '/guide', state: { back: '/settings' } }] })
+    render(<QueryClientProvider client={qc}><RouterProvider router={r} /></QueryClientProvider>)
+    await user.click(await screen.findByRole('switch', { name: 'Sleep' }))
+    await user.click(screen.getByRole('button', { name: /^Next/ }))
+    await screen.findByText(/^Set up · /)
+    await act(async () => {})
+    const [bed, wake] = screen.getAllByRole('combobox', { name: /Use one of mine/ })
+    await user.selectOptions(bed, 'Lights out')
+    await user.selectOptions(wake, 'Up')
+    await user.click(screen.getByRole('button', { name: /^(Next|Create report)/ }))
+    // no reader question, no new practice but Nap, the second Sleep report is numbered, with the existing ids
+    expect(await screen.findByText('Here’s what’s set up')).toBeInTheDocument()
+    expect(practicesApi.createUserPractice).toHaveBeenCalledTimes(1)
+    expect(practicesApi.createUserPractice).toHaveBeenCalledWith(expect.objectContaining({ practice: 'Nap' }))
+    const [name, def] = vi.mocked(chartsApi.createReport).mock.calls[0]
+    expect(name).toBe('Sleep 2')
+    expect(JSON.stringify(def)).toContain('"bedtime":"p-sleep"')
+    expect(JSON.stringify(def)).toContain('"wake":"p-wake"')
+    expect(practicesApi.updateUserPractice).not.toHaveBeenCalled()
+    expect(practicesApi.deleteUserPractice).not.toHaveBeenCalled()
+    expect(chartsApi.updateReport).not.toHaveBeenCalled()
+    expect(chartsApi.deleteReport).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Start logging' }))
     expect(await screen.findByText('Settings')).toBeInTheDocument()
   })
 })

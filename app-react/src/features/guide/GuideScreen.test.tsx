@@ -8,7 +8,9 @@ import { GuideScreen } from './GuideScreen'
 
 vi.mock('../../api/guide', () => ({ guideApi: { start: vi.fn(), update: vi.fn() } }))
 vi.mock('../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn().mockResolvedValue([]) } }))
+vi.mock('../../api/charts', () => ({ chartsApi: { getReports: vi.fn().mockResolvedValue([]) } }))
 vi.mock('./MiniReport', () => ({ MiniReport: ({ kind, head, footer }: { kind: string; head?: React.ReactNode; footer?: React.ReactNode }) => <div data-testid={`mini-${kind}`}>{head}{footer}</div> }))
+import { chartsApi } from '../../api/charts'
 import { guideApi } from '../../api/guide'
 const api = vi.mocked(guideApi)
 
@@ -143,5 +145,18 @@ describe('GuideScreen on wide layouts', () => {
     expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled()
     await user.click(screen.getByRole('button', { name: 'Next' }))
     expect(screen.getByRole('heading', { name: 'Sleep' })).toBeInTheDocument()
+  })
+})
+
+describe('a report the person already has', () => {
+  it('is marked on its card, and can still be tracked again', async () => {
+    vi.mocked(chartsApi.getReports).mockResolvedValue([{ id: 'r1', name: 'My sleep', definition: { Panels: { version: 1, template: { Sleep: { bedtime: 'a', wake: 'b', nap: null, min: null, max: null } }, required: [], panels: [] } } } as never])
+    setViewportWidth(1200)
+    const user = userEvent.setup()
+    render(<Providers><RouterProvider router={router()} /></Providers>)
+    expect(await screen.findByText('You already have this report')).toBeInTheDocument()
+    expect(screen.getAllByText('You already have this report')).toHaveLength(1)
+    await user.click(screen.getByRole('switch', { name: 'Sleep' }))
+    expect(screen.getByRole('button', { name: /^Next/ })).toBeEnabled()
   })
 })

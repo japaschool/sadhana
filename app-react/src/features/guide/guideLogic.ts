@@ -2,7 +2,7 @@ import type { Report, ReportDefinition } from '../../api/charts'
 import type { PracticeDataType, UserPractice } from '../../types/api'
 import { draftToDefinition } from '../insights/panels/TemplateForm'
 import type { TemplateDraft } from '../insights/panels/TemplateForm'
-import { DAYS_SLOT, DURATION_SLOT, fits, JAPA_SLOTS, SLEEP_SLOTS } from '../insights/panels/templates'
+import { DAYS_SLOT, DURATION_SLOT, fits, JAPA_SLOTS, SLEEP_SLOTS, templateSlug } from '../insights/panels/templates'
 import type { Slot } from '../insights/panels/templates'
 
 export type GuideKind = 'sleep' | 'count' | 'time' | 'days'
@@ -46,6 +46,10 @@ export function nameProblem(name: string, slot: Slot, practices: UserPractice[],
   if (have) return !have.is_active ? 'inUseHidden' : fits(slot, have) ? null : 'inUseOtherType'
   return others.some((o) => o.name === n && !slot.types.includes(o.data_type)) ? 'twice' : null
 }
+
+/** The person already has a report made from this kind's template. Reports built by hand have none. */
+export const hasReport = (kind: GuideKind, reports: Report[]) =>
+  reports.some((r) => 'Panels' in r.definition && !!r.definition.Panels.template && templateSlug(r.definition.Panels) === SLUGS[kind])
 
 /** "Sleep", then "Sleep 2" when taken. */
 export function uniqueName(base: string, reports: Report[]): string {

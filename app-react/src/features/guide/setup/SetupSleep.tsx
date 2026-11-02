@@ -8,17 +8,17 @@ import type { Setup } from './useSetup'
 /** Bedtime and wake-up are needed; a nap is optional. The aim is a minimum and a maximum, each clearable. */
 export function SetupSleep({ setup }: { setup: Setup<'sleep'> }) {
   const { t } = useTranslation()
-  const { value: v, set, check } = setup
+  const { value: v, set, check, fitting } = setup
   const wrong = v.min !== null && v.max !== null && v.min > v.max
   return (
     <>
       <Section title={t('guide.setup.practices')} tag={t('guide.setup.renameHint')}>
         <RowList>
-          <PracticeRow name={v.bedtime} type="Time" needed onRename={(bedtime) => set({ bedtime })} check={check(v.bedtime, SLEEP_SLOTS[0])} />
-          <PracticeRow name={v.wake} type="Time" needed onRename={(wake) => set({ wake })} check={check(v.wake, SLEEP_SLOTS[1])} />
+          <PracticeRow name={v.bedtime} type="Time" needed onRename={(bedtime) => set({ bedtime })} check={check(v.bedtime, SLEEP_SLOTS[0])} options={fitting(SLEEP_SLOTS[0])} />
+          <PracticeRow name={v.wake} type="Time" needed onRename={(wake) => set({ wake })} check={check(v.wake, SLEEP_SLOTS[1])} options={fitting(SLEEP_SLOTS[1])} />
           <PracticeRow name={v.nap ?? t('reportPanels.nap')} label={t('reportPanels.nap')} type="Duration" note={t('guide.setup.napNote')}
             tick={{ on: v.nap !== null, onChange: (on) => set({ nap: on ? t('reportPanels.nap') : null }) }}
-            onRename={(nap) => set({ nap })} check={v.nap === null ? undefined : check(v.nap, SLEEP_SLOTS[2])} />
+            onRename={(nap) => set({ nap })} check={v.nap === null ? undefined : check(v.nap, SLEEP_SLOTS[2])} options={fitting(SLEEP_SLOTS[2])} />
         </RowList>
       </Section>
       <Section title={t('guide.setup.sleepAim')} tag={t('templateForm.optional')}>

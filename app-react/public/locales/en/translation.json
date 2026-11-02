@@ -1069,6 +1069,7 @@
   "guide": {
     "title": "What would you like to see about your days?",
     "intro": "This is how each report looks after a few weeks of logging.",
+    "haveReport": "You already have this report",
     "exit": "Build my own list",
     "back": "Back",
     "skip": "Skip",
@@ -1199,6 +1200,14 @@
         "twice": "You’re using this name for something else in this setup. Please choose a different name.",
         "empty": "A practice needs a name."
       },
+      "fit": "Your practices that fit",
+      "startNew": "Or start something new",
+      "fitNote": "{{type}} · already on Today",
+      "useFit": "Use",
+      "usingFit": "Using",
+      "useOne": "Use one of mine for {{name}}",
+      "usePick": "Use one of mine…",
+      "tracked": "You already track this",
       "fixRange": "Fix the sleep range to continue",
       "retry": "Try again"
     },

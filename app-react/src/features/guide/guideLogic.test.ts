@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Report, ReportDefinition } from '../../api/charts'
 import type { UserPractice } from '../../types/api'
 import { DAYS_SLOT, DURATION_SLOT, JAPA_SLOTS, SLEEP_SLOTS } from '../insights/panels/templates'
-import { buildPlan, nameProblem, runPlan, uniqueName } from './guideLogic'
+import { buildPlan, hasReport, nameProblem, runPlan, uniqueName } from './guideLogic'
 import type { Choices, GuideApi, GuideKind, PlannedPractice } from './guideLogic'
 
 const sleep = { bedtime: 'Bedtime', wake: 'Wake-up', nap: 'Nap', min: 360, max: 540 }
@@ -191,5 +191,25 @@ describe('runPlan', () => {
     await runPlan(plan(all, f.practices), f.api, (k, s) => { if (s === 'done') kinds.push(k) })
     expect(kinds).toEqual(['sleep', 'count', 'time', 'days'])
     expect(f.practices.filter((x) => x.practice === 'Reading')).toHaveLength(1)
+  })
+})
+
+describe('on existing practices', () => {
+  it('a report built on them holds their ids at once, and creates nothing else', async () => {
+    const [a, b] = [prac('Book reading', 'Duration'), prac('Lecture listening', 'Duration')]
+    const f = fakeApi([a, b])
+    await runPlan(plan({ ...none, time: { names: ['Book reading', 'Lecture listening'], goal: null } }, f.practices), f.api, () => {})
+    expect(f.log).toEqual(['report:duration report'])
+    expect((f.defs['duration report'] as { Panels: { template: unknown } }).Panels.template).toEqual({ Duration: { practices: [a.id, b.id], goal: null } })
+  })
+})
+
+describe('hasReport', () => {
+  const made = (template: object | null): Report => ({ id: 'r', name: 'x', definition: { Panels: { version: 1, template, required: [], panels: [] } } as never })
+  it('tells which template a report was made from, and ignores ones made by hand', () => {
+    const rs = [made({ Duration: { practices: [], goal: null } }), made(null)]
+    expect(hasReport('time', rs)).toBe(true)
+    expect(hasReport('sleep', rs)).toBe(false)
+    expect(hasReport('days', [])).toBe(false)
   })
 })

@@ -13,6 +13,7 @@ import type { GuideKind } from '../guideLogic'
 
 vi.mock('../../../api/guide', () => ({ guideApi: { start: vi.fn(), update: vi.fn() } }))
 vi.mock('../../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn() } }))
+vi.mock('../../../api/charts', () => ({ chartsApi: { getReports: vi.fn().mockResolvedValue([]) } }))
 vi.mock('../MiniReport', () => ({
   MiniReport: ({ kind, applied, head, footer }: { kind: string; applied?: unknown; head?: React.ReactNode; footer?: React.ReactNode }) => (
     <div data-testid={`mini-${kind}`}>{head}{footer}{applied !== undefined && <pre data-testid={`applied-${kind}`}>{JSON.stringify(applied)}</pre>}</div>
@@ -373,5 +374,68 @@ describe('guide.setup translations', () => {
     expect(want.length).toBeGreaterThan(20)
     expect(keys(ru.guide.setup)).toEqual(want)
     expect(keys(uk.guide.setup)).toEqual(want)
+  })
+})
+
+describe('your practices that fit', () => {
+  const MINE = [mine('Book reading', 'Duration'), mine('Hidden one', 'Duration', false), mine('Steps', 'Int'), mine('Meditation', 'Duration')]
+
+  it('lists compatible active practices first, with Use, and Using once picked', async () => {
+    setup(MINE)
+    const user = await start(['time'])
+    const list = await screen.findByRole('group', { name: 'Book reading' })
+    expect(screen.queryByRole('group', { name: 'Hidden one' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Steps' })).not.toBeInTheDocument()
+    const heading = screen.getByRole('heading', { name: 'Your practices that fit' })
+    expect(heading.compareDocumentPosition(screen.getByRole('heading', { name: 'Or start something new' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    await user.click(within(list).getByRole('button', { name: 'Use' }))
+    expect(within(list).getByRole('button', { name: 'Using' })).toBeInTheDocument()
+    // the picked row is not asked again whether to use it
+    expect(screen.queryByRole('group', { name: 'You already have a practice with this name' })).not.toBeInTheDocument()
+    expect(next()).toBeEnabled()
+  })
+
+  it('Use keeps the name exactly, and Using again lets it go', async () => {
+    setup(MINE)
+    const user = await start(['time'])
+    const list = await screen.findByRole('group', { name: 'Book reading' })
+    await user.click(within(list).getByRole('button', { name: 'Use' }))
+    expect(applied('time').names).toEqual(['Book reading'])
+    await user.click(within(list).getByRole('button', { name: 'Using' }))
+    expect(applied('time').names).toEqual([])
+  })
+
+  it('marks a suggestion that exactly matches with "You already track this"', async () => {
+    setup(MINE)
+    await start(['time'])
+    expect(await screen.findByRole('button', { name: 'Meditation', description: 'You already track this' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Reading' })).not.toHaveAccessibleDescription('You already track this')
+  })
+
+  it('does not mark a suggestion whose practice is hidden', async () => {
+    setup([mine('Reading', 'Duration', false)])
+    await start(['time'])
+    expect(screen.getByRole('button', { name: 'Reading' })).not.toHaveAccessibleDescription('You already track this')
+  })
+
+  it('offers the compatible ones for a single slot, and picking one sets the name', async () => {
+    setup([mine('Lights out', 'Time'), mine('Steps', 'Int')])
+    const user = await start(['sleep'])
+    const pick = (await screen.findAllByRole('combobox', { name: /Use one of mine/ }))[0]
+    expect(within(pick).queryByRole('option', { name: 'Steps' })).not.toBeInTheDocument()
+    await user.selectOptions(pick, 'Lights out')
+    expect(applied('sleep').bedtime).toBe('Lights out')
+    expect(screen.queryByRole('group', { name: 'You already have a practice with this name' })).not.toBeInTheDocument()
+    expect(next()).toBeEnabled()
+  })
+
+  it('does the same for Daily count', async () => {
+    setup([mine('Rounds', 'Int'), mine('Walk', 'Bool')])
+    const user = await start(['count'])
+    const rounds = await screen.findByRole('group', { name: 'Rounds' })
+    expect(screen.queryByRole('group', { name: 'Walk' })).not.toBeInTheDocument()
+    await user.click(within(rounds).getByRole('button', { name: 'Use' }))
+    expect(applied('count').count).toBe('Rounds')
+    expect(screen.queryByRole('group', { name: 'You already have a practice with this name' })).not.toBeInTheDocument()
   })
 })

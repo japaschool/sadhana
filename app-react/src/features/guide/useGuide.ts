@@ -81,7 +81,6 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
     run.end(outcome)
     navigate('/', { replace: true })
   }, [run, navigate])
-  // ponytail: Task 17 refines where a guide opened from the app ends up.
   const finish = () => navigate(firstRun ? '/' : backTo, { replace: true })
 
   return {
@@ -103,7 +102,7 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
     confirmLeave: () => exit('left'),
     /** Recorded once, when everything is created, so closing the app on the closing screen still counts. */
     finished: (hasReader?: boolean) => run.end('finished', hasReader),
-    /** Leaves the closing screen: navigation only. */
+    /** Leaves the closing screen: navigation only. Sign-up ends on Today; from Add practice it goes back to where it was opened. */
     finish,
     /** Some of it may already exist, so leaving can't promise nothing is saved. */
     partlySaved: plan.current !== null,

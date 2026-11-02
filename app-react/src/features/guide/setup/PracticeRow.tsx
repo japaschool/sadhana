@@ -1,7 +1,7 @@
 import { useId, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { PracticeDataType } from '../../../types/api'
+import type { PracticeDataType, UserPractice } from '../../../types/api'
 import { TypeIcon, typeLabelKey } from '../../yatras/settings/mobile/TypeChip'
 import type { NameCheck } from './useSetup'
 
@@ -9,7 +9,7 @@ const LINK = 'flex min-h-11 items-center px-1 text-[13px] font-bold text-ui-acce
 const SMALL = 'flex min-h-9 items-center justify-center rounded-[10px] px-3.5 py-1.5 text-[13px] font-extrabold'
 
 /** A practice the report needs: its name can be changed in place, an optional one has a tick. */
-export function PracticeRow({ name, label, type, note, needed, tick, onRename, onRemove, check, startEditing = false }: {
+export function PracticeRow({ name, label, type, note, needed, tick, onRename, onRemove, check, options, picked, startEditing = false }: {
   name: string
   /** What the tick is called, whatever the practice is named. */
   label?: string
@@ -21,18 +21,24 @@ export function PracticeRow({ name, label, type, note, needed, tick, onRename, o
   onRemove?: () => void
   /** Missing while an optional practice is unticked. */
   check?: NameCheck
+  /** The person's practices this one could be; picking one sets the name to theirs. */
+  options?: UserPractice[]
+  /** The name was picked from a list of the person's practices: no need to ask whether to use it. */
+  picked?: boolean
   startEditing?: boolean
 }) {
   const { t } = useTranslation()
   const [editing, setEditing] = useState(startEditing)
   const [draft, setDraft] = useState(name)
   const [used, setUsed] = useState<string | null>(null)
+  const [pickedHere, setPickedHere] = useState<string | null>(null)
   const titleId = useId()
   const off = tick && !tick.on
   // The draft is what was typed, spaces and all; the choices get it trimmed. If the name changed from outside (a suggestion tapped) the name wins.
   const shown = draft.trim() === name ? draft : name
   const problem = !off && check?.problem
-  const usable = !off && !problem && check?.existing && name ? check.existing : undefined
+  const fromList = picked || pickedHere === name
+  const usable = !off && !problem && !fromList && check?.existing && name ? check.existing : undefined
 
   return (
     <div className="bg-ui-surface">
@@ -59,6 +65,14 @@ export function PracticeRow({ name, label, type, note, needed, tick, onRename, o
           )}
           {needed && <span className="self-start rounded-full bg-ui-accent-soft px-2 py-[3px] text-[11px] leading-tight font-extrabold text-ui-accent">{t('guide.setup.needed')}</span>}
           <span className="text-xs leading-snug text-ui-muted">{note ?? t(typeLabelKey(type))}</span>
+          {!off && !editing && !!options?.length && (
+            <select aria-label={t('guide.setup.useOne', { name: label ?? name })} value={options.some((o) => o.practice === name) ? name : ''}
+              onChange={(e) => { setPickedHere(e.target.value); onRename(e.target.value) }}
+              className="mt-1 min-h-9 self-start rounded-[10px] border border-ui-control bg-ui-surface px-2 text-[13px] font-bold">
+              <option value="" disabled>{t('guide.setup.usePick')}</option>
+              {options.map((o) => <option key={o.id} value={o.practice}>{o.practice}</option>)}
+            </select>
+          )}
         </div>
         {!off && (editing
           ? <button type="button" onClick={() => setEditing(false)} className={`${LINK} font-extrabold`}>{t('guide.setup.done')}</button>
@@ -111,12 +125,38 @@ export const RowList = ({ children }: { children: ReactNode }) => (
 )
 
 /** A suggestion, or "+ Name your own" (dashed). */
-export function Chip({ on, dashed, disabled, onClick, children }: { on?: boolean; dashed?: boolean; disabled?: boolean; onClick: () => void; children: ReactNode }) {
+export function Chip({ on, dashed, disabled, note, onClick, children }: { on?: boolean; dashed?: boolean; disabled?: boolean; note?: string; onClick: () => void; children: ReactNode }) {
+  const noteId = useId()
   return (
-    <button type="button" aria-pressed={dashed ? undefined : !!on} disabled={disabled} onClick={onClick}
+    <>
+    <button type="button" aria-pressed={dashed ? undefined : !!on} aria-describedby={note ? noteId : undefined} disabled={disabled} onClick={onClick}
       className={`inline-flex min-h-11 items-center gap-2 rounded-full border-[1.5px] px-3.5 text-sm leading-tight font-bold disabled:opacity-45 ${
         dashed ? 'border-dashed border-ui-control text-ui-accent' : on ? 'border-ui-accent-pill bg-ui-accent-soft' : 'border-ui-hairline bg-ui-surface'}`}>
       {on && <span aria-hidden className="-mt-[2px] h-2 w-1 rotate-45 border-r-[1.6px] border-b-[1.6px] border-ui-accent" />}{children}
     </button>
+    {note && <span id={noteId} className="-ml-1 self-center text-xs font-semibold text-ui-muted">{note}</span>}
+    </>
+  )
+}
+
+/** The person's own practices that fit this report, each with Use; a used one says Using and lets go on a second press. */
+export function FitList({ options, isOn, disabled, onUse }: { options: UserPractice[]; isOn: (name: string) => boolean; disabled: boolean; onUse: (name: string, on: boolean) => void }) {
+  const { t } = useTranslation()
+  return (
+    <RowList>
+      {options.map((o) => {
+        const on = isOn(o.practice)
+        return (
+          <div key={o.id} role="group" aria-label={o.practice} className="flex items-center gap-3 bg-ui-surface py-2.5 pr-3 pl-3.5">
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="flex min-w-0 items-center gap-2"><TypeIcon type={o.data_type} /><span className="truncate text-[15px] font-bold">{o.practice}</span></span>
+              <span className="text-xs leading-snug text-ui-muted">{t('guide.setup.fitNote', { type: t(typeLabelKey(o.data_type)) })}</span>
+            </div>
+            <button type="button" disabled={!on && disabled} onClick={() => onUse(o.practice, !on)}
+              className={`${SMALL} disabled:opacity-45 ${on ? 'bg-ui-accent-soft text-ui-accent' : 'border border-ui-control bg-ui-surface'}`}>{t(on ? 'guide.setup.usingFit' : 'guide.setup.useFit')}</button>
+          </div>
+        )
+      })}
+    </RowList>
   )
 }
