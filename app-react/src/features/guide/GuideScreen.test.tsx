@@ -1,16 +1,20 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setViewportWidth } from '../../test/viewport'
 import { GuideScreen } from './GuideScreen'
 
 vi.mock('../../api/guide', () => ({ guideApi: { start: vi.fn(), update: vi.fn() } }))
+vi.mock('../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn().mockResolvedValue([]) } }))
 vi.mock('./MiniReport', () => ({ MiniReport: ({ kind, head, footer }: { kind: string; head?: React.ReactNode; footer?: React.ReactNode }) => <div data-testid={`mini-${kind}`}>{head}{footer}</div> }))
 import { guideApi } from '../../api/guide'
 const api = vi.mocked(guideApi)
 
 const routes = [{ path: '/guide', element: <GuideScreen /> }, { path: '/', element: <p>Today</p> }]
+const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+const Providers = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>
 const router = (state?: unknown) => createMemoryRouter(routes, { initialEntries: [{ pathname: '/guide', state }] })
 const pos = (n: number) => screen.getByText(`${n} of 4`)
 const states = () => [...document.querySelectorAll('[data-state]')].map((d) => d.getAttribute('data-state'))
@@ -28,7 +32,7 @@ describe('GuideScreen on mobile', () => {
     const width = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(300)
     Element.prototype.scrollIntoView = vi.fn()
     const user = userEvent.setup()
-    const { container } = render(<RouterProvider router={router()} />)
+    const { container } = render(<Providers><RouterProvider router={router()} /></Providers>)
     await user.click(screen.getByRole('button', { name: 'Track this' }))
     pos(2)
     const strip = container.querySelector('.snap-x') as HTMLElement
@@ -41,7 +45,7 @@ describe('GuideScreen on mobile', () => {
 
   it('Track and Skip move through the four reports and record each choice', async () => {
     const user = userEvent.setup()
-    render(<RouterProvider router={router({ firstRun: true })} />)
+    render(<Providers><RouterProvider router={router({ firstRun: true })} /></Providers>)
     pos(1)
     expect(states()).toEqual(['cur', 'pending', 'pending', 'pending'])
     await user.click(screen.getByRole('button', { name: 'Track this' }))
@@ -57,7 +61,7 @@ describe('GuideScreen on mobile', () => {
 
   it('shows the nothing-chosen screen after skipping all; look through again starts over', async () => {
     const user = userEvent.setup()
-    render(<RouterProvider router={router()} />)
+    render(<Providers><RouterProvider router={router()} /></Providers>)
     for (let i = 0; i < 4; i++) await user.click(screen.getByRole('button', { name: 'Skip' }))
     expect(screen.getByText('Nothing picked yet')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Look through again' }))
@@ -66,7 +70,7 @@ describe('GuideScreen on mobile', () => {
 
   it('Build my own list goes to Today and marks left', async () => {
     const user = userEvent.setup()
-    render(<RouterProvider router={router()} />)
+    render(<Providers><RouterProvider router={router()} /></Providers>)
     for (let i = 0; i < 4; i++) await user.click(screen.getByRole('button', { name: 'Skip' }))
     const exits = screen.getAllByRole('button', { name: 'Build my own list' })
     await user.click(exits[exits.length - 1])
@@ -76,7 +80,7 @@ describe('GuideScreen on mobile', () => {
 
   it('can be left from the first card, and has no Back there on first run', async () => {
     const user = userEvent.setup()
-    render(<RouterProvider router={router({ firstRun: true })} />)
+    render(<Providers><RouterProvider router={router({ firstRun: true })} /></Providers>)
     expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Build my own list' }))
     expect(screen.getByText('Today')).toBeInTheDocument()
@@ -86,21 +90,21 @@ describe('GuideScreen on mobile', () => {
     api.start.mockRejectedValue(new Error('down'))
     api.update.mockRejectedValue(new Error('down'))
     const user = userEvent.setup()
-    render(<RouterProvider router={router()} />)
+    render(<Providers><RouterProvider router={router()} /></Providers>)
     await user.click(screen.getByRole('button', { name: 'Track this' }))
     pos(2)
   })
 
   it('reads first run from history state, so a reload keeps it; without it the run is add_practice', async () => {
     const first = router({ firstRun: true })
-    const { unmount } = render(<RouterProvider router={first} />)
+    const { unmount } = render(<Providers><RouterProvider router={first} /></Providers>)
     unmount()
-    render(<RouterProvider router={first} />)
+    render(<Providers><RouterProvider router={first} /></Providers>)
     await vi.waitFor(() => expect(api.start).toHaveBeenCalledTimes(2))
     expect(api.start).toHaveBeenNthCalledWith(1, 'signup')
     expect(api.start).toHaveBeenNthCalledWith(2, 'signup')
     cleanup()
-    render(<RouterProvider router={router()} />)
+    render(<Providers><RouterProvider router={router()} /></Providers>)
     await vi.waitFor(() => expect(api.start).toHaveBeenLastCalledWith('add_practice'))
   })
 })
@@ -109,11 +113,11 @@ describe('GuideScreen on wide layouts', () => {
   it('has no Back on first run, and Back from set up needs one click on a later run', async () => {
     setViewportWidth(1200)
     const user = userEvent.setup()
-    const { unmount } = render(<RouterProvider router={router({ firstRun: true })} />)
+    const { unmount } = render(<Providers><RouterProvider router={router({ firstRun: true })} /></Providers>)
     expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument()
     unmount()
     const r = createMemoryRouter([...routes, { path: '/settings', element: <p>Settings</p> }], { initialEntries: [{ pathname: '/guide', state: { back: '/settings' } }] })
-    render(<RouterProvider router={r} />)
+    render(<Providers><RouterProvider router={r} /></Providers>)
     await user.click(screen.getByRole('switch', { name: 'Days I did it' }))
     await user.click(screen.getByRole('button', { name: 'Next' }))
     await user.click(screen.getByRole('button', { name: 'Back' }))
@@ -124,7 +128,7 @@ describe('GuideScreen on wide layouts', () => {
   it('a chosen card says Tracking', async () => {
     setViewportWidth(1200)
     const user = userEvent.setup()
-    render(<RouterProvider router={router()} />)
+    render(<Providers><RouterProvider router={router()} /></Providers>)
     expect(screen.getAllByText('Track this')).toHaveLength(4)
     await user.click(screen.getByRole('switch', { name: 'Sleep' }))
     expect(screen.getByText('Tracking')).toBeInTheDocument()
@@ -133,7 +137,7 @@ describe('GuideScreen on wide layouts', () => {
   it('Next is disabled until something is chosen, then goes to set up', async () => {
     setViewportWidth(1200)
     const user = userEvent.setup()
-    render(<RouterProvider router={router({ firstRun: true })} />)
+    render(<Providers><RouterProvider router={router({ firstRun: true })} /></Providers>)
     expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
     await user.click(screen.getByRole('switch', { name: 'Sleep' }))
     expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled()

@@ -5,7 +5,7 @@ import { addDays, fromDateStr, toDateStr } from '../today/date'
 import { formatDuration } from '../today/values'
 import { makeLookup, monthCounts, statResult, windowDays } from '../insights/panels/panelLogic'
 import { daysPanels, durationPanels, japaPanels, sleepPanels } from '../insights/panels/templates'
-import type { GuideKind } from './guideLogic'
+import type { Choices, GuideKind } from './guideLogic'
 
 /** Same numbers every run (mulberry32), so tests and screenshots agree. */
 function rng(seed: number) {
@@ -76,55 +76,75 @@ function entriesOf(today: string, days: number, rows: Row[]): ReportDataEntry[] 
   return rows.flatMap((r) => cobs.map((cob_date, i) => ({ cob_date, practice: r.practice.practice, value: r.values[i] ?? null })))
 }
 
+/** The example with a person's choices applied: their names, target, goal and aim. Blank names keep the example's. */
+export type Applied = NonNullable<Choices[GuideKind]>
+
+const named = (name: string | null | undefined, fallback: string) => name?.trim() || fallback
+const unique = (names: string[]) => [...new Set(names.map((n) => n.trim()).filter(Boolean))]
+
 /**
  * A fixed example definition with its own data, built by the real report builders so it can't drift from them.
- * Nothing here is requested or saved: it works before anything exists.
+ * Nothing here is requested or saved: it works before anything exists. `applied` swaps in the choices made so far.
  */
-export function exampleReport(kind: GuideKind, todayCob: string, t: TFunction): { definition: PanelsReport; entries: ReportDataEntry[]; practices: UserPractice[] } {
+export function exampleReport(kind: GuideKind, todayCob: string, t: TFunction, applied?: Applied): { definition: PanelsReport; entries: ReportDataEntry[]; practices: UserPractice[] } {
   if (kind === 'sleep') {
+    const a = applied as Choices['sleep']
     const ns = nights()
-    const bed = P('bed', t('reportPanels.bedtime'), 'Time')
-    const wake = P('wake', t('reportPanels.wakeUp'), 'Time')
-    const nap = P('nap', t('reportPanels.nap'), 'Duration')
+    const bed = P('bed', named(a?.bedtime, t('reportPanels.bedtime')), 'Time')
+    const wake = P('wake', named(a?.wake, t('reportPanels.wakeUp')), 'Time')
+    const nap = !a || a.nap !== null ? P('nap', named(a?.nap, t('reportPanels.nap')), 'Duration') : null
     return {
-      definition: sleepPanels({ bedtime: bed.id, wake: wake.id, nap: nap.id, min: 360, max: 540 }),
+      definition: sleepPanels({ bedtime: bed.id, wake: wake.id, nap: nap?.id ?? null, min: a ? a.min : 360, max: a ? a.max : 540 }),
       // The night ending on day i began the evening before.
       entries: entriesOf(todayCob, SLEEP_DAYS, [
         { practice: bed, values: ns.map((_, i) => (ns[i + 1] ? time(ns[i + 1]!.bed) : null)) },
         { practice: wake, values: ns.map((n) => (n ? time(n.wake) : null)) },
-        { practice: nap, values: ns.map((n) => (n && n.nap ? { Duration: Math.round(n.nap * 60) } : null)) },
+        ...(nap ? [{ practice: nap, values: ns.map((n) => (n && n.nap ? { Duration: Math.round(n.nap * 60) } : null)) }] : []),
       ]),
-      practices: [bed, wake, nap],
+      practices: nap ? [bed, wake, nap] : [bed, wake],
     }
   }
   if (kind === 'count') {
+    const a = applied as Choices['count']
     const cs = counts()
-    const total = P('count', t('guide.suggest.count3'), 'Int')
-    const early = P('early', t('reportPanels.morningRounds'), 'Int')
+    const total = P('count', named(a?.count, t('guide.suggest.count3')), 'Int')
+    const early = !a || a.early !== null ? P('early', named(a?.early, t('reportPanels.morningRounds')), 'Int') : null
+    const def = japaPanels({ total: total.id, target: a ? (a.target ?? TARGET) : TARGET, morning: early?.id ?? null, quality: null, attunement: null })
+    // No target yet: no line and no days-on-target figure, rather than one from a number nobody chose.
+    if (a && a.target === null) {
+      for (const p of def.panels) {
+        if (p.kind === 'Chart') p.target = null
+        if (p.kind === 'Stats') p.stats = p.stats.filter((s) => !('Key' in s.label && s.label.Key.endsWith('daysOnTarget')))
+      }
+    }
     return {
-      definition: japaPanels({ total: total.id, target: TARGET, morning: early.id, quality: null, attunement: null }),
+      definition: def,
       entries: entriesOf(todayCob, COUNT_DAYS, [
         { practice: total, values: cs.map((c) => (c ? { Int: c.v } : null)) },
-        { practice: early, values: cs.map((c) => (c ? { Int: c.e } : null)) },
+        ...(early ? [{ practice: early, values: cs.map((c) => (c ? { Int: c.e } : null)) }] : []),
       ]),
-      practices: [total, early],
+      practices: early ? [total, early] : [total],
     }
   }
   if (kind === 'time') {
+    const a = applied as Choices['time']
     const ds = durations()
-    const ps = [1, 2, 3].map((n) => P(`time${n}`, t(`guide.suggest.time${n}`), 'Duration'))
+    const names = unique(a?.names ?? [])
+    const ps = (names.length ? names : [1, 2, 3].map((n) => t(`guide.suggest.time${n}`))).map((name, j) => P(`time${j + 1}`, name, 'Duration'))
     return {
-      definition: durationPanels({ practices: ps.map((p) => p.id), goal: GOAL }),
-      entries: entriesOf(todayCob, COUNT_DAYS, ps.map((practice, j) => ({ practice, values: ds.map((d) => (d && d[j] ? { Duration: d[j] } : null)) }))),
+      definition: durationPanels({ practices: ps.map((p) => p.id), goal: a ? a.goal : GOAL }),
+      entries: entriesOf(todayCob, COUNT_DAYS, ps.map((practice, j) => ({ practice, values: ds.map((d) => (d && d[j % 3] ? { Duration: d[j % 3] } : null)) }))),
       practices: ps,
     }
   }
-  const ps = [5, 4, 3].map((n) => P(`days${n}`, t(`guide.suggest.days${n}`), 'Bool'))
+  const a = applied as Choices['days']
+  const names = unique(a?.names ?? [])
+  const ps = (names.length ? names : [5, 4, 3].map((n) => t(`guide.suggest.days${n}`))).map((name, j) => P(`days${j + 1}`, name, 'Bool'))
   return {
     definition: daysPanels({ practices: ps.map((p) => p.id) }),
     entries: entriesOf(todayCob, 90, ps.map((practice, j) => {
-      const R = rng(40 + j)
-      return { practice, values: Array.from({ length: 90 }, () => (R() < DONE_RATES[j] ? { Bool: true } : null)) }
+      const R = rng(40 + (j % 3))
+      return { practice, values: Array.from({ length: 90 }, () => (R() < DONE_RATES[j % 3] ? { Bool: true } : null)) }
     })),
     practices: ps,
   }

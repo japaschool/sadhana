@@ -55,3 +55,32 @@ describe('example reports', () => {
     expect(s).not.toMatch(/\{\{|guide\./)
   })
 })
+
+describe('example reports with the choices applied', () => {
+  const chart = (kind: GuideKind, a: Parameters<typeof exampleReport>[3]) => exampleReport(kind, TODAY, t, a).definition.panels.find((p) => p.kind === 'Chart')
+  const stats = (kind: GuideKind, a: Parameters<typeof exampleReport>[3]) => exampleReport(kind, TODAY, t, a).definition.panels.flatMap((p) => (p.kind === 'Stats' ? p.stats : []))
+
+  it('uses their names, and the example names for blank ones', () => {
+    const r = exampleReport('sleep', TODAY, t, { bedtime: 'Lights out', wake: '', nap: null, min: null, max: 600 })
+    expect(r.practices.map((p) => p.practice)).toEqual(['Lights out', t('reportPanels.wakeUp')])
+    expect(exampleReport('days', TODAY, t, { names: ['Stretching', ' ', 'Stretching', 'Walk'] }).practices.map((p) => p.practice)).toEqual(['Stretching', 'Walk'])
+    expect(exampleReport('time', TODAY, t, { names: [], goal: null }).practices).toHaveLength(3)
+  })
+
+  it('an empty count target draws no target line and no days-on-target figure; a typed one draws it', () => {
+    const none = { count: 'Pages', target: null, early: null, how: null }
+    const c = chart('count', none)
+    expect(c && 'target' in c && c.target).toBeNull()
+    expect(JSON.stringify(stats('count', none))).not.toContain('daysOnTarget')
+    const c25 = chart('count', { ...none, target: 25 })
+    expect(c25 && 'target' in c25 && c25.target?.min).toBe(25)
+    expect(JSON.stringify(stats('count', { ...none, target: 25 }))).toContain('daysOnTarget')
+  })
+
+  it('a cleared goal and unticked extras leave them out; more names than the example has still draw', () => {
+    expect(exampleReport('count', TODAY, t, { count: 'A', target: 1, early: null, how: null }).practices).toHaveLength(1)
+    const c = chart('time', { names: ['a', 'b', 'c', 'd', 'e'], goal: null })
+    expect(c && 'series' in c && c.series).toHaveLength(5)
+    expect(c && 'target' in c && c.target?.min).toBeNull()
+  })
+})

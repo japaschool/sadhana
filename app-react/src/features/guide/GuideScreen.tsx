@@ -6,11 +6,13 @@ import { BottomSheet } from '../../ui/primitives/BottomSheet'
 import { PrimaryButton, SecondaryButton } from '../auth/kit'
 import { GuideFrame } from './GuideFrame'
 import { ChooseMobile } from './mobile/ChooseMobile'
+import { SetupMobile } from './mobile/SetupMobile'
 import { useGuide } from './useGuide'
 import type { Guide } from './useGuide'
 import { ChooseWide } from './wide/ChooseWide'
+import { SetupWide } from './wide/SetupWide'
 
-/** ponytail: Tasks 11 and 12 replace these three with the setup, reader and finish screens. */
+/** ponytail: Task 12 replaces these two with the reader and finish screens. */
 function Placeholder({ guide, title, action, onAction }: { guide: Guide; title: string; action: string; onAction: () => void }) {
   const { t } = useTranslation()
   const wide = !guide.carousel // the phone has Back in its top bar
@@ -35,7 +37,7 @@ export function GuideScreen() {
   return (
     <>
       {step.at === 'choose' && <ByLayout mobile={<ChooseMobile guide={guide} />} tablet={<ChooseWide guide={guide} />} desktop={<ChooseWide guide={guide} />} />}
-      {step.at === 'setup' && <Placeholder guide={guide} title={t(`guide.kinds.${step.kind}.name`)} action={t('guide.next')} onAction={guide.next} />}
+      {step.at === 'setup' && <ByLayout key={step.kind} mobile={<SetupMobile guide={guide} kind={step.kind} />} tablet={<SetupWide guide={guide} kind={step.kind} />} desktop={<SetupWide guide={guide} kind={step.kind} />} />}
       {step.at === 'reader' && <Placeholder guide={guide} title={t('guide.steps.sharing')} action={t('guide.next')} onAction={guide.next} />}
       {step.at === 'finish' && <Placeholder guide={guide} title={t('guide.steps.finish')} action={t('guide.done')} onAction={() => guide.finish()} />}
       {guide.confirming && (

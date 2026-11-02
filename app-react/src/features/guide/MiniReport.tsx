@@ -5,6 +5,7 @@ import type { PanelsReport } from '../../api/charts'
 import { PanelsReportView } from '../insights/panels/PanelsReportView'
 import { toDateStr } from '../today/date'
 import { exampleReport, exampleSummary } from './examples'
+import type { Applied } from './examples'
 import type { GuideKind } from './guideLogic'
 
 /** Sleep's four figures are two in the carousel's narrow frame: average sleep and nights in range. */
@@ -19,11 +20,12 @@ function fit(kind: GuideKind, definition: PanelsReport, compact: boolean): Panel
  * An example report drawn by the real renderer on bundled data, so it works before anything exists.
  * "Example" is in the frame, not the data, and nothing in it responds to touch.
  */
-export function MiniReport({ kind, compact = false, head, footer, on = false }: { kind: GuideKind; compact?: boolean; head?: ReactNode; footer?: ReactNode; on?: boolean }) {
+export function MiniReport({ kind, compact = false, head, footer, on = false, applied }: { kind: GuideKind; compact?: boolean; head?: ReactNode; footer?: ReactNode; on?: boolean; applied?: Applied }) {
   const { t, i18n } = useTranslation()
   const today = toDateStr(new Date())
   // i18n.language: the example's names and text are rebuilt when the language changes.
-  const example = useMemo(() => exampleReport(kind, today, t), [kind, today, t, i18n.language]) // eslint-disable-line react-hooks/exhaustive-deps
+  const choices = JSON.stringify(applied)
+  const example = useMemo(() => exampleReport(kind, today, t, applied), [kind, today, t, i18n.language, choices]) // eslint-disable-line react-hooks/exhaustive-deps
   const definition = fit(kind, example.definition, compact)
   return (
     <div className={`flex h-full flex-col overflow-hidden rounded-[20px] border bg-ui-surface ${on ? 'border-[1.5px] border-ui-accent-pill bg-ui-accent-soft' : 'border-ui-hairline'}`}>

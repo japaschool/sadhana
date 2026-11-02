@@ -82,7 +82,7 @@ const roundsText = (v: number | null) => (v === null ? '' : String(v))
 const typeRounds = (next: string) => next.replace(/\D/g, '').slice(0, 4)
 
 /** A number typed as text. Time limits by default; with `suffix`, a required whole number that has no clear button. */
-function LimitField({ id, label, placeholder, value, onChange, suffix }: {
+export function LimitField({ id, label, placeholder, value, onChange, suffix }: {
   id: string; label: string; placeholder: string; value: number | null; onChange: (v: number | null) => void; suffix?: string
 }) {
   const { t } = useTranslation()

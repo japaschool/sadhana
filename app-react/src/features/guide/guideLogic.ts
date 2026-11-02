@@ -20,13 +20,13 @@ export const KINDS: GuideKind[] = ['sleep', 'count', 'time', 'days']
 const SLUGS: Record<GuideKind, string> = { sleep: 'sleep', count: 'japa', time: 'duration', days: 'days' }
 const HOW_VARIANTS = '1,2,3,4,5'
 
-interface Item { name: string; slot: Slot; planned: PlannedPractice }
+export interface Item { name: string; slot: Slot; planned: PlannedPractice }
 /** `type` is what gets created, which is the slot's first type unless said: How it went is Text, with a 1 to 5 dropdown. */
 const item = (name: string, slot: Slot, type: PracticeDataType = slot.types[0], dropdown_variants?: string): Item =>
   ({ name: name.trim(), slot, planned: { name: name.trim(), data_type: type, ...(dropdown_variants && { dropdown_variants }) } })
 
 /** The practices a report needs, in order. */
-function itemsOf(kind: GuideKind, c: NonNullable<Choices[GuideKind]>): Item[] {
+export function itemsOf(kind: GuideKind, c: NonNullable<Choices[GuideKind]>): Item[] {
   if (kind === 'sleep') {
     const s = c as NonNullable<Choices['sleep']>
     return [item(s.bedtime, SLEEP_SLOTS[0]), item(s.wake, SLEEP_SLOTS[1]), ...(s.nap ? [item(s.nap, SLEEP_SLOTS[2])] : [])]
