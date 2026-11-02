@@ -142,6 +142,53 @@ describe('creating', () => {
   })
 })
 
+describe('coming back to Finish after a failure', () => {
+  async function fail(user: ReturnType<typeof userEvent.setup>) {
+    await answer('No', user)
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    await screen.findByText('Setup didn’t finish')
+  }
+
+  it('builds the plan again, so a changed name is the one created', async () => {
+    const user = await open({ firstRun: true })
+    have.push({ id: 'h', practice: 'Bedtime', data_type: 'Time', is_active: false })
+    await fail(user)
+    await user.click(screen.getByRole('button', { name: 'Review my choices' })) // the reader question
+    await user.click(screen.getByRole('button', { name: 'Back' })) // the sleep set up
+    await user.click(screen.getByRole('button', { name: 'Rename Bedtime' }))
+    const input = screen.getByRole('textbox', { name: 'Practice name' })
+    await user.clear(input)
+    await user.type(input, 'Lights out')
+    await user.click(screen.getByRole('button', { name: 'Done' }))
+    await user.click(screen.getByRole('button', { name: /^Next/ }))
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    expect(await screen.findByText('Here’s what’s set up')).toBeInTheDocument()
+    expect(have.map((p) => p.practice)).toContain('Lights out')
+    expect(made).toEqual(['Sleep'])
+  })
+
+  it('does not duplicate or renumber a report that landed before the failure', async () => {
+    vi.mocked(chartsApi.createReport).mockImplementationOnce(async (name) => { made.push(name); return 'r' }).mockRejectedValueOnce(offline())
+    const user = await open({ firstRun: true }, true)
+    await fail(user)
+    expect(made).toEqual(['Sleep'])
+    await user.click(screen.getByRole('button', { name: 'Review my choices' }))
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    expect(await screen.findByText('Here’s what’s set up')).toBeInTheDocument()
+    expect(made).toEqual(['Sleep', 'Days I did it'])
+  })
+
+  it('a plain Retry reads nothing again for the plan', async () => {
+    vi.mocked(chartsApi.createReport).mockRejectedValueOnce(offline())
+    const user = await open({ firstRun: true })
+    await fail(user)
+    const before = vi.mocked(chartsApi.getReports).mock.calls.length
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    await screen.findByText('Here’s what’s set up')
+    expect(vi.mocked(chartsApi.getReports).mock.calls.length - before).toBe(1) // runPlan's own read only
+  })
+})
+
 describe('the closing screen', () => {
   it('says Sleep starts on the second day', async () => {
     const user = await open({ firstRun: true })

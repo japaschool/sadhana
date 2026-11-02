@@ -32,15 +32,20 @@ export function FinishStep({ guide }: { guide: Guide }) {
   const [copied, setCopied] = useState(false)
   const started = useRef(false)
 
-  async function run() {
+  /** `rebuild`: back at Finish after a failure, so choices may have changed. A plain retry keeps the plan. */
+  async function run(rebuild: boolean) {
     setFailure(null)
     setCreating('running')
     setRows({})
     try {
-      if (!plan.current) {
-        // Read fresh: the cache is persisted and can be stale. A report an earlier attempt made keeps its name, not "Sleep 2".
+      if (!plan.current || rebuild) {
+        // Read fresh: the cache is persisted and can be stale. Reports an earlier attempt planned keep their names, not "Sleep 2".
+        const prev = plan.current
         const [practices, reports] = await Promise.all([api.getPractices(), api.getReports()])
-        plan.current = buildPlan(chosen, practices, reports, (slug) => t(`templateForm.${slug}Name`))
+        const taken = new Set(prev?.reports.map((r) => r.name))
+        const built = buildPlan(chosen, practices, reports.filter((r) => !taken.has(r.name)), (slug) => t(`templateForm.${slug}Name`))
+        for (const r of built.reports) r.name = prev?.reports.find((o) => o.kind === r.kind)?.name ?? r.name
+        plan.current = built
       }
       await runPlan(plan.current, api, (kind, state) => setRows((r) => ({ ...r, [kind]: state })))
       void qc.invalidateQueries({ queryKey: ['practices'] })
@@ -54,7 +59,7 @@ export function FinishStep({ guide }: { guide: Guide }) {
   useEffect(() => {
     if (started.current) return
     started.current = true
-    void run()
+    void run(plan.current !== null)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on arriving at Finish
   }, [])
 
@@ -120,7 +125,7 @@ export function FinishStep({ guide }: { guide: Guide }) {
         {list}
         {failure && (
           <div className="flex flex-col gap-2">
-            {failure === 'connection' && <PrimaryButton type="button" onClick={() => void run()}>{t('guide.finish.retry')}</PrimaryButton>}
+            {failure === 'connection' && <PrimaryButton type="button" onClick={() => void run(false)}>{t('guide.finish.retry')}</PrimaryButton>}
             <SecondaryButton onClick={guide.back}>{t('guide.finish.review')}</SecondaryButton>
           </div>
         )}
