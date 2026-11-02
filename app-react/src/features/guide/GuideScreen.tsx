@@ -25,8 +25,9 @@ export function GuideScreen() {
   const blocker = useBlocker(({ historyAction }) => historyAction === 'POP' && guide.creating === null)
   useEffect(() => {
     if (blocker.state !== 'blocked') return
-    blocker.reset()
-    guide.popBack()
+    // The router's restore of this entry is async in a browser, so navigating here would act on the entry before it. Leaving is the Back itself.
+    if (guide.popBack()) blocker.proceed()
+    else blocker.reset()
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once per Back: the router's update is a transition, so `blocked` outlives popBack's own re-render
   }, [blocker.state])
 

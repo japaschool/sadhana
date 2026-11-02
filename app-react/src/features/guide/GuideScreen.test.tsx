@@ -69,11 +69,14 @@ describe('the system Back button', () => {
     expect(r.state.location.pathname).toBe('/guide')
   })
 
-  it('on the first card of a sign-up guide with nothing set up, leaves for Today and marks left', async () => {
+  // The browser restores /guide asynchronously after a blocked POP, so a navigate from here would act on the wrong entry
+  // (seen in real Chrome). The memory router can't show that, so these pin that the Back itself goes through: the action stays POP.
+  it('on the first card of a sign-up guide with nothing set up, lets the Back through and marks left', async () => {
     const r = opened({ firstRun: true })
     render(<Providers><RouterProvider router={r} /></Providers>)
     await back(r)
-    expect(await screen.findByText('Today')).toBeInTheDocument()
+    expect(await screen.findByText('Where it came from')).toBeInTheDocument()
+    expect(r.state.historyAction).toBe('POP')
     await vi.waitFor(() => expect(api.update).toHaveBeenCalledWith('run-1', { outcome: 'left' }))
   })
 
@@ -82,6 +85,20 @@ describe('the system Back button', () => {
     render(<Providers><RouterProvider router={r} /></Providers>)
     await back(r)
     expect(await screen.findByText('Where it came from')).toBeInTheDocument()
+    expect(r.state.historyAction).toBe('POP')
+  })
+
+  it('after the leave sheet, leaving replaces the guide, so a reload cannot reopen it', async () => {
+    const user = userEvent.setup()
+    const r = opened({ firstRun: true })
+    render(<Providers><RouterProvider router={r} /></Providers>)
+    await toReader(user)
+    await back(r)
+    await back(r)
+    await back(r)
+    await user.click(screen.getByRole('button', { name: 'Leave setup' }))
+    expect(await screen.findByText('Today')).toBeInTheDocument()
+    expect(r.state.historyAction).toBe('REPLACE')
   })
 
   it('does not get in the way of the guide’s own exit', async () => {
@@ -94,6 +111,12 @@ describe('the system Back button', () => {
 })
 
 describe('GuideScreen on mobile', () => {
+  it('keeps Skip and Track in a bar fixed to the bottom of the screen', () => {
+    render(<Providers><RouterProvider router={router()} /></Providers>)
+    expect(screen.getByRole('button', { name: 'Track this' }).parentElement).toHaveClass('fixed', 'bottom-0', 'bg-ui-tabbar')
+    expect(screen.getByRole('button', { name: 'Skip' }).parentElement).toBe(screen.getByRole('button', { name: 'Track this' }).parentElement)
+  })
+
   it('a swipe back during a Track scroll moves the position back, not stuck on the target', async () => {
     const width = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(300)
     Element.prototype.scrollIntoView = vi.fn()

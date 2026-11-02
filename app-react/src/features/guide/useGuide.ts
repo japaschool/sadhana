@@ -98,11 +98,16 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
     toggle, decide,
     next: () => advance(tracked),
     back: goBack,
-    /** The system Back. At the start there is no step to go back to, so it means leaving, and asks if anything would be lost. */
+    /**
+     * The system Back. At the start there is no step to go back to, so it means leaving, and asks if anything would be lost.
+     * True when the Back should go through. It never navigates: the browser is still restoring this entry (see GuideScreen).
+     */
     popBack: () => {
       if (confirming) setConfirming(false)
-      else if (step.at === 'choose' && pos === 0 && !nothing && (firstRun || setUp)) leave()
-      else goBack()
+      else if (step.at !== 'choose' || pos > 0 || nothing) goBack()
+      else if (setUp) setConfirming(true)
+      else { if (firstRun) run.end('left'); return true }
+      return false
     },
     /** From the nothing-chosen screen: track just this one. */
     pick: (kind: GuideKind) => { setTracked([kind]); setNothing(false); setStep(after({ at: 'choose' }, [kind])) },
