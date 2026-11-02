@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -6,7 +6,7 @@ import { setViewportWidth } from '../../test/viewport'
 import { GuideScreen } from './GuideScreen'
 
 vi.mock('../../api/guide', () => ({ guideApi: { start: vi.fn(), update: vi.fn() } }))
-vi.mock('./MiniReport', () => ({ MiniReport: ({ kind }: { kind: string }) => <div data-testid={`mini-${kind}`} /> }))
+vi.mock('./MiniReport', () => ({ MiniReport: ({ kind, head, footer }: { kind: string; head?: React.ReactNode; footer?: React.ReactNode }) => <div data-testid={`mini-${kind}`}>{head}{footer}</div> }))
 import { guideApi } from '../../api/guide'
 const api = vi.mocked(guideApi)
 
@@ -24,6 +24,21 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('GuideScreen on mobile', () => {
+  it('a swipe back during a Track scroll moves the position back, not stuck on the target', async () => {
+    const width = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(300)
+    Element.prototype.scrollIntoView = vi.fn()
+    const user = userEvent.setup()
+    const { container } = render(<RouterProvider router={router()} />)
+    await user.click(screen.getByRole('button', { name: 'Track this' }))
+    pos(2)
+    const strip = container.querySelector('.snap-x') as HTMLElement
+    fireEvent.pointerDown(strip)
+    strip.scrollLeft = 0
+    fireEvent.scroll(strip)
+    pos(1)
+    width.mockRestore()
+  })
+
   it('Track and Skip move through the four reports and record each choice', async () => {
     const user = userEvent.setup()
     render(<RouterProvider router={router({ firstRun: true })} />)
@@ -91,6 +106,30 @@ describe('GuideScreen on mobile', () => {
 })
 
 describe('GuideScreen on wide layouts', () => {
+  it('has no Back on first run, and Back from set up needs one click on a later run', async () => {
+    setViewportWidth(1200)
+    const user = userEvent.setup()
+    const { unmount } = render(<RouterProvider router={router({ firstRun: true })} />)
+    expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument()
+    unmount()
+    const r = createMemoryRouter([...routes, { path: '/settings', element: <p>Settings</p> }], { initialEntries: [{ pathname: '/guide', state: { back: '/settings' } }] })
+    render(<RouterProvider router={r} />)
+    await user.click(screen.getByRole('switch', { name: 'Days I did it' }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.getByText('Settings')).toBeInTheDocument()
+  })
+
+  it('a chosen card says Tracking', async () => {
+    setViewportWidth(1200)
+    const user = userEvent.setup()
+    render(<RouterProvider router={router()} />)
+    expect(screen.getAllByText('Track this')).toHaveLength(4)
+    await user.click(screen.getByRole('switch', { name: 'Sleep' }))
+    expect(screen.getByText('Tracking')).toBeInTheDocument()
+  })
+
   it('Next is disabled until something is chosen, then goes to set up', async () => {
     setViewportWidth(1200)
     const user = userEvent.setup()

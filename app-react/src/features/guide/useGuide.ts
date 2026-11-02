@@ -14,13 +14,14 @@ const stepName = (s: GuideStep) => (s.at === 'setup' ? `setup_${s.kind}` : s.at)
 
 /**
  * The guide's state. `firstRun` (new account) adds the reader question; `back` is where Back from the first
- * card goes when the guide wasn't opened by sign-up.
+ * card goes when the guide wasn't opened by sign-up. `carousel` is false on the wide grid, where `pos` means nothing.
  */
-export function useGuide({ firstRun, back: backTo }: { firstRun: boolean; back: string }) {
+export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun: boolean; back: string; carousel?: boolean }) {
   const navigate = useNavigate()
   const run = useGuideRun(firstRun ? 'signup' : 'add_practice')
   const [step, setStep] = useState<GuideStep>({ at: 'choose' })
-  const [pos, setPos] = useState(0)
+  const [carouselPos, setPos] = useState(0)
+  const pos = carousel ? carouselPos : 0
   const [tracked, setTracked] = useState<GuideKind[]>([])
   const [skipped, setSkipped] = useState<GuideKind[]>([])
   const [choices, setChoices] = useState<Choices>(NONE)
@@ -76,7 +77,9 @@ export function useGuide({ firstRun, back: backTo }: { firstRun: boolean; back: 
   }, [run, navigate])
 
   return {
-    firstRun, step, pos, setPos, tracked, skipped, choices, nothing, confirming,
+    firstRun, carousel, step, pos, setPos, tracked, skipped, choices, nothing, confirming,
+    /** What the plan is built from: only the reports still tracked, so skipping one after its set up drops it (re-tracking brings its values back). */
+    chosen: Object.fromEntries(KINDS.map((k) => [k, tracked.includes(k) ? choices[k] : null])) as unknown as Choices,
     /** The first card of a sign-up guide is the start: nowhere to go back to. */
     canBack: !(firstRun && step.at === 'choose' && pos === 0 && !nothing),
     setChoice: <K extends GuideKind>(kind: K, value: Choices[K]) => setChoices((c) => ({ ...c, [kind]: value })),
@@ -87,7 +90,7 @@ export function useGuide({ firstRun, back: backTo }: { firstRun: boolean; back: 
     pick: (kind: GuideKind) => { setTracked([kind]); setNothing(false); setStep(after({ at: 'choose' }, [kind])) },
     lookAgain: () => { setNothing(false); setPos(0); setSkipped([]) },
     /** "Build my own list", at any step: asks first once a report has been set up. */
-    leave: () => (KINDS.some((k) => choices[k]) ? setConfirming(true) : exit('left')),
+    leave: () => (KINDS.some((k) => tracked.includes(k) && choices[k]) ? setConfirming(true) : exit('left')),
     keepGoing: () => setConfirming(false),
     confirmLeave: () => exit('left'),
     finish: (hasReader?: boolean) => exit('finished', hasReader),

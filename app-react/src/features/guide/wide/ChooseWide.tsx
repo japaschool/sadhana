@@ -4,6 +4,7 @@ import { Toggle } from '../../../ui/primitives/Toggle'
 import { PrimaryButton, SecondaryButton } from '../../auth/kit'
 import { KINDS } from '../guideLogic'
 import { GuideFrame } from '../GuideFrame'
+import { KindHead } from '../KindHead'
 import { MiniReport } from '../MiniReport'
 import type { Guide } from '../useGuide'
 
@@ -32,18 +33,16 @@ export function ChooseWide({ guide }: { guide: Guide }) {
           <p className="text-sm leading-normal text-ui-muted text-pretty">{t('guide.intro')}</p>
         </div>
         <div className={`grid items-stretch ${desktop ? 'grid-cols-4 gap-5' : 'grid-cols-2 gap-4'}`}>
-          {KINDS.map((k) => (
-            <div key={k} className="flex flex-col gap-3">
-              <div className="flex items-start justify-between gap-3 px-1">
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-base font-extrabold">{t(`guide.kinds.${k}.name`)}</span>
-                  <span className="text-[13px] leading-snug text-ui-muted">{t(`guide.kinds.${k}.desc`)}</span>
-                </div>
-                <Toggle checked={guide.tracked.includes(k)} onChange={() => guide.toggle(k)} label={t(`guide.kinds.${k}.name`)} />
+          {KINDS.map((k) => {
+            const on = guide.tracked.includes(k)
+            const foot = (
+              <div className={`mt-auto flex items-center justify-between gap-2.5 border-t border-ui-hairline px-3.5 py-3 ${on ? 'bg-ui-accent-soft' : 'bg-ui-surface'}`}>
+                <span className={`text-sm font-extrabold ${on ? 'text-ui-accent' : ''}`}>{t(on ? 'guide.tracking' : 'guide.track')}</span>
+                <Toggle checked={on} onChange={() => guide.toggle(k)} label={t(`guide.kinds.${k}.name`)} />
               </div>
-              <MiniReport kind={k} compact={desktop} />
-            </div>
-          ))}
+            )
+            return <MiniReport key={k} kind={k} compact={desktop} on={on} head={<KindHead kind={k} />} footer={foot} />
+          })}
         </div>
       </div>
     </GuideFrame>

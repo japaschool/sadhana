@@ -10,8 +10,8 @@ import { guideApi } from '../../api/guide'
 const api = vi.mocked(guideApi)
 
 const wrapper = ({ children }: { children: ReactNode }) => <MemoryRouter initialEntries={['/guide']}>{children}</MemoryRouter>
-function setup(firstRun: boolean) {
-  return renderHook(() => ({ guide: useGuide({ firstRun, back: '/settings' }), path: useLocation().pathname }), { wrapper })
+function setup(firstRun: boolean, carousel = true) {
+  return renderHook(() => ({ guide: useGuide({ firstRun, back: '/settings', carousel }), path: useLocation().pathname }), { wrapper })
 }
 
 beforeEach(() => {
@@ -78,6 +78,7 @@ describe('useGuide', () => {
 
   it('asks first once a report has been set up; keep going stays, leave leaves', () => {
     const { result } = setup(true)
+    act(() => result.current.guide.toggle('sleep'))
     act(() => result.current.guide.setChoice('sleep', { bedtime: 'Bed', wake: 'Wake', nap: null, min: null, max: null }))
     act(() => result.current.guide.leave())
     expect(result.current.guide.confirming).toBe(true)
@@ -95,6 +96,32 @@ describe('useGuide', () => {
     act(() => result.current.guide.finish(true))
     expect(result.current.path).toBe('/')
     await vi.waitFor(() => expect(api.update).toHaveBeenCalledWith('run-1', { outcome: 'finished', has_reader: true }))
+  })
+
+  it('drops a report from the plan and the confirmation when it is un-chosen, and brings its values back when re-chosen', () => {
+    const sleep = { bedtime: 'Bed', wake: 'Wake', nap: null, min: null, max: null }
+    const { result } = setup(true)
+    act(() => result.current.guide.toggle('sleep'))
+    act(() => result.current.guide.setChoice('sleep', sleep))
+    expect(result.current.guide.chosen.sleep).toEqual(sleep)
+    act(() => result.current.guide.decide('sleep', false))
+    expect(result.current.guide.chosen.sleep).toBeNull()
+    act(() => result.current.guide.leave())
+    expect(result.current.guide.confirming).toBe(false)
+    expect(result.current.path).toBe('/')
+    act(() => result.current.guide.toggle('sleep'))
+    expect(result.current.guide.chosen.sleep).toEqual(sleep)
+  })
+
+  it('without the carousel, Back ignores its position', () => {
+    const first = setup(true, false).result
+    expect(first.current.guide.canBack).toBe(false)
+    const later = setup(false, false).result
+    act(() => { later.current.guide.toggle('days'); later.current.guide.setPos(3) })
+    act(() => later.current.guide.next())
+    act(() => later.current.guide.back())
+    act(() => later.current.guide.back())
+    expect(later.current.path).toBe('/settings')
   })
 
   it('goes on when guide_runs fails', async () => {

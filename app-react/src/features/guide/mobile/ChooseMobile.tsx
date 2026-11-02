@@ -4,6 +4,7 @@ import { PrimaryButton, SecondaryButton } from '../../auth/kit'
 import { KINDS } from '../guideLogic'
 import type { GuideKind } from '../guideLogic'
 import { GuideFrame } from '../GuideFrame'
+import { KindHead } from '../KindHead'
 import { MiniReport } from '../MiniReport'
 import type { Guide } from '../useGuide'
 
@@ -75,14 +76,9 @@ function Nothing({ guide }: { guide: Guide }) {
 }
 
 function Card({ kind, current }: { kind: GuideKind; current: boolean }) {
-  const { t } = useTranslation()
   return (
     <div className={`w-[min(322px,calc(100vw-56px))] shrink-0 snap-start transition-opacity ${current ? '' : 'opacity-55'}`}>
-      <div className="mb-2.5 flex flex-col gap-0.5 px-1">
-        <span className="text-base font-extrabold">{t(`guide.kinds.${kind}.name`)}</span>
-        <span className="text-[13px] leading-snug text-ui-muted">{t(`guide.kinds.${kind}.desc`)}</span>
-      </div>
-      <MiniReport kind={kind} compact />
+      <MiniReport kind={kind} compact head={<KindHead kind={kind} />} />
     </div>
   )
 }
@@ -99,12 +95,22 @@ export function ChooseMobile({ guide }: { guide: Guide }) {
     const card = el?.firstElementChild as HTMLElement | null
     return el && card ? Math.round(el.scrollLeft / (card.offsetWidth + GAP)) : pos
   }
+  // Track/Skip scroll to the new card; `goingTo` keeps that scroll's own events from moving the position back.
+  // A touch, the scroll ending, or a moment passing releases it, so it can't stick when a swipe interrupts.
   useEffect(() => {
     const card = strip.current?.children[pos] as HTMLElement | undefined
     if (!card || indexAt() === pos) return
     goingTo.current = pos
     card.scrollIntoView?.({ behavior: 'smooth', inline: 'start', block: 'nearest' })
-  }) // eslint-disable-line react-hooks/exhaustive-deps
+    const release = setTimeout(() => { goingTo.current = null }, 700)
+    return () => clearTimeout(release)
+  }, [pos]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const el = strip.current
+    const release = () => { goingTo.current = null }
+    el?.addEventListener('scrollend', release)
+    return () => el?.removeEventListener('scrollend', release)
+  }, [nothing])
   function onScroll() {
     const i = indexAt()
     if (goingTo.current !== null) { if (i === goingTo.current) goingTo.current = null; return }
@@ -117,7 +123,7 @@ export function ChooseMobile({ guide }: { guide: Guide }) {
     <GuideFrame guide={guide}>
       <Heading />
       <Dots guide={guide} label={t('guide.position', { a: pos + 1, b: KINDS.length })} />
-      <div ref={strip} onScroll={onScroll} className="flex snap-x snap-mandatory items-start gap-3 overflow-x-auto scroll-px-[22px] px-[22px] [scrollbar-width:none]">
+      <div ref={strip} onScroll={onScroll} onPointerDown={() => { goingTo.current = null }} onTouchStart={() => { goingTo.current = null }} className="flex snap-x snap-mandatory items-start gap-3 overflow-x-auto scroll-px-[22px] px-[22px] [scrollbar-width:none]">
         {KINDS.map((k, i) => <Card key={k} kind={k} current={i === pos} />)}
       </div>
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-2.5 px-[22px] pt-3.5">

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 import { ByLayout } from '../../layouts/ByLayout'
+import { useLayout } from '../../layouts/useLayout'
 import { BottomSheet } from '../../ui/primitives/BottomSheet'
 import { PrimaryButton, SecondaryButton } from '../auth/kit'
 import { GuideFrame } from './GuideFrame'
@@ -11,11 +12,14 @@ import { ChooseWide } from './wide/ChooseWide'
 
 /** ponytail: Tasks 11 and 12 replace these three with the setup, reader and finish screens. */
 function Placeholder({ guide, title, action, onAction }: { guide: Guide; title: string; action: string; onAction: () => void }) {
+  const { t } = useTranslation()
+  const wide = !guide.carousel // the phone has Back in its top bar
   return (
     <GuideFrame guide={guide}>
       <div className="flex flex-col gap-4 px-[22px] py-4">
         <h1 className="text-[26px] font-extrabold">{title}</h1>
         <PrimaryButton type="button" onClick={onAction}>{action}</PrimaryButton>
+        {wide && <SecondaryButton onClick={guide.back}>{t('guide.back')}</SecondaryButton>}
       </div>
     </GuideFrame>
   )
@@ -25,7 +29,7 @@ function Placeholder({ guide, title, action, onAction }: { guide: Guide; title: 
 export function GuideScreen() {
   const { t } = useTranslation()
   const state = useLocation().state as { firstRun?: boolean; back?: string } | null
-  const guide = useGuide({ firstRun: state?.firstRun === true, back: state?.back ?? '/' })
+  const guide = useGuide({ firstRun: state?.firstRun === true, back: state?.back ?? '/', carousel: useLayout() === 'mobile' })
   const { step } = guide
 
   return (
