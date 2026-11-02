@@ -185,6 +185,17 @@ describe('Create all and link', () => {
     expect(screen.queryByRole('button', { name: 'Create and link' })).toBeNull()
   })
 
+  it('an existing member with practices sees neither Help me choose nor Start logging on joined=1', async () => {
+    mine = [{ id: '1', practice: 'Japa rounds', data_type: 'Int', is_active: true }]
+    api.getYatraUserPractices.mockResolvedValue([
+      { yatra_practice: { id: 'a', practice: 'Japa rounds', data_type: 'Int' }, user_practice: 'Japa rounds' },
+    ])
+    renderLinkScreen('/yatra/y1/links?joined=1')
+    await screen.findByText('All 1 linked')
+    expect(screen.queryByRole('link', { name: /Help me choose/ })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Start logging' })).toBeNull()
+  })
+
   it('creates each practice with the yatra name and type, then links them all', async () => {
     renderLinkScreen()
     fireEvent.click(await screen.findByRole('button', { name: 'Create all and link' }))

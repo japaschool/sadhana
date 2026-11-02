@@ -76,10 +76,10 @@ export function LinkPracticesMobile() {
           <p className="text-[13px] leading-normal text-ui-muted">{t('yatraSettings.createHint')}</p>
         </>
       )}
-      {joined && !missing.length && total > 0 && (
+      {joined && s.canCreate && !missing.length && total > 0 && (
         <Link to="/" className={`${createBtn} flex items-center justify-center bg-ui-primary text-ui-on-primary`}>{t('yatraSettings.startLogging')}</Link>
       )}
-      {joined && (
+      {joined && s.canCreate && (
         <Link to="/guide" state={{ back: here.pathname + here.search }} className="flex flex-col gap-0.5 border-t border-ui-hairline pt-3 text-sm">
           <span className="font-extrabold text-ui-accent">{t('home.helpChoose')}</span>
           <span className="text-ui-muted">{t('home.helpChooseSub')}</span>
