@@ -61,8 +61,8 @@ pub async fn get_shared_reports(
     let mut conn = state.get_conn()?;
     let user_id = path.into_inner();
 
-    let data =
-        web::block(move || Report::get_all(&mut conn, &user_id, query.panels)).await??;
+    let data = web::block(move || Report::get_all(&mut conn, &user_id, query.panels, query.months))
+        .await??;
 
     Ok(HttpResponse::Ok().json(GetAllReportsResponse { reports: data }))
 }

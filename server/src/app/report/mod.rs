@@ -30,6 +30,7 @@ impl Report {
         conn: &mut PgConnection,
         user_id: &Uuid,
         panels: bool,
+        months: bool,
     ) -> Result<Vec<Self>, AppError> {
         let data = DBReport::get_all(conn, user_id, panels)?;
 
@@ -52,6 +53,12 @@ impl Report {
                     .map_err(|_| err("Invalid panels report definition"))?,
                 ),
             };
+
+            if let ReportDefinition::Panels(p) = &definition {
+                if !months && p.has_month() {
+                    continue;
+                }
+            }
 
             res.push(Report {
                 id: report.id,
@@ -183,6 +190,9 @@ pub struct ReportsQuery {
     /// Older clients can't draw panels reports, so they are left out unless asked for.
     #[serde(default)]
     pub panels: bool,
+    /// Cached builds that know panels still can't draw a Month panel; left out unless asked for.
+    #[serde(default)]
+    pub months: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -200,7 +210,8 @@ pub async fn get_reports(
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
 
-    let res = web::block(move || Report::get_all(&mut conn, &user_id, query.panels)).await??;
+    let res = web::block(move || Report::get_all(&mut conn, &user_id, query.panels, query.months))
+        .await??;
 
     Ok(HttpResponse::Ok().json(GetAllReportsResponse { reports: res }))
 }
