@@ -1096,8 +1096,9 @@
     },
     "leave": {
       "title": "Leave setup?",
-      "body": "Nothing has been created yet. If you leave now, what you set up here won’t be saved.",
-      "keep": "Keep going"
+      "body": "What you’ve chosen here won’t be saved.",
+      "keep": "Keep setting up",
+      "confirm": "Leave setup"
     },
     "suggest": {
       "count1": "Mantra rounds",
