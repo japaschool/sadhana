@@ -7,7 +7,7 @@ import { useToastStore } from '../../../../hooks/useToast'
 import { setViewportWidth } from '../../../../test/viewport'
 import { ChartEditorMobileScreen } from './ChartEditorMobile'
 import { NewChartSheet } from './NewChartSheet'
-import { sleepPanels } from '../../panels/templates'
+import { daysPanels, sleepPanels } from '../../panels/templates'
 
 vi.mock('../../../../api/charts', () => ({
   chartsApi: { getReports: vi.fn(), getReportData: vi.fn(), updateReport: vi.fn(), createReport: vi.fn(), deleteReport: vi.fn() },
@@ -51,6 +51,14 @@ function renderAt(path: string) {
 }
 
 describe('ChartEditorMobile', () => {
+  it('a report with month grids reads half a year, so its Last 90 days are whole', async () => {
+    charts.getReports.mockResolvedValue([{ id: 'd1', name: 'Days', definition: { Panels: daysPanels({ practices: ['wake'] }) } }])
+    charts.getReportData.mockReset().mockResolvedValue([])
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([])
+    renderAt('/settings/charts/d1')
+    await waitFor(() => expect(charts.getReportData.mock.calls.map((c) => c[1])).toContain('HalfYear'))
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
     setViewportWidth(390)

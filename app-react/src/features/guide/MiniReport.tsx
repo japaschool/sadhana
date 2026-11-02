@@ -40,7 +40,7 @@ export function MiniReport({ kind, compact = false, head, footer, on = false, ap
         <div role="img" aria-label={exampleSummary(kind, today, t)} className="pointer-events-none flex flex-col gap-3">
           <PanelsReportView report={{ id: `example-${kind}`, name: t(`guide.example.after`), definition: { Panels: definition } }}
             definition={definition} entries={example.entries} previous={undefined} practices={example.practices} todayCob={today}
-            chartHeight={compact ? 110 : 200} formLink={null} cols={compact ? 2 : 4} interactive={false} />
+            chartHeight={compact ? 110 : 200} formLink={null} cols={compact ? 2 : 4} interactive={false} legendLast />
         </div>
       </div>
       {footer}

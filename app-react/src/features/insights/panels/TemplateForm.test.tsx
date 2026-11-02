@@ -344,6 +344,20 @@ describe('the Japa template', () => {
   })
 })
 
+describe('the live preview', () => {
+  beforeEach(() => {
+    setViewportWidth(1200)
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue(PRACTICES)
+    charts.getReports.mockResolvedValue([])
+    charts.getReportData.mockReset().mockResolvedValue([])
+  })
+  it.each([['days', 'HalfYear'], ['sleep', 'Month']])('of %s reads %s', async (slug, duration) => {
+    renderNew(`/settings/charts/new/${slug}`)
+    await waitFor(() => expect(charts.getReportData).toHaveBeenCalled())
+    expect(charts.getReportData.mock.calls[0][1]).toBe(duration)
+  })
+})
+
 describe('the new Japa screen', () => {
   beforeEach(() => {
     setViewportWidth(390)

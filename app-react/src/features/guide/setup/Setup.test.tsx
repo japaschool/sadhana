@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import en from '../../../../public/locales/en/translation.json'
@@ -63,6 +63,50 @@ async function rename(user: ReturnType<typeof userEvent.setup>, from: string, to
   if (to) await user.type(input, to)
   return input
 }
+
+describe('small things on the rows', () => {
+  it('+ Name your own after a suggestion opens the name field', async () => {
+    const user = await start(['count'])
+    await user.click(screen.getByRole('button', { name: en.guide.suggest.count1 }))
+    await user.click(screen.getByRole('button', { name: en.guide.setup.ownName }))
+    expect(screen.getByRole('textbox', { name: 'Practice name' })).toBeInTheDocument()
+    expect(screen.queryByText(en.guide.setup.clash.empty)).not.toBeInTheDocument()
+  })
+
+  it('a blank row’s buttons still say what they act on', async () => {
+    const user = await start(['days'])
+    await user.click(screen.getByRole('button', { name: en.guide.setup.ownName }))
+    await user.click(screen.getByRole('button', { name: 'Done' }))
+    expect(screen.getByRole('button', { name: 'Remove Practice name' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Rename Practice name' })).toBeInTheDocument()
+  })
+
+  it('a name stops at 64 characters, as in the form', async () => {
+    const user = await start(['days'])
+    await user.click(screen.getByRole('button', { name: en.guide.setup.ownName }))
+    expect(screen.getByRole('textbox', { name: 'Practice name' })).toHaveAttribute('maxlength', '64')
+  })
+})
+
+describe('with no connection and no practices cached', () => {
+  afterEach(() => onlineManager.setOnline(true))
+
+  it('says so instead of a Next that never wakes up, and carries on when back online', async () => {
+    const user = userEvent.setup()
+    setViewportWidth(1200)
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const r = createMemoryRouter([{ path: '/guide', element: <GuideScreen /> }], { initialEntries: ['/guide'] })
+    onlineManager.setOnline(false)
+    render(<QueryClientProvider client={qc}><RouterProvider router={r} /></QueryClientProvider>)
+    await user.click(screen.getByRole('switch', { name: 'Sleep' }))
+    await user.click(next())
+    expect(await screen.findByText('Something went wrong')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument()
+    await act(async () => { onlineManager.setOnline(true) })
+    await vi.waitFor(() => expect(screen.queryByText('Something went wrong')).not.toBeInTheDocument())
+    expect(next()).toBeEnabled()
+  })
+})
 
 describe('Sleep', () => {
   it('renames a practice in place, and it reaches the choices (trimmed)', async () => {

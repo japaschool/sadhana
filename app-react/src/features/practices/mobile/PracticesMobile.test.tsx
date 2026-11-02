@@ -1,3 +1,4 @@
+import userEvent from '@testing-library/user-event'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
@@ -98,7 +99,8 @@ describe('PracticesMobile', () => {
     api.getUserPractices.mockResolvedValue([])
     renderAt('/settings/practices')
     expect(await screen.findByText('No practices yet')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: '+ Add your first practice' })).toHaveAttribute('href', '/settings/practices/new')
+    await userEvent.click(screen.getByRole('button', { name: '+ Add your first practice' }))
+    expect(screen.getByRole('button', { name: /Help me choose/ })).toBeInTheDocument()
   })
 
   it('adds a practice with a list of numbers', async () => {

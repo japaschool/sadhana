@@ -23,6 +23,8 @@ interface PanelsReportViewProps {
   month?: string
   /** Off in examples: charts show no tooltip. */
   interactive?: boolean
+  /** The month legend under the grids, as in examples and form previews (17m3, 17t16); a report has it above them (17m23). */
+  legendLast?: boolean
 }
 
 /** A required practice was deleted or hidden (15m19, 15t10). */
@@ -64,7 +66,7 @@ function MonthLegend() {
   )
 }
 
-export function PanelsReportView({ report, definition, entries, previous, practices, todayCob, chartHeight, formLink, cols = 4, month = todayCob.slice(0, 7), interactive = true }: PanelsReportViewProps) {
+export function PanelsReportView({ report, definition, entries, previous, practices, todayCob, chartHeight, formLink, cols = 4, month = todayCob.slice(0, 7), interactive = true, legendLast = false }: PanelsReportViewProps) {
   const { t } = useTranslation()
   const lookup = makeLookup(entries, previous, practices)
   const days = windowDays(entries)
@@ -72,10 +74,12 @@ export function PanelsReportView({ report, definition, entries, previous, practi
   const missing = missingRequired(definition, lookup)
   const firstChart = panels.findIndex((p) => p.kind === 'Chart')
   const labels = [...new Set(missing.map((r) => labelText(r.label, t)))].join(', ')
+  const legend = panels.some((p) => p.kind === 'Month') && <MonthLegend />
 
   return (
     <div aria-label={report.name} role="group" className="flex flex-col gap-3">
       {missing.length > 0 && <MissingCard labels={labels} formLink={formLink} />}
+      {!legendLast && legend}
       {panels.map((p, i) => (p.kind === 'Month' ? (
         <MonthPanelView key={i} practice={p.practice} month={month} end={monthEnd(month, todayCob)} todayCob={todayCob} lookup={lookup} />
       ) : p.kind === 'Stats' ? (
@@ -85,7 +89,7 @@ export function PanelsReportView({ report, definition, entries, previous, practi
         <ChartPanelView key={i} panel={p} panels={panels} days={days} lookup={lookup} todayCob={todayCob}
           height={i === firstChart ? chartHeight : Math.round(chartHeight * 0.72)} first={i === firstChart} compact={cols === 2} interactive={interactive} />
       )))}
-      {panels.some((p) => p.kind === 'Month') && <MonthLegend />}
+      {legendLast && legend}
     </div>
   )
 }

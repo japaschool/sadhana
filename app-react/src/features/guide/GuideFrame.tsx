@@ -20,7 +20,7 @@ export function GuideFrame({ guide, footer, children }: { guide: Guide; footer?:
   const steps = guide.firstRun ? ['choose', 'setup', 'sharing', 'finish'] : ['choose', 'setup', 'finish']
   const at = { choose: 'choose', setup: 'setup', reader: 'sharing', finish: 'finish' }[guide.step.at]
   const cur = steps.indexOf(at)
-  const exit = guide.creating === 'running' ? <span className="w-11" /> : <button type="button" onClick={guide.leave} className={EXIT}>{t(guide.exitKey)}</button>
+  const exit = guide.creating ? <span className="w-11" /> : <button type="button" onClick={guide.leave} className={EXIT}>{t(guide.exitKey)}</button>
   const back = guide.canBack && (
     <button type="button" onClick={guide.back} className="flex min-h-11 items-center gap-1.5 px-2 text-[15px] font-bold text-ui-accent">
       <Chevron />{t('guide.back')}

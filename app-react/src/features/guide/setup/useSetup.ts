@@ -46,7 +46,8 @@ export function useSetup<K extends GuideKind>(guide: Guide, kind: K) {
   }
 
   const named = items.filter((it) => it.name)
-  const loadFailed = q.isError && !q.data
+  // Paused is offline before a first load: nothing will come until the connection does.
+  const loadFailed = (q.isError || q.isPaused) && !q.data
   const hint = ((): string | null => {
     if (loadFailed) return t('common.error')
     if (kind === 'count' && !(value as Value<'count'>).count.trim()) return t('guide.setup.needCount')

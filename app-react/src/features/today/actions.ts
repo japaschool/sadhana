@@ -13,10 +13,12 @@ export function shareUrl(): string | null {
   return user ? `${window.location.origin}/shared/${user.id}` : null
 }
 
-/** Copies the public charts link. Returns false when nobody is signed in. */
-export function copyShareLink(): boolean {
+/** Copies the public charts link. Resolves to false when nobody is signed in or the browser refuses. */
+export async function copyShareLink(): Promise<boolean> {
   const url = shareUrl()
   if (!url) return false
-  void navigator.clipboard.writeText(url)
-  return true
+  try {
+    await navigator.clipboard.writeText(url)
+    return true
+  } catch { return false }
 }

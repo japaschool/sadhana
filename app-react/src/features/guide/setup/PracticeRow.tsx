@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PracticeDataType, UserPractice } from '../../../types/api'
+import { NAME_MAX } from '../../practices/usePractices'
 import { TypeIcon, typeLabelKey } from '../../yatras/settings/mobile/TypeChip'
 import type { NameCheck } from './useSetup'
 
@@ -56,7 +57,7 @@ export function PracticeRow({ name, label, type, note, needed, tick, onRename, o
           {editing && !off ? (
             <div className="flex min-h-11 items-center gap-2 rounded-[10px] border-2 border-ui-accent-fill bg-ui-surface px-3">
               <TypeIcon type={type} />
-              <input autoFocus value={shown} aria-label={t('guide.setup.nameField')} aria-invalid={!!problem || !name}
+              <input autoFocus value={shown} maxLength={NAME_MAX} aria-label={t('guide.setup.nameField')} aria-invalid={!!problem || !name}
                 onChange={(e) => { setDraft(e.target.value); onRename(e.target.value.trim()) }}
                 className="min-w-0 flex-1 bg-transparent text-[15px] font-bold outline-none" />
             </div>
@@ -74,8 +75,8 @@ export function PracticeRow({ name, label, type, note, needed, tick, onRename, o
           : theirs && fit && !vanish
             // Theirs isn't renamed: a new name is a new practice, and the button says so.
             ? <button type="button" onClick={() => { setDraft(''); onRename(''); setEditing(true) }} className={LINK}>{t('guide.setup.startNew1')}</button>
-            : <button type="button" aria-label={t('guide.setup.rename', { name })} onClick={() => { setDraft(name); setEditing(true) }} className={LINK}>{t('guide.setup.renameShort')}</button>)}
-        {onRemove && <button type="button" aria-label={t('guide.setup.remove', { name })} onClick={onRemove} className="flex h-11 w-11 shrink-0 items-center justify-center text-lg text-ui-muted">×</button>}
+            : <button type="button" aria-label={t('guide.setup.rename', { name: name || label })} onClick={() => { setDraft(name); setEditing(true) }} className={LINK}>{t('guide.setup.renameShort')}</button>)}
+        {onRemove && <button type="button" aria-label={t('guide.setup.remove', { name: name || label })} onClick={onRemove} className="flex h-11 w-11 shrink-0 items-center justify-center text-lg text-ui-muted">×</button>}
       </div>
       {!!fit?.options.length && !fit.elsewhere && !editing && (
         <div className="mx-3.5 mb-3 flex flex-col gap-1.5">

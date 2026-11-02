@@ -361,7 +361,7 @@
     "createAndLink": "Create and link",
     "createIntro": "You don't have any practices yet. We can create all {{count}} with the yatra's names and types, and link them in one go.",
     "createHint": "They'll appear on Today. You can rename, hide or set them up differently later in My practices.",
-    "createdMany_one": "{{count}} practice was created and linked. It is on Today now, under the yatra's name.",
+    "createdMany_one": "{{count}} practice was created and linked. It is on Today now, under the yatra’s name.",
     "createdMany_other": "{{count}} practices were created and linked. They are on Today now, under the yatra’s names.",
     "startLogging": "Start logging",
     "note_hidden": "You have a hidden practice called “{{name}}”. Turn it on in My practices, then link it.",
@@ -1080,7 +1080,7 @@
     "done": "Done",
     "position": "{{a}} of {{b}}",
     "chosen": "{{n}} chosen",
-    "chooseOne": "Choose at least one, or build your own list",
+    "chooseOne": "Choose at least one to continue",
     "noneChosen": "None chosen",
     "steps": {
       "label": "Steps",
@@ -1181,7 +1181,7 @@
       "enterNumber": "Enter a number",
       "targetHint": "There’s no right number. Pick one that fits an ordinary day; you can change it any time.",
       "goalLabel": "Time a day",
-      "goalHint": "Days that reach it count toward “Days at goal”. Clear it to just see the time.",
+      "goalHint": "Days that reach it count toward “Days on goal”. Clear it to just see the time.",
       "daysHint": "Each practice gets its own section in the report: this month, last month, the last 90 days, and a month grid.",
       "optionalGroup": "Optional",
       "preview": "Preview",
@@ -1207,8 +1207,6 @@
       "fitNote": "{{type}} · already on Today",
       "useFit": "Use",
       "usingFit": "Using",
-      "useOne": "Use one of mine for {{name}}",
-      "usePick": "Use one of mine…",
       "tracked": "You already track this",
       "fixRange": "Fix the sleep range to continue",
       "retry": "Try again"
@@ -1248,6 +1246,7 @@
         "days": "The month grid fills in day by day.",
         "past": "Your past entries are already in it."
       },
+      "goal": "goal {{value}}",
       "linkTitle": "Link for your reader",
       "copy": "Copy",
       "copied": "Copied",

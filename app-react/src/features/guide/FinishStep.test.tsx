@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AxiosError } from 'axios'
@@ -133,6 +133,7 @@ describe('creating', () => {
     expect(await screen.findByText('Setup didn’t finish')).toBeInTheDocument()
     expect(screen.getByText(/can’t be used any more/)).toBeInTheDocument()
     expect(chartsApi.createReport).not.toHaveBeenCalled()
+    await vi.waitFor(() => expect(qc.getQueryData<UserPractice[]>(['practices'])?.map((p) => p.practice)).toContain('Bedtime')) // so set up can't pass on the old list
   })
 
   it('has fresh practices and reports in the cache before the closing screen, and marks the run finished with the answer', async () => {
@@ -341,8 +342,61 @@ describe('the closing screen', () => {
 
   it('outside first run, leaves to where the guide was opened from', async () => {
     const user = await open({ back: '/settings' })
-    await user.click(await screen.findByRole('button', { name: 'Start logging' }))
+    await user.click(await screen.findByRole('button', { name: 'Done' }))
     expect(await screen.findByText('Settings')).toBeInTheDocument()
+  })
+
+  it('says Start logging when it leaves for Today from the app too', async () => {
+    await open({ back: '/' })
+    expect(await screen.findByRole('button', { name: 'Start logging' })).toBeInTheDocument()
+  })
+
+  it('has no exit link', async () => {
+    const user = await open({ firstRun: true })
+    await answer('No', user)
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    await screen.findByText('Here’s what’s set up')
+    expect(screen.queryByRole('button', { name: 'Build my own list' })).not.toBeInTheDocument()
+  })
+
+  it('shows the target and the goal beside the names', async () => {
+    const user = userEvent.setup()
+    qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    router = createMemoryRouter([{ path: '/guide', element: <GuideScreen /> }, { path: '/settings', element: <p>Settings</p> }], { initialEntries: [{ pathname: '/guide', state: { back: '/settings' } }] })
+    render(<QueryClientProvider client={qc}><RouterProvider router={router} /></QueryClientProvider>)
+    await user.click(screen.getByRole('switch', { name: 'Daily count' }))
+    await user.click(screen.getByRole('switch', { name: 'Time spent' }))
+    await user.click(screen.getByRole('button', { name: /^(Next|Create report)/ }))
+    await screen.findByText(/^Set up · /)
+    await act(async () => {})
+    await user.click(screen.getByRole('button', { name: en.guide.suggest.count3 }))
+    const target = screen.getByLabelText('How many a day')
+    await user.type(target, '20')
+    fireEvent.blur(target)
+    await user.click(screen.getByRole('button', { name: /^(Next|Create report)/ }))
+    await user.click(screen.getByRole('button', { name: en.guide.suggest.time1 }))
+    const goal = screen.getByLabelText('Time a day')
+    fireEvent.change(goal, { target: { value: '01:30' } })
+    fireEvent.blur(goal)
+    await user.click(screen.getByRole('button', { name: /^(Next|Create report)/ }))
+    await screen.findByText('Here’s what’s set up')
+    expect(screen.getByText(`${en.guide.suggest.count3} · 20 a day`)).toBeInTheDocument()
+    expect(screen.getByText(`${en.guide.suggest.time1} · goal 1 h 30 min`)).toBeInTheDocument()
+  })
+
+  it('says Copied only when the copy worked', async () => {
+    const user = await open({ firstRun: true })
+    // After open: userEvent.setup puts its own clipboard in place.
+    const writeText = vi.fn().mockRejectedValueOnce(new Error('denied')).mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+    await answer('Yes', user)
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    await screen.findByText('Here’s what’s set up')
+    await user.click(screen.getByRole('button', { name: 'Copy' }))
+    await act(async () => {})
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Copy' }))
+    expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument()
   })
 })
 
@@ -373,7 +427,7 @@ describe('from Add practice, on practices the person already has', () => {
     expect(practicesApi.deleteUserPractice).not.toHaveBeenCalled()
     expect(chartsApi.updateReport).not.toHaveBeenCalled()
     expect(chartsApi.deleteReport).not.toHaveBeenCalled()
-    await user.click(screen.getByRole('button', { name: 'Start logging' }))
+    await user.click(screen.getByRole('button', { name: 'Done' }))
     expect(await screen.findByText('Settings')).toBeInTheDocument()
   })
 })

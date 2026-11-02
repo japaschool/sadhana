@@ -15,6 +15,8 @@ export function SetupCount({ setup }: { setup: Setup<'count'> }) {
   const { value: v, set, check, fitting } = setup
   // Once the row is there it stays, even if its name is cleared while typing.
   const [own, setOwn] = useState(false)
+  // A new key for each "+ Name your own", so a row already showing a suggestion starts over as an open field.
+  const [ownTap, setOwnTap] = useState(0)
   const mine = fitting(JAPA_SLOTS[0])
   const early = t('templateForm.morning')
   const how = t('templateForm.quality')
@@ -32,11 +34,11 @@ export function SetupCount({ setup }: { setup: Setup<'count'> }) {
             const name = t(`guide.suggest.count${n}`)
             return <Chip key={n} on={v.count === name} note={check(name, JAPA_SLOTS[0]).existing ? t('guide.setup.tracked') : undefined} onClick={() => { setOwn(true); set({ count: name }) }}>{name}</Chip>
           })}
-          <Chip dashed onClick={() => { setOwn(true); set({ count: '' }) }}>{t('guide.setup.ownName')}</Chip>
+          <Chip dashed onClick={() => { setOwn(true); setOwnTap((n) => n + 1); set({ count: '' }) }}>{t('guide.setup.ownName')}</Chip>
         </div>
         {(v.count || own) && (
           <RowList>
-            <PracticeRow name={v.count} label={t('templateForm.total')} type="Int" note={t('guide.setup.countNote')} startEditing={!v.count} vanish fit={{ options: mine, fallback: '', elsewhere: true }}
+            <PracticeRow key={ownTap} name={v.count} label={t('templateForm.total')} type="Int" note={t('guide.setup.countNote')} startEditing={!v.count} vanish fit={{ options: mine, fallback: '', elsewhere: true }}
               onRename={(count) => set({ count })} check={check(v.count, JAPA_SLOTS[0])} />
           </RowList>
         )}

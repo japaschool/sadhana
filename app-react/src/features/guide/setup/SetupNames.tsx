@@ -37,7 +37,7 @@ export function SetupNames({ setup, slot, suggestions, max }: { setup: Setup<'ti
         {v.names.length > 0 && (
           <RowList>
             {v.names.map((name, i) => (
-              <PracticeRow key={i} name={name} label={name} type={slot.types[0]} startEditing={!name} vanish fit={{ options: mine, fallback: '', elsewhere: true }}
+              <PracticeRow key={i} name={name} label={name || t('guide.setup.nameField')} type={slot.types[0]} startEditing={!name} vanish fit={{ options: mine, fallback: '', elsewhere: true }}
                 note={suggestions.includes(name) ? undefined : t('guide.setup.ownType', { type: t(`yatraSettings.type${slot.types[0]}`) })}
                 onRename={(n) => set_(v.names.map((x, j) => (j === i ? n : x)))}
                 onRemove={() => set_(v.names.filter((_, j) => j !== i))} check={check(name, slot)} />

@@ -50,8 +50,9 @@ function NewReport({ slug }: { slug: Slug }) {
   const reportsQ = useReports()
   const practicesQ = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices })
   const todayCob = toDateStr(new Date())
-  // The same query as Insights' default 30 days and the chart editor's preview.
-  const dataQ = useQuery({ queryKey: ['report-data', todayCob, 'Month'], queryFn: () => chartsApi.getReportData(todayCob, 'Month'), enabled: wide })
+  // The same query as Insights and the chart editor's preview: 30 days, or half a year for month grids (Last 90 days needs it).
+  const duration = slug === 'days' ? 'HalfYear' : 'Month'
+  const dataQ = useQuery({ queryKey: ['report-data', todayCob, duration], queryFn: () => chartsApi.getReportData(todayCob, duration), enabled: wide })
 
   const defaultName = t(`templateForm.${slug}Name`)
   const [name, setName] = useState(defaultName)
@@ -113,7 +114,7 @@ function NewReport({ slug }: { slug: Slug }) {
     : (
       // ponytail: the preview has no previous window, so its first night has no bar; pass it through if that reads as wrong.
       <PanelsReportView report={{ id: 'new', name: name.trim() || defaultName, definition }} definition={definition.Panels}
-        entries={dataQ.data ?? []} previous={undefined} practices={practices} todayCob={todayCob} chartHeight={desktop ? 220 : 180} formLink={null} cols={2} />
+        entries={dataQ.data ?? []} previous={undefined} practices={practices} todayCob={todayCob} chartHeight={desktop ? 220 : 180} formLink={null} cols={2} legendLast />
     )
   const buttons = (
     <div className="flex items-center justify-end gap-2">

@@ -6,7 +6,8 @@ import { chartsApi } from '../../api/charts'
 import { practicesApi } from '../../api/practices'
 import { PrimaryButton, SecondaryButton } from '../auth/kit'
 import { REPORTS_KEY } from '../insights/useReports'
-import { shareUrl } from '../today/actions'
+import { copyShareLink, shareUrl } from '../today/actions'
+import { formatDuration } from '../today/values'
 import { GuideFrame } from './GuideFrame'
 import { buildPlan, itemsOf, KINDS, runPlan } from './guideLogic'
 import type { GuideApi, GuideKind } from './guideLogic'
@@ -59,6 +60,8 @@ export function FinishStep({ guide }: { guide: Guide }) {
       setCreating('done')
       guide.finished(guide.reader ?? undefined)
     } catch (e) {
+      // Set up gates on this list: a name that failed here mustn't pass there on the old one.
+      void qc.invalidateQueries({ queryKey: ['practices'], refetchType: 'all' })
       setFailure(isAxiosError(e) ? 'connection' : 'names')
       setCreating(null)
     }
@@ -75,6 +78,12 @@ export function FinishStep({ guide }: { guide: Guide }) {
   const names = (k: GuideKind) => itemsOf(k, chosen[k]!).map((it) => it.name)
   const practices = new Set(kinds.flatMap(names)).size
   const link = guide.reader ? shareUrl() : null
+  const detail = (k: GuideKind) => {
+    const { count, time } = chosen
+    if (k === 'count' && count?.target != null) return `${count.target} ${t('templateForm.targetSuffix')}`
+    if (k === 'time' && time?.goal != null) return t('guide.finish.goal', { value: formatDuration(time.goal, { h: t('today.unitH'), min: t('today.unitMin') }) })
+    return null
+  }
   const hasHistory = (k: GuideKind) => names(k).every((n) => guide.existed.current?.has(n))
   const rowNote = (k: GuideKind) => {
     const s = rows[k]
@@ -87,7 +96,7 @@ export function FinishStep({ guide }: { guide: Guide }) {
         <li key={k} className="flex min-h-14 items-start gap-3 px-3.5 py-3">
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="text-[15px] font-extrabold">{t(`guide.kinds.${k}.name`)}</span>
-            <span className="text-[13px] leading-snug text-ui-ink2">{names(k).join(', ')}</span>
+            <span className="text-[13px] leading-snug text-ui-ink2">{[names(k).join(', '), detail(k)].filter(Boolean).join(' · ')}</span>
             {done && (
               <span className="text-xs leading-snug text-ui-muted text-pretty">
                 {hasHistory(k) ? t('guide.finish.note.past') : <><b className="text-ui-accent">{t(k === 'sleep' ? 'guide.finish.second' : 'guide.finish.first')} · </b>{t(`guide.finish.note.${k}`)}</>}
@@ -113,14 +122,14 @@ export function FinishStep({ guide }: { guide: Guide }) {
             <div className="flex min-h-12 items-center justify-between gap-2 rounded-xl border border-ui-control bg-ui-surface py-1 pr-1.5 pl-3.5">
               <span className="min-w-0 font-ui-mono text-sm [overflow-wrap:anywhere]">{link}</span>
               <button type="button" className="min-h-10 shrink-0 rounded-[10px] bg-ui-tint px-3.5 text-[13px] font-extrabold text-ui-accent"
-                onClick={() => { void navigator.clipboard.writeText(link); setCopied(true) }}>
+                onClick={() => { void copyShareLink().then(setCopied) }}>
                 {t(copied ? 'guide.finish.copied' : 'guide.finish.copy')}
               </button>
             </div>
             <span className="text-xs leading-snug text-ui-muted">{t('guide.finish.linkNote')}</span>
           </div>
         )}
-        <PrimaryButton type="button" onClick={guide.finish}>{t('guide.finish.start')}</PrimaryButton>
+        <PrimaryButton type="button" onClick={guide.finish}>{t(guide.finishKey)}</PrimaryButton>
       </>
     )
   } else {

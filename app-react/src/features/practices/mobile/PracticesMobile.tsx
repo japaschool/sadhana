@@ -80,7 +80,7 @@ export function PracticesMobile() {
       </header>
       <div className="flex flex-col gap-4 px-4 pb-8">
         <h1 className="px-1 text-[30px] leading-tight font-extrabold tracking-[-0.02em] text-ui-ink">{t('practices.title')}</h1>
-        <PracticeList s={s} swipe onDelete={setDeletingId} />
+        <PracticeList s={s} swipe onAdd={() => setChoosing(true)} onDelete={setDeletingId} />
       </div>
 
       {(adding || editing) && (
@@ -134,10 +134,12 @@ export function DeleteSheet({ s, p, onDeleted, onClose }: { s: Practices; p: Use
  * The count, then your practices in Today's order under their group headers. The dots drag a practice (within or across
  * groups) or a whole group. Tap a row to edit it, a header to rename or delete its group.
  */
-export function PracticeList({ s, swipe, selected, selectedGroup, onDelete }: {
+export function PracticeList({ s, swipe, onAdd, selected, selectedGroup, onDelete }: {
   s: Practices
   /** Mobile: a left swipe shows Hide and Delete. */
   swipe?: boolean
+  /** The empty list's button. Wide layouts open the Add form beside the list, so they pass none. */
+  onAdd?: () => void
   /** Wide layouts: the row open in the editor beside the list. */
   selected?: string
   /** Wide layouts: the group open in the editor beside the list. */
@@ -207,8 +209,7 @@ export function PracticeList({ s, swipe, selected, selectedGroup, onDelete }: {
 
   if (s.isLoading) return <Skeleton />
   if (s.isError) return <p role="alert" className="rounded-2xl bg-ui-surface px-4 py-3 text-sm text-ui-danger">{t('common.error')}</p>
-  // Wide layouts open the Add form beside an empty list, so the card has no button.
-  if (!s.practices.length && single) return <Empty add={swipe} />
+  if (!s.practices.length && single) return <Empty onAdd={onAdd} />
   const count = t('practices.count', { count: s.practices.length })
   return (
     <>
@@ -416,7 +417,7 @@ function Skeleton() {
   )
 }
 
-function Empty({ add }: { add?: boolean }) {
+function Empty({ onAdd }: { onAdd?: () => void }) {
   const { t } = useTranslation()
   return (
     <div className="flex flex-col items-center gap-3 rounded-[18px] border border-dashed border-ui-control px-6 py-8 text-center">
@@ -425,9 +426,9 @@ function Empty({ add }: { add?: boolean }) {
       </div>
       <h2 className="text-xl font-extrabold text-ui-ink">{t('practices.emptyTitle')}</h2>
       <p className="text-sm leading-normal text-ui-ink2">{t('practices.emptyText')}</p>
-      {add && <Link to="/settings/practices/new" className="mt-1 flex min-h-12 items-center rounded-[14px] bg-ui-accent-fill px-5 text-[15px] font-extrabold text-ui-ink">
+      {onAdd && <button type="button" onClick={onAdd} className="mt-1 flex min-h-12 items-center rounded-[14px] bg-ui-accent-fill px-5 text-[15px] font-extrabold text-ui-ink">
         {t('practices.addFirst')}
-      </Link>}
+      </button>}
     </div>
   )
 }

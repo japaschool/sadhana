@@ -40,6 +40,19 @@ describe('MiniReport', () => {
     } finally { vi.useRealTimers() }
   })
 
+  it('keeps the month legend under the grids, as in every example frame', () => {
+    render(<MiniReport kind="days" compact />)
+    const cell = document.querySelector('[data-cob]')!
+    expect(cell.compareDocumentPosition(screen.getByRole('list', { name: 'Key' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('a real report has the month legend above its sections', () => {
+    const e = exampleReport('days', today(), i18n.t.bind(i18n))
+    render(<PanelsReportView report={{ id: 'r', name: 'Days', definition: { Panels: e.definition } }} definition={e.definition} entries={e.entries} previous={undefined} practices={e.practices} todayCob={today()} chartHeight={100} formLink={null} />)
+    const cell = document.querySelector('[data-cob]')!
+    expect(cell.compareDocumentPosition(screen.getByRole('list', { name: 'Key' })) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy()
+  })
+
   it('draws with the real renderer: sleep has its charts, days its month grids', () => {
     const { container, unmount } = render(<MiniReport kind="sleep" compact />)
     expect(container.querySelectorAll('.recharts-surface')).toHaveLength(2)

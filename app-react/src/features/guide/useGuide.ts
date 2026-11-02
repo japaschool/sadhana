@@ -86,10 +86,10 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
   }, [run, navigate, firstRun])
   const finish = () => navigate(firstRun ? '/' : backTo, { replace: true })
   const setUp = KINDS.some((k) => tracked.includes(k) && choices[k])
-  const leave = () => (creating === 'done' ? finish() : setUp ? setConfirming(true) : exit('left'))
+  const leave = () => (setUp ? setConfirming(true) : exit('left'))
 
   return {
-    firstRun, carousel, step, exitKey: firstRun ? 'guide.exit' : 'home.addOneMyself', pos, reader, setReader, creating, setCreating, plan, existed, setPos, tracked, skipped, choices, nothing, confirming,
+    firstRun, carousel, step, exitKey: firstRun ? 'guide.exit' : 'home.addOneMyself', finishKey: firstRun || backTo === '/' ? 'guide.finish.start' : 'guide.done', pos, reader, setReader, creating, setCreating, plan, existed, setPos, tracked, skipped, choices, nothing, confirming,
     /** What the plan is built from: only the reports still tracked, so skipping one after its set up drops it (re-tracking brings its values back). */
     chosen: Object.fromEntries(KINDS.map((k) => [k, tracked.includes(k) ? choices[k] : null])) as unknown as Choices,
     /** The first card of a sign-up guide is the start: nowhere to go back to. */
