@@ -50,8 +50,11 @@ export function FinishStep({ guide }: { guide: Guide }) {
         owed.current = false
       }
       await runPlan(plan.current, api, (kind, state) => setRows((r) => ({ ...r, [kind]: state })))
-      void qc.invalidateQueries({ queryKey: ['practices'] })
-      void qc.invalidateQueries({ queryKey: REPORTS_KEY })
+      // Nothing observes these here, so without refetchType 'all' the next screen would start from the old lists.
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['practices'], refetchType: 'all' }),
+        qc.invalidateQueries({ queryKey: REPORTS_KEY, refetchType: 'all' }),
+      ])
       setCreating('done')
       guide.finished(guide.reader ?? undefined)
     } catch (e) {

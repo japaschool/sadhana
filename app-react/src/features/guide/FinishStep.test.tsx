@@ -134,14 +134,15 @@ describe('creating', () => {
     expect(chartsApi.createReport).not.toHaveBeenCalled()
   })
 
-  it('refreshes the practices and reports on success and marks the run finished with the answer', async () => {
+  it('has fresh practices and reports in the cache before the closing screen, and marks the run finished with the answer', async () => {
     const user = await open({ firstRun: true })
-    const spy = vi.spyOn(qc, 'invalidateQueries')
+    // Nothing observes these during Finish, which is what a plain invalidate skips.
+    await qc.fetchQuery({ queryKey: REPORTS_KEY, queryFn: chartsApi.getReports })
     await answer('Yes', user)
     await user.click(screen.getByRole('button', { name: 'Finish setup' }))
     await screen.findByText('Here’s what’s set up')
-    expect(spy).toHaveBeenCalledWith({ queryKey: ['practices'] })
-    expect(spy).toHaveBeenCalledWith({ queryKey: REPORTS_KEY })
+    expect(qc.getQueryData<UserPractice[]>(['practices'])?.map((p) => p.practice).sort()).toEqual(['Bedtime', 'Nap', 'Wake-up'])
+    expect(qc.getQueryData<{ name: string }[]>(REPORTS_KEY)?.map((r) => r.name)).toEqual(['Sleep'])
     // recorded on success, so someone who copies the link and closes the app still counts
     await vi.waitFor(() => expect(guideApi.update).toHaveBeenCalledWith('run-1', { outcome: 'finished', has_reader: true }))
     await user.click(screen.getByRole('button', { name: 'Start logging' }))
@@ -243,7 +244,7 @@ describe('coming back to Finish after a failure', () => {
     const before = vi.mocked(chartsApi.getReports).mock.calls.length
     await user.click(screen.getByRole('button', { name: 'Retry' }))
     await screen.findByText('Here’s what’s set up')
-    expect(vi.mocked(chartsApi.getReports).mock.calls.length - before).toBe(1) // runPlan's own read only
+    expect(vi.mocked(chartsApi.getReports).mock.calls.length - before).toBe(2) // runPlan's own read and the refresh at the end
   })
 })
 

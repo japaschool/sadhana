@@ -54,9 +54,9 @@ export function useLinkPractices(yatraId: string) {
   const [notes, setNotes] = useState<Map<string, 'hidden' | 'type' | 'failed'>>(new Map())
   const [creating, setCreating] = useState(false)
   const [created, setCreated] = useState(0)
-  // The offer stays up once made, so creating one row doesn't take the buttons off the others.
+  // The offer stays up once made, so creating one row doesn't take the buttons off the others. Decided on a settled list: a cached one may predate the guide.
   const offered = useRef<boolean | null>(null)
-  if (offered.current === null && practicesQ.data) offered.current = !practicesQ.data.some((p) => p.is_active)
+  if (offered.current === null && practicesQ.data && !practicesQ.isFetching) offered.current = !practicesQ.data.some((p) => p.is_active)
 
   /** One practice per row with the yatra's name and type, then all of them linked. Never touches an existing practice. */
   async function createAndLink(rows: YatraPractice[]) {
