@@ -37,6 +37,7 @@ export function ReaderStep({ guide }: { guide: Guide }) {
         <span className="font-ui-mono text-xs font-semibold tracking-[.08em] text-ui-muted uppercase">{t('guide.reader.label')}</span>
         <h1 className="text-[26px] leading-[1.15] font-extrabold tracking-[-0.02em] text-pretty">{t('guide.reader.title')}</h1>
         <p className="text-sm leading-normal text-ui-muted text-pretty">{t('guide.reader.intro')}</p>
+        <p className="text-sm leading-normal text-ui-ink2 text-pretty">{t('guide.reader.always')}</p>
         <div role="radiogroup" aria-label={t('guide.reader.title')} className={`grid gap-3 ${wide ? 'grid-cols-2' : ''}`}>
           <Option on={guide.reader === true} title={t('guide.reader.yes')} body={t('guide.reader.yesBody')} onPick={() => guide.setReader(true)} />
           <Option on={guide.reader === false} title={t('guide.reader.no')} body={t('guide.reader.noBody')} onPick={() => guide.setReader(false)} />

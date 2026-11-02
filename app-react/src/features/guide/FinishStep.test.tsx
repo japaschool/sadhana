@@ -72,6 +72,11 @@ describe('the reader question', () => {
     expect(screen.getByRole('button', { name: 'Finish setup' })).toBeEnabled()
   })
 
+  it('says plainly that the link exists whatever the answer', async () => {
+    await open({ firstRun: true })
+    expect(screen.getByText(/works without signing in and can’t be turned off/)).toBeInTheDocument()
+  })
+
   it('is not asked outside first run', async () => {
     await open({ back: '/settings' })
     expect(screen.queryByRole('radio')).not.toBeInTheDocument()
@@ -100,6 +105,7 @@ describe('creating', () => {
     await answer('Yes', user)
     await user.click(screen.getByRole('button', { name: 'Finish setup' }))
     expect(await screen.findByText('Setup didn’t finish')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong. The connection dropped while saving.')
     expect(screen.getAllByText('Not saved yet').length).toBe(2)
     expect(screen.getByRole('button', { name: 'Review my choices' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Retry' }))
@@ -136,9 +142,41 @@ describe('creating', () => {
     await screen.findByText('Here’s what’s set up')
     expect(spy).toHaveBeenCalledWith({ queryKey: ['practices'] })
     expect(spy).toHaveBeenCalledWith({ queryKey: REPORTS_KEY })
+    // recorded on success, so someone who copies the link and closes the app still counts
+    await vi.waitFor(() => expect(guideApi.update).toHaveBeenCalledWith('run-1', { outcome: 'finished', has_reader: true }))
     await user.click(screen.getByRole('button', { name: 'Start logging' }))
     expect(await screen.findByText('Today')).toBeInTheDocument()
-    await vi.waitFor(() => expect(guideApi.update).toHaveBeenCalledWith('run-1', { outcome: 'finished', has_reader: true }))
+    expect(vi.mocked(guideApi.update).mock.calls.filter(([, b]) => b.outcome).length).toBe(1)
+  })
+})
+
+describe('leaving during and after creating', () => {
+  it('has no exit link while creating', async () => {
+    let release!: () => void
+    vi.mocked(chartsApi.createReport).mockImplementationOnce(async (name) => { await new Promise<void>((r) => { release = r }); made.push(name); return 'r' })
+    const user = await open({ firstRun: true })
+    await answer('No', user)
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    await screen.findByText('Creating…')
+    expect(screen.queryByRole('button', { name: 'Build my own list' })).not.toBeInTheDocument()
+    await act(async () => release())
+    await screen.findByText('Here’s what’s set up')
+  })
+
+  it('after a partial failure the leave sheet says what stays', async () => {
+    vi.mocked(chartsApi.createReport).mockRejectedValueOnce(offline())
+    const user = await open({ firstRun: true })
+    await answer('No', user)
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    await screen.findByText('Setup didn’t finish')
+    await user.click(screen.getAllByRole('button', { name: 'Build my own list' })[0])
+    expect(screen.getByText('Anything already created stays. The rest won’t be saved.')).toBeInTheDocument()
+  })
+
+  it('before anything is created the sheet keeps its first wording', async () => {
+    const user = await open({ firstRun: true })
+    await user.click(screen.getAllByRole('button', { name: 'Build my own list' })[0])
+    expect(screen.getByText('What you’ve chosen here won’t be saved.')).toBeInTheDocument()
   })
 })
 
@@ -176,6 +214,26 @@ describe('coming back to Finish after a failure', () => {
     await user.click(screen.getByRole('button', { name: 'Finish setup' }))
     expect(await screen.findByText('Here’s what’s set up')).toBeInTheDocument()
     expect(made).toEqual(['Sleep', 'Days I did it'])
+  })
+
+  it('Retry still rebuilds when the rebuild itself failed offline', async () => {
+    vi.mocked(chartsApi.createReport).mockRejectedValueOnce(offline())
+    const user = await open({ firstRun: true })
+    await fail(user)
+    await user.click(screen.getByRole('button', { name: 'Review my choices' }))
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    await user.click(screen.getByRole('button', { name: 'Rename Bedtime' }))
+    const input = screen.getByRole('textbox', { name: 'Practice name' })
+    await user.clear(input)
+    await user.type(input, 'Lights out')
+    await user.click(screen.getByRole('button', { name: 'Done' }))
+    await user.click(screen.getByRole('button', { name: /^Next/ }))
+    vi.mocked(practicesApi.getUserPractices).mockRejectedValueOnce(offline())
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    await screen.findByText('Setup didn’t finish')
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(await screen.findByText('Here’s what’s set up')).toBeInTheDocument()
+    expect(have.map((p) => p.practice)).toContain('Lights out')
   })
 
   it('a plain Retry reads nothing again for the plan', async () => {

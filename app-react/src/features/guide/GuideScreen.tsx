@@ -28,7 +28,7 @@ export function GuideScreen() {
       {guide.confirming && (
         <BottomSheet label={t('guide.leave.title')} onClose={guide.keepGoing}>
           <h2 className="text-xl font-extrabold">{t('guide.leave.title')}</h2>
-          <p className="text-sm leading-normal text-ui-ink2">{t('guide.leave.body')}</p>
+          <p className="text-sm leading-normal text-ui-ink2">{t(guide.partlySaved ? 'guide.leave.bodyPartial' : 'guide.leave.body')}</p>
           <PrimaryButton type="button" onClick={guide.keepGoing}>{t('guide.leave.keep')}</PrimaryButton>
           <SecondaryButton onClick={guide.confirmLeave}>{t('guide.leave.confirm')}</SecondaryButton>
         </BottomSheet>

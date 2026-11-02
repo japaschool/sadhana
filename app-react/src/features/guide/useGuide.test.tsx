@@ -91,11 +91,14 @@ describe('useGuide', () => {
     expect(result.current.path).toBe('/')
   })
 
-  it('marks finished with whether there is a reader', async () => {
+  it('marks finished with whether there is a reader, and leaving afterwards only navigates', async () => {
     const { result } = setup(true)
-    act(() => result.current.guide.finish(true))
+    act(() => result.current.guide.finished(true))
+    expect(result.current.path).toBe('/guide')
+    act(() => result.current.guide.finish())
     expect(result.current.path).toBe('/')
     await vi.waitFor(() => expect(api.update).toHaveBeenCalledWith('run-1', { outcome: 'finished', has_reader: true }))
+    expect(api.update.mock.calls.filter(([, b]) => b.outcome)).toHaveLength(1)
   })
 
   it('drops a report from the plan and the confirmation when it is un-chosen, and brings its values back when re-chosen', () => {

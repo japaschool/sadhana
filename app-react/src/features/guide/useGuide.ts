@@ -77,11 +77,12 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
     } else setStep(step.at === 'finish' && firstRun ? { at: 'reader' } : lastSetup)
   }
 
-  const exit = useCallback((outcome: 'finished' | 'left', hasReader?: boolean) => {
-    run.end(outcome, hasReader)
-    // ponytail: Task 17 refines where a guide opened from the app ends up.
-    navigate(outcome === 'finished' && !firstRun ? backTo : '/', { replace: true })
-  }, [run, navigate, firstRun, backTo])
+  const exit = useCallback((outcome: 'left') => {
+    run.end(outcome)
+    navigate('/', { replace: true })
+  }, [run, navigate])
+  // ponytail: Task 17 refines where a guide opened from the app ends up.
+  const finish = () => navigate(firstRun ? '/' : backTo, { replace: true })
 
   return {
     firstRun, carousel, step, pos, reader, setReader, creating, setCreating, plan, setPos, tracked, skipped, choices, nothing, confirming,
@@ -97,9 +98,14 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
     pick: (kind: GuideKind) => { setTracked([kind]); setNothing(false); setStep(after({ at: 'choose' }, [kind])) },
     lookAgain: () => { setNothing(false); setPos(0); setSkipped([]) },
     /** "Build my own list", at any step: asks first once a report has been set up. */
-    leave: () => (creating === 'done' ? exit('finished', reader ?? undefined) : KINDS.some((k) => tracked.includes(k) && choices[k]) ? setConfirming(true) : exit('left')),
+    leave: () => (creating === 'done' ? finish() : KINDS.some((k) => tracked.includes(k) && choices[k]) ? setConfirming(true) : exit('left')),
     keepGoing: () => setConfirming(false),
     confirmLeave: () => exit('left'),
-    finish: (hasReader?: boolean) => exit('finished', hasReader),
+    /** Recorded once, when everything is created, so closing the app on the closing screen still counts. */
+    finished: (hasReader?: boolean) => run.end('finished', hasReader),
+    /** Leaves the closing screen: navigation only. */
+    finish,
+    /** Some of it may already exist, so leaving can't promise nothing is saved. */
+    partlySaved: plan.current !== null,
   }
 }

@@ -1099,7 +1099,8 @@
       "title": "Leave setup?",
       "body": "What you’ve chosen here won’t be saved.",
       "keep": "Keep setting up",
-      "confirm": "Leave setup"
+      "confirm": "Leave setup",
+      "bodyPartial": "Anything already created stays. The rest won’t be saved."
     },
     "suggest": {
       "count1": "Mantra rounds",
@@ -1194,7 +1195,8 @@
       "no": "No, it’s just for me",
       "noBody": "We won’t show you a link here.",
       "pick": "Choose an answer to finish",
-      "finish": "Finish setup"
+      "finish": "Finish setup",
+      "always": "Every account has a link that works without signing in and can’t be turned off. Answering No just means we won’t show it here."
     },
     "finish": {
       "creatingTitle": "Setting up your reports",
