@@ -150,6 +150,12 @@ export function exampleReport(kind: GuideKind, todayCob: string, t: TFunction, a
   }
 }
 
+/** The day an example stands on. Days draws one month, nearly empty early on, so it shows the last month's 28th (every month has one) until this month's. */
+export function exampleDay(kind: GuideKind, todayCob: string): string {
+  const d = fromDateStr(todayCob)
+  return kind !== 'days' || d.getDate() >= 28 ? todayCob : toDateStr(new Date(d.getFullYear(), d.getMonth() - 1, 28))
+}
+
 /** What a screen reader gets in place of the picture: the same figures the report shows. */
 export function exampleSummary(kind: GuideKind, todayCob: string, t: TFunction): string {
   const { definition, entries, practices } = exampleReport(kind, todayCob, t)

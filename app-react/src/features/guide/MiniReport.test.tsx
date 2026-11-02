@@ -4,7 +4,7 @@ import i18n from 'i18next'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import ru from '../../../public/locales/ru/translation.json'
 import { toDateStr } from '../today/date'
-import { exampleSummary } from './examples'
+import { exampleDay, exampleSummary } from './examples'
 import { MiniReport } from './MiniReport'
 import type { GuideKind } from './guideLogic'
 import { PanelsReportView } from '../insights/panels/PanelsReportView'
@@ -25,7 +25,19 @@ describe('MiniReport', () => {
   it.each(KINDS)('%s shows the example band and is an image named by its summary', (kind) => {
     render(<MiniReport kind={kind} compact />)
     expect(screen.getByText('Example · not your data')).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: exampleSummary(kind, today(), i18n.t.bind(i18n)) })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: exampleSummary(kind, exampleDay(kind, today()), i18n.t.bind(i18n)) })).toBeInTheDocument()
+  })
+
+  it('days is a full month’s example on the first of the month, and its summary says the same', () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 10, 1, 12))
+    try {
+      render(<MiniReport kind="days" compact />)
+      const cells = [...document.querySelectorAll<HTMLElement>('[data-cob]')]
+      expect(cells.every((c) => c.dataset.cob!.startsWith('2026-10'))).toBe(true)
+      const day = exampleDay('days', '2026-11-01')
+      expect(screen.getByRole('img', { name: exampleSummary('days', day, i18n.t.bind(i18n)) })).toBeInTheDocument()
+    } finally { vi.useRealTimers() }
   })
 
   it('draws with the real renderer: sleep has its charts, days its month grids', () => {

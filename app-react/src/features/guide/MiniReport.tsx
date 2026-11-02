@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import type { PanelsReport } from '../../api/charts'
 import { PanelsReportView } from '../insights/panels/PanelsReportView'
 import { toDateStr } from '../today/date'
-import { exampleReport, exampleSummary } from './examples'
+import { exampleDay, exampleReport, exampleSummary } from './examples'
 import type { Applied } from './examples'
 import type { GuideKind } from './guideLogic'
 
@@ -22,7 +22,7 @@ function fit(kind: GuideKind, definition: PanelsReport, compact: boolean): Panel
  */
 export function MiniReport({ kind, compact = false, head, footer, on = false, applied }: { kind: GuideKind; compact?: boolean; head?: ReactNode; footer?: ReactNode; on?: boolean; applied?: Applied }) {
   const { t, i18n } = useTranslation()
-  const today = toDateStr(new Date())
+  const today = exampleDay(kind, toDateStr(new Date()))
   // i18n.language: the example's names and text are rebuilt when the language changes.
   const choices = JSON.stringify(applied)
   const example = useMemo(() => exampleReport(kind, today, t, applied), [kind, today, t, i18n.language, choices]) // eslint-disable-line react-hooks/exhaustive-deps

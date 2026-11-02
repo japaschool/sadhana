@@ -2,12 +2,27 @@ import i18n from 'i18next'
 import { describe, expect, it } from 'vitest'
 import type { Panel } from '../../api/charts'
 import { makeLookup, resolve, windowDays } from '../insights/panels/panelLogic'
-import { exampleReport, exampleSummary } from './examples'
+import { exampleDay, exampleReport, exampleSummary } from './examples'
 import type { GuideKind } from './guideLogic'
 
 const KINDS: GuideKind[] = ['sleep', 'count', 'time', 'days']
 const TODAY = '2026-11-02'
 const t = i18n.t.bind(i18n)
+
+describe('exampleDay', () => {
+  it.each([['2026-11-01', '2026-10-28'], ['2026-11-27', '2026-10-28'], ['2026-01-02', '2025-12-28'], ['2026-03-01', '2026-02-28']])('days on %s stands on %s', (today, day) => {
+    expect(exampleDay('days', today)).toBe(day)
+  })
+  it('keeps a date already late in the month, and the other kinds', () => {
+    expect(exampleDay('days', '2026-11-28')).toBe('2026-11-28')
+    expect(exampleDay('sleep', '2026-11-01')).toBe('2026-11-01')
+  })
+  it('gives days a well filled month on the first', () => {
+    const { entries, practices } = exampleReport('days', exampleDay('days', '2026-11-01'), t)
+    const done = entries.filter((e) => e.practice === practices[0].practice && e.cob_date.startsWith('2026-10') && e.value).length
+    expect(done).toBeGreaterThan(10)
+  })
+})
 
 describe('example reports', () => {
   it.each(KINDS)('%s builds from fixed data, the same each time', (kind) => {
