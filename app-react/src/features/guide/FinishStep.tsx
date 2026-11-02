@@ -13,6 +13,9 @@ import { buildPlan, itemsOf, KINDS, runPlan } from './guideLogic'
 import type { GuideApi, GuideKind } from './guideLogic'
 import type { Guide } from './useGuide'
 
+/** How long the closing screen waits for the refreshed lists: with offlineFirst a fetch that can't get out may never settle. */
+const REFRESH_WAIT = 5000
+
 const api: GuideApi = {
   getPractices: () => practicesApi.getUserPractices(),
   createPractice: (p) => practicesApi.createUserPractice({ practice: p.name, data_type: p.data_type, dropdown_variants: p.dropdown_variants }),
@@ -53,12 +56,15 @@ export function FinishStep({ guide }: { guide: Guide }) {
       }
       await runPlan(plan.current, api, (kind, state) => setRows((r) => ({ ...r, [kind]: state })))
       // Nothing observes these here, so without refetchType 'all' the next screen would start from the old lists.
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: ['practices'], refetchType: 'all' }),
-        qc.invalidateQueries({ queryKey: REPORTS_KEY, refetchType: 'all' }),
+      guide.finished(guide.reader ?? undefined)
+      await Promise.race([
+        Promise.all([
+          qc.invalidateQueries({ queryKey: ['practices'], refetchType: 'all' }),
+          qc.invalidateQueries({ queryKey: REPORTS_KEY, refetchType: 'all' }),
+        ]),
+        new Promise((r) => setTimeout(r, REFRESH_WAIT)),
       ])
       setCreating('done')
-      guide.finished(guide.reader ?? undefined)
     } catch (e) {
       // Set up gates on this list: a name that failed here mustn't pass there on the old one.
       void qc.invalidateQueries({ queryKey: ['practices'], refetchType: 'all' })

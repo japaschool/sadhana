@@ -153,6 +153,27 @@ describe('creating', () => {
   })
 })
 
+describe('a refresh that never answers', () => {
+  it('records finished first and still reaches the closing screen', async () => {
+    const user = await open({ firstRun: true })
+    await answer('No', user)
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
+    try {
+      vi.mocked(chartsApi.createReport).mockImplementationOnce(async (name) => {
+        made.push(name)
+        // offlineFirst: the fetch goes out and stays pending
+        vi.mocked(practicesApi.getUserPractices).mockImplementation(() => new Promise(() => {}))
+        return 'r'
+      })
+      await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+      await vi.waitFor(() => expect(guideApi.update).toHaveBeenCalledWith('run-1', { outcome: 'finished', has_reader: false }))
+      expect(screen.queryByText('Here’s what’s set up')).not.toBeInTheDocument()
+      await act(async () => { await vi.advanceTimersByTimeAsync(5000) })
+      expect(screen.getByText('Here’s what’s set up')).toBeInTheDocument()
+    } finally { vi.useRealTimers() }
+  })
+})
+
 describe('leaving during and after creating', () => {
   async function opened(state: unknown) {
     const user = await open(state)
