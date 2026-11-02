@@ -18,6 +18,7 @@ export function SetupWide({ guide, kind }: { guide: Guide; kind: GuideKind }) {
       <div className="w-40"><SecondaryButton onClick={guide.back}>{t('guide.back')}</SecondaryButton></div>
       <div className="flex flex-wrap items-center justify-end gap-4">
         {setup.hint && <span role="status" className="max-w-[340px] text-right text-[13px] leading-snug font-semibold text-ui-muted">{setup.hint}</span>}
+        {setup.retry && <div className="w-40"><SecondaryButton onClick={setup.retry}>{t('guide.setup.retry')}</SecondaryButton></div>}
         <div className="w-60"><PrimaryButton type="button" disabled={!setup.ready} onClick={setup.next}>{setup.nextLabel}</PrimaryButton></div>
       </div>
     </>

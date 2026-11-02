@@ -120,6 +120,41 @@ describe('Sleep', () => {
   })
 })
 
+describe('a ticked extra left blank', () => {
+  it('blocks Next for Nap', async () => {
+    const user = await start(['sleep'])
+    expect(next()).toBeEnabled()
+    await rename(user, 'Nap', '')
+    expect(next()).toBeDisabled()
+    expect(screen.getByText('Give every practice a name to continue')).toBeInTheDocument()
+  })
+
+  it.each(['Part done early', 'How it went'])('blocks Next for %s once the count and target are filled in', async (extra) => {
+    const user = await start(['count'])
+    await user.click(screen.getByRole('button', { name: 'Pages read' }))
+    const target = screen.getByLabelText('How many a day')
+    await user.type(target, '20')
+    fireEvent.blur(target)
+    await user.click(screen.getByRole('checkbox', { name: extra }))
+    expect(next()).toBeEnabled()
+    await rename(user, extra, '  ')
+    expect(next()).toBeDisabled()
+    expect(screen.getByText('Give every practice a name to continue')).toBeInTheDocument()
+  })
+})
+
+describe('when the practices cannot be loaded', () => {
+  it('says so and Try again loads them', async () => {
+    vi.mocked(practicesApi.getUserPractices).mockRejectedValueOnce(new Error('down'))
+    const user = await start(['sleep'])
+    expect(await screen.findByText('Something went wrong')).toBeInTheDocument()
+    expect(next()).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Try again' }))
+    await vi.waitFor(() => expect(next()).toBeEnabled())
+    expect(screen.queryByText('Something went wrong')).not.toBeInTheDocument()
+  })
+})
+
 describe('Daily count', () => {
   it('needs a target, which starts empty', async () => {
     const user = await start(['count'])

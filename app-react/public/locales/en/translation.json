@@ -1182,7 +1182,8 @@
         "twice": "You’re using this name for something else in this setup. Please choose a different name.",
         "empty": "A practice needs a name."
       },
-      "fixRange": "Fix the sleep range to continue"
+      "fixRange": "Fix the sleep range to continue",
+      "retry": "Try again"
     }
   }
 }

@@ -46,7 +46,9 @@ export function useSetup<K extends GuideKind>(guide: Guide, kind: K) {
   }
 
   const named = items.filter((it) => it.name)
+  const loadFailed = q.isError && !q.data
   const hint = ((): string | null => {
+    if (loadFailed) return t('common.error')
     if (kind === 'count' && !(value as Value<'count'>).count.trim()) return t('guide.setup.needCount')
     if ((kind === 'time' || kind === 'days') && !items.length) return t('guide.setup.needOne')
     if (named.length < items.length) return t('guide.setup.needName')
@@ -61,6 +63,8 @@ export function useSetup<K extends GuideKind>(guide: Guide, kind: K) {
   const after = guide.tracked[at + 1]
   return {
     kind, value, practices, check, hint,
+    /** Without the person's practices names can't be checked, so Next waits; this tries again. */
+    retry: loadFailed ? () => { void q.refetch() } : null,
     ready: q.isSuccess && !hint,
     position: t('guide.setup.label', { a: at + 1, b: guide.tracked.length }),
     nextLabel: t('guide.setup.next', { what: after ? t(`guide.kinds.${after}.name`) : t(guide.firstRun ? 'guide.steps.sharing' : 'guide.steps.finish') }),

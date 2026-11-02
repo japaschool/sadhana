@@ -25,15 +25,15 @@ export interface Item { name: string; slot: Slot; planned: PlannedPractice }
 const item = (name: string, slot: Slot, type: PracticeDataType = slot.types[0], dropdown_variants?: string): Item =>
   ({ name: name.trim(), slot, planned: { name: name.trim(), data_type: type, ...(dropdown_variants && { dropdown_variants }) } })
 
-/** The practices a report needs, in order. */
+/** The practices a report needs, in order. A ticked optional one is there even while its name is blank, so the screens can flag it. */
 export function itemsOf(kind: GuideKind, c: NonNullable<Choices[GuideKind]>): Item[] {
   if (kind === 'sleep') {
     const s = c as NonNullable<Choices['sleep']>
-    return [item(s.bedtime, SLEEP_SLOTS[0]), item(s.wake, SLEEP_SLOTS[1]), ...(s.nap ? [item(s.nap, SLEEP_SLOTS[2])] : [])]
+    return [item(s.bedtime, SLEEP_SLOTS[0]), item(s.wake, SLEEP_SLOTS[1]), ...(s.nap !== null ? [item(s.nap, SLEEP_SLOTS[2])] : [])]
   }
   if (kind === 'count') {
     const k = c as NonNullable<Choices['count']>
-    return [item(k.count, JAPA_SLOTS[0]), ...(k.early ? [item(k.early, JAPA_SLOTS[1])] : []), ...(k.how ? [item(k.how, JAPA_SLOTS[2], 'Text', HOW_VARIANTS)] : [])]
+    return [item(k.count, JAPA_SLOTS[0]), ...(k.early !== null ? [item(k.early, JAPA_SLOTS[1])] : []), ...(k.how !== null ? [item(k.how, JAPA_SLOTS[2], 'Text', HOW_VARIANTS)] : [])]
   }
   const { names } = c as { names: string[] }
   return names.map((n) => item(n, kind === 'time' ? DURATION_SLOT : DAYS_SLOT))

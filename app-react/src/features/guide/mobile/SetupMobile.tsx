@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { PrimaryButton } from '../../auth/kit'
+import { PrimaryButton, SecondaryButton } from '../../auth/kit'
 import { KINDS } from '../guideLogic'
 import type { GuideKind } from '../guideLogic'
 import { GuideFrame } from '../GuideFrame'
@@ -28,6 +28,7 @@ export function SetupMobile({ guide, kind }: { guide: Guide; kind: GuideKind }) 
       </div>
       <div className="fixed inset-x-0 bottom-0 z-10 flex flex-col gap-2 border-t border-ui-hairline bg-ui-tabbar px-4 pt-3 pb-[max(30px,env(safe-area-inset-bottom))]">
         {setup.hint && <span role="status" className="text-center text-[13px] leading-snug text-ui-muted">{setup.hint}</span>}
+        {setup.retry && <SecondaryButton onClick={setup.retry}>{t('guide.setup.retry')}</SecondaryButton>}
         <PrimaryButton type="button" disabled={!setup.ready} onClick={setup.next}>{setup.nextLabel}</PrimaryButton>
       </div>
     </GuideFrame>
