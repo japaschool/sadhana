@@ -1,13 +1,13 @@
-import { useId, type ReactNode } from 'react'
-import { Bar, CartesianGrid, Cell, ComposedChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { useId, type Key, type ReactNode } from 'react'
+import { Bar, CartesianGrid, Cell, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useTranslation } from 'react-i18next'
-import type { ChartPanel, Panel } from '../../../api/charts'
+import type { ChartPanel, Panel, Series } from '../../../api/charts'
 import type { Trace } from '../chartLogic'
 import { barPlacement, formatDurationTick, formatTick, spansYears } from '../insightsLogic'
 import { AXIS, TICK, tipDate, TipRow, TipShell } from '../mobile/InsightsChart'
 import { formatDuration } from '../../today/values'
 import {
-  chartRows, clockText, fitHours, labelText, statResult, tipLines, type BarState, type Lookup, type PanelRow, type Resolved,
+  chartRows, clockText, fitHours, labelText, seriesColour, seriesName, statResult, tipLines, type BarState, type Lookup, type PanelRow, type Resolved,
 } from './panelLogic'
 
 interface ChartPanelProps {
@@ -33,6 +33,12 @@ const SOLID: Record<BarState, string> = {
   ok: 'var(--ui-state-ok-solid)', under: 'var(--ui-state-under-solid)', over: 'var(--ui-state-over-solid)', neutral: 'var(--ui-state-none)',
 }
 
+/** A labelled target words itself from its key (`…Met`, `…Line`); Sleep's limits have no label and word themselves by range. */
+const targetKey = (panel: ChartPanel) => {
+  const label = panel.target?.label
+  return label && 'Key' in label ? label.Key : null
+}
+
 function stateCell(state: BarState, thin: boolean, stripes: string) {
   if (thin) return { fill: SOLID[state] }
   if (state === 'under') return { fill: FILL.under, stroke: 'var(--ui-state-under)', strokeWidth: 1.6 }
@@ -52,17 +58,38 @@ function Swatch({ state }: { state: BarState }) {
   return <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px]" style={style} />
 }
 
-function Line({ dashed }: { dashed: boolean }) {
+function LineGlyph({ dashed }: { dashed: boolean }) {
   return <span aria-hidden className={`h-0 w-4 shrink-0 border-t-2 border-ui-ink ${dashed ? 'border-dashed' : 'border-solid'}`} />
 }
 
-function PanelLegend({ panel, first }: { panel: ChartPanel; first: boolean }) {
+/** The bar inside a bar, in its slot's middle (15m12). */
+function InnerBar({ x = 0, y = 0, width = 0, height = 0 }: { x?: number; y?: number; width?: number; height?: number }) {
+  const w = Math.max(2, width * 0.4)
+  return <rect x={x + (width - w) / 2} y={y} width={w} height={height} rx={1} fill="var(--ui-ink)" opacity={0.78} />
+}
+
+function MarkGlyph({ mark }: { mark: Series['mark'] }) {
+  if (mark === 'Dot' || mark === 'Line') return <span aria-hidden className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: 'var(--ui-state-over)' }} />
+  return (
+    <span aria-hidden className="flex h-3 w-3 shrink-0 items-end justify-center rounded-[2px]" style={{ background: FILL.ok }}>
+      <span className="h-2 w-[5px] bg-ui-ink opacity-[.78]" />
+    </span>
+  )
+}
+
+function PanelLegend({ panel, first, lookup }: { panel: ChartPanel; first: boolean; lookup: Lookup }) {
   const { t } = useTranslation()
   const u = { h: t('today.unitH'), min: t('today.unitMin') }
   const hrs = (v: number) => formatDuration(v, u)
   const target = first && panel.target?.colour ? panel.target : null
+  const goal = targetKey(panel)
   const items: { key: string; glyph: ReactNode; text: string }[] = []
-  if (target) {
+  if (target && goal) {
+    if (target.min !== null) {
+      items.push({ key: 'ok', glyph: <Swatch state="ok" />, text: t(`${goal}Met`) })
+      items.push({ key: 'under', glyph: <Swatch state="under" />, text: t('reportPanels.missed') })
+    }
+  } else if (target) {
     const { min, max } = target
     if (min === null && max === null) items.push({ key: 'none', glyph: <Swatch state="neutral" />, text: t('reportPanels.noTarget') })
     else {
@@ -77,11 +104,13 @@ function PanelLegend({ panel, first }: { panel: ChartPanel; first: boolean }) {
   panel.lines.forEach((l, i) => {
     if (l.pick === null || !l.label) return
     items.push({
-      key: `line${i}`, glyph: <Line dashed={l.dashed} />,
+      key: `line${i}`, glyph: <LineGlyph dashed={l.dashed} />,
       text: labelText(l.label, t),
     })
   })
-  if (panel.bar_layout === 'Stacked') {
+  if (panel.bar_layout === 'Overlaid') {
+    panel.series.slice(1).forEach((s, i) => items.push({ key: `s${i}`, glyph: <MarkGlyph mark={s.mark} />, text: seriesName(s, lookup, t) }))
+  } else if (panel.bar_layout === 'Stacked' && panel.target?.colour) {
     panel.series.slice(1).forEach((s, i) => {
       const state = panel.target && (panel.target.min !== null || panel.target.max !== null) ? 'ok' : 'neutral'
       items.push({
@@ -89,6 +118,15 @@ function PanelLegend({ panel, first }: { panel: ChartPanel; first: boolean }) {
         text: t('reportPanels.stackedOnTop', { label: labelText(s.label, t) }),
       })
     })
+  } else if (panel.bar_layout === 'Stacked') {
+    panel.series.forEach((s, i) => items.push({
+      key: `s${i}`, glyph: <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: seriesColour(s, i, panel.bar_layout) }} />,
+      text: seriesName(s, lookup, t),
+    }))
+  }
+  if (goal && panel.target?.lines && panel.target.min !== null) {
+    const value = panel.format === 'Count' ? String(panel.target.min) : hrs(panel.target.min)
+    items.push({ key: 'goal', glyph: <LineGlyph dashed={false} />, text: t(`${goal}Line`, { value }) })
   }
   if (!items.length) return null
   return (
@@ -126,7 +164,12 @@ export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, 
   // Tall enough for a label an hour, otherwise every other hour still gets its grid line.
   const every = hours > 6 && height < 240 ? 2 : 1
   const hourTicks = Array.from({ length: hours + 1 }, (_, k) => lo + k * 60)
-  const maxHour = Math.ceil(Math.max(0, ...values) / 60)
+  // A stack reaches its total and a goal line must fit, or the top tick falls short of them.
+  const tops = panel.bar_layout === 'Stacked'
+    ? rows.map((r) => panel.series.reduce((sum, _, i) => { const v = r[`s${i}`]; return sum + (typeof v === 'number' ? v : 0) }, 0))
+    : values
+  const reach = panel.target?.lines ? [panel.target.min ?? 0, panel.target.max ?? 0] : []
+  const maxHour = Math.ceil(Math.max(0, ...tops, ...reach) / 60)
   const hourStep = Math.ceil(maxHour / 6) || 1
   const durationTicks = Array.from({ length: Math.floor(maxHour / hourStep) + 1 }, (_, k) => k * hourStep * 60)
   const yTick = clock
@@ -138,6 +181,10 @@ export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, 
     : []
   const multiYear = rows.length > 0 && spansYears(rows[0].cob, rows[rows.length - 1].cob)
   const target = panel.target
+  const goal = targetKey(panel)
+  const limitText = (key: string, value: number) => (goal
+    ? t(`${goal}Line`, { value: panel.format === 'Count' ? value : formatDurationTick(value, tickUnits) }).toLocaleLowerCase(locale)
+    : `${t(`reportPanels.${key}`)} ${formatDurationTick(value, tickUnits)}`)
   const limits = (target?.lines ? [
     { key: 'min', value: target.min, position: 'insideTopRight' as const },
     { key: 'max', value: target.max, position: 'insideBottomRight' as const },
@@ -163,14 +210,33 @@ export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, 
             {overlayAxes.map((id) => <XAxis key={id} xAxisId={id} dataKey="cob" hide />)}
             <YAxis reversed={panel.reversed} width={44} domain={clock ? [lo, hi] : [0, 'auto']} tickFormatter={yTick}
               {...(clock ? { ticks: hourTicks, interval: 0 as const } : panel.format === 'Duration' ? { ticks: durationTicks, interval: 0 as const } : {})} {...AXIS} />
-            {panel.series.map((_, i) => {
+            {panel.series.map((s, i) => {
+              const colour = seriesColour(s, i, panel.bar_layout)
+              if (s.mark === 'Dot') {
+                const base = s.only_with
+                // Sits above the bar it's beside, so it reads the base's height.
+                const at = (r: PanelRow) => (r[`s${i}`] === null ? null : base === null ? r[`s${i}`] : r[`s${base}`])
+                return (
+                  <Line key={i} dataKey={at} stroke="none" isAnimationActive={false} activeDot={false} legendType="none"
+                    dot={(d: { key?: Key | null; cx?: number; cy?: number }) => (d.cx === undefined || d.cy === undefined || d.cy === null
+                      ? <g key={d.key} />
+                      : <circle key={d.key} data-mark="dot" cx={d.cx} cy={d.cy - 6} r={2.6} fill={colour} />)} />
+                )
+              }
+              if (s.mark === 'Line') {
+                return (
+                  <Line key={i} dataKey={`s${i}`} stroke={colour} strokeWidth={2} dot={{ r: 2.4, fill: colour, strokeWidth: 0 }}
+                    activeDot={false} isAnimationActive={false} />
+                )
+              }
               const bar = placement[i]
               if (!bar) return null
+              const inner = panel.bar_layout === 'Overlaid' && i > 0
               const fade = panel.bar_layout === 'Stacked' && i > 0 ? 0.45 : 1
               return (
-                <Bar key={i} dataKey={`s${i}`} xAxisId={bar.xAxisId} stackId={bar.stackId} fill={`var(--ui-chart-${i + 1})`} fillOpacity={bar.fillOpacity}
-                  radius={thin ? 0 : 2} maxBarSize={14} isAnimationActive={false}>
-                  {target?.colour && rows.map((r) => <Cell key={r.cob} opacity={fade} {...stateCell(r.state ?? 'neutral', thin, stripes)} />)}
+                <Bar key={i} dataKey={`s${i}`} xAxisId={bar.xAxisId} stackId={bar.stackId} fill={colour} fillOpacity={inner ? 1 : bar.fillOpacity}
+                  radius={thin ? 0 : 2} maxBarSize={14} isAnimationActive={false} {...(inner ? { shape: InnerBar } : {})}>
+                  {target?.colour && !inner && rows.map((r) => <Cell key={r.cob} opacity={fade} {...stateCell(r.state ?? 'neutral', thin, stripes)} />)}
                 </Bar>
               )
             })}
@@ -181,13 +247,13 @@ export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, 
                 if (!lines.length) return null
                 return (
                   <TipShell title={tipDate(label, locale)}>
-                    {lines.map((l) => <TipRow key={l.key} color={SOLID[l.state ?? 'neutral']} name={l.name} value={l.text} />)}
+                    {lines.map((l) => <TipRow key={l.key} color={l.colour ?? SOLID[l.state ?? 'neutral']} name={l.name} value={l.text} />)}
                   </TipShell>
                 )
               }} />
             {limits.map((l) => (
               <ReferenceLine key={l.key} y={l.value} ifOverflow="extendDomain" stroke="var(--ui-ink)" strokeWidth={1.3} strokeDasharray="4 3"
-                label={{ ...LINE_LABEL, value: `${t(`reportPanels.${l.key}`)} ${formatDurationTick(l.value, tickUnits)}`, position: l.position }} />
+                label={{ ...LINE_LABEL, value: limitText(l.key, l.value), position: l.position }} />
             ))}
             {panel.lines.map((l, i) => {
               const y = lineValue(i)
@@ -203,7 +269,7 @@ export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, 
           <p className="absolute inset-0 flex items-center justify-center pb-6 text-sm font-extrabold text-ui-ink">{t('insights.noData')}</p>
         )}
       </div>
-      <PanelLegend panel={panel} first={first} />
+      <PanelLegend panel={panel} first={first} lookup={lookup} />
     </section>
   )
 }

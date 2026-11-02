@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import type { ChartPanel, Panel, SleepTemplate } from '../../../api/charts'
+import type { ChartPanel, JapaTemplate, Panel, SleepTemplate, Stat } from '../../../api/charts'
 import type { UserPractice } from '../../../types/api'
-import { pickerGroups, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, suggestFor } from './templates'
+import { DURATION_SLOT, durationPanels, JAPA_SLOTS, japaPanels, numericVariants, pickerGroups, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, suggestFor } from './templates'
 
 const T: SleepTemplate = { bedtime: 'bed', wake: 'wake', nap: 'nap', min: 360, max: 540 }
 const charts = (ps: Panel[]) => ps.filter((p): p is Extract<Panel, { kind: 'Chart' }> => p.kind === 'Chart') as (ChartPanel & { kind: 'Chart' })[]
@@ -126,5 +126,113 @@ describe('pickerGroups', () => {
     const g = pickerGroups(SLEEP_SLOTS[0], ps)
     expect(g.compatible.map((x) => x.id)).toEqual(['1'])
     expect(g.cant.map((x) => [x.practice.id, x.reason])).toEqual([['2', 'type']])
+  })
+})
+
+const J: JapaTemplate = { total: 'tot', target: 16, morning: 'mor', quality: 'qua', attunement: 'att' }
+const statsOf = (ps: Panel[]) => (ps[0] as Extract<Panel, { kind: 'Stats' }>).stats
+const scopeOf = (s: Stat) => (Object.values(s.value)[0] as { scope: unknown }).scope
+
+describe('japaPanels', () => {
+  it('requires total rounds only', () => {
+    const r = japaPanels(J)
+    expect(r.template).toEqual({ Japa: J })
+    expect(r.required.map((x) => x.practice)).toEqual(['tot'])
+    expect(r.panels.map((p) => p.kind)).toEqual(['Stats', 'Chart', 'Chart'])
+  })
+
+  it('takes today out and counts a missing day as 0 in every stat', () => {
+    const stats = statsOf(japaPanels(J).panels)
+    expect(stats).toHaveLength(5)
+    for (const s of stats) expect(scopeOf(s)).toEqual({ today: false, missing_zero: true })
+  })
+
+  it('draws total bars against the target, morning overlaid, attunement as a dot', () => {
+    const [rounds] = charts(japaPanels(J).panels)
+    expect(rounds.bar_layout).toBe('Overlaid')
+    expect(rounds.format).toBe('Count')
+    expect(rounds.series.map((s) => s.mark)).toEqual(['Bar', 'Bar', 'Dot'])
+    expect(rounds.series[0].source).toEqual({ Practice: { practice: 'tot' } })
+    expect(rounds.series[2].only_with).toBe(0)
+    expect(rounds.target).toMatchObject({ min: 16, max: null, lines: true, colour: true, of: { Practice: { practice: 'tot' } } })
+  })
+
+  it('gives quality its own line chart', () => {
+    const [, q] = charts(japaPanels(J).panels)
+    expect(q.series).toHaveLength(1)
+    expect(q.series[0].mark).toBe('Line')
+    expect(q.target).toBeNull()
+  })
+
+  it('has one chart and two stats with only total and target', () => {
+    const r = japaPanels({ ...J, morning: null, quality: null, attunement: null })
+    expect(charts(r.panels)).toHaveLength(1)
+    expect(charts(r.panels)[0].series).toHaveLength(1)
+    expect(statsOf(r.panels)).toHaveLength(2)
+  })
+})
+
+describe('numeric practices', () => {
+  const dd = (dropdown_variants?: string) => ({ ...p('x', 'Quality', 'Text'), dropdown_variants })
+  it('needs every dropdown variant to be a number', () => {
+    expect(numericVariants(dd('1,2,3'))).toBe(true)
+    expect(numericVariants(dd('1\n2, 3'))).toBe(true)
+    expect(numericVariants(dd('1,good'))).toBe(false)
+    expect(numericVariants(dd(''))).toBe(false)
+    expect(numericVariants(dd())).toBe(false)
+  })
+  it('offers a numeric dropdown for quality, and refuses other text', () => {
+    const quality = JAPA_SLOTS.find((s) => s.key === 'quality')!
+    const { compatible, cant } = pickerGroups(quality, [p('i', 'Int', 'Int'), { ...dd('1,2'), id: 'n' }, { ...dd('a,b'), id: 't' }, p('b', 'Bool', 'Bool')])
+    expect(compatible.map((p) => p.id)).toEqual(['i', 'n'])
+    expect(cant.map((c) => c.practice.id)).toEqual(['t', 'b'])
+  })
+})
+
+describe('durationPanels', () => {
+  const ids = ['a', 'b', 'c']
+  it('one practice with a goal: states and a goal line', () => {
+    const r = durationPanels({ practices: ['a'], goal: 60 })
+    const [c] = charts(r.panels)
+    expect(r.template).toEqual({ Duration: { practices: ['a'], goal: 60 } })
+    expect(c.series).toHaveLength(1)
+    expect(c.target).toMatchObject({ min: 60, max: null, lines: true, colour: true })
+  })
+  it('several practices: stacked by practice, the goal only as a line', () => {
+    const [c] = charts(durationPanels({ practices: ids, goal: 120 }).panels)
+    expect(c.bar_layout).toBe('Stacked')
+    expect(c.series.map((s) => s.source)).toEqual(ids.map((practice) => ({ Practice: { practice } })))
+    expect(c.series.every((s) => s.label === null)).toBe(true)
+    expect(c.target).toMatchObject({ lines: true, colour: false })
+  })
+  it('the daily total is optional on every term', () => {
+    const [c] = charts(durationPanels({ practices: ids, goal: null }).panels)
+    expect(c.target?.of).toEqual({ Calc: { terms: ids.map((practice) => ({ sign: 1, practice, day_offset: 0, optional: true })) } })
+  })
+  it('average per day; days on goal only with a goal', () => {
+    const scope = { today: false, missing_zero: true }
+    const withGoal = statsOf(durationPanels({ practices: ids, goal: 120 }).panels)
+    expect(withGoal.map((s) => Object.keys(s.value)[0])).toEqual(['Average', 'OnTarget'])
+    for (const s of withGoal) expect(scopeOf(s)).toEqual(scope)
+    expect(statsOf(durationPanels({ practices: ids, goal: null }).panels)).toHaveLength(1)
+  })
+  it('requires each practice, under one label', () => {
+    const r = durationPanels({ practices: ids, goal: null })
+    expect(r.required.map((x) => x.practice)).toEqual(ids)
+    expect(new Set(r.required.map((x) => JSON.stringify(x.label))).size).toBe(1)
+  })
+  it('a multi-select slot of Duration practices', () => {
+    expect(DURATION_SLOT).toMatchObject({ many: true, types: ['Duration'], required: true })
+  })
+})
+
+describe('suggestions for Japa', () => {
+  const [total, , , attunement] = JAPA_SLOTS
+  it('an earlier hint beats list order', () => {
+    const ps = [p('q', 'Japa quality', 'Int'), p('m', 'Rounds in the morning', 'Int'), p('t', 'Total rounds', 'Int')]
+    expect(suggestFor(total, ps, new Set())?.id).toBe('t')
+  })
+  it('knows attunement by its other name', () => {
+    expect(suggestFor(attunement, [p('a', 'Japa affirmation', 'Bool')], new Set())?.id).toBe('a')
   })
 })

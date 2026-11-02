@@ -19,7 +19,7 @@ import { KindGlyph } from '../ReportGlyph'
 import { writeStored } from '../useInsights'
 import { nameTaken, REPORTS_KEY, useReports } from '../useReports'
 import { PanelsReportView } from './PanelsReportView'
-import { draftProblem, draftToDefinition, newSleepDraft, TemplateForm } from './TemplateForm'
+import { draftProblem, draftToDefinition, NEW_DRAFTS, TemplateForm } from './TemplateForm'
 
 const SMALL_BTN = 'flex min-h-11 items-center rounded-[14px] px-4 text-sm font-bold'
 
@@ -28,14 +28,18 @@ function Busy() {
   return <div className="flex h-40 items-center justify-center"><span role="status" aria-label={t('common.loading')} className={SPINNER} /></div>
 }
 
-/** /settings/charts/new/:template. Only Sleep for now. */
+type Slug = keyof typeof NEW_DRAFTS
+
+/** /settings/charts/new/:template */
 export function NewTemplateScreen() {
   const { template } = useParams()
-  return template === 'sleep' ? <NewSleep /> : <Navigate to="/settings/charts" replace />
+  return template && template in NEW_DRAFTS
+    ? <NewReport key={template} slug={template as Slug} />
+    : <Navigate to="/settings/charts" replace />
 }
 
 /** A new report: nothing is saved until Create, so half-filled reports never reach Insights. */
-function NewSleep() {
+function NewReport({ slug }: { slug: Slug }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -49,8 +53,9 @@ function NewSleep() {
   // The same query as Insights' default 30 days and the chart editor's preview.
   const dataQ = useQuery({ queryKey: ['report-data', todayCob, 'Month'], queryFn: () => chartsApi.getReportData(todayCob, 'Month'), enabled: wide })
 
-  const [name, setName] = useState(() => t('templateForm.sleepName'))
-  const [draft, setDraft] = useState(newSleepDraft)
+  const defaultName = t(`templateForm.${slug}Name`)
+  const [name, setName] = useState(defaultName)
+  const [draft, setDraft] = useState(NEW_DRAFTS[slug])
   const definition = draftToDefinition(draft)
   const taken = nameTaken(reportsQ.data ?? [], name)
   const ready = !!name.trim() && !!definition && !taken
@@ -82,8 +87,8 @@ function NewSleep() {
   const createLabel = t('templateForm.create')
   const heading = (size: string) => (
     <div className="flex min-w-0 flex-col gap-1">
-      <h1 className={`${size} leading-[1.15] font-extrabold tracking-[-0.02em] text-ui-ink`}>{t('templateForm.newSleep')}</h1>
-      <p className="flex items-center gap-2 text-sm text-ui-muted"><KindGlyph kind="template" className="text-ui-muted" />{t('templateForm.readySleep')}</p>
+      <h1 className={`${size} leading-[1.15] font-extrabold tracking-[-0.02em] text-ui-ink`}>{t(`templateForm.new${draft.kind}`)}</h1>
+      <p className="flex items-center gap-2 text-sm text-ui-muted"><KindGlyph kind={slug} className="text-ui-muted" />{t(`templateForm.ready${draft.kind}`)}</p>
     </div>
   )
 
@@ -95,7 +100,7 @@ function NewSleep() {
       <div className="px-[22px] pt-0.5 pb-4">{heading('text-[28px]')}</div>
       <div className="flex flex-col gap-4 px-4 pb-[180px]">{form}</div>
       <div className="fixed inset-x-0 bottom-0 z-40 flex flex-col gap-2 border-t border-ui-control bg-ui-tabbar px-4 pt-3 pb-[calc(16px+env(safe-area-inset-bottom))]">
-        {draftProblem(draft) === 'required' && <p className="text-center text-xs leading-snug text-ui-muted">{t('templateForm.needs')}</p>}
+        {draftProblem(draft) === 'required' && <p className="text-center text-xs leading-snug text-ui-muted">{t(`templateForm.needs${draft.kind}`)}</p>}
         <button type="button" disabled={!ready || create.isPending} onClick={() => create.mutate()}
           className={`${BTN} bg-ui-accent-fill text-ui-ink disabled:opacity-50`}>{createLabel}</button>
       </div>
@@ -107,7 +112,7 @@ function NewSleep() {
     : dataQ.isLoading || !practices ? <Busy />
     : (
       // ponytail: the preview has no previous window, so its first night has no bar; pass it through if that reads as wrong.
-      <PanelsReportView report={{ id: 'new', name: name.trim() || t('templateForm.sleepName'), definition }} definition={definition.Panels}
+      <PanelsReportView report={{ id: 'new', name: name.trim() || defaultName, definition }} definition={definition.Panels}
         entries={dataQ.data ?? []} previous={undefined} practices={practices} todayCob={todayCob} chartHeight={desktop ? 220 : 180} formLink={null} cols={2} />
     )
   const buttons = (
@@ -139,7 +144,7 @@ function NewSleep() {
           className="sticky top-0 flex h-dvh min-w-[360px] flex-1 flex-col gap-4 overflow-y-auto border-l border-ui-control bg-ui-sheet px-6 pt-[calc(32px+env(safe-area-inset-top))] pb-10">
           <div className="flex min-w-0 flex-col gap-0.5">
             <span className="text-[11px] font-bold uppercase tracking-[.1em] text-ui-accent">{t('chartSettings.preview')}</span>
-            <h2 className="text-xl font-extrabold break-words text-ui-ink">{name.trim() || t('templateForm.sleepName')}</h2>
+            <h2 className="text-xl font-extrabold break-words text-ui-ink">{name.trim() || defaultName}</h2>
             <p className="text-xs text-ui-muted">{t('templateForm.previewSub')}</p>
           </div>
           {preview}

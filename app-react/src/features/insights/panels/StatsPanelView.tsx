@@ -28,15 +28,18 @@ const LONG = 8
 export function StatsPanelView({ stats, days, lookup, todayCob, cols }: StatsPanelProps) {
   const { t } = useTranslation()
   const text = useStatText(days, lookup, todayCob)
-  const left = stats.length % cols
+  // One row on wide layouts, however many figures there are.
+  const across = cols === 2 ? 2 : stats.length
+  const left = stats.length % across
   return (
-    <div className={`grid gap-px overflow-hidden rounded-[18px] border border-ui-hairline bg-ui-hairline ${cols === 2 ? 'grid-cols-2' : 'grid-cols-4'}`}>
+    <div className={`grid gap-px overflow-hidden rounded-[18px] border border-ui-hairline bg-ui-hairline ${cols === 2 ? 'grid-cols-2' : ''}`}
+      style={cols === 2 ? undefined : { gridTemplateColumns: `repeat(${across}, minmax(0, 1fr))` }}>
       {stats.map((s, i) => {
         const r = text(s)
         const under = s.under && text(s.under)
         return (
           <div key={i} className="flex min-w-0 flex-col gap-1 bg-ui-surface px-3.5 py-3"
-            style={left && i === stats.length - 1 ? { gridColumn: `span ${cols - left + 1}` } : undefined}>
+            style={left && i === stats.length - 1 ? { gridColumn: `span ${across - left + 1}` } : undefined}>
             <span className="text-xs leading-[1.3] font-bold text-ui-muted">{labelText(s.label, t)}</span>
             <span className={`font-ui-mono leading-[1.15] font-semibold tracking-[-0.02em] whitespace-nowrap text-ui-ink ${cols === 2 ? 'text-[22px]' : r.text.length > LONG ? 'text-[20px]' : 'text-[26px]'}`}>
               {r.of === undefined || r.text === '—' ? r.text : (
