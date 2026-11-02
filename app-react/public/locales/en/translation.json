@@ -1184,6 +1184,45 @@
       },
       "fixRange": "Fix the sleep range to continue",
       "retry": "Try again"
+    },
+    "reader": {
+      "label": "Almost done · Sharing",
+      "title": "Does anyone else read this chart?",
+      "intro": "Some people share their practice with a mentor, teacher or friend. Either way is fine.",
+      "yes": "Yes, someone reads it",
+      "yesBody": "For example a mentor, teacher or friend. You’ll get a link to send them. Anyone with the link can see your reports, but not change anything.",
+      "no": "No, it’s just for me",
+      "noBody": "We won’t show you a link here.",
+      "pick": "Choose an answer to finish",
+      "finish": "Finish setup"
+    },
+    "finish": {
+      "creatingTitle": "Setting up your reports",
+      "creatingBody": "This takes a few seconds.",
+      "created": "Created",
+      "working": "Creating…",
+      "waiting": "Waiting",
+      "notSaved": "Not saved yet",
+      "failTitle": "Setup didn’t finish",
+      "failBody": "The connection dropped while saving. Your choices are kept, so Retry picks up where it stopped.",
+      "failNames": "A practice name you chose can’t be used any more, for example because it is now hidden or has another type. Review your choices and pick a different name.",
+      "retry": "Retry",
+      "review": "Review my choices",
+      "title": "Here’s what’s set up",
+      "summary": "Reports in Insights: {{reports}}. Practices on Today: {{practices}}.",
+      "second": "Second day",
+      "first": "First entry",
+      "note": {
+        "sleep": "A night needs a bedtime and the next morning’s wake-up, so day one has nothing to show yet.",
+        "count": "Starts with your first log.",
+        "time": "Starts with your first log.",
+        "days": "The month grid fills in day by day."
+      },
+      "linkTitle": "Link for your reader",
+      "copy": "Copy",
+      "copied": "Copied",
+      "linkNote": "Anyone with this link can see your reports. It updates as you log.",
+      "start": "Start logging"
     }
   }
 }

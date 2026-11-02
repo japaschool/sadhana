@@ -4,28 +4,13 @@ import { ByLayout } from '../../layouts/ByLayout'
 import { useLayout } from '../../layouts/useLayout'
 import { BottomSheet } from '../../ui/primitives/BottomSheet'
 import { PrimaryButton, SecondaryButton } from '../auth/kit'
-import { GuideFrame } from './GuideFrame'
+import { FinishStep } from './FinishStep'
 import { ChooseMobile } from './mobile/ChooseMobile'
 import { SetupMobile } from './mobile/SetupMobile'
+import { ReaderStep } from './ReaderStep'
 import { useGuide } from './useGuide'
-import type { Guide } from './useGuide'
 import { ChooseWide } from './wide/ChooseWide'
 import { SetupWide } from './wide/SetupWide'
-
-/** ponytail: Task 12 replaces these two with the reader and finish screens. */
-function Placeholder({ guide, title, action, onAction }: { guide: Guide; title: string; action: string; onAction: () => void }) {
-  const { t } = useTranslation()
-  const wide = !guide.carousel // the phone has Back in its top bar
-  return (
-    <GuideFrame guide={guide}>
-      <div className="flex flex-col gap-4 px-[22px] py-4">
-        <h1 className="text-[26px] font-extrabold">{title}</h1>
-        <PrimaryButton type="button" onClick={onAction}>{action}</PrimaryButton>
-        {wide && <SecondaryButton onClick={guide.back}>{t('guide.back')}</SecondaryButton>}
-      </div>
-    </GuideFrame>
-  )
-}
 
 /** /guide. Opened by sign-up (state.firstRun) or from the app (no state): the latter has no reader question. */
 export function GuideScreen() {
@@ -38,8 +23,8 @@ export function GuideScreen() {
     <>
       {step.at === 'choose' && <ByLayout mobile={<ChooseMobile guide={guide} />} tablet={<ChooseWide guide={guide} />} desktop={<ChooseWide guide={guide} />} />}
       {step.at === 'setup' && <ByLayout key={step.kind} mobile={<SetupMobile guide={guide} kind={step.kind} />} tablet={<SetupWide guide={guide} kind={step.kind} />} desktop={<SetupWide guide={guide} kind={step.kind} />} />}
-      {step.at === 'reader' && <Placeholder guide={guide} title={t('guide.steps.sharing')} action={t('guide.next')} onAction={guide.next} />}
-      {step.at === 'finish' && <Placeholder guide={guide} title={t('guide.steps.finish')} action={t('guide.done')} onAction={() => guide.finish()} />}
+      {step.at === 'reader' && <ReaderStep guide={guide} />}
+      {step.at === 'finish' && <FinishStep guide={guide} />}
       {guide.confirming && (
         <BottomSheet label={t('guide.leave.title')} onClose={guide.keepGoing}>
           <h2 className="text-xl font-extrabold">{t('guide.leave.title')}</h2>

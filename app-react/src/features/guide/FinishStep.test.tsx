@@ -1,0 +1,188 @@
+import { act, cleanup, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { AxiosError } from 'axios'
+import { createMemoryRouter, RouterProvider } from 'react-router-dom'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import en from '../../../public/locales/en/translation.json'
+import ru from '../../../public/locales/ru/translation.json'
+import uk from '../../../public/locales/uk/translation.json'
+import type { UserPractice } from '../../types/api'
+import { useAuthStore } from '../../store/authStore'
+import { setViewportWidth } from '../../test/viewport'
+import { REPORTS_KEY } from '../insights/useReports'
+import { GuideScreen } from './GuideScreen'
+
+vi.mock('../../api/guide', () => ({ guideApi: { start: vi.fn(), update: vi.fn() } }))
+vi.mock('../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn(), createUserPractice: vi.fn() } }))
+vi.mock('../../api/charts', () => ({ chartsApi: { getReports: vi.fn(), createReport: vi.fn() } }))
+vi.mock('./MiniReport', () => ({ MiniReport: ({ head, footer }: { head?: React.ReactNode; footer?: React.ReactNode }) => <div>{head}{footer}</div> }))
+import { chartsApi } from '../../api/charts'
+import { guideApi } from '../../api/guide'
+import { practicesApi } from '../../api/practices'
+
+let have: UserPractice[]
+let made: string[]
+let qc: QueryClient
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  have = []
+  made = []
+  setViewportWidth(1200)
+  useAuthStore.setState({ user: { id: 'u-123' } as never })
+  vi.mocked(guideApi.start).mockResolvedValue('run-1')
+  vi.mocked(guideApi.update).mockResolvedValue(undefined)
+  vi.mocked(practicesApi.getUserPractices).mockImplementation(async () => [...have])
+  vi.mocked(practicesApi.createUserPractice).mockImplementation(async (p) => { have.push({ id: `id-${p.practice}`, practice: p.practice, data_type: p.data_type, is_active: true }) })
+  vi.mocked(chartsApi.getReports).mockImplementation(async () => made.map((name) => ({ id: name, name, definition: { Panels: { panels: [] } } }) as never))
+  vi.mocked(chartsApi.createReport).mockImplementation(async (name) => { made.push(name); return `r-${name}` })
+})
+afterEach(cleanup)
+
+/** Walks the guide to the step after the last set up, with sleep (and days, if asked) tracked. */
+async function open(state: unknown, days = false) {
+  const user = userEvent.setup()
+  qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const r = createMemoryRouter([{ path: '/guide', element: <GuideScreen /> }, { path: '/', element: <p>Today</p> }, { path: '/settings', element: <p>Settings</p> }], { initialEntries: [{ pathname: '/guide', state }] })
+  render(<QueryClientProvider client={qc}><RouterProvider router={r} /></QueryClientProvider>)
+  await user.click(screen.getByRole('switch', { name: 'Sleep' }))
+  if (days) await user.click(screen.getByRole('switch', { name: 'Days I did it' }))
+  await user.click(screen.getByRole('button', { name: /^Next/ }))
+  await screen.findByText(/^Set up · /)
+  await act(async () => {})
+  await user.click(screen.getByRole('button', { name: /^Next/ }))
+  if (days) {
+    await user.click(screen.getByRole('button', { name: 'Walk' }))
+    await user.click(screen.getByRole('button', { name: /^Next/ }))
+  }
+  return user
+}
+const answer = (name: string, user: ReturnType<typeof userEvent.setup>) => user.click(screen.getByRole('radio', { name: new RegExp(`^${name}`) }))
+const offline = () => new AxiosError('Network Error')
+
+describe('the reader question', () => {
+  it('starts with neither answer selected, and Finish waits for one', async () => {
+    const user = await open({ firstRun: true })
+    const [yes, no] = [screen.getByRole('radio', { name: /^Yes/ }), screen.getByRole('radio', { name: /^No/ })]
+    expect(yes).not.toBeChecked()
+    expect(no).not.toBeChecked()
+    expect(screen.getByRole('button', { name: 'Finish setup' })).toBeDisabled()
+    await user.click(no)
+    expect(screen.getByRole('button', { name: 'Finish setup' })).toBeEnabled()
+  })
+
+  it('is not asked outside first run', async () => {
+    await open({ back: '/settings' })
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument()
+    expect(await screen.findByText('Here’s what’s set up')).toBeInTheDocument()
+  })
+})
+
+describe('creating', () => {
+  it('shows each report as Created, Creating… or Waiting', async () => {
+    let release!: () => void
+    vi.mocked(chartsApi.createReport).mockImplementationOnce(async (name) => { await new Promise<void>((r) => { release = r }); made.push(name); return 'r' })
+    const user = await open({ firstRun: true }, true)
+    await answer('No', user)
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    expect(await screen.findByText('Creating…')).toBeInTheDocument()
+    expect(screen.getByText('Waiting')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument()
+    await act(async () => release())
+    expect(await screen.findByText('Here’s what’s set up')).toBeInTheDocument()
+    expect(made).toEqual(['Sleep', 'Days I did it'])
+  })
+
+  it('on a failure says Not saved yet, offers Retry, and Retry carries on without duplicates', async () => {
+    vi.mocked(chartsApi.createReport).mockRejectedValueOnce(offline()).mockImplementationOnce(async (name) => { made.push(name); return 'r' })
+    const user = await open({ firstRun: true }, true)
+    await answer('Yes', user)
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    expect(await screen.findByText('Setup didn’t finish')).toBeInTheDocument()
+    expect(screen.getAllByText('Not saved yet').length).toBe(2)
+    expect(screen.getByRole('button', { name: 'Review my choices' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(await screen.findByText('Here’s what’s set up')).toBeInTheDocument()
+    expect(made).toEqual(['Sleep', 'Days I did it'])
+    expect(have.map((p) => p.practice).sort()).toEqual(['Bedtime', 'Nap', 'Wake-up', 'Walk'])
+  })
+
+  it('keeps the plan across a retry, so the guide’s own report is not met again as "Sleep 2"', async () => {
+    vi.mocked(chartsApi.createReport).mockImplementationOnce(async (name) => { made.push(name); throw offline() })
+    const user = await open({ firstRun: true })
+    await answer('No', user)
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    await user.click(await screen.findByRole('button', { name: 'Retry' }))
+    expect(await screen.findByText('Here’s what’s set up')).toBeInTheDocument()
+    expect(made).toEqual(['Sleep'])
+  })
+
+  it('reads practices fresh, and a name that turned out hidden reaches the person as the retry state', async () => {
+    const user = await open({ firstRun: true })
+    have.push({ id: 'h', practice: 'Bedtime', data_type: 'Time', is_active: false })
+    await answer('No', user)
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    expect(await screen.findByText('Setup didn’t finish')).toBeInTheDocument()
+    expect(screen.getByText(/can’t be used any more/)).toBeInTheDocument()
+    expect(chartsApi.createReport).not.toHaveBeenCalled()
+  })
+
+  it('refreshes the practices and reports on success and marks the run finished with the answer', async () => {
+    const user = await open({ firstRun: true })
+    const spy = vi.spyOn(qc, 'invalidateQueries')
+    await answer('Yes', user)
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    await screen.findByText('Here’s what’s set up')
+    expect(spy).toHaveBeenCalledWith({ queryKey: ['practices'] })
+    expect(spy).toHaveBeenCalledWith({ queryKey: REPORTS_KEY })
+    await user.click(screen.getByRole('button', { name: 'Start logging' }))
+    expect(await screen.findByText('Today')).toBeInTheDocument()
+    await vi.waitFor(() => expect(guideApi.update).toHaveBeenCalledWith('run-1', { outcome: 'finished', has_reader: true }))
+  })
+})
+
+describe('the closing screen', () => {
+  it('says Sleep starts on the second day', async () => {
+    const user = await open({ firstRun: true })
+    await answer('No', user)
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    await screen.findByText('Here’s what’s set up')
+    expect(screen.getByText(/^Second day/)).toBeInTheDocument()
+    expect(screen.getByText(/day one has nothing to show yet/)).toBeInTheDocument()
+  })
+
+  it('shows the whole share link only after Yes, and says who can see it', async () => {
+    const user = await open({ firstRun: true })
+    await answer('Yes', user)
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    await screen.findByText('Here’s what’s set up')
+    expect(screen.getByText(`${window.location.origin}/shared/u-123`)).toBeInTheDocument()
+    expect(screen.getByText('Anyone with this link can see your reports. It updates as you log.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument()
+  })
+
+  it('shows no link after No', async () => {
+    const user = await open({ firstRun: true })
+    await answer('No', user)
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    await screen.findByText('Here’s what’s set up')
+    expect(screen.queryByText(/\/shared\//)).not.toBeInTheDocument()
+  })
+
+  it('outside first run, leaves to where the guide was opened from', async () => {
+    const user = await open({ back: '/settings' })
+    await user.click(await screen.findByRole('button', { name: 'Start logging' }))
+    expect(await screen.findByText('Settings')).toBeInTheDocument()
+  })
+})
+
+describe('copy', () => {
+  it('is in every language and promises nothing about privacy', () => {
+    for (const l of [en, ru, uk]) {
+      expect(Object.keys(l.guide.reader)).toEqual(Object.keys(en.guide.reader))
+      expect(Object.keys(l.guide.finish)).toEqual(Object.keys(en.guide.finish))
+    }
+    expect(JSON.stringify(en.guide.reader) + JSON.stringify(en.guide.finish)).not.toMatch(/private|turn off|nothing is shared/i)
+  })
+})

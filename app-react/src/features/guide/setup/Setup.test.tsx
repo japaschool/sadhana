@@ -65,7 +65,7 @@ async function rename(user: ReturnType<typeof userEvent.setup>, from: string, to
 
 describe('Sleep', () => {
   it('renames a practice in place, and it reaches the choices (trimmed)', async () => {
-    const user = await start(['sleep'])
+    const user = await start(['sleep'], { firstRun: true })
     await rename(user, 'Bedtime', '  Lights out  ')
     await user.click(screen.getByRole('button', { name: 'Done' }))
     expect(screen.getByText('Lights out')).toBeInTheDocument()
@@ -355,14 +355,14 @@ describe('layouts and leaving', () => {
   })
 
   it('the leave sheet appears once a set up is done, and Keep setting up stays', async () => {
-    const user = await start(['sleep'])
+    const user = await start(['sleep'], { firstRun: true })
     await user.click(next())
-    expect(screen.getByRole('heading', { name: 'Finish' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Does anyone else read this chart?' })).toBeInTheDocument()
     await user.click(screen.getAllByRole('button', { name: 'Build my own list' })[0])
     expect(screen.getByRole('heading', { name: 'Leave setup?' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Keep setting up' }))
     expect(screen.queryByRole('heading', { name: 'Leave setup?' })).not.toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Finish' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Does anyone else read this chart?' })).toBeInTheDocument()
   })
 })
 
