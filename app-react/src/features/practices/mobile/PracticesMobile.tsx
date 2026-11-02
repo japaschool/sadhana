@@ -7,6 +7,7 @@ import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import type { SortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { AddPracticeChooser } from '../../guide/AddPracticeChooser'
 import { MobileShell } from '../../../layouts/mobile/MobileShell'
 import type { PracticeDataType, PracticeGroup, UserPractice } from '../../../types/api'
 import { parseOptions } from '../../today/values'
@@ -48,6 +49,7 @@ export function PracticesMobile() {
   const newGroup = useNewGroup(s)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deletingGroup, setDeletingGroup] = useState(false)
+  const [choosing, setChoosing] = useState(false)
 
   const close = () => navigate(LIST_PATH, { replace: true })
   const find = (pid?: string | null) => s.practices.find((p) => p.id === pid)
@@ -70,9 +72,9 @@ export function PracticesMobile() {
             <Link to="/settings/practices/groups/new" className="flex min-h-11 items-center gap-1.5 rounded-full bg-ui-chip px-4 text-[15px] font-extrabold text-ui-ink">
               <span aria-hidden className="text-lg leading-none">+</span>{t('practices.group')}
             </Link>
-            <Link to="/settings/practices/new" className="flex min-h-11 items-center gap-1.5 rounded-full bg-ui-accent-fill px-4 text-[15px] font-extrabold text-ui-ink">
+            <button type="button" onClick={() => setChoosing(true)} className="flex min-h-11 items-center gap-1.5 rounded-full bg-ui-accent-fill px-4 text-[15px] font-extrabold text-ui-ink">
               <span aria-hidden className="text-lg leading-none">+</span>{t('practices.add')}
-            </Link>
+            </button>
           </div>
         </div>
       </header>
@@ -93,6 +95,7 @@ export function PracticesMobile() {
           }}
           onDelete={editing && (() => setDeletingId(editing.id))} />
       )}
+      {choosing && <AddPracticeChooser back="/settings/practices" onClose={() => setChoosing(false)} />}
       {newGroup.sheet}
       {deleting && <DeleteSheet s={s} p={deleting} onDeleted={() => { if (editing?.id === deleting.id) close() }} onClose={() => setDeletingId(null)} />}
 

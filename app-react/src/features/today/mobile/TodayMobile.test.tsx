@@ -100,6 +100,39 @@ describe('TodayMobile', () => {
     expect(await screen.findByText('guide state {"back":"/"}')).toBeInTheDocument()
   })
 
+  it('Add practice in the menu offers the guide or the form', async () => {
+    api.getUserPractices.mockResolvedValue([{ id: 'p1', practice: 'Reading', data_type: 'Bool', is_active: true }])
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={['/']}>
+          <Routes><Route path="/" element={<TodayMobileScreen />} /><Route path="/guide" element={<GuideProbe />} />
+            <Route path="/settings/practices/new" element={<p>the form</p>} /></Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+    fireEvent.click(await screen.findByRole('button', { name: 'More' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Add new practice' }))
+    fireEvent.click(await screen.findByRole('button', { name: /Add one myself/ }))
+    expect(await screen.findByText('the form')).toBeInTheDocument()
+  })
+
+  it('Help me choose from the menu opens the guide with back set to Today', async () => {
+    api.getUserPractices.mockResolvedValue([{ id: 'p1', practice: 'Reading', data_type: 'Bool', is_active: true }])
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={['/']}>
+          <Routes><Route path="/" element={<TodayMobileScreen />} /><Route path="/guide" element={<GuideProbe />} /></Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+    fireEvent.click(await screen.findByRole('button', { name: 'More' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Add new practice' }))
+    fireEvent.click(await screen.findByRole('button', { name: /Help me choose/ }))
+    expect(await screen.findByText('guide state {"back":"/"}')).toBeInTheDocument()
+  })
+
   it('shows the rows and a note when the day cannot be loaded', async () => {
     api.getDiaryEntries.mockRejectedValue(new Error('offline'))
     renderScreen()

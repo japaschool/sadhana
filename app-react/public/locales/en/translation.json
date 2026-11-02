@@ -82,6 +82,9 @@
     "addCustom": "Add your own",
     "helpChoose": "Help me choose",
     "helpChooseSub": "See example reports first, then pick what to track",
+    "helpChooseDesc": "See example reports, then pick what to track. We set up the practices for you.",
+    "addOneMyself": "Add one myself",
+    "addOneMyselfSub": "Name it and choose its type",
     "offline": "You're offline — changes will sync when reconnected",
     "saveFailed": "Could not save — please try again"
   },

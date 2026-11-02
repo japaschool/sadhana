@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { DayFailedNote, SyncBanner } from '../SyncBanner'
+import { AddPracticeChooser } from '../../guide/AddPracticeChooser'
 import { InstallSheet } from '../InstallSheet'
 import { AppBar, type AppBarAction } from '../../../layouts/mobile/AppBar'
 import { MobileShell } from '../../../layouts/mobile/MobileShell'
@@ -20,11 +21,12 @@ export function TodayMobile() {
   const navigate = useNavigate()
   const [date, setDate] = useLogDate()
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [choosing, setChoosing] = useState(false)
   const today = useToday(date)
   const dateStr = toDateStr(date)
 
   const actions: AppBarAction[] = [
-    { label: t('home.addPractice'), onSelect: () => navigate('/settings/practices/new') },
+    { label: t('home.addPractice'), onSelect: () => setChoosing(true) },
     { label: t('home.editPractices'), onSelect: () => navigate('/settings/practices') },
   ]
 
@@ -54,6 +56,7 @@ export function TodayMobile() {
         )}
       </div>
       {calendarOpen && <CalendarSheet date={date} onSelect={setDate} onClose={() => setCalendarOpen(false)} />}
+      {choosing && <AddPracticeChooser back="/" onClose={() => setChoosing(false)} />}
       <InstallSheet ready={!today.isLoading} />
     </>
   )

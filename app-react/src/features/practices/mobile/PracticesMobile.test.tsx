@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { AxiosError, AxiosHeaders } from 'axios'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { setViewportWidth } from '../../../test/viewport'
@@ -37,6 +37,10 @@ const GROUPED: UserPractice[] = [
 const unprocessable = () => new AxiosError('x', '422', undefined, undefined,
   { status: 422, data: {}, statusText: '', headers: {}, config: { headers: new AxiosHeaders() } })
 
+function GuideProbe() {
+  return <p>guide state {JSON.stringify(useLocation().state)}</p>
+}
+
 function renderAt(path: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
@@ -45,6 +49,7 @@ function renderAt(path: string) {
         <Routes>
           {['/settings/practices', '/settings/practices/new', '/settings/practices/:id', '/settings/practices/groups/new', '/settings/practices/groups/:groupId'].map((p) => <Route key={p} path={p} element={<PracticesMobileScreen />} />)}
           <Route path="/" element={<p>Today page</p>} />
+          <Route path="/guide" element={<GuideProbe />} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -71,6 +76,22 @@ describe('PracticesMobile', () => {
     expect(within(screen.getByRole('button', { name: /^Japa rounds/ })).getByText('Required')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Show' }))
     await waitFor(() => expect(api.updateUserPractice).toHaveBeenCalledWith('p2', expect.objectContaining({ practice: 'Lectures', is_active: true })))
+  })
+
+  it('Add offers the guide or the form; the form is the old sheet', async () => {
+    renderAt('/settings/practices')
+    fireEvent.click(await screen.findByRole('button', { name: 'Add' }))
+    const chooser = await screen.findByRole('dialog')
+    expect(within(chooser).getByRole('button', { name: /Help me choose/ })).toBeInTheDocument()
+    fireEvent.click(within(chooser).getByRole('button', { name: /Add one myself/ }))
+    expect(await screen.findByRole('dialog', { name: 'New practice' })).toBeInTheDocument()
+  })
+
+  it('Help me choose opens the guide and remembers where it came from', async () => {
+    renderAt('/settings/practices')
+    fireEvent.click(await screen.findByRole('button', { name: 'Add' }))
+    fireEvent.click(await screen.findByRole('button', { name: /Help me choose/ }))
+    expect(await screen.findByText('guide state {"back":"/settings/practices"}')).toBeInTheDocument()
   })
 
   it('shows the first-time state with no practices', async () => {

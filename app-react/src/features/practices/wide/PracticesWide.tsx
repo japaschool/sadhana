@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, Navigate, useMatch, useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import { DesktopShell } from '../../../layouts/desktop/DesktopShell'
 import { TabletShell } from '../../../layouts/tablet/TabletShell'
 import { useLayout } from '../../../layouts/useLayout'
@@ -26,6 +27,7 @@ export function PracticesWide() {
   const newGroup = useNewGroup(s)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deletingGroup, setDeletingGroup] = useState(false)
+  const [addAnchor, setAddAnchor] = useState<HTMLElement | null>(null)
 
   const close = () => navigate(LIST_PATH, { replace: true })
   const find = (pid?: string | null) => s.practices.find((p) => p.id === pid)
@@ -40,6 +42,12 @@ export function PracticesWide() {
 
   const page = (
     <div className="flex min-h-dvh">
+      {addAnchor && (
+        <AnchoredMenu anchor={addAnchor} label={t('practices.add')} onClose={() => setAddAnchor(null)}>
+          <MenuItem onSelect={() => { setAddAnchor(null); navigate('/guide', { state: { back: '/settings/practices' } }) }}>{t('home.helpChoose')}</MenuItem>
+          <MenuItem onSelect={() => { setAddAnchor(null); navigate('/settings/practices/new') }}>{t('home.addOneMyself')}</MenuItem>
+        </AnchoredMenu>
+      )}
       <div className={`flex shrink-0 flex-col gap-3.5 border-r border-ui-control ${desktop ? 'w-[500px] px-7 pt-9' : 'w-[360px] px-4 pt-[calc(28px+env(safe-area-inset-top))]'} pb-7`}>
         <div className="flex flex-col gap-0.5">
           <Link to="/settings" className="flex min-h-11 items-center gap-1 self-start text-[15px] font-bold text-ui-accent">
@@ -51,9 +59,9 @@ export function PracticesWide() {
               <Link to="/settings/practices/groups/new" className="flex min-h-11 items-center gap-1.5 rounded-full bg-ui-chip pr-4 pl-3 text-sm font-extrabold text-ui-ink">
                 <span aria-hidden className="text-[22px] leading-none font-semibold">+</span>{t('practices.group')}
               </Link>
-              <Link to="/settings/practices/new" className="flex min-h-11 items-center gap-1.5 rounded-full bg-ui-accent-fill pr-4 pl-3 text-sm font-extrabold text-ui-ink">
+              <button type="button" aria-haspopup="menu" onClick={(e) => setAddAnchor(e.currentTarget)} className="flex min-h-11 items-center gap-1.5 rounded-full bg-ui-accent-fill pr-4 pl-3 text-sm font-extrabold text-ui-ink">
                 <span aria-hidden className="text-[22px] leading-none font-semibold">+</span>{t('practices.add')}
-              </Link>
+              </button>
             </div>
           </div>
         </div>

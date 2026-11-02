@@ -40,7 +40,8 @@ export function LogPanel({ date, onDate }: { date: Date; onDate: (d: Date) => vo
   }, [date, onDate])
 
   const more = [
-    { label: t('home.addPractice'), onSelect: () => navigate('/settings/practices/new') },
+    { label: t('home.helpChoose'), onSelect: () => navigate('/guide', { state: { back: '/' } }) },
+    { label: t('home.addOneMyself'), onSelect: () => navigate('/settings/practices/new') },
     { label: t('home.editPractices'), onSelect: () => navigate('/settings/practices') },
   ]
 
