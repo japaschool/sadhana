@@ -95,7 +95,7 @@ describe('TodayMobile', () => {
       </QueryClientProvider>,
     )
     expect(await screen.findByRole('button', { name: 'Add starter practices' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'or create a custom one' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Add your own' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('link', { name: /Help me choose/ }))
     expect(await screen.findByText('guide state {"back":"/"}')).toBeInTheDocument()
   })

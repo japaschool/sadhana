@@ -69,7 +69,8 @@
   "home": {
     "addPractice": "Add new practice",
     "editPractices": "Edit practices",
-    "noPractices": "No practices yet",
+    "noPractices": "Nothing to log yet",
+    "emptyText": "Today lists the practices you fill in each day. Start with a few common ones, or add your own.",
     "addStarters": "Add starter practices",
     "starters": {
       "wakeUp": "Wake up time",
@@ -78,7 +79,7 @@
       "meditation": "Meditation",
       "yoga": "Yoga"
     },
-    "addCustom": "or create a custom one",
+    "addCustom": "Add your own",
     "helpChoose": "Help me choose",
     "helpChooseSub": "See example reports first, then pick what to track",
     "offline": "You're offline — changes will sync when reconnected",
