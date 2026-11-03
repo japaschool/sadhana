@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest'
 import type { Report, ReportDefinition } from '../../api/charts'
 import type { PracticeGroup, UserPractice } from '../../types/api'
 import { DAYS_SLOT, DURATION_SLOT, JAPA_SLOTS, SLEEP_SLOTS } from '../insights/panels/templates'
-import { buildPlan, hasReport, itemsOf, nameProblem, runPlan, scaleVariants, uniqueName } from './guideLogic'
+import { buildPlan, hasReport, nameProblem, runPlan, uniqueName } from './guideLogic'
 import type { Choices, GuideApi, GuideKind, PlannedPractice } from './guideLogic'
 
 const sleep = { bedtime: 'Bedtime', wake: 'Wake-up', nap: 'Nap', min: 360, max: 540 }
-const count = { count: 'Pages read', target: 20, early: 'Early', how: 'How it went', scaleFrom: 1, scaleTo: 5 }
+const count = { count: 'Pages read', target: 20, early: 'Early' }
 const none: Choices = { sleep: null, count: null, time: null, days: null }
 const all: Choices = { sleep, count, time: { names: ['Reading', 'Study'], goal: 90 }, days: { names: ['Walk'] } }
 const names = (s: string) => `${s} report`
@@ -35,7 +35,7 @@ function fakeApi(practices: UserPractice[] = [], reports: Report[] = [], groups:
     },
     createPractice: async (p: PlannedPractice, groupId) => {
       const fail = tick(`practice:${p.name}`)
-      if (!fail || state.lose) practices.push(prac(p.name, p.data_type, { dropdown_variants: p.dropdown_variants, group_id: groupId }))
+      if (!fail || state.lose) practices.push(prac(p.name, p.data_type, { group_id: groupId }))
       if (fail) throw new Error('network')
     },
     createReport: async (name, d) => {
@@ -52,7 +52,7 @@ function fakeApi(practices: UserPractice[] = [], reports: Report[] = [], groups:
 describe('buildPlan', () => {
   it('orders practices by report, Sleep first, no duplicates between reports', () => {
     const p = plan({ ...all, time: { names: ['Nap', 'Reading'], goal: null }, days: { names: ['Walk', 'Journaling'] } })
-    expect(p.practices.map((x) => x.name)).toEqual(['Bedtime', 'Wake-up', 'Nap', 'Pages read', 'Early', 'How it went', 'Reading', 'Walk', 'Journaling'])
+    expect(p.practices.map((x) => x.name)).toEqual(['Bedtime', 'Wake-up', 'Nap', 'Pages read', 'Early', 'Reading', 'Walk', 'Journaling'])
     expect(p.reports.map((r) => r.kind)).toEqual(['sleep', 'count', 'time', 'days'])
   })
 
@@ -66,14 +66,8 @@ describe('buildPlan', () => {
     expect(p.reports).toHaveLength(1)
   })
 
-  it('takes the dropdown 1 to 5 for How it went', () => {
-    const p = plan({ ...none, count })
-    expect(p.practices.find((x) => x.name === 'How it went')).toEqual({ name: 'How it went', data_type: 'Text', dropdown_variants: '1,2,3,4,5' })
-    expect(p.practices.find((x) => x.name === 'Pages read')).toEqual({ name: 'Pages read', data_type: 'Int' })
-  })
-
   it('leaves out unticked optionals', () => {
-    const p = plan({ ...none, sleep: { ...sleep, nap: null }, count: { ...count, early: null, how: null } })
+    const p = plan({ ...none, sleep: { ...sleep, nap: null }, count: { ...count, early: null } })
     expect(p.practices.map((x) => x.name)).toEqual(['Bedtime', 'Wake-up', 'Pages read'])
   })
 
@@ -94,14 +88,14 @@ describe('buildPlan groups', () => {
     expect(group(p, 'time')).toBe('duration report')
   })
   it('names a Daily count report and its group after the count', () => {
-    const p = plan({ ...none, count: { ...count, count: ' Pages read ', early: 'Done in the morning', how: null } }, [], [report('Pages read')])
+    const p = plan({ ...none, count: { ...count, count: ' Pages read ', early: 'Done in the morning' } }, [], [report('Pages read')])
     expect(group(p, 'count')).toBe('Pages read')
     expect(p.reports[0].name).toBe('Pages read 2')
-    expect(plan({ ...none, count: { ...count, count: 'Pages read', early: null, how: null } }).reports[0].name).toBe('Pages read')
+    expect(plan({ ...none, count: { ...count, count: 'Pages read', early: null } }).reports[0].name).toBe('Pages read')
   })
   it('leaves a single practice alone', () => {
     expect(group(plan({ ...none, days: { names: ['Walk'] } }), 'days')).toBeNull()
-    expect(group(plan({ ...none, count: { ...count, early: null, how: null } }), 'count')).toBeNull()
+    expect(group(plan({ ...none, count: { ...count, early: null } }), 'count')).toBeNull()
   })
   it('skips the group when any practice is reused, from before or from an earlier report here', () => {
     expect(group(plan({ ...none, time: { names: ['Reading', 'Study'], goal: null } }, [prac('Reading', 'Duration')]), 'time')).toBeNull()
@@ -112,21 +106,6 @@ describe('buildPlan groups', () => {
   it('a rebuild after a partial attempt decides as the first one did', () => {
     const c = { ...none, time: { names: ['Reading', 'Study'], goal: null } }
     expect(buildPlan(c, [prac('Reading', 'Duration')], [], names, new Set())).toMatchObject({ reports: [{ group: 'duration report' }] })
-  })
-})
-
-describe('scaleVariants', () => {
-  it('lists the scale', () => {
-    expect(scaleVariants(1, 5)).toBe('1,2,3,4,5')
-    expect(scaleVariants(0, 10)).toBe('0,1,2,3,4,5,6,7,8,9,10')
-  })
-  it.each([[null, 5], [1, null], [5, 5], [5, 1], [0, 11]])('refuses %s to %s', (from, to) => {
-    expect(scaleVariants(from, to)).toBeUndefined()
-  })
-  it('gives the planned practice its options, and blanks stay safe while typing', () => {
-    const planned = (scaleFrom: number | null, scaleTo: number | null) => itemsOf('count', { ...count, scaleFrom, scaleTo })[2].planned.dropdown_variants
-    expect(planned(0, 3)).toBe('0,1,2,3')
-    expect(planned(5, 1)).toBeUndefined()
   })
 })
 
@@ -168,7 +147,7 @@ describe('runPlan groups', () => {
   })
   it('creates a name two reports share only once', async () => {
     const f = fakeApi()
-    await runPlan(plan({ ...none, sleep, count: { ...count, count: 'sleep report', early: 'Done in the morning', how: null } }), f.api, () => {})
+    await runPlan(plan({ ...none, sleep, count: { ...count, count: 'sleep report', early: 'Done in the morning' } }), f.api, () => {})
     expect(f.log.filter((l) => l.startsWith('group:'))).toEqual(['group:sleep report'])
     expect(new Set(f.practices.map((p) => p.group_id))).toEqual(new Set(['g-sleep report']))
   })
@@ -253,14 +232,6 @@ describe('runPlan', () => {
     expect(f.log).toEqual([])
   })
 
-  it('reuses an active Int How it went as the plan does', async () => {
-    const f = fakeApi([prac('How it went', 'Int')])
-    const p = plan({ ...none, count }, f.practices)
-    expect(p.practices.map((x) => x.name)).toEqual(['Pages read', 'Early'])
-    await runPlan(p, f.api, () => {})
-    expect(f.practices.filter((x) => x.practice === 'How it went')).toHaveLength(1)
-  })
-
   it('puts the right practices and numbers in each definition', async () => {
     const reading = prac('Reading', 'Duration')
     const f = fakeApi([reading])
@@ -268,7 +239,7 @@ describe('runPlan', () => {
     const id = (name: string) => f.practices.find((x) => x.practice === name)!.id
     const tpl = (name: string) => (f.defs[name] as { Panels: { template: Record<string, unknown> } }).Panels.template
     expect(tpl('sleep report')).toEqual({ Sleep: { bedtime: id('Bedtime'), wake: id('Wake-up'), nap: id('Nap'), min: 360, max: 540 } })
-    expect(tpl('Pages read')).toEqual({ Japa: { total: id('Pages read'), target: 20, morning: id('Early'), quality: id('How it went'), attunement: null } })
+    expect(tpl('Pages read')).toEqual({ Japa: { total: id('Pages read'), target: 20, morning: id('Early'), quality: null, attunement: null } })
     expect(tpl('duration report')).toEqual({ Duration: { practices: [reading.id, id('Study')], goal: 90 } })
     expect(tpl('days report')).toEqual({ Days: { practices: [id('Walk')] } })
     expect(id('Bedtime')).not.toBe(id('Wake-up'))

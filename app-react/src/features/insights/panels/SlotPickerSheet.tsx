@@ -30,7 +30,7 @@ export function SlotPickerSheet({ slot, value, suggested, practices, onPick, onC
         <div className="flex min-w-0 flex-col gap-1">
           <h2 className="text-xl font-extrabold tracking-[-0.01em] text-ui-ink">{label}</h2>
           <p className="flex items-center gap-1.5 text-[13px] font-semibold text-ui-muted">
-            <TypeIcon type={type} />{t(slot.key === 'quality' ? 'templateForm.onlyQuality' : `templateForm.only${type}`)}
+            <TypeIcon type={type} />{t(`templateForm.only${type}`)}
           </p>
         </div>
         <button type="button" aria-label={t('yatraSettings.close')} onClick={onClose}

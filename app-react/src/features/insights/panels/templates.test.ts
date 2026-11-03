@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { ChartPanel, JapaTemplate, Panel, SleepTemplate, Stat } from '../../../api/charts'
 import type { UserPractice } from '../../../types/api'
-import { DAYS_SLOT, daysPanels, DURATION_SLOT, durationPanels, MAX_DAYS, JAPA_SLOTS, japaPanels, numericVariants, pickerGroups, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, suggestFor } from './templates'
+import { DAYS_SLOT, daysPanels, DURATION_SLOT, durationPanels, MAX_DAYS, JAPA_SLOTS, japaPanels, pickerGroups, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, suggestFor } from './templates'
 
 const T: SleepTemplate = { bedtime: 'bed', wake: 'wake', nap: 'nap', min: 360, max: 540 }
 const charts = (ps: Panel[]) => ps.filter((p): p is Extract<Panel, { kind: 'Chart' }> => p.kind === 'Chart') as (ChartPanel & { kind: 'Chart' })[]
@@ -138,54 +138,32 @@ describe('japaPanels', () => {
     const r = japaPanels(J)
     expect(r.template).toEqual({ Japa: J })
     expect(r.required.map((x) => x.practice)).toEqual(['tot'])
-    expect(r.panels.map((p) => p.kind)).toEqual(['Stats', 'Chart', 'Chart'])
+    expect(r.panels.map((p) => p.kind)).toEqual(['Stats', 'Chart'])
   })
 
   it('takes today out and counts a missing day as 0 in every stat', () => {
     const stats = statsOf(japaPanels(J).panels)
-    expect(stats).toHaveLength(5)
+    expect(stats).toHaveLength(2)
     for (const s of stats) expect(scopeOf(s)).toEqual({ today: false, missing_zero: true })
   })
 
-  it('draws total bars against the target, morning overlaid, attunement as a dot', () => {
+  it('draws total bars against the target under the headline, morning overlaid', () => {
     const [rounds] = charts(japaPanels(J).panels)
+    expect(rounds.headline).toBe(true)
+    expect(rounds.title).toBeNull()
     expect(rounds.bar_layout).toBe('Overlaid')
     expect(rounds.format).toBe('Count')
-    expect(rounds.series.map((s) => s.mark)).toEqual(['Bar', 'Bar', 'Dot'])
+    // An older report's quality and done marker aren't drawn.
+    expect(rounds.series.map((s) => s.source)).toEqual([{ Practice: { practice: 'tot' } }, { Practice: { practice: 'mor' } }])
     expect(rounds.series[0].source).toEqual({ Practice: { practice: 'tot' } })
-    expect(rounds.series[2].only_with).toBe(0)
     expect(rounds.target).toMatchObject({ min: 16, max: null, lines: true, colour: true, of: { Practice: { practice: 'tot' } } })
   })
 
-  it('gives quality its own line chart', () => {
-    const [, q] = charts(japaPanels(J).panels)
-    expect(q.series).toHaveLength(1)
-    expect(q.series[0].mark).toBe('Line')
-    expect(q.target).toBeNull()
-  })
-
-  it('has one chart and two stats with only total and target', () => {
+  it('has one chart and one stat with only total and target', () => {
     const r = japaPanels({ ...J, morning: null, quality: null, attunement: null })
     expect(charts(r.panels)).toHaveLength(1)
     expect(charts(r.panels)[0].series).toHaveLength(1)
-    expect(statsOf(r.panels)).toHaveLength(2)
-  })
-})
-
-describe('numeric practices', () => {
-  const dd = (dropdown_variants?: string) => ({ ...p('x', 'Quality', 'Text'), dropdown_variants })
-  it('needs every dropdown variant to be a number', () => {
-    expect(numericVariants(dd('1,2,3'))).toBe(true)
-    expect(numericVariants(dd('1\n2, 3'))).toBe(true)
-    expect(numericVariants(dd('1,good'))).toBe(false)
-    expect(numericVariants(dd(''))).toBe(false)
-    expect(numericVariants(dd())).toBe(false)
-  })
-  it('offers a numeric dropdown for quality, and refuses other text', () => {
-    const quality = JAPA_SLOTS.find((s) => s.key === 'quality')!
-    const { compatible, cant } = pickerGroups(quality, [p('i', 'Int', 'Int'), { ...dd('1,2'), id: 'n' }, { ...dd('a,b'), id: 't' }, p('b', 'Bool', 'Bool')])
-    expect(compatible.map((p) => p.id)).toEqual(['i', 'n'])
-    expect(cant.map((c) => c.practice.id)).toEqual(['t', 'b'])
+    expect(statsOf(r.panels)).toHaveLength(1)
   })
 })
 
@@ -227,7 +205,7 @@ describe('durationPanels', () => {
 })
 
 describe('suggestions for Japa', () => {
-  const [total, , , attunement] = JAPA_SLOTS
+  const [total] = JAPA_SLOTS
   it('an earlier hint beats list order', () => {
     const ps = [p('q', 'Japa quality', 'Int'), p('m', 'Rounds in the morning', 'Int'), p('t', 'Total rounds', 'Int')]
     expect(suggestFor(total, ps, new Set())?.id).toBe('t')
@@ -242,9 +220,6 @@ describe('suggestions for Japa', () => {
     expect(suggestFor(slot, ps, new Set())?.id).toBe('t')
     expect(suggestFor(morning, ps, new Set())?.id).toBe('m')
     expect(suggestFor(morning, ps, new Set(['t']))?.id).toBe('m')
-  })
-  it('knows attunement by its other name', () => {
-    expect(suggestFor(attunement, [p('a', 'Japa affirmation', 'Bool')], new Set())?.id).toBe('a')
   })
 })
 

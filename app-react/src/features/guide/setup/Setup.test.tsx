@@ -174,7 +174,7 @@ describe('a ticked extra left blank', () => {
     expect(screen.getByText('Give every practice a name to continue')).toBeInTheDocument()
   })
 
-  it.each(['Done in the morning', 'How it went'])('blocks Next for %s once the count and target are filled in', async (extra) => {
+  it.each(['Done in the morning'])('blocks Next for %s once the count and target are filled in', async (extra) => {
     const user = await start(['count'])
     await user.click(screen.getByRole('button', { name: 'Pages read' }))
     const target = screen.getByLabelText('How many a day')
@@ -224,11 +224,11 @@ describe('Daily count', () => {
     expect(next()).toBeEnabled()
   })
 
-  it('How it went and Done in the morning start unticked', async () => {
+  it('Done in the morning starts unticked, and How it went isn’t offered', async () => {
     const user = await start(['count'])
     expect(screen.getByRole('checkbox', { name: 'Done in the morning' })).not.toBeChecked()
-    expect(screen.getByRole('checkbox', { name: 'How it went' })).not.toBeChecked()
-    expect(applied('count')).toMatchObject({ early: null, how: null })
+    expect(screen.queryByRole('checkbox', { name: 'How it went' })).not.toBeInTheDocument()
+    expect(applied('count')).toMatchObject({ early: null })
     await user.click(screen.getByRole('checkbox', { name: 'Done in the morning' }))
     expect(applied('count').early).toBe('Done in the morning')
     await rename(user, 'Done in the morning', '   ')
@@ -236,69 +236,6 @@ describe('Daily count', () => {
   })
 })
 
-describe('How it went scale', () => {
-  async function ticked() {
-    const user = await start(['count'])
-    await user.click(screen.getByRole('button', { name: 'Pages read' }))
-    const target = screen.getByLabelText('How many a day')
-    await user.type(target, '20')
-    fireEvent.blur(target)
-    await user.click(screen.getByRole('checkbox', { name: 'How it went' }))
-    return user
-  }
-  const setField = async (user: ReturnType<typeof userEvent.setup>, label: string, value: string) => {
-    const f = screen.getByLabelText(label)
-    await user.clear(f)
-    if (value) await user.type(f, value)
-    fireEvent.blur(f)
-  }
-
-  it('starts at 1 to 5 and takes another range', async () => {
-    const user = await ticked()
-    expect(screen.getByLabelText('From')).toHaveValue('1')
-    expect(screen.getByLabelText('To')).toHaveValue('5')
-    await setField(user, 'From', '0')
-    await setField(user, 'To', '10')
-    expect(next()).toBeEnabled()
-    expect(screen.getByText('Dropdown · Choose 0 to 10 each day')).toBeInTheDocument()
-    expect(applied('count')).toMatchObject({ scaleFrom: 0, scaleTo: 10 })
-  })
-
-  it.each([['5', '1'], ['0', '11'], ['1', '']])('blocks Next for %s to %s', async (from, to) => {
-    const user = await ticked()
-    await setField(user, 'To', to)
-    await setField(user, 'From', from)
-    expect(next()).toBeDisabled()
-    expect(screen.getByText('Fix the scale to continue')).toBeInTheDocument()
-  })
-
-  it('shows in the row before it is ticked, and an unticked row blocks nothing', async () => {
-    const user = await start(['count'])
-    expect(screen.getByLabelText('From')).toHaveValue('1')
-    await user.click(screen.getByRole('button', { name: 'Pages read' }))
-    const target = screen.getByLabelText('How many a day')
-    await user.type(target, '20')
-    fireEvent.blur(target)
-    await setField(user, 'To', '')
-    expect(next()).toBeEnabled()
-  })
-
-  it('goes away for a practice of the person’s own, which has its options', async () => {
-    setup([mine('Quality', 'Int')])
-    const user = await start(['count'])
-    const rows = await screen.findAllByRole('group', { name: 'Quality' })
-    await user.click(within(rows[2]).getByRole('button', { name: 'Use' }))
-    expect(applied('count').how).toBe('Quality')
-    expect(screen.queryByLabelText('From')).not.toBeInTheDocument()
-    expect(screen.getByText('Dropdown · One choice each day')).toBeInTheDocument()
-  })
-
-  it('takes digits only', async () => {
-    const user = await ticked()
-    await setField(user, 'To', '-7a')
-    expect(screen.getByLabelText('To')).toHaveValue('7')
-  })
-})
 
 describe('Time spent and Days I did it', () => {
   it.each([['time', 'Reading'], ['days', 'Walk']] as const)('%s needs at least one practice', async (kind, chip) => {

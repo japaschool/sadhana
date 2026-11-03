@@ -326,18 +326,11 @@ describe('japa missing and retyped practices', () => {
   const def = japaPanels({ total: 't', target: 16, morning: 'm', quality: 'q', attunement: 'a' })
   const view = (ps: UserPractice[]) => visiblePanels(def, makeLookup([], undefined, ps))
   const chartsOf = (ps: Panel[]) => ps.filter((x) => x.kind === 'Chart') as Extract<Panel, { kind: 'Chart' }>[]
-  const statLabels = (ps: Panel[]) => (ps[0] as Extract<Panel, { kind: 'Stats' }>).stats.map((s) => (s.label as { Key: string }).Key)
 
-  it('leaves out a deleted optional practice, its figure and its chart', () => {
+  it('leaves out a deleted optional practice, its figure and its line', () => {
     const v = view(ALL.filter((p) => p.id !== 'q'))
-    expect(chartsOf(v)).toHaveLength(1)
-    expect(statLabels(v)).not.toContain('reportPanels.avgQuality')
-    expect(missingRequired(def, makeLookup([], undefined, ALL.filter((p) => p.id !== 'q')))).toEqual([])
-  })
-  it('treats attunement retyped to Int as missing', () => {
-    const v = view([...ALL.filter((p) => p.id !== 'a'), P('a', 'Attune', 'Int')])
     expect(chartsOf(v)[0].series.map((s) => s.mark)).toEqual(['Bar', 'Bar'])
-    expect(statLabels(v)).not.toContain('reportPanels.attunementDays')
+    expect(missingRequired(def, makeLookup([], undefined, ALL.filter((p) => p.id !== 'q')))).toEqual([])
   })
   it('reports total rounds retyped to Time as a missing required practice', () => {
     const ps = [...ALL.filter((p) => p.id !== 't'), P('t', 'Rounds', 'Time')]
@@ -355,11 +348,8 @@ describe('tipLines on a Japa day', () => {
   it('names a series without a label by its practice', () => {
     expect(lines[0]).toMatchObject({ name: 'Rounds', text: '18', state: 'ok' })
   })
-  it('shows a true day as a tick, not a 1', () => {
-    expect(lines[1]).toMatchObject({ name: 'reportPanels.attunementDone', text: '✓' })
-  })
   it('adds no total row when the target judges the one series', () => {
-    expect(lines).toHaveLength(2)
+    expect(lines).toHaveLength(1)
   })
 })
 

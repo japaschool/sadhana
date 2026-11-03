@@ -274,10 +274,9 @@ describe('NewTemplateScreen', () => {
 })
 
 describe('the Japa template', () => {
-  const JAPA: TemplateDraft = { kind: 'Japa', total: 'japa', target: 16, morning: null, quality: null, attunement: null }
+  const JAPA: TemplateDraft = { kind: 'Japa', total: 'japa', target: 16, morning: null }
   const ALL = [
     ...PRACTICES, p('m', 'Morning rounds', 'Int'), p('b', 'Attunement', 'Bool'),
-    { ...p('dd', 'Quality', 'Text'), dropdown_variants: '1,2,3' }, { ...p('words', 'Mood', 'Text'), dropdown_variants: 'good,bad' },
   ]
   function JapaForm({ start, flagMissing }: { start: TemplateDraft; flagMissing?: boolean }) {
     const [v, setV] = useState(start)
@@ -300,6 +299,14 @@ describe('the Japa template', () => {
     expect(draftToDefinition(JAPA)).toEqual({ Panels: japaPanels({ total: 'japa', target: 16, morning: null, quality: null, attunement: null }) })
   })
 
+  it('drops an older report’s quality and done marker on save', () => {
+    const def = japaPanels({ total: 'japa', target: 16, morning: null, quality: 'q', attunement: 'b' })
+    expect(draftToDefinition(draftOf(def, ALL)!)!.Panels.template).toEqual({ Japa: { total: 'japa', target: 16, morning: null, quality: null, attunement: null } })
+    render(<JapaForm start={JAPA} />)
+    expect(screen.queryByText('Attunement')).not.toBeInTheDocument()
+    expect(screen.queryByText('How it went')).not.toBeInTheDocument()
+  })
+
   it('reads the template back, with a deleted total as missing and a deleted extra kept', () => {
     const def = japaPanels({ total: 'japa', target: 16, morning: 'gone', quality: null, attunement: null })
     expect(draftOf(def, ALL)).toMatchObject({ kind: 'Japa', total: 'japa', target: 16, morning: 'gone' })
@@ -320,17 +327,6 @@ describe('the Japa template', () => {
     expect(shown()).toMatchObject({ total: null })
     fireEvent.click(screen.getByRole('button', { name: 'Use Japa rounds' }))
     expect(shown()).toMatchObject({ total: 'japa' })
-  })
-
-  it('offers a numeric dropdown for quality and says why words can’t be used', () => {
-    render(<JapaForm start={JAPA} />)
-    fireEvent.click(screen.getByRole('button', { name: 'How it went: Choose a practice' }))
-    const sheet = within(screen.getByRole('dialog', { name: 'How it went' }))
-    expect(sheet.getByRole('radio', { name: /Quality/ })).toBeInTheDocument()
-    expect(sheet.queryByRole('radio', { name: /Mood/ })).not.toBeInTheDocument()
-    expect(sheet.getByText('Mood')).toBeInTheDocument()
-    fireEvent.click(sheet.getByRole('radio', { name: /Quality/ }))
-    expect(shown()).toMatchObject({ quality: 'dd' })
   })
 
   it('says why a cleared target isn’t saved on a saved report', () => {

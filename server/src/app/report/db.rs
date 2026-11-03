@@ -520,6 +520,7 @@ mod tests {
                 reversed: true,
                 target: None,
                 lines: vec![],
+                headline: false,
             })],
         }
     }

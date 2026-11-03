@@ -14,13 +14,13 @@ import { DAYS_SLOT, daysPanels, DURATION_SLOT, durationPanels, fits, JAPA_SLOTS,
 
 export type TemplateDraft =
   | { kind: 'Sleep'; bedtime: string | null; wake: string | null; nap: string | null; min: number | null; max: number | null }
-  | { kind: 'Japa'; total: string | null; target: number | null; morning: string | null; quality: string | null; attunement: string | null }
+  | { kind: 'Japa'; total: string | null; target: number | null; morning: string | null }
   | { kind: 'Duration'; practices: string[]; goal: number | null }
   | { kind: 'Days'; practices: string[] }
 
 export const NEW_DRAFTS = {
   sleep: (): TemplateDraft => ({ kind: 'Sleep', bedtime: null, wake: null, nap: null, ...SLEEP_DEFAULTS }),
-  japa: (): TemplateDraft => ({ kind: 'Japa', total: null, target: null, morning: null, quality: null, attunement: null }),
+  japa: (): TemplateDraft => ({ kind: 'Japa', total: null, target: null, morning: null }),
   duration: (): TemplateDraft => ({ kind: 'Duration', practices: [], goal: null }),
   days: (): TemplateDraft => ({ kind: 'Days', practices: [] }),
 }
@@ -41,8 +41,8 @@ export function draftToDefinition(d: TemplateDraft): { Panels: PanelsReport } | 
   if (d.kind === 'Duration') return { Panels: durationPanels({ practices: d.practices, goal: d.goal }) }
   if (d.kind === 'Days') return { Panels: daysPanels({ practices: d.practices }) }
   if (d.kind === 'Japa') {
-    const { kind: _, ...t } = d
-    return { Panels: japaPanels({ ...t, total: d.total!, target: d.target! }) }
+    // Quality and done markers are no longer drawn, so a saved report drops its old ones.
+    return { Panels: japaPanels({ total: d.total!, target: d.target!, morning: d.morning, quality: null, attunement: null }) }
   }
   return { Panels: sleepPanels({ bedtime: d.bedtime!, wake: d.wake!, nap: d.nap, min: d.min, max: d.max }) }
 }
@@ -62,7 +62,9 @@ export function draftOf(def: PanelsReport, practices: UserPractice[]): TemplateD
   if ('Days' in template) {
     return { kind: 'Days', practices: template.Days.practices.filter((id) => practices.some((p) => p.id === id && fits(DAYS_SLOT, p))) }
   }
-  const draft: TemplateDraft = 'Sleep' in template ? { kind: 'Sleep', ...template.Sleep } : { kind: 'Japa', ...template.Japa }
+  const draft: TemplateDraft = 'Sleep' in template ? { kind: 'Sleep', ...template.Sleep } : {
+    kind: 'Japa', total: template.Japa.total, target: template.Japa.target, morning: template.Japa.morning,
+  }
   const empty = slotsOf(draft).filter((s) => s.required && !practices.some((p) => p.id === slotValue(draft, s) && fits(s, p)))
   return { ...draft, ...Object.fromEntries(empty.map((s) => [s.key, null])) }
 }
@@ -302,7 +304,7 @@ export function TemplateForm({ value, onChange, practices, name, flagMissing }: 
           </section>
           <section className="flex flex-col gap-2">
             <h2 className={GROUP}>{t('templateForm.extras')}</h2>
-            {rows(JAPA_SLOTS.filter((s) => !s.required))}
+            {rows(slots.filter((s) => !s.required))}
           </section>
         </>
       )}

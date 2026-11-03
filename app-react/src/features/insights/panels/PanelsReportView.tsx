@@ -5,6 +5,8 @@ import type { UserPractice } from '../../../types/api'
 import { ChartPanelView } from './ChartPanelView'
 import { MonthPanelView } from './MonthPanelView'
 import { StatsPanelView } from './StatsPanelView'
+import type { Range } from '../useInsights'
+import { current } from './templates'
 import { labelText, makeLookup, missingRequired, monthEnd, visiblePanels, windowDays } from './panelLogic'
 
 interface PanelsReportViewProps {
@@ -27,6 +29,8 @@ interface PanelsReportViewProps {
   legendLast?: boolean
   /** Off in examples: month panels show only their grid. */
   monthFigures?: boolean
+  /** The window's length, which words a headline's change; none in examples. */
+  range?: Range
 }
 
 /** A required practice was deleted or hidden (15m19, 15t10). */
@@ -68,12 +72,14 @@ function MonthLegend() {
   )
 }
 
-export function PanelsReportView({ report, definition, entries, previous, practices, todayCob, chartHeight, formLink, cols = 4, month = todayCob.slice(0, 7), interactive = true, legendLast = false, monthFigures = true }: PanelsReportViewProps) {
+export function PanelsReportView({ report, definition, entries, previous, practices, todayCob, chartHeight, formLink, cols = 4, month = todayCob.slice(0, 7), interactive = true, legendLast = false, monthFigures = true, range }: PanelsReportViewProps) {
   const { t } = useTranslation()
   const lookup = makeLookup(entries, previous, practices)
   const days = windowDays(entries)
-  const panels = visiblePanels(definition, lookup)
-  const missing = missingRequired(definition, lookup)
+  const prevDays = windowDays(previous ?? [])
+  const def = current(definition)
+  const panels = visiblePanels(def, lookup)
+  const missing = missingRequired(def, lookup)
   const firstChart = panels.findIndex((p) => p.kind === 'Chart')
   const labels = [...new Set(missing.map((r) => labelText(r.label, t)))].join(', ')
   const legend = panels.some((p) => p.kind === 'Month') && <MonthLegend />
@@ -88,7 +94,7 @@ export function PanelsReportView({ report, definition, entries, previous, practi
         <StatsPanelView key={i} stats={p.stats} days={days} lookup={lookup} todayCob={todayCob} cols={cols} />
       ) : (
         // The first chart leads; the rest are shorter (15m6, 15m12).
-        <ChartPanelView key={i} panel={p} panels={panels} days={days} lookup={lookup} todayCob={todayCob}
+        <ChartPanelView key={i} panel={p} panels={panels} days={days} prevDays={prevDays} range={range} lookup={lookup} todayCob={todayCob}
           height={i === firstChart ? chartHeight : Math.round(chartHeight * 0.72)} first={i === firstChart} compact={cols === 2} interactive={interactive} />
       )))}
       {legendLast && legend}
