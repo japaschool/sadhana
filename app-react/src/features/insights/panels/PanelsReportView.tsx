@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import type { PanelsReport, Report, ReportDataEntry } from '../../../api/charts'
 import type { UserPractice } from '../../../types/api'
 import { ChartPanelView } from './ChartPanelView'
+import { AroundPanelView } from './AroundPanelView'
+import { GapsPanelView } from './GapsPanelView'
 import { MonthPanelView } from './MonthPanelView'
 import { StatsPanelView } from './StatsPanelView'
 import type { Range } from '../useInsights'
@@ -88,7 +90,12 @@ export function PanelsReportView({ report, definition, entries, previous, practi
     <div aria-label={report.name} role="group" className="flex flex-col gap-3">
       {missing.length > 0 && <MissingCard labels={labels} formLink={formLink} />}
       {!legendLast && legend}
-      {panels.map((p, i) => (p.kind === 'Month' ? (
+      {panels.map((p, i) => (p.kind === 'Gaps' ? (
+        <GapsPanelView key={i} event={p.event} days={days} prevDays={prevDays} lookup={lookup} todayCob={todayCob}
+          height={chartHeight} cols={cols} interactive={interactive} />
+      ) : p.kind === 'Around' ? (
+        <AroundPanelView key={i} event={p.event} rows={p.rows} days={days} prevDays={prevDays} lookup={lookup} todayCob={todayCob} />
+      ) : p.kind === 'Month' ? (
         <MonthPanelView key={i} practice={p.practice} month={month} end={monthEnd(month, todayCob)} todayCob={todayCob} lookup={lookup} figures={monthFigures} />
       ) : p.kind === 'Stats' ? (
         <StatsPanelView key={i} stats={p.stats} days={days} lookup={lookup} todayCob={todayCob} cols={cols} />

@@ -458,3 +458,27 @@ describe('lookup text', () => {
     expect(lk([], undefined, ps).options('n')).toEqual([])
   })
 })
+
+describe('gaps panels', () => {
+  const ev = P('ev', 'Event', 'Bool')
+  const def: PanelsReport = {
+    version: 1, template: null,
+    required: [{ practice: 'ev', label: { Key: 'reportPanels.event' } }],
+    panels: [
+      { kind: 'Gaps', event: 'ev' },
+      { kind: 'Around', event: 'ev', rows: [{ label: null, source: { Practice: { practice: 'n' } } }] },
+    ],
+  }
+  it('keeps both while the event is Bool or Text', () => {
+    expect(visiblePanels(def, lk([], undefined, [...practices, ev])).map((p) => p.kind)).toEqual(['Gaps', 'Around'])
+  })
+  it('an event retyped to Int drops both and reads as missing', () => {
+    const l = lk([], undefined, [...practices, P('ev', 'Event', 'Int')])
+    expect(visiblePanels(def, l)).toEqual([])
+    expect(missingRequired(def, l).map((r) => r.practice)).toEqual(['ev'])
+  })
+  it('an Around panel with only a Bool row is dropped', () => {
+    const only: PanelsReport = { ...def, panels: [{ kind: 'Around', event: 'ev', rows: [{ label: null, source: { Practice: { practice: 'ev' } } }] }] }
+    expect(visiblePanels(only, lk([], undefined, [...practices, ev]))).toEqual([])
+  })
+})

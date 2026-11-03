@@ -6,6 +6,8 @@ import type { PracticeDataType, UserPractice } from '../../../types/api'
 import { addDays, fromDateStr, toDateStr } from '../../today/date'
 import { formatMinutesAsHHMM, valueToNumber } from '../chartLogic'
 import { formatDuration, parseOptions, type DurationUnits } from '../../today/values'
+// A function-only cycle: gapLogic reads resolve/scalar from here, at call time.
+import { rowKind } from './gapLogic'
 
 export interface Lookup {
   /** Numeric value on a day; null when empty, or the practice is unavailable. */
@@ -191,9 +193,21 @@ function visibleStat(s: Stat, l: Lookup): Stat | null {
   return { ...s, under: s.under ? visibleStat(s.under, l) : null }
 }
 
+/** A Gaps or Around event: a true Bool or a non-empty Text. */
+const eventOk = (event: string, l: Lookup) => l.available(event, 'Bool') || l.available(event, 'Text')
+
 export function visiblePanels(def: PanelsReport, l: Lookup): Panel[] {
   const out: Panel[] = []
   for (const panel of def.panels) {
+    if (panel.kind === 'Gaps') {
+      if (eventOk(panel.event, l)) out.push(panel)
+      continue
+    }
+    if (panel.kind === 'Around') {
+      const rows = panel.rows.filter((r) => rowKind(r.source, l) !== null)
+      if (eventOk(panel.event, l) && rows.length) out.push({ ...panel, rows })
+      continue
+    }
     if (panel.kind === 'Month') {
       if (l.available(panel.practice, 'Bool')) out.push(panel)
       continue
@@ -227,9 +241,11 @@ export function visiblePanels(def: PanelsReport, l: Lookup): Panel[] {
 
 function panelSources(def: PanelsReport): Source[] {
   const ofStat = (s: Stat): Source[] => [statParts(s.value)[1].of, ...(s.under ? ofStat(s.under) : [])]
-  return def.panels.flatMap((p) => (p.kind === 'Month' ? [] : p.kind === 'Stats'
-    ? p.stats.flatMap(ofStat)
-    : [...p.series.map((s) => s.source), ...(p.target ? [p.target.of] : []), ...p.lines.map((r) => r.of)]))
+  return def.panels.flatMap((p) => (p.kind === 'Month' || p.kind === 'Gaps' ? [] : p.kind === 'Around'
+    ? p.rows.map((r) => r.source)
+    : p.kind === 'Stats'
+      ? p.stats.flatMap(ofStat)
+      : [...p.series.map((s) => s.source), ...(p.target ? [p.target.of] : []), ...p.lines.map((r) => r.of)]))
 }
 
 /** Deleted, hidden, or retyped so that a Range can no longer use it as a time. */
@@ -237,8 +253,10 @@ export function missingRequired(def: PanelsReport, l: Lookup): Required[] {
   const ends = new Set(panelSources(def).flatMap((s) => ('Range' in s ? [s.Range.from.practice, s.Range.to.practice] : [])))
   const charted = def.panels.flatMap((p) => (p.kind === 'Chart' ? p.series.map((s) => ({ s, want: seriesTypes(s, p.format) })) : []))
   const months = new Set(def.panels.flatMap((p) => (p.kind === 'Month' ? [p.practice] : [])))
+  const events = new Set(def.panels.flatMap((p) => (p.kind === 'Gaps' || p.kind === 'Around' ? [p.event] : [])))
   return def.required.filter((r) => !l.available(r.practice)
     || (months.has(r.practice) && !l.available(r.practice, 'Bool'))
+    || (events.has(r.practice) && !eventOk(r.practice, l))
     || (ends.has(r.practice) && !l.available(r.practice, 'Time'))
     || charted.some(({ s, want }) => 'Practice' in s.source && s.source.Practice.practice === r.practice && !typedOk(s.source, want, l)))
 }
