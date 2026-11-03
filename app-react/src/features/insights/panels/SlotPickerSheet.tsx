@@ -30,14 +30,14 @@ export function SlotPickerSheet({ slot, value, suggested, practices, onPick, onC
         <div className="flex min-w-0 flex-col gap-1">
           <h2 className="text-xl font-extrabold tracking-[-0.01em] text-ui-ink">{label}</h2>
           <p className="flex items-center gap-1.5 text-[13px] font-semibold text-ui-muted">
-            <TypeIcon type={type} />{t(`templateForm.only${type}`)}
+            <TypeIcon type={type} />{t(slot.types.length > 1 ? `templateForm.only_${slot.key}` : `templateForm.only${type}`)}
           </p>
         </div>
         <button type="button" aria-label={t('yatraSettings.close')} onClick={onClose}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ui-chip text-lg text-ui-muted">×</button>
       </div>
       <div role="radiogroup" aria-label={label} className="-mx-3 flex flex-col gap-0.5">
-        <h3 className={GROUP}>{t(typeLabelKey(type))}</h3>
+        {slot.types.length === 1 && <h3 className={GROUP}>{t(typeLabelKey(type))}</h3>}
         {compatible.map((p) => {
           const on = p.id === value
           const hint = p.id === suggested?.id

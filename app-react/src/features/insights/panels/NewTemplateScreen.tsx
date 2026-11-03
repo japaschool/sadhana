@@ -51,7 +51,8 @@ function NewReport({ slug }: { slug: Slug }) {
   const practicesQ = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices })
   const todayCob = toDateStr(new Date())
   // The same query as Insights and the chart editor's preview: 30 days, or half a year for month grids (Last 90 days needs it).
-  const duration = slug === 'days' ? 'HalfYear' : 'Month'
+  // A year for gaps: the days-around table needs 10 events.
+  const duration = slug === 'days' ? 'HalfYear' : slug === 'gaps' ? 'Year' : 'Month'
   const dataQ = useQuery({ queryKey: ['report-data', todayCob, duration], queryFn: () => chartsApi.getReportData(todayCob, duration), enabled: wide })
 
   const defaultName = t(`templateForm.${slug}Name`)

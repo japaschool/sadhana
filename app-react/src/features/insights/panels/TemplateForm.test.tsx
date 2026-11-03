@@ -9,7 +9,7 @@ import { setViewportWidth } from '../../../test/viewport'
 import { REPORTS_KEY } from '../useReports'
 import { NewTemplateScreen } from './NewTemplateScreen'
 import { draftOf, draftProblem, draftToDefinition, TemplateForm, type TemplateDraft } from './TemplateForm'
-import { daysPanels, durationPanels, japaPanels, sleepPanels } from './templates'
+import { daysPanels, durationPanels, gapsPanels, japaPanels, sleepPanels } from './templates'
 
 vi.mock('../../../api/charts', () => ({
   chartsApi: { getReports: vi.fn(), getReportData: vi.fn(), updateReport: vi.fn(), createReport: vi.fn(), deleteReport: vi.fn() },
@@ -489,5 +489,69 @@ describe('the Days template', () => {
     cleanupForm()
     render(<DaysForm start={{ kind: 'Days', practices: [] }} practices={[]} />)
     expect(screen.getByText('You have no yes/no practice')).toBeInTheDocument()
+  })
+})
+
+describe('the Days between events template', () => {
+  const ALL = [...PRACTICES, p('fast', 'Fasting', 'Bool'), p('note', 'Note', 'Text'), p('read', 'Reading', 'Int'), p('kirtan', 'Kirtan', 'Int'), p('pages', 'Pages', 'Int')]
+  const GAPS: TemplateDraft = { kind: 'Gaps', event: null, rows: [], sleep: null }
+  function GapsForm({ start = GAPS, practices = ALL }: { start?: TemplateDraft; practices?: UserPractice[] }) {
+    const [v, setV] = useState(start)
+    return (
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MemoryRouter>
+          <TemplateForm value={v} onChange={setV} practices={practices} />
+          <output data-testid="draft">{JSON.stringify(v)}</output>
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
+  }
+  const draft = () => JSON.parse(screen.getByTestId('draft').textContent!) as TemplateDraft
+  beforeEach(() => { vi.clearAllMocks(); charts.getReports.mockResolvedValue([]) })
+
+  it('needs an event, and no more than four rows counting Sleep', () => {
+    expect(draftProblem(GAPS)).toBe('required')
+    const sleep = { bedtime: 'bed', wake: 'wake', nap: null }
+    expect(draftProblem({ ...GAPS, event: 'fast', rows: ['a', 'b', 'c'], sleep })).toBeNull()
+    expect(draftProblem({ ...GAPS, event: 'fast', rows: ['a', 'b', 'c', 'd'], sleep })).toBe('tooMany')
+  })
+
+  it('picking a yes/no event and two number rows builds the definition', () => {
+    render(<GapsForm />)
+    fireEvent.click(screen.getByRole('button', { name: 'Event: Choose a practice' }))
+    fireEvent.click(screen.getByRole('radio', { name: /Fasting/ }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Reading' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Kirtan' }))
+    expect(draftToDefinition(draft())).toEqual({ Panels: gapsPanels({ event: 'fast', rows: ['read', 'kirtan'], sleep: null }) })
+  })
+
+  it('a fifth row (four rows plus Sleep) says a report can show up to 4', () => {
+    render(<GapsForm start={{ ...GAPS, event: 'fast', rows: ['read', 'kirtan', 'pages', 'japa'] }} />)
+    expect(screen.queryByRole('alert')).toBeNull()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Sleep (calculated)' }))
+    expect(draft()).toMatchObject({ sleep: { bedtime: 'bed', wake: 'wake', nap: null } })
+    expect(screen.getByRole('alert')).toHaveTextContent('A report can show up to 4 practices.')
+  })
+
+  it('offers Sleep only when a bedtime and a wake-up can be found', () => {
+    render(<GapsForm />)
+    expect(screen.getByRole('checkbox', { name: 'Sleep (calculated)' })).toBeInTheDocument()
+    cleanupForm()
+    render(<GapsForm practices={ALL.filter((x) => x.data_type !== 'Time')} />)
+    expect(screen.queryByRole('checkbox', { name: 'Sleep (calculated)' })).toBeNull()
+  })
+
+  it('reads back, dropping what no longer fits', () => {
+    const def = gapsPanels({ event: 'fast', rows: ['read', 'gone', 'fast'], sleep: { bedtime: 'bed', wake: 'wake', nap: null } })
+    expect(draftOf(def, ALL)).toEqual({ kind: 'Gaps', event: 'fast', rows: ['read'], sleep: { bedtime: 'bed', wake: 'wake', nap: null } })
+    expect(draftOf(def, ALL.filter((x) => x.id !== 'fast' && x.id !== 'wake'))).toEqual({ kind: 'Gaps', event: null, rows: ['read'], sleep: null })
+  })
+
+  it('Create waits for an event', async () => {
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue(ALL)
+    setViewportWidth(390)
+    renderNew('/settings/charts/new/gaps')
+    expect(await screen.findByText('Choose an event practice to create the report.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Create report' })).toBeDisabled()
   })
 })

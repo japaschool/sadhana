@@ -237,10 +237,13 @@ it('the new chart sheet offers Daily count and Time spent', () => {
   expect(screen.getByRole('link', { name: /Time spent/ })).toHaveAttribute('href', '/settings/charts/new/duration')
 })
 
-it('the new chart sheet lists Days I did it fourth', () => {
+it('the new chart sheet lists Days I did it, then Days between events last', () => {
   render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><NewChartSheet onClose={() => {}} /></MemoryRouter></QueryClientProvider>)
   const links = screen.getAllByRole('link').map((a) => a.getAttribute('href'))
-  expect(links).toEqual(['/settings/charts/new/sleep', '/settings/charts/new/japa', '/settings/charts/new/duration', '/settings/charts/new/days'])
+  expect(links).toEqual([
+    '/settings/charts/new/sleep', '/settings/charts/new/japa', '/settings/charts/new/duration', '/settings/charts/new/days', '/settings/charts/new/gaps',
+  ])
+  expect(screen.getByRole('link', { name: /Days between events/ })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: /Days I did it/ })).toBeInTheDocument()
 })
 

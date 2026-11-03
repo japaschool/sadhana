@@ -746,7 +746,10 @@
     "durationSubtitle": "Time spent report · saved as you edit",
     "days": "Days I did it",
     "daysDesc": "Done days for each practice, month by month",
-    "daysSubtitle": "Days I did it report · saved as you edit"
+    "daysSubtitle": "Days I did it report · saved as you edit",
+    "gaps": "Days between events",
+    "gapsDesc": "How long between events, and the days around them",
+    "gapsSubtitle": "Days between events report · saved as you edit"
   },
   "practices": {
     "add": "Add",
@@ -1068,7 +1071,19 @@
     "noGoal": "No goal",
     "goalHint": "With one practice, bars show goal met or missed. With several, practices keep their colours and a line marks the goal.",
     "practicesSelected": "Practices · {{count}} selected",
-    "targetMissing": "Set a target to save your changes."
+    "targetMissing": "Set a target to save your changes.",
+    "gapsName": "Days between events",
+    "newGaps": "New days between events report",
+    "readyGaps": "Ready-made report · Days between events",
+    "needsGaps": "Choose an event practice to create the report.",
+    "event": "Event",
+    "hint_event": "A yes/no or text practice. A day it’s done or filled in is an event.",
+    "compare": "Compare · {{count}} selected",
+    "compareHint": "Up to 4 rows, shown on the days around each event.",
+    "sleepCalculated": "Sleep (calculated)",
+    "none_event": "You have no yes/no or text practice",
+    "noneCompare": "You have no number, duration or time-of-day practice",
+    "only_event": "Yes/no and text practices only"
   },
   "guide": {
     "title": "What would you like to see about your days?",
