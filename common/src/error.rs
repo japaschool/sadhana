@@ -1,7 +1,7 @@
 use std::string::FromUtf8Error;
 
 #[cfg(feature = "backend")]
-use actix_web::{error::BlockingError, http::StatusCode, HttpResponse, ResponseError};
+use actix_web::{HttpResponse, ResponseError, error::BlockingError, http::StatusCode};
 #[cfg(feature = "backend")]
 use bcrypt::BcryptError;
 #[cfg(feature = "backend")]

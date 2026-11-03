@@ -117,11 +117,7 @@ impl User {
         }
 
         let hashed = hasher::hash_password(&uuid::Uuid::new_v4().to_string())?;
-        let record = SignupUser {
-            email,
-            hash: &hashed,
-            name,
-        };
+        let record = SignupUser { email, hash: &hashed, name };
         let user = diesel::insert_into(users::table)
             .values(&record)
             .get_result::<User>(conn)?;
@@ -272,11 +268,7 @@ impl Confirmation {
 mod tests {
     use super::User;
     use crate::{app::user::request::SignupUser, schema::users, utils::db};
-    use diesel::{
-        prelude::*,
-        sql_query,
-        sql_types::{BigInt, Text},
-    };
+    use diesel::{prelude::*, sql_query, sql_types::{BigInt, Text}};
 
     #[derive(QueryableByName)]
     struct Count {
@@ -295,12 +287,10 @@ mod tests {
     }
 
     fn delete_user(conn: &mut PgConnection, email: &str) {
-        sql_query(
-            "delete from user_practices where user_id in (select id from users where email = $1)",
-        )
-        .bind::<Text, _>(email)
-        .execute(conn)
-        .unwrap();
+        sql_query("delete from user_practices where user_id in (select id from users where email = $1)")
+            .bind::<Text, _>(email)
+            .execute(conn)
+            .unwrap();
         diesel::delete(users::table.filter(users::email.eq(email)))
             .execute(conn)
             .unwrap();
@@ -315,15 +305,7 @@ mod tests {
         let mut conn = db::establish_connection().get().unwrap();
         let email = "skip_absent@test.co";
         delete_user(&mut conn, email);
-        User::signup(
-            &mut conn,
-            email,
-            "Skip",
-            "abcdef",
-            "en",
-            parsed.skip_defaults,
-        )
-        .unwrap();
+        User::signup(&mut conn, email, "Skip", "abcdef", "en", parsed.skip_defaults).unwrap();
         assert!(practices(&mut conn, email) > 0);
         delete_user(&mut conn, email);
     }

@@ -1,4 +1,4 @@
-use actix_web::{middleware::Logger, web::Data, App, HttpServer};
+use actix_web::{App, HttpServer, middleware::Logger, web::Data};
 use diesel_migrations::*;
 use dotenvy::dotenv;
 #[cfg(not(target_env = "msvc"))]

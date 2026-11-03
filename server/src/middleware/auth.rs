@@ -1,15 +1,15 @@
 use crate::{app::user::model::User, constants, utils::token};
-use actix_http::{body::EitherBody, HttpMessage, Method};
+use actix_http::{HttpMessage, Method, body::EitherBody};
 use actix_service::{Service, Transform};
 use actix_web::{
+    Error, HttpRequest, HttpResponse,
     dev::{ServiceRequest, ServiceResponse},
     web::Data,
-    Error, HttpRequest, HttpResponse,
 };
 use common::error::AppError;
 use futures::{
-    future::{ok, Ready},
     Future,
+    future::{Ready, ok},
 };
 use std::pin::Pin;
 use uuid::Uuid;

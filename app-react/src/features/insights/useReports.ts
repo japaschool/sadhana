@@ -5,8 +5,11 @@ import { useTranslation } from 'react-i18next'
 import { chartsApi } from '../../api/charts'
 import type { PanelsReport, Report } from '../../api/charts'
 
-/** Not ['reports']: an older build reads that key from the shared IndexedDB cache, and its tracesFor throws on a Panels row. */
-export const REPORTS_KEY = ['reports', 'panels'] as const
+/**
+ * Older builds read ['reports'] (tracesFor throws on a Panels row) and ['reports', 'panels'] (a Gaps panel is drawn as a
+ * chart and throws) from the shared IndexedDB cache, so the list asked for at panels level 3 has its own key.
+ */
+export const REPORTS_KEY = ['reports', 'panels', 3] as const
 
 export function sortReports(list: Report[], locale: string): Report[] {
   const collator = new Intl.Collator(locale, { sensitivity: 'base' })

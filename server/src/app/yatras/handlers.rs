@@ -1,4 +1,4 @@
-use actix_web::{web, HttpRequest, HttpResponse};
+use actix_web::{HttpRequest, HttpResponse, web};
 use common::error::AppError;
 
 use crate::middleware::{auth, state::AppState};
