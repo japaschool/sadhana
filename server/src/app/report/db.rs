@@ -341,7 +341,7 @@ mod tests {
     }
 
     fn only_grid(conn: &mut PgConnection, user_id: &Uuid) -> (Vec<Uuid>, Option<bool>) {
-        match ApiReport::get_all(conn, user_id, false, false)
+        match ApiReport::get_all(conn, user_id, 0, false, false)
             .unwrap()
             .remove(0)
             .definition
@@ -387,7 +387,7 @@ mod tests {
                 traces: vec![trace(c), trace(a)],
             });
             Report::create(conn, &u, "r", &def)?;
-            match ApiReport::get_all(conn, &u, false, false)?
+            match ApiReport::get_all(conn, &u, 0, false, false)?
                 .remove(0)
                 .definition
             {
@@ -532,7 +532,7 @@ mod tests {
             let sent = sleep_report(a, b);
             let id = Report::create(conn, &u, "r", &ReportDefinition::Panels(sent.clone()))?;
 
-            match ApiReport::get_all(conn, &u, true, true)?
+            match ApiReport::get_all(conn, &u, 1, true, false)?
                 .remove(0)
                 .definition
             {
@@ -554,10 +554,10 @@ mod tests {
             Report::create(conn, &u, "g", &grid(vec![a], Some(true)))?;
             Report::create(conn, &u, "p", &ReportDefinition::Panels(sleep_report(a, b)))?;
 
-            let hidden = ApiReport::get_all(conn, &u, false, false)?;
+            let hidden = ApiReport::get_all(conn, &u, 0, false, false)?;
             assert_eq!(hidden.len(), 1);
             assert!(matches!(hidden[0].definition, ReportDefinition::Grid(_)));
-            assert_eq!(ApiReport::get_all(conn, &u, true, true)?.len(), 2);
+            assert_eq!(ApiReport::get_all(conn, &u, 1, true, false)?.len(), 2);
             Ok(())
         });
     }
@@ -585,10 +585,10 @@ mod tests {
             )?;
 
             // What a cached build with panels=true gets: the Sleep report only.
-            let old = ApiReport::get_all(conn, &u, true, false)?;
+            let old = ApiReport::get_all(conn, &u, 1, false, false)?;
             assert_eq!(old.len(), 1);
             assert_eq!(old[0].name, "s");
-            assert_eq!(ApiReport::get_all(conn, &u, true, true)?.len(), 2);
+            assert_eq!(ApiReport::get_all(conn, &u, 1, true, false)?.len(), 2);
             Ok(())
         });
     }
@@ -622,6 +622,122 @@ mod tests {
                 &panels(days_report(Uuid::new_v4(), vec![a], 1)),
             ));
             Report::create(conn, &u, "r", &panels(days_report(a, vec![a, b], 8)))?;
+            Ok(())
+        });
+    }
+
+    fn gaps_report(event: Uuid, rows: Vec<Uuid>) -> PanelsReport {
+        use super::super::panels::*;
+        PanelsReport {
+            version: 1,
+            template: Some(Template::Gaps(GapsTemplate {
+                event,
+                rows: rows.clone(),
+                sleep: None,
+            })),
+            required: vec![],
+            panels: vec![
+                Panel::Gaps { event },
+                Panel::Around {
+                    event,
+                    rows: rows
+                        .into_iter()
+                        .map(|practice| AroundRow {
+                            label: None,
+                            source: Source::Practice { practice },
+                        })
+                        .collect(),
+                },
+            ],
+        }
+    }
+
+    fn names(reports: Vec<ApiReport>) -> Vec<String> {
+        reports.into_iter().map(|r| r.name).collect()
+    }
+
+    #[test]
+    fn gaps_report_needs_level_3() {
+        run(|conn| {
+            let (u, [a, b, _, _]) = user_with_practices(conn);
+            Report::create(conn, &u, "s", &panels(sleep_report(a, b)))?;
+            Report::create(conn, &u, "g", &panels(gaps_report(a, vec![b])))?;
+            assert_eq!(names(ApiReport::get_all(conn, &u, 1, true, false)?), ["s"]);
+            assert_eq!(
+                names(ApiReport::get_all(conn, &u, 3, true, false)?),
+                ["g", "s"]
+            );
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn shared_never_gets_gaps() {
+        run(|conn| {
+            let (u, [a, b, _, _]) = user_with_practices(conn);
+            Report::create(conn, &u, "s", &panels(sleep_report(a, b)))?;
+            Report::create(conn, &u, "g", &panels(gaps_report(a, vec![b])))?;
+            assert_eq!(names(ApiReport::get_all(conn, &u, 3, true, true)?), ["s"]);
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn gaps_round_trips() {
+        run(|conn| {
+            use super::super::panels::*;
+            let (u, [a, b, c, d]) = user_with_practices(conn);
+            let mut sent = gaps_report(a, vec![b]);
+            sent.template = Some(Template::Gaps(GapsTemplate {
+                event: a,
+                rows: vec![b],
+                sleep: Some(SleepRows {
+                    bedtime: c,
+                    wake: d,
+                    nap: None,
+                }),
+            }));
+            Report::create(conn, &u, "g", &panels(sent.clone()))?;
+            match ApiReport::get_all(conn, &u, 3, true, false)?
+                .remove(0)
+                .definition
+            {
+                ReportDefinition::Panels(got) => assert_eq!(got, sent),
+                _ => panic!("not panels"),
+            }
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn gaps_validate() {
+        run(|conn| {
+            use super::super::panels::*;
+            let (u, [a, b, c, d]) = user_with_practices(conn);
+            unprocessable(Report::create(
+                conn,
+                &u,
+                "r",
+                &panels(gaps_report(a, vec![a, b, c, d, b])),
+            ));
+            let mut too_many = gaps_report(a, vec![]);
+            too_many.template = Some(Template::Gaps(GapsTemplate {
+                event: a,
+                rows: vec![a, b, c, d],
+                sleep: Some(SleepRows {
+                    bedtime: c,
+                    wake: d,
+                    nap: None,
+                }),
+            }));
+            unprocessable(Report::create(conn, &u, "r", &panels(too_many)));
+            unprocessable(Report::create(
+                conn,
+                &u,
+                "r",
+                &panels(gaps_report(Uuid::new_v4(), vec![b])),
+            ));
+            Report::create(conn, &u, "r", &panels(gaps_report(a, vec![a, b, c, d])))?;
             Ok(())
         });
     }
@@ -883,7 +999,7 @@ mod tests {
             let (u, [a, _, _, _]) = user_with_practices(conn);
             let sent = japa_report(a, 16);
             Report::create(conn, &u, "r", &panels(sent.clone()))?;
-            match ApiReport::get_all(conn, &u, true, true)?
+            match ApiReport::get_all(conn, &u, 1, true, false)?
                 .remove(0)
                 .definition
             {
@@ -930,7 +1046,7 @@ mod tests {
             let (u, [a, b, _, _]) = user_with_practices(conn);
             let sent = duration_report(vec![a, b], Some(120));
             Report::create(conn, &u, "r", &panels(sent.clone()))?;
-            match ApiReport::get_all(conn, &u, true, true)?
+            match ApiReport::get_all(conn, &u, 1, true, false)?
                 .remove(0)
                 .definition
             {
