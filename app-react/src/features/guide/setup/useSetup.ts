@@ -5,7 +5,7 @@ import { practicesApi } from '../../../api/practices'
 import type { UserPractice } from '../../../types/api'
 import { DAYS_SLOT, DURATION_SLOT, fits, JAPA_SLOTS, pickerGroups, SLEEP_DEFAULTS, SLEEP_SLOTS } from '../../insights/panels/templates'
 import type { Slot } from '../../insights/panels/templates'
-import { buildPlan, itemsOf, KINDS, nameProblem, scaleVariants } from '../guideLogic'
+import { buildPlan, itemsOf, KINDS, nameProblem } from '../guideLogic'
 import type { Choices, GuideKind, NameProblem, PlannedPractice } from '../guideLogic'
 import type { Guide } from '../useGuide'
 
@@ -14,7 +14,7 @@ type Value<K extends GuideKind> = NonNullable<Choices[K]>
 /** What a screen shows before anything is chosen. Optional practices that need a name of their own start unticked; Nap starts ticked, as in the mockup. */
 function defaults(kind: GuideKind, t: TFunction): Value<GuideKind> {
   if (kind === 'sleep') return { bedtime: t('reportPanels.bedtime'), wake: t('reportPanels.wakeUp'), nap: t('reportPanels.nap'), ...SLEEP_DEFAULTS }
-  if (kind === 'count') return { count: '', target: null, early: null, how: null, scaleFrom: 1, scaleTo: 5 }
+  if (kind === 'count') return { count: '', target: null, early: null }
   return kind === 'time' ? { names: [], goal: null } : { names: [] }
 }
 
@@ -55,8 +55,6 @@ export function useSetup<K extends GuideKind>(guide: Guide, kind: K) {
     if (named.length < items.length) return t('guide.setup.needName')
     if (others === null || items.some((it) => check(it.name, it.slot).problem)) return t('guide.setup.fixNames')
     if (kind === 'count' && (value as Value<'count'>).target === null) return t('guide.setup.needTarget')
-    const c = value as Value<'count'>
-    if (kind === 'count' && c.how !== null && !check(c.how, JAPA_SLOTS[2]).existing && !scaleVariants(c.scaleFrom, c.scaleTo)) return t('guide.setup.fixScale')
     const s = value as Value<'sleep'>
     if (kind === 'sleep' && s.min !== null && s.max !== null && s.min > s.max) return t('guide.setup.fixRange')
     return null

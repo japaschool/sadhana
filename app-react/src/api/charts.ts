@@ -63,6 +63,8 @@ export interface ChartPanel {
   reversed: boolean
   target: Target | null
   lines: RefLine[]
+  /** The first series' daily average and its change vs the previous window, in place of the title. */
+  headline?: boolean
 }
 
 /** Sleep: today in, missing skipped. Japa and Duration: today out, missing counts as 0. */
@@ -78,6 +80,7 @@ export type Panel = { kind: 'Stats'; stats: Stat[] } | ({ kind: 'Chart' } & Char
   | { kind: 'Month'; practice: string }
 
 export interface SleepTemplate { bedtime: string; wake: string; nap: string | null; min: number | null; max: number | null }
+/** `quality` and `attunement`: older reports may have them; no longer drawn, and saved as null. */
 export interface JapaTemplate { total: string; target: number; morning: string | null; quality: string | null; attunement: string | null }
 export interface DurationTemplate { practices: string[]; goal: number | null }
 export interface DaysTemplate { practices: string[] }

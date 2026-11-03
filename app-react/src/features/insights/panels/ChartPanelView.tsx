@@ -3,7 +3,9 @@ import { Bar, CartesianGrid, Cell, ComposedChart, Line, ReferenceLine, Responsiv
 import { useTranslation } from 'react-i18next'
 import type { ChartPanel, Panel, Series } from '../../../api/charts'
 import type { Trace } from '../chartLogic'
-import { barPlacement, formatTick, spansYears } from '../insightsLogic'
+import { barPlacement, formatDay, formatDelta, formatTick, spansYears } from '../insightsLogic'
+import type { Range } from '../useInsights'
+import { Headline } from '../Headline'
 import { AXIS, TICK, tipDate, TipRow, TipShell } from '../mobile/InsightsChart'
 import { formatDuration } from '../../today/values'
 import {
@@ -15,6 +17,9 @@ interface ChartPanelProps {
   /** All the report's panels: a tapped day shows them together. */
   panels: Panel[]
   days: string[]
+  /** The window before `days`, for the headline's change. */
+  prevDays?: string[]
+  range?: Range
   lookup: Lookup
   todayCob: string
   height: number
@@ -72,8 +77,9 @@ function InnerBar({ x = 0, y = 0, width = 0, height = 0 }: { x?: number; y?: num
   return <rect x={x + (width - w) / 2} y={y} width={w} height={height} rx={1} fill="var(--ui-ink)" opacity={0.78} />
 }
 
-function MarkGlyph({ mark }: { mark: Series['mark'] }) {
-  if (mark === 'Dot' || mark === 'Line') return <span aria-hidden className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: 'var(--ui-state-over)' }} />
+function MarkGlyph({ mark, colour }: { mark: Series['mark']; colour: string }) {
+  if (mark === 'Line') return <span aria-hidden className="h-0 w-4 shrink-0 border-t-2" style={{ borderColor: colour }} />
+  if (mark === 'Dot') return <span aria-hidden className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: colour }} />
   return (
     <span aria-hidden className="flex h-3 w-3 shrink-0 items-end justify-center rounded-[2px]" style={{ background: FILL.ok }}>
       <span className="h-2 w-[5px] bg-ui-ink opacity-[.78]" />
@@ -113,7 +119,9 @@ function PanelLegend({ panel, first, lookup }: { panel: ChartPanel; first: boole
     })
   })
   if (panel.bar_layout === 'Overlaid') {
-    panel.series.slice(1).forEach((s, i) => items.push({ key: `s${i}`, glyph: <MarkGlyph mark={s.mark} />, text: seriesName(s, lookup, t) }))
+    panel.series.slice(1).forEach((s, i) => items.push({
+      key: `s${i}`, glyph: <MarkGlyph mark={s.mark} colour={seriesColour(s, i + 1, panel.bar_layout)} />, text: seriesName(s, lookup, t),
+    }))
   } else if (panel.bar_layout === 'Stacked' && panel.target?.colour) {
     panel.series.slice(1).forEach((s, i) => {
       const state = panel.target && (panel.target.min !== null || panel.target.max !== null) ? 'ok' : 'neutral'
@@ -130,7 +138,7 @@ function PanelLegend({ panel, first, lookup }: { panel: ChartPanel; first: boole
   }
   if (goal && panel.target?.lines && panel.target.min !== null) {
     const value = panel.format === 'Count' ? String(panel.target.min) : hrs(panel.target.min)
-    items.push({ key: 'goal', glyph: <LineGlyph dashed={false} />, text: t(`${goal}Line`, { value }) })
+    items.push({ key: 'goal', glyph: <LineGlyph dashed />, text: t(`${goal}Line`, { value }) })
   }
   if (!items.length) return null
   return (
@@ -144,9 +152,31 @@ function PanelLegend({ panel, first, lookup }: { panel: ChartPanel; first: boole
   )
 }
 
+/** The first series' daily average and its change vs the previous window, drawn as the generic report draws it. */
+function PanelHeadline({ panel, days, prevDays, range, lookup, todayCob, wide }: {
+  panel: ChartPanel; days: string[]; prevDays: string[]; range?: Range; lookup: Lookup; todayCob: string; wide: boolean
+}) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language || 'en'
+  const units = { h: t('today.unitH'), min: t('today.unitMin') }
+  const average = (d: string[]) => statResult({
+    Average: { of: panel.series[0].source, pick: null, format: panel.format, scope: { today: false, missing_zero: true } },
+  }, d, lookup, todayCob).value
+  const value = average(days)
+  if (value === null || !days.length) return null
+  const prev = range && range !== 'all' && prevDays.length ? average(prevDays) : null
+  const delta = prev ? Math.round(((value - prev) / prev) * 100) : null
+  const y = spansYears(days[0], days[days.length - 1])
+  return (
+    <Headline wide={wide} up={(delta ?? 0) >= 0} value={panel.format === 'Duration' ? formatDuration(value, units) : String(value)}
+      label={t('insights.dailyAverage', { range: `${formatDay(days[0], locale, y)} – ${formatDay(days[days.length - 1], locale, y)}` })}
+      delta={delta === null ? null : t(`insights.vsPrev${range}`, { delta: formatDelta(delta) })} />
+  )
+}
+
 const LINE_LABEL = { fontSize: 10, fontFamily: TICK.fontFamily, fill: 'var(--ui-ink)', stroke: 'var(--ui-surface)', strokeWidth: 3, paintOrder: 'stroke' }
 
-export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, first, compact, interactive = true }: ChartPanelProps) {
+export function ChartPanelView({ panel, panels, days, prevDays = [], range, lookup, todayCob, height, first, compact, interactive = true }: ChartPanelProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const stripes = `stripes-${useId().replace(/[^a-zA-Z0-9]/g, '')}`
@@ -206,7 +236,9 @@ export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, 
 
   return (
     <section className={`flex min-w-0 flex-col gap-3 rounded-[20px] border border-ui-hairline bg-ui-surface ${compact ? 'p-4' : 'p-6'}`}>
-      {panel.title && <h2 className="text-base leading-[1.3] font-extrabold text-ui-ink">{labelText(panel.title, t)}</h2>}
+      {panel.headline
+        ? <PanelHeadline panel={panel} days={days} prevDays={prevDays} range={range} lookup={lookup} todayCob={todayCob} wide={!compact} />
+        : panel.title && <h2 className="text-base leading-[1.3] font-extrabold text-ui-ink">{labelText(panel.title, t)}</h2>}
       <div className="relative">
         <ResponsiveContainer width="100%" height={height}>
           <ComposedChart data={rows} barCategoryGap={thin ? '10%' : BAR_GAP} barGap={1} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>

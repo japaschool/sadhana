@@ -18,7 +18,7 @@ const REFRESH_WAIT = 5000
 
 const api: GuideApi = {
   getPractices: () => practicesApi.getUserPractices(),
-  createPractice: (p, group_id) => practicesApi.createUserPractice({ practice: p.name, data_type: p.data_type, dropdown_variants: p.dropdown_variants, group_id }),
+  createPractice: (p, group_id) => practicesApi.createUserPractice({ practice: p.name, data_type: p.data_type, group_id }),
   getGroups: () => practicesApi.getGroups(),
   createGroup: (name) => practicesApi.createGroup(name),
   getReports: () => chartsApi.getReports(),

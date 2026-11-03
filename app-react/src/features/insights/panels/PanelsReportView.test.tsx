@@ -6,7 +6,7 @@ import i18n from 'i18next'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ru from '../../../../public/locales/ru/translation.json'
 import uk from '../../../../public/locales/uk/translation.json'
-import type { PanelsReport, Report, ReportDataEntry, SleepTemplate } from '../../../api/charts'
+import type { Panel, PanelsReport, Report, ReportDataEntry, SleepTemplate } from '../../../api/charts'
 import type { PracticeDataType, UserPractice } from '../../../types/api'
 import { setViewportWidth } from '../../../test/viewport'
 import { addDays, fromDateStr, toDateStr } from '../../today/date'
@@ -261,16 +261,18 @@ describe('a Japa report', () => {
   afterEach(cleanup)
   const ROUNDS = P('r', 'Japa rounds', 'Int')
   const MORNING = P('m', 'Morning rounds', 'Int')
-  const QUALITY = P('q', 'Quality', 'Text')
+  const QUALITY = { ...P('q', 'Quality', 'Text'), dropdown_variants: '1,2,3,4,5' }
   const ATT = P('a', 'Attunement', 'Bool')
   const days = Array.from({ length: 7 }, (_, i) => dayAt(TODAY, i - 6))
   const entries = days.flatMap((d, i) => [
     e(d, ROUNDS.practice, { Int: i % 2 ? 16 : 8 }), e(d, MORNING.practice, { Int: 4 }),
-    e(d, QUALITY.practice, { Text: String(i) }), e(d, ATT.practice, { Bool: i === 2 }),
+    e(d, QUALITY.practice, { Text: String(i % 4) }), e(d, ATT.practice, { Bool: i === 2 }),
   ])
-  const show = (def: PanelsReport, practices = [ROUNDS, MORNING, QUALITY, ATT]) => render(
+  // A week before: 8 rounds a day.
+  const previous = days.map((d) => e(dayAt(d, -7), ROUNDS.practice, { Int: 8 }))
+  const show = (def: PanelsReport, practices = [ROUNDS, MORNING, QUALITY, ATT], prev?: typeof previous) => render(
     <MemoryRouter>
-      <PanelsReportView report={report(def)} definition={def} entries={entries} previous={undefined} practices={practices} todayCob={TODAY} chartHeight={300} formLink="/f" />
+      <PanelsReportView report={report(def)} definition={def} entries={entries} previous={prev} practices={practices} todayCob={TODAY} chartHeight={300} formLink="/f" range="7d" />
     </MemoryRouter>,
   )
   const full = japaPanels({ total: 'r', target: 16, morning: 'm', quality: 'q', attunement: 'a' })
@@ -278,7 +280,7 @@ describe('a Japa report', () => {
   it('names the states, extras and target in the legend', () => {
     show(full)
     const legend = screen.getByRole('list', { name: 'Key' })
-    expect(within(legend).getAllByRole('listitem').map((x) => x.textContent)).toEqual(['On target', 'Missed', 'Done in the morning', 'Marked done', 'Target 16'])
+    expect(within(legend).getAllByRole('listitem').map((x) => x.textContent)).toEqual(['On target', 'Missed', 'Done in the morning', 'Target 16'])
   })
 
   it('states come from the target, and the morning bars stay out of them', () => {
@@ -287,15 +289,34 @@ describe('a Japa report', () => {
     expect(container.querySelectorAll('rect[fill="var(--ui-ink)"]')).toHaveLength(7)
   })
 
-  it('draws one attunement dot, above its bar', () => {
+  it('draws no dot for an older report’s done marker, nor its figure', () => {
     const { container } = show(full)
-    expect(container.querySelectorAll('circle[data-mark="dot"]')).toHaveLength(1)
+    expect(container.querySelectorAll('circle[data-mark="dot"]')).toHaveLength(0)
+    expect(screen.queryByText('Days marked done')).not.toBeInTheDocument()
   })
 
-  it('draws quality as a line in its own card', () => {
+  it('draws nothing for an older report’s quality', () => {
     const { container } = show(full)
-    expect(screen.getByRole('heading', { name: 'How it went' })).toBeInTheDocument()
-    expect(container.querySelectorAll('.recharts-line-curve').length).toBeGreaterThan(0)
+    expect(screen.queryByRole('heading', { name: 'How it went' })).not.toBeInTheDocument()
+    expect(container.querySelectorAll('.recharts-line-curve')).toHaveLength(0)
+    expect(screen.queryByText('Average rating')).not.toBeInTheDocument()
+  })
+
+  it('heads the chart with the daily average and its change vs the previous window', () => {
+    show(full, undefined, previous)
+    expect(screen.queryByRole('heading', { name: 'Count' })).not.toBeInTheDocument()
+    expect(screen.getByText(/^Daily average/)).toBeInTheDocument()
+    // Today out, six days of 8/16 alternating: 72 / 6 = 12, vs 8 before.
+    expect(screen.getByText(/^Daily average/).nextElementSibling).toHaveTextContent('12')
+    expect(screen.getByText('+50% vs previous 7 days')).toBeInTheDocument()
+  })
+
+  it('draws a report saved with the older two charts as the one chart', () => {
+    const old = full.panels.length
+    const saved: PanelsReport = { ...full, panels: [...full.panels, { ...(full.panels[1] as Extract<Panel, { kind: 'Chart' }>), headline: false, title: { Text: 'How it went' } }] }
+    show(saved)
+    expect(old).toBe(2)
+    expect(screen.queryByRole('heading', { name: 'How it went' })).not.toBeInTheDocument()
   })
 
   it('with total and target only, the legend has just the states and the line', () => {
@@ -303,9 +324,9 @@ describe('a Japa report', () => {
     expect(within(screen.getByRole('list', { name: 'Key' })).getAllByRole('listitem').map((x) => x.textContent)).toEqual(['On target', 'Missed', 'Target 16'])
   })
 
-  it('five figures sit in one row on wide layouts', () => {
+  it('two figures sit in one row on wide layouts', () => {
     show(full)
-    expect((screen.getByText('Average per day').parentElement?.parentElement as HTMLElement).style.gridTemplateColumns).toBe('repeat(5, minmax(0, 1fr))')
+    expect((screen.getByText('Days on target').parentElement?.parentElement as HTMLElement).style.gridTemplateColumns).toBe('repeat(2, minmax(0, 1fr))')
   })
 })
 

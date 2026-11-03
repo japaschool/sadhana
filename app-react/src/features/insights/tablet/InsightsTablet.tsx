@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { TabletShell } from '../../../layouts/tablet/TabletShell'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import { SegmentedControl } from '../../../ui/primitives/SegmentedControl'
+import { Headline } from '../Headline'
 import { formatDelta, formatHeadline, traceAverageLabel, windowLabel } from '../insightsLogic'
 import { fromDateStr } from '../../today/date'
 import { PanelsReportView } from '../panels/PanelsReportView'
@@ -73,7 +74,7 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300, panelHei
           onOpenDay={(cob) => (onLogDate ? onLogDate(fromDateStr(cob)) : setOpenDay(cob))} />
       ) : panels ? (
         <PanelsReportView key={ins.selectedId} report={ins.report!} definition={panels} entries={ins.entries} previous={ins.previousEntries}
-          practices={ins.practices} todayCob={ins.todayCob} chartHeight={panelHeight} formLink={`/settings/charts/${ins.selectedId}`} month={ins.month ?? undefined} />
+          practices={ins.practices} todayCob={ins.todayCob} chartHeight={panelHeight} formLink={`/settings/charts/${ins.selectedId}`} month={ins.month ?? undefined} range={ins.range} />
       ) : (
         <section className="flex flex-col gap-[18px] rounded-[24px] border border-ui-hairline bg-ui-surface p-6">
           {ins.isLoading ? (
@@ -88,19 +89,9 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300, panelHei
           ) : (
             <>
               {h && (
-                <div className="flex items-end justify-between gap-4">
-                  <div className="flex flex-col gap-0.5">
-                    <p className="text-[13px] font-semibold text-ui-muted">
-                      {t(h.kind === 'time' ? 'insights.average' : 'insights.dailyAverage', { range: windowLabel(ins.entries, i18n.language || 'en') })}
-                    </p>
-                    <p className="font-ui-mono text-[40px] leading-tight tracking-[-0.03em] text-ui-ink">{formatHeadline(h, units)}</p>
-                  </div>
-                  {h.delta !== null && (
-                    <p className={`pb-2 text-[13px] font-bold ${h.delta >= 0 ? 'text-ui-good' : 'text-ui-muted'}`}>
-                      {t(`insights.vsPrev${ins.range}`, { delta: formatDelta(h.delta) })}
-                    </p>
-                  )}
-                </div>
+                <Headline wide value={formatHeadline(h, units)} up={(h.delta ?? 0) >= 0}
+                  label={t(h.kind === 'time' ? 'insights.average' : 'insights.dailyAverage', { range: windowLabel(ins.entries, i18n.language || 'en') })}
+                  delta={h.delta === null ? null : t(`insights.vsPrev${ins.range}`, { delta: formatDelta(h.delta) })} />
               )}
               {/* Remount per report and legend toggle: Recharts hangs updating in place when the series layout changes. */}
               <InsightsChart key={`${ins.selectedId}|${[...ins.hidden]}`} rows={ins.rows} traces={ins.traces} barLayout={ins.barLayout}

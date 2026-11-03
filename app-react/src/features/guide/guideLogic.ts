@@ -8,29 +8,19 @@ import type { Slot } from '../insights/panels/templates'
 export type GuideKind = 'sleep' | 'count' | 'time' | 'days'
 export interface Choices {
   sleep: { bedtime: string; wake: string; nap: string | null; min: number | null; max: number | null } | null
-  count: { count: string; target: number | null; early: string | null; how: string | null; scaleFrom: number | null; scaleTo: number | null } | null
+  count: { count: string; target: number | null; early: string | null } | null
   time: { names: string[]; goal: number | null } | null
   days: { names: string[] } | null
 }
-export interface PlannedPractice { name: string; data_type: PracticeDataType; dropdown_variants?: string }
+export interface PlannedPractice { name: string; data_type: PracticeDataType }
 export interface GuidePlan { practices: PlannedPractice[]; reports: { kind: GuideKind; name: string; slug: string; group: string | null; choices: Choices[GuideKind] }[] }
 export type NameProblem = 'empty' | 'inUseHidden' | 'inUseOtherType' | 'twice'
 
 export const KINDS: GuideKind[] = ['sleep', 'count', 'time', 'days']
 const SLUGS: Record<GuideKind, string> = { sleep: 'sleep', count: 'japa', time: 'duration', days: 'days' }
-/** Enough for 0 to 10, and short enough to pick from. */
-const MAX_SCALE = 11
-
-/** The whole numbers from `from` to `to`, as a dropdown's options. Undefined unless they make a scale of 2 to MAX_SCALE options. */
-export function scaleVariants(from: number | null, to: number | null): string | undefined {
-  if (from === null || to === null || to <= from || to - from >= MAX_SCALE) return undefined
-  return Array.from({ length: to - from + 1 }, (_, i) => from + i).join(',')
-}
-
 export interface Item { name: string; slot: Slot; planned: PlannedPractice }
-/** `type` is what gets created, which is the slot's first type unless said: How it went is Text, with a dropdown of numbers. */
-const item = (name: string, slot: Slot, type: PracticeDataType = slot.types[0], dropdown_variants?: string): Item =>
-  ({ name: name.trim(), slot, planned: { name: name.trim(), data_type: type, ...(dropdown_variants && { dropdown_variants }) } })
+/** What gets created has the slot's first type. */
+const item = (name: string, slot: Slot): Item => ({ name: name.trim(), slot, planned: { name: name.trim(), data_type: slot.types[0] } })
 
 /** The practices a report needs, in order. A ticked optional one is there even while its name is blank, so the screens can flag it. */
 export function itemsOf(kind: GuideKind, c: NonNullable<Choices[GuideKind]>): Item[] {
@@ -40,7 +30,7 @@ export function itemsOf(kind: GuideKind, c: NonNullable<Choices[GuideKind]>): It
   }
   if (kind === 'count') {
     const k = c as NonNullable<Choices['count']>
-    return [item(k.count, JAPA_SLOTS[0]), ...(k.early !== null ? [item(k.early, JAPA_SLOTS[1])] : []), ...(k.how !== null ? [item(k.how, JAPA_SLOTS[2], 'Text', scaleVariants(k.scaleFrom, k.scaleTo))] : [])]
+    return [item(k.count, JAPA_SLOTS[0]), ...(k.early !== null ? [item(k.early, JAPA_SLOTS[1])] : [])]
   }
   const { names } = c as { names: string[] }
   return names.map((n) => item(n, kind === 'time' ? DURATION_SLOT : DAYS_SLOT))
@@ -108,7 +98,7 @@ function draftOf(kind: GuideKind, c: NonNullable<Choices[GuideKind]>, id: (name:
   }
   if (kind === 'count') {
     const k = c as NonNullable<Choices['count']>
-    return { kind: 'Japa', total: id(k.count), target: k.target, morning: k.early ? id(k.early) : null, quality: k.how ? id(k.how) : null, attunement: null }
+    return { kind: 'Japa', total: id(k.count), target: k.target, morning: k.early ? id(k.early) : null }
   }
   if (kind === 'time') {
     const t = c as NonNullable<Choices['time']>

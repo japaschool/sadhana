@@ -50,6 +50,7 @@ pub struct JapaTemplate {
     pub target: i32,
     pub morning: Option<Uuid>,
     pub quality: Option<Uuid>,
+    /// A done marker older reports may have; no longer drawn.
     pub attunement: Option<Uuid>,
 }
 
@@ -97,6 +98,9 @@ pub struct ChartPanel {
     pub reversed: bool,
     pub target: Option<Target>,
     pub lines: Vec<RefLine>,
+    /// The first series' daily average and its change vs the previous window, above the chart.
+    #[serde(default)]
+    pub headline: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

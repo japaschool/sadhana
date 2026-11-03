@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { AppBar } from '../../../layouts/mobile/AppBar'
 import { MobileShell } from '../../../layouts/mobile/MobileShell'
 import { SegmentedControl } from '../../../ui/primitives/SegmentedControl'
+import { Headline } from '../Headline'
 import { formatDelta, formatHeadline, traceAverageLabel, windowLabel } from '../insightsLogic'
 import { PanelsReportView } from '../panels/PanelsReportView'
 import { isTable, RANGES, useInsights } from '../useInsights'
@@ -54,7 +55,7 @@ export function InsightsMobile() {
           <InsightsTable grouped={ins.grouped} traces={ins.traces} entries={ins.entries} todayCob={ins.todayCob} onOpenDay={setOpenDay} />
         ) : panels ? (
           <PanelsReportView key={ins.selectedId} report={ins.report!} definition={panels} entries={ins.entries} previous={ins.previousEntries}
-            practices={ins.practices} todayCob={ins.todayCob} chartHeight={230} formLink={`/settings/charts/${ins.selectedId}`} cols={2} month={ins.month ?? undefined} />
+            practices={ins.practices} todayCob={ins.todayCob} chartHeight={230} formLink={`/settings/charts/${ins.selectedId}`} cols={2} month={ins.month ?? undefined} range={ins.range} />
         ) : (
           <section className={`${CARD} p-4`}>
             {ins.isLoading ? (
@@ -69,17 +70,9 @@ export function InsightsMobile() {
             ) : (
               <>
                 {h && (
-                  <div className="mb-3">
-                    <p className="text-xs font-semibold text-ui-muted">
-                      {t(h.kind === 'time' ? 'insights.average' : 'insights.dailyAverage', { range: windowLabel(ins.entries, i18n.language || 'en') })}
-                    </p>
-                    <p className="font-ui-mono text-[30px] leading-tight text-ui-ink">{formatHeadline(h, units)}</p>
-                    {h.delta !== null && (
-                      <p className={`text-xs font-semibold ${h.delta >= 0 ? 'text-ui-good' : 'text-ui-muted'}`}>
-                        {t(`insights.vsPrev${ins.range}`, { delta: formatDelta(h.delta) })}
-                      </p>
-                    )}
-                  </div>
+                  <Headline wide={false} className="mb-3" value={formatHeadline(h, units)} up={(h.delta ?? 0) >= 0}
+                    label={t(h.kind === 'time' ? 'insights.average' : 'insights.dailyAverage', { range: windowLabel(ins.entries, i18n.language || 'en') })}
+                    delta={h.delta === null ? null : t(`insights.vsPrev${ins.range}`, { delta: formatDelta(h.delta) })} />
                 )}
                 {/* Remount per report and legend toggle: Recharts hangs updating in place when the series layout changes. */}
                 <InsightsChart key={`${ins.selectedId}|${[...ins.hidden]}`} rows={ins.rows} traces={ins.traces} barLayout={ins.barLayout}
