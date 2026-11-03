@@ -15,8 +15,8 @@ describe('AddTimeSheet', () => {
     const { onSave, onClose, key } = setup()
     key('+30'); key('+15')
     expect(screen.getByTestId('amount')).toHaveTextContent('+45')
-    expect(screen.getByTestId('new-total')).toHaveTextContent('1 h 15 min')
-    key('Add 45 min')
+    expect(screen.getByTestId('new-total')).toHaveTextContent('1h 15m')
+    key('Add 45m')
     expect(onSave).toHaveBeenCalledWith({ Duration: 75 })
     expect(onClose).toHaveBeenCalled()
   })
@@ -29,7 +29,7 @@ describe('AddTimeSheet', () => {
     expect(screen.getByTestId('amount')).toHaveTextContent('+4')
     key('Reset')
     expect(screen.getByTestId('amount')).toHaveTextContent('+0')
-    expect(screen.getByRole('button', { name: 'Add 0 min' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Add 0m' })).toBeDisabled()
   })
 
   it('Set total starts at the current value and replaces it', () => {
@@ -37,7 +37,7 @@ describe('AddTimeSheet', () => {
     expect(screen.getByRole('radio', { name: 'Set total' })).toHaveAttribute('aria-checked', 'true')
     expect(screen.getByTestId('amount')).toHaveTextContent('30')
     key('9'); key('0')
-    key('Set 1 h 30 min')
+    key('Set 1h 30m')
     expect(onSave).toHaveBeenCalledWith({ Duration: 90 })
   })
 

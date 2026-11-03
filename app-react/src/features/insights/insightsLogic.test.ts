@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest'
+import { formatDuration } from '../today/values'
 import type { ReportDataEntry } from '../../api/charts'
 import type { Trace } from './chartLogic'
 import {
   averageDailyTotal, headline, formatHeadline, formatDelta, averageLines,
-  traceAverageLabel, barPlacement, seriesRows, formatDay, formatTick, windowLabel, formatDurationTick, cellText, tableColumns,
+  traceAverageLabel, barPlacement, seriesRows, formatDay, formatTick, windowLabel, cellText, tableColumns,
 } from './insightsLogic'
 
 const TODAY = '2026-10-06'
-const U = { h: 'h', min: 'min' }
+const U = { h: 'h', min: 'm' }
 const e = (cob_date: string, practice: string, value: unknown): ReportDataEntry => ({ cob_date, practice, value })
 const tr = (name: string, dataType: Trace['dataType'], extra: Partial<Trace> = {}): Trace => ({
   name, dataType, type_: { Line: { style: 'Regular' } }, color: `c-${name}`, showAverage: false, yAxis: null, ...extra,
@@ -85,7 +86,7 @@ describe('headline', () => {
 
 describe('formatting', () => {
   it('formatHeadline per kind', () => {
-    expect(formatHeadline({ kind: 'duration', value: 128, delta: null }, U)).toBe('2 h 8 min')
+    expect(formatHeadline({ kind: 'duration', value: 128, delta: null }, U)).toBe('2h 8m')
     expect(formatHeadline({ kind: 'count', value: 16, delta: null }, U)).toBe('16')
     expect(formatHeadline({ kind: 'time', value: 1470, delta: null }, U)).toBe('00:30')
   })
@@ -94,9 +95,9 @@ describe('formatting', () => {
     expect(formatDelta(-8)).toBe('−8%')
     expect(formatDelta(0)).toBe('+0%')
   })
-  it('formatDurationTick', () => {
-    const u = { h: 'h', min: 'm' }
-    expect([30, 60, 90, 125, 0].map((m) => formatDurationTick(m, u))).toEqual(['30m', '1h', '1h30', '2h05', '0m'])
+  it('formatDuration: one-letter units flush, longer ones spaced', () => {
+    expect([30, 60, 90, 125, 0].map((m) => formatDuration(m, { h: 'h', min: 'm' }))).toEqual(['30m', '1h', '1h 30m', '2h 5m', '0m'])
+    expect(formatDuration(90, { h: 'год', min: 'хв' })).toBe('1 год 30 хв')
   })
   it('window labels', () => {
     expect(formatDay('2026-09-07', 'en')).toBe('Sep 7')
@@ -119,7 +120,7 @@ describe('traceAverageLabel', () => {
     expect(traceAverageLabel(tr('R', 'Bool'), rows, TODAY, U)).toBe('2/3')
   })
   it('duration, time, count and no data', () => {
-    expect(traceAverageLabel(tr('A', 'Duration'), [e('2026-10-05', 'A', dur(128))], TODAY, U)).toBe('2 h 8 min')
+    expect(traceAverageLabel(tr('A', 'Duration'), [e('2026-10-05', 'A', dur(128))], TODAY, U)).toBe('2h 8m')
     expect(traceAverageLabel(tr('W', 'Time'), [e('2026-10-05', 'W', { Time: { h: 5, m: 15 } })], TODAY, U)).toBe('05:15')
     expect(traceAverageLabel(tr('N', 'Int'), [e('2026-10-05', 'N', { Int: 7 })], TODAY, U)).toBe('7')
     expect(traceAverageLabel(tr('N', 'Int'), [], TODAY, U)).toBe('—')
@@ -207,7 +208,7 @@ describe('seriesRows', () => {
 
 describe('cellText', () => {
   it('formats each type and leaves missing values empty', () => {
-    expect(cellText({ Duration: 90 }, 'Duration', U)).toBe('1 h 30 min')
+    expect(cellText({ Duration: 90 }, 'Duration', U)).toBe('1h 30m')
     expect(cellText({ Time: { h: 4, m: 5 } }, 'Time', U)).toBe('04:05')
     expect(cellText({ Int: 16 }, 'Int', U)).toBe('16')
     expect(cellText({ Bool: true }, 'Bool', U)).toBe('✓')

@@ -8,11 +8,15 @@ export function parseOptions(raw?: string | null): string[] {
   return (raw ?? '').split(/[,\n]/).map((s) => s.trim()).filter(Boolean)
 }
 
+/** A number and its unit: one-letter units sit flush (2h, 20m), longer ones get a space (2 год). */
+export const withUnit = (n: number, unit: string) => `${n}${unit.length > 1 ? ' ' : ''}${unit}`
+
+/** 2h 20m, 45m, 7h. */
 export function formatDuration(total: number, u: DurationUnits): string {
   const h = Math.floor(total / 60)
-  const m = total % 60
-  if (h === 0) return `${m} ${u.min}`
-  return m === 0 ? `${h} ${u.h}` : `${h} ${u.h} ${m} ${u.min}`
+  const m = Math.round(total % 60)
+  if (h === 0) return withUnit(m, u.min)
+  return m === 0 ? withUnit(h, u.h) : `${withUnit(h, u.h)} ${withUnit(m, u.min)}`
 }
 
 export function formatTime(t: { h: number; m: number }): string {

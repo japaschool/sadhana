@@ -14,7 +14,7 @@ const score = scoreConfig('Higher', { Int: 16 }, { Int: 20 })
 describe('values', () => {
   it('formats each type the way the fields show it', () => {
     expect(formatValue({ Int: 16 }, 'Int')).toBe('16')
-    expect(formatValue({ Duration: 90 }, 'Duration')).toBe('90 min') // minutes only, like the Log's input
+    expect(formatValue({ Duration: 90 }, 'Duration')).toBe('90m') // minutes only, like the Log's input
     expect(formatValue({ Time: { h: 5, m: 0 } }, 'Time')).toBe('05:00')
     expect(formatValue(null, 'Int')).toBe('')
   })

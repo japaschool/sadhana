@@ -7,7 +7,7 @@ import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import { Toggle } from '../../../ui/primitives/Toggle'
 import { onRadioKeys, radioTabIndex } from '../../../ui/radioKeys'
 import { addDays, toDateStr } from '../../today/date'
-import { parseOptions } from '../../today/values'
+import { parseOptions, withUnit } from '../../today/values'
 import { BTN, CARD, FIELD, HINT } from '../../yatras/settings/mobile/AdminPage'
 import { SheetHeader } from '../../yatras/settings/mobile/fields'
 import { TypeIcon } from '../../yatras/settings/mobile/TypeChip'
@@ -188,7 +188,7 @@ function Sample({ type }: { type: PracticeDataType }) {
   if (type === 'Text') return <span className="w-[72px] rounded-lg border border-ui-control bg-ui-field px-2 py-1.5 text-xs text-ui-faint2">Aa…</span>
   return (
     <span className="flex items-center gap-2 font-ui-mono text-[15px] font-semibold text-ui-ink">
-      45 {t('today.unitMin')}
+      {withUnit(45, t('today.unitMin'))}
       <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-ui-accent-soft font-ui text-ui-accent">+</span>
     </span>
   )

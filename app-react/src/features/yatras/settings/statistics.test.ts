@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { YatraPractice } from '../../../types/api'
 import { aggregationsFor, newStatistic, statValue, withPractice } from './statistics'
 
-const u = { h: 'h', min: 'min' }
+const u = { h: 'h', min: 'm' }
 const japa: YatraPractice = { id: 'p1', practice: 'Japa rounds', data_type: 'Int' }
 const wake: YatraPractice = { id: 'p2', practice: 'Wake up', data_type: 'Time' }
 const arati: YatraPractice = { id: 'p4', practice: 'Mangala arati', data_type: 'Bool' }
@@ -32,7 +32,7 @@ describe('statistics', () => {
     expect(statValue({ Time: { h: 1, m: 52 } }, 'Count', 'Time', u)).toBe('112')
     expect(statValue({ Time: { h: 3, m: 55 } }, 'Min', 'Time', u)).toBe('03:55')
     expect(statValue({ Time: { h: 4.25, m: 15.4 } }, 'Avg', 'Time', u)).toBe('04:15')
-    expect(statValue({ Duration: 2480 }, 'Sum', 'Duration', u)).toBe('41 h 20 min')
+    expect(statValue({ Duration: 2480 }, 'Sum', 'Duration', u)).toBe('41h 20m')
     expect(statValue(null, 'Sum', 'Int', u)).toBe('—')
   })
 })

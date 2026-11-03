@@ -5,7 +5,7 @@ import type { TFunction } from 'i18next'
 import { durationPanels, japaPanels, sleepPanels } from './templates'
 import { averageDailyTotal } from '../insightsLogic'
 import {
-  figureDuration, makeLookup, windowDays, resolve, stateOf, statResult, visiblePanels, missingRequired, fitHours, chartRows, tipLines, monthCells, monthCounts,
+  figureDuration, makeLookup, windowDays, resolve, stateOf, statResult, visiblePanels, missingRequired, fitHours, durationFloor, chartRows, tipLines, monthCells, monthCounts,
 } from './panelLogic'
 
 const P = (id: string, practice: string, data_type: PracticeDataType, is_active = true): UserPractice =>
@@ -200,13 +200,18 @@ describe('windowDays and fitHours', () => {
     expect(fitHours([690, 1140])).toEqual([660, 1200])
     expect(fitHours([])).toEqual([0, 720])
   })
+  it('durationFloor starts at 3h, lower only to fit', () => {
+    expect(durationFloor([420, 450])).toBe(180)
+    expect(durationFloor([150, 450])).toBe(120)
+    expect(durationFloor([])).toBe(180)
+  })
 })
 
 describe('chart rows and tips', () => {
   const def = sleepPanels({ bedtime: 'bed', wake: 'wake', nap: 'nap', min: 360, max: 540 })
   const charts = def.panels.flatMap((p) => (p.kind === 'Chart' ? [p] : []))
   const t = ((k: string) => k) as unknown as TFunction
-  const u = { h: 'h', min: 'min' }
+  const u = { h: 'h', min: 'm' }
   const day = '2026-10-05'
 
   it('a row has a column per series and the state of the total', () => {
@@ -225,9 +230,9 @@ describe('chart rows and tips', () => {
     const l = lk([...night([7, 0], [23, 0]), e(day, 'Nap', D(30))])
     expect(tipLines(def.panels, day, l, t, u).map((x) => [x.name, x.text])).toEqual([
       ['reportPanels.sleep', '23:00 → 07:00'],
-      ['reportPanels.night', '8 h'],
-      ['reportPanels.nap', '30 min'],
-      ['reportPanels.total', '8 h 30 min'],
+      ['reportPanels.night', '8h'],
+      ['reportPanels.nap', '30m'],
+      ['reportPanels.total', '8h 30m'],
     ])
     expect(tipLines(def.panels, '2026-10-04', l, t, u)).toEqual([])
   })
@@ -397,7 +402,7 @@ describe('a Duration report', () => {
     const l = makeLookup(rows, undefined, ps)
     const t = ((k: string, o?: { value: string }) => (o ? `${k}:${o.value}` : k)) as unknown as TFunction
     const lines = tipLines(visiblePanels(def, l), days[2], l, t, { h: 'h', min: 'm' })
-    expect(lines.map((x) => x.name)).toEqual(['Service', 'reportPanels.total', 'reportPanels.goalShort:1 h 35 m'])
+    expect(lines.map((x) => x.name)).toEqual(['Service', 'reportPanels.total', 'reportPanels.goalShort:1h 35m'])
     expect(lines[0].colour).toBe('var(--ui-chart-3)')
     expect(tipLines(visiblePanels(def, l), days[0], l, t, { h: 'h', min: 'm' }).at(-1)?.name).toBe('reportPanels.goalMet')
   })

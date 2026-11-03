@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { parseOptions, formatDuration, formatTime, sameValue, capitalize } from './values'
 
-const units = { h: 'h', min: 'min' }
+const units = { h: 'h', min: 'm' }
 
 describe('parseOptions', () => {
   it('splits on commas and newlines, trims, drops empties', () => {
@@ -15,10 +15,10 @@ describe('parseOptions', () => {
 
 describe('formatDuration', () => {
   it('formats minutes, hours, and both', () => {
-    expect(formatDuration(0, units)).toBe('0 min')
-    expect(formatDuration(30, units)).toBe('30 min')
-    expect(formatDuration(60, units)).toBe('1 h')
-    expect(formatDuration(75, units)).toBe('1 h 15 min')
+    expect(formatDuration(0, units)).toBe('0m')
+    expect(formatDuration(30, units)).toBe('30m')
+    expect(formatDuration(60, units)).toBe('1h')
+    expect(formatDuration(75, units)).toBe('1h 15m')
   })
 })
 

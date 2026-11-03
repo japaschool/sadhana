@@ -46,7 +46,7 @@ const T = (h: number, m = 0) => ({ Time: { h, m } })
 const e = (cob_date: string, practice: string, value: unknown): ReportDataEntry => ({ cob_date, practice, value })
 const dayAt = (cob: string, n: number) => toDateStr(addDays(fromDateStr(cob), n))
 
-/** 30 nights to today: wake 07:00; 23:00 bed (480 min) but 02:00 (300 min) on 7 nights; one night has no wake-up. */
+/** 30 nights to today: wake 07:00; 23:00 bed (480m) but 02:00 (300m) on 7 nights; one night has no wake-up. */
 function nights(days = 30) {
   const window: string[] = Array.from({ length: days }, (_, i) => dayAt(TODAY, i - days + 1))
   const SHORT = new Set([1, 2, 3, 4, 5, 6, 7])
@@ -130,20 +130,20 @@ describe('PanelsReportView', () => {
 
   it('one limit: the legend has that state only', () => {
     view({ def: sleepPanels(tmpl({ max: null })) })
-    expect(within(legends()[0]).getByText('6 h or more')).toBeInTheDocument()
-    expect(within(legends()[0]).getByText('Under 6 h')).toBeInTheDocument()
+    expect(within(legends()[0]).getByText('6h or more')).toBeInTheDocument()
+    expect(within(legends()[0]).getByText('Under 6h')).toBeInTheDocument()
     expect(screen.queryByText(/^Over/)).toBeNull()
   })
 
   it('both limits: the legend names the range and the average lines', () => {
     view()
     const key = within(legends()[0])
-    expect(key.getByText('In range · 6 h–9 h')).toBeInTheDocument()
-    expect(key.getByText('Under 6 h')).toBeInTheDocument()
-    expect(key.getByText('Over 9 h')).toBeInTheDocument()
+    expect(key.getByText('In range · 6h–9h')).toBeInTheDocument()
+    expect(key.getByText('Under 6h')).toBeInTheDocument()
+    expect(key.getByText('Over 9h')).toBeInTheDocument()
     expect(key.getByText('Average bedtime')).toBeInTheDocument()
     expect(key.getByText('Average wake-up')).toBeInTheDocument()
-    expect(within(legends()[1]).getByText('Nap, stacked on top')).toBeInTheDocument()
+    expect(within(legends()[1]).getByText('Nap — on top')).toBeInTheDocument()
   })
 
   it('a line without a label has no legend row', () => {
@@ -153,7 +153,7 @@ describe('PanelsReportView', () => {
     const key = within(legends()[0])
     expect(key.queryByText('Average bedtime')).toBeNull()
     expect(key.queryByText('Average wake-up')).toBeNull()
-    expect(key.getByText('Under 6 h')).toBeInTheDocument()
+    expect(key.getByText('Under 6h')).toBeInTheDocument()
   })
 
   it('a long range drops outlines and stripes for solid colours', () => {
@@ -245,7 +245,7 @@ describe('PanelsReportView', () => {
     await i18n.changeLanguage('ru')
     view()
     expect(screen.getAllByText('Средний отбой')).toHaveLength(2) // figure and legend
-    expect(screen.getByText('Средний сон').parentElement).toHaveTextContent('7 ч 18 мин')
+    expect(screen.getByText('Средний сон').parentElement).toHaveTextContent('7ч 18м')
     expect(screen.getByText('Ночей в норме').parentElement).toHaveTextContent('22 из 29')
   })
 
@@ -324,7 +324,7 @@ describe('a Duration report', () => {
 
   it('one practice: goal met, missed and the line', () => {
     const { container } = show(durationPanels({ practices: ['a'], goal: 60 }))
-    expect(legend()).toEqual(['Goal met', 'Missed', 'Goal 1 h'])
+    expect(legend()).toEqual(['Goal met', 'Missed', 'Goal 1h'])
     expect(container.querySelectorAll('.recharts-bar-rectangle [fill="var(--ui-state-under-fill)"]').length).toBeGreaterThan(0)
   })
   it('one practice, no goal: neutral bars and no legend', () => {
@@ -334,7 +334,7 @@ describe('a Duration report', () => {
   })
   it('several practices: series colours, practice names and the goal', () => {
     const { container } = show(durationPanels({ practices: ['a', 'b'], goal: 120 }))
-    expect(legend()).toEqual(['Reading', 'Listening', 'Goal 2 h'])
+    expect(legend()).toEqual(['Reading', 'Listening', 'Goal 2h'])
     expect(container.querySelectorAll('.recharts-bar-rectangle [fill="var(--ui-chart-2)"]').length).toBeGreaterThan(0)
     expect(container.querySelectorAll('.recharts-bar-rectangle [fill="var(--ui-state-under-fill)"]')).toHaveLength(0)
   })

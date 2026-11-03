@@ -64,13 +64,13 @@ describe('InsightsMobile', () => {
 
   it('shows the headline, delta, window and legend for All practices', async () => {
     renderScreen()
-    // Today (Oct 6) is excluded: the headline is Oct 5's 60 min; the previous window (Oct 4) had 40 → +50%.
+    // Today (Oct 6) is excluded: the headline is Oct 5's 60m; the previous window (Oct 4) had 40 → +50%.
     expect(await screen.findByText('+50% vs previous 30 days')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Insights' })).toBeInTheDocument()
     expect(screen.getByText('Daily average · Oct 5 – Oct 6')).toBeInTheDocument()
-    expect(screen.getAllByText('1 h')).toHaveLength(2) // headline + Japa legend row
+    expect(screen.getAllByText('1h')).toHaveLength(2) // headline + Japa legend row
     const legend = screen.getByRole('list', { name: 'Averages' })
-    expect(within(legend).getByText('Japa').parentElement).toHaveTextContent('1 h')
+    expect(within(legend).getByText('Japa').parentElement).toHaveTextContent('1h')
     expect(within(legend).getByText('Reading').parentElement).toHaveTextContent('—')
   })
 
@@ -195,7 +195,7 @@ describe('InsightsMobile', () => {
     const rows = within(table).getAllByRole('row')
     // Group band, header, Oct 6, Oct 5 (newest first), footer.
     expect(rows.map((r) => r.textContent)).toEqual([
-      'Practices', 'DateJapaReading', 'TueOct 630 min—', 'MonOct 51 h—', '2 days1 h—',
+      'Practices', 'DateJapaReading', 'TueOct 630m—', 'MonOct 51h—', '2 days1h—',
     ])
     expect(within(table).getAllByTestId('required-missing')).toHaveLength(2)
     expect(screen.queryByRole('list', { name: 'Averages' })).toBeNull()

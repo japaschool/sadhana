@@ -38,7 +38,7 @@ export function sleepPanels(t: SleepTemplate): PanelsReport {
     series: [{ label: key('sleep'), mark: 'Range', source: range, axis: 'Left', only_with: null }],
     bar_layout: 'Grouped',
     format: 'NoonClock',
-    reversed: true,
+    reversed: false,
     target: { min: t.min, max: t.max, of: total, lines: false, colour: true, label: null } satisfies Target,
     lines: [
       { of: range, pick: 'From', dashed: false, label: key('avgBedtime') },

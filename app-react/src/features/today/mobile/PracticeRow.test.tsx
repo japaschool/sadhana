@@ -110,7 +110,7 @@ describe('PracticeRow', () => {
 
   it('Duration: the value edits inline in minutes; + opens the add sheet', () => {
     const onSave = setup({ practice: 'Audiobooks', data_type: 'Duration' }, { Duration: 30 })
-    expect(screen.getByText('30 min')).toBeInTheDocument()
+    expect(screen.getByText('30m')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Edit Audiobooks' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     const input = screen.getByRole('textbox', { name: 'Audiobooks' })

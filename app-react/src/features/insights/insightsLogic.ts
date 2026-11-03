@@ -114,13 +114,6 @@ export function windowLabel(rows: ReportDataEntry[], locale: string): string {
   return `${formatDay(first, locale, y)} – ${formatDay(last, locale, y)}`
 }
 
-export function formatDurationTick(min: number, u: DurationUnits): string {
-  const h = Math.floor(min / 60)
-  const m = Math.round(min % 60)
-  if (h === 0) return `${m}${u.min}`
-  return m === 0 ? `${h}${u.h}` : `${h}${u.h}${String(m).padStart(2, '0')}`
-}
-
 export interface BarPlacement { stackId?: string; xAxisId?: string; rounded: boolean; fillOpacity: number }
 
 /** How each trace is drawn as a bar for a report's bar layout (null for non-bars), by position.

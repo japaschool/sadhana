@@ -99,7 +99,7 @@ describe('shared reports', () => {
     setViewportWidth(1440)
     renderAt(<SharedDesktop />)
     await userEvent.click(await screen.findByRole('radio', { name: /Full sadhana/ }))
-    expect(await screen.findByRole('button', { name: /Reading: 40 ?min/ })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /Reading: 40m/ })).toBeInTheDocument()
     expect(screen.getByText('2 reports · read-only')).toBeInTheDocument()
   })
 

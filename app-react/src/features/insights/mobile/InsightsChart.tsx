@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import type { BarLayout } from '../../../api/charts'
 import { formatMinutesAsHHMM, type ChartDataRow, type Trace } from '../chartLogic'
 import { assignAxes, AXES, isLeft, type Axis } from '../axes'
-import { barPlacement, formatDurationTick, seriesRows, formatTick, spansYears, type AverageLine } from '../insightsLogic'
+import { barPlacement, seriesRows, formatTick, spansYears, type AverageLine } from '../insightsLogic'
 import { fromDateStr } from '../../today/date'
 import { formatDuration, type DurationUnits } from '../../today/values'
 
@@ -69,7 +69,7 @@ function PointTip({ active, label, payload, traces, units, locale }: TipProps & 
 export function InsightsChart({ rows, traces, barLayout, averages, height = 170, hidden = NONE }: InsightsChartProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
-  const units = { h: t('today.unitH'), min: t('insights.tickMin') }
+  const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const axes = assignAxes(traces)
   const used = AXES.filter((a) => axes.includes(a))
   const on = (a: Axis) => traces.filter((_, i) => axes[i] === a)
@@ -82,7 +82,7 @@ export function InsightsChart({ rows, traces, barLayout, averages, height = 170,
   const tickFormat = (a: Axis) => {
     const dt = on(a)[0].dataType
     if (dt === 'Time') return formatMinutesAsHHMM
-    return dt === 'Duration' ? (v: number) => formatDurationTick(v, units) : (v: number) => String(v)
+    return dt === 'Duration' ? (v: number) => formatDuration(v, units) : (v: number) => String(v)
   }
   const xTicks = rows.length
     ? [...new Set([rows[0], rows[Math.floor((rows.length - 1) / 2)], rows[rows.length - 1]].map((r) => r.cob))]

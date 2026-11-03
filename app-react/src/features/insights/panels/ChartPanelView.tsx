@@ -3,11 +3,11 @@ import { Bar, CartesianGrid, Cell, ComposedChart, Line, ReferenceLine, Responsiv
 import { useTranslation } from 'react-i18next'
 import type { ChartPanel, Panel, Series } from '../../../api/charts'
 import type { Trace } from '../chartLogic'
-import { barPlacement, formatDurationTick, formatTick, spansYears } from '../insightsLogic'
+import { barPlacement, formatTick, spansYears } from '../insightsLogic'
 import { AXIS, TICK, tipDate, TipRow, TipShell } from '../mobile/InsightsChart'
 import { formatDuration } from '../../today/values'
 import {
-  chartRows, clockText, fitHours, labelText, seriesColour, seriesName, statResult, tipLines, type BarState, type Lookup, type PanelRow, type Resolved,
+  chartRows, clockText, durationFloor, fitHours, labelText, seriesColour, seriesName, statResult, tipLines, type BarState, type Lookup, type PanelRow, type Resolved,
 } from './panelLogic'
 
 interface ChartPanelProps {
@@ -150,8 +150,7 @@ export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, 
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const stripes = `stripes-${useId().replace(/[^a-zA-Z0-9]/g, '')}`
-  const tickUnits = { h: t('today.unitH'), min: t('insights.tickMin') }
-  const tipUnits = { h: t('today.unitH'), min: t('today.unitMin') }
+  const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const rows = chartRows(panel, days, lookup)
   const thin = days.length > THIN_FROM
   const marks = panel.series.map((s) => s.mark)
@@ -174,11 +173,19 @@ export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, 
     : values
   const reach = panel.target?.lines ? [panel.target.min ?? 0, panel.target.max ?? 0] : []
   const maxHour = Math.ceil(Math.max(0, ...tops, ...reach) / 60)
-  const hourStep = Math.ceil(maxHour / 6) || 1
-  const durationTicks = Array.from({ length: Math.floor(maxHour / hourStep) + 1 }, (_, k) => k * hourStep * 60)
+  // Sleep's length (unlabelled limits) starts above 0 so its limits stand apart; the bottom bar and the limits must still show.
+  const floored = panel.format === 'Duration' && !!panel.target && !targetKey(panel)
+  const fromHour = floored
+    ? durationFloor([...rows.flatMap((r) => (typeof r.s0 === 'number' ? [r.s0] : [])), ...reach.filter((v) => v > 0)]) / 60
+    : 0
+  const hourStep = Math.ceil((maxHour - fromHour) / 6) || 1
+  const durationTicks = Array.from({ length: Math.floor((maxHour - fromHour) / hourStep) + 1 }, (_, k) => (fromHour + k * hourStep) * 60)
+  // The floored axis tops out on a labelled tick at or above the tallest bar.
+  const topHour = fromHour + Math.ceil((maxHour - fromHour) / hourStep) * hourStep
+  if (floored && durationTicks[durationTicks.length - 1] < topHour * 60) durationTicks.push(topHour * 60)
   const yTick = clock
     ? (v: number) => ((v - lo) / 60 % every === 0 ? clockText(v) : '')
-    : panel.format === 'Duration' ? (v: number) => formatDurationTick(v, tickUnits) : (v: number) => String(v)
+    : panel.format === 'Duration' ? (v: number) => formatDuration(v, units) : (v: number) => String(v)
 
   const xTicks = rows.length
     ? [...new Set([rows[0], rows[Math.floor((rows.length - 1) / 2)], rows[rows.length - 1]].map((r) => r.cob))]
@@ -187,8 +194,8 @@ export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, 
   const target = panel.target
   const goal = targetKey(panel)
   const limitText = (key: string, value: number) => (goal
-    ? t(`${goal}Line`, { value: panel.format === 'Count' ? value : formatDurationTick(value, tickUnits) }).toLocaleLowerCase(locale)
-    : `${t(`reportPanels.${key}`)} ${formatDurationTick(value, tickUnits)}`)
+    ? t(`${goal}Line`, { value: panel.format === 'Count' ? value : formatDuration(value, units) }).toLocaleLowerCase(locale)
+    : `${t(`reportPanels.${key}`)} ${formatDuration(value, units)}`)
   const limits = (target?.lines ? [
     { key: 'min', value: target.min, position: 'insideTopRight' as const },
     { key: 'max', value: target.max, position: 'insideBottomRight' as const },
@@ -212,7 +219,10 @@ export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, 
             <CartesianGrid vertical={false} stroke="var(--ui-hairline)" />
             <XAxis dataKey="cob" ticks={xTicks} interval={0} tickFormatter={(c: string) => formatTick(c, locale, multiYear)} {...AXIS} />
             {overlayAxes.map((id) => <XAxis key={id} xAxisId={id} dataKey="cob" hide />)}
-            <YAxis reversed={panel.reversed} width={44} domain={clock ? [lo, hi] : [0, 'auto']} tickFormatter={yTick}
+            {/* ponytail: stored `reversed` ignored — older Sleep reports saved true, and every axis now grows upwards. */}
+            {/* A stack's domain always takes in 0 unless overflow is allowed; bars are clipped at the floor. */}
+            <YAxis width={44} domain={clock ? [lo, hi] : floored ? [fromHour * 60, topHour * 60] : [0, 'auto']} allowDataOverflow={floored}
+              tickFormatter={yTick}
               {...(clock ? { ticks: hourTicks, interval: 0 as const } : panel.format === 'Duration' ? { ticks: durationTicks, interval: 0 as const } : {})} {...AXIS} />
             {panel.series.map((s, i) => {
               const colour = seriesColour(s, i, panel.bar_layout)
@@ -247,7 +257,7 @@ export function ChartPanelView({ panel, panels, days, lookup, todayCob, height, 
             {interactive && <Tooltip isAnimationActive={false} cursor={{ fill: 'var(--ui-hairline)', stroke: 'var(--ui-hairline)' }}
               content={({ active, label }) => {
                 if (!active || typeof label !== 'string') return null
-                const lines = tipLines(panels, label, lookup, t, tipUnits)
+                const lines = tipLines(panels, label, lookup, t, units)
                 if (!lines.length) return null
                 return (
                   <TipShell title={tipDate(label, locale)}>

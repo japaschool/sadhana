@@ -404,7 +404,7 @@ describe('the closing screen', () => {
     await user.click(screen.getByRole('button', { name: /^(Next|Create report)/ }))
     await screen.findByText('Here’s what’s set up')
     expect(screen.getByText(`${en.guide.suggest.count3} · 20 a day`)).toBeInTheDocument()
-    expect(screen.getByText(`${en.guide.suggest.time1} · goal 1 h 30 min`)).toBeInTheDocument()
+    expect(screen.getByText(`${en.guide.suggest.time1} · goal 1h 30m`)).toBeInTheDocument()
   })
 
   it('says Copied only when the copy worked', async () => {

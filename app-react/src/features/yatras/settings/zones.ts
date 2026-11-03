@@ -3,6 +3,7 @@ import type {
 } from '../../../types/api'
 import i18n from '../../../i18n'
 import { findZone, zoneNumber } from '../yatrasLogic'
+import { withUnit } from '../../today/values'
 
 export type ScoredType = 'Int' | 'Time' | 'Duration'
 export const isScored = (dt: PracticeDataType): dt is ScoredType => dt === 'Int' || dt === 'Time' || dt === 'Duration'
@@ -18,7 +19,7 @@ export function formatValue(v: PracticeValue | null | undefined, dt: ScoredType)
   const n = zoneNumber(v)
   if (n === null) return ''
   if (dt === 'Int') return String(n)
-  if (dt === 'Duration') return `${n} ${i18n.t('today.unitMin')}`
+  if (dt === 'Duration') return withUnit(n, i18n.t('today.unitMin'))
   return `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`
 }
 

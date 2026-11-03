@@ -238,6 +238,11 @@ export function fitHours(values: number[]): [number, number] {
   return [lo, hi]
 }
 
+/** Where a sleep-length axis starts: 3h, so close limits stand apart, lower only to fit a shorter value. */
+export function durationFloor(values: number[]): number {
+  return Math.min(180, ...values.map((v) => Math.floor(v / 60) * 60))
+}
+
 export function labelText(label: Label | null, t: TFunction, fallback = ''): string {
   if (!label) return fallback
   return 'Key' in label ? t(label.Key) : label.Text
