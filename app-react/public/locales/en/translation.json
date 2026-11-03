@@ -985,7 +985,10 @@
     "aroundNote": "Average on those days, against your usual over this range. Tinted when it’s clearly different.",
     "aroundCell": "{{value}}, usual {{usual}}",
     "event": "Event",
-    "option": "Option"
+    "option": "Option",
+    "daysSince": "Days since the one before",
+    "eventCount_one": "{{count}} event",
+    "eventCount_other": "{{count}} events"
   },
   "templateForm": {
     "sleepName": "Sleep",

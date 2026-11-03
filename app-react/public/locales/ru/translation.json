@@ -1066,7 +1066,12 @@
     "aroundNote": "Среднее в эти дни на фоне вашего обычного за период. Цветом отмечено, когда разница заметна.",
     "aroundCell": "{{value}}, обычно {{usual}}",
     "event": "Событие",
-    "option": "Вариант"
+    "option": "Вариант",
+    "daysSince": "Дней с предыдущего",
+    "eventCount_one": "{{count}} событие",
+    "eventCount_few": "{{count}} события",
+    "eventCount_many": "{{count}} событий",
+    "eventCount_other": "{{count}} события"
   },
   "templateForm": {
     "sleepName": "Сон",

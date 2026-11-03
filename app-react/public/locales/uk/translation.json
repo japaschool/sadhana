@@ -1066,7 +1066,12 @@
     "aroundNote": "Середнє в ці дні порівняно з вашим звичайним за період. Кольором позначено, коли різниця помітна.",
     "aroundCell": "{{value}}, зазвичай {{usual}}",
     "event": "Подія",
-    "option": "Варіант"
+    "option": "Варіант",
+    "daysSince": "Днів від попередньої",
+    "eventCount_one": "{{count}} подія",
+    "eventCount_few": "{{count}} події",
+    "eventCount_many": "{{count}} подій",
+    "eventCount_other": "{{count}} події"
   },
   "templateForm": {
     "sleepName": "Сон",

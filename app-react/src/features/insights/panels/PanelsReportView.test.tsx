@@ -574,6 +574,15 @@ describe('a Days between events report', () => {
     expect(same.getAttribute('aria-label')).toMatch(/usual 14\.\d/)
   })
 
+  it('draws a stem and a marker per event with a gap, over calendar time (16m16)', () => {
+    const { container } = gapsView(EV, (i) => (i % 5 === 2 ? { Bool: true } : null))
+    expect(screen.getByText('Days since the one before')).toBeInTheDocument()
+    expect(screen.getByText('12 events')).toBeInTheDocument()
+    // The first event has nothing before it in the window, so 11 gaps.
+    expect(container.querySelectorAll('[data-mark="gap"]')).toHaveLength(11)
+    expect(container.querySelectorAll('[data-mark="gap"] line')).toHaveLength(11)
+  })
+
   it('6 events: says how many more the table needs', () => {
     gapsView(EV, (i) => (i % 10 === 2 ? { Bool: true } : null))
     expect(screen.getByText('4 more events needed for this table')).toBeInTheDocument()
