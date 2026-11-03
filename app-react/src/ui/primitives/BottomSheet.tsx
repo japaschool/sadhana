@@ -11,7 +11,7 @@ interface BottomSheetProps {
   label: string; onClose: () => void; children: ReactNode
   /** Mobile: a lower ceiling than 92dvh, e.g. to stop under something kept in view. */
   maxHeight?: string
-  /** Pinned under the content (e.g. Save): the sheet is full height, its content scrolls, and only the handle drags it. */
+  /** Pinned under the content (e.g. Save): the sheet is full height and its content scrolls. */
   footer?: ReactNode
 }
 
@@ -80,7 +80,8 @@ export function BottomSheet({ label, onClose, children, maxHeight, footer }: Bot
         transition={{ type: 'tween', duration: 0.22, ease: 'easeOut' }}
         drag="y"
         dragControls={drag}
-        dragListener={!footer}
+        // Handle only: a body drag listener makes framer set touch-action: pan-x, so iOS can't scroll a tall sheet.
+        dragListener={false}
         dragConstraints={{ top: 0, bottom: 0 }}
         dragElastic={{ top: 0, bottom: 0.6 }}
         onDragEnd={(_, info) => { if (info.offset.y > CLOSE_DRAG_PX || info.velocity.y > 500) onClose() }}

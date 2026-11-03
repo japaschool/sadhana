@@ -17,6 +17,11 @@ describe('BottomSheet', () => {
     expect(onClose).toHaveBeenCalledTimes(2)
   })
 
+  it('leaves touch scrolling on (iOS can scroll a tall sheet)', () => {
+    render(<BottomSheet label="S" onClose={() => {}}><p>x</p></BottomSheet>)
+    expect(screen.getByRole('dialog').style.touchAction).toBe('')
+  })
+
   it('traps Tab inside the sheet', () => {
     render(<BottomSheet label="S" onClose={() => {}}><button>first</button><button>last</button></BottomSheet>)
     screen.getByText('last').focus()
