@@ -1,17 +1,22 @@
 import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { PanelsReport } from '../../api/charts'
+import type { Panel, PanelsReport } from '../../api/charts'
 import { PanelsReportView } from '../insights/panels/PanelsReportView'
+import { current } from '../insights/panels/templates'
 import { toDateStr } from '../today/date'
 import { exampleDay, exampleReport, exampleSummary } from './examples'
 import type { Applied } from './examples'
 import type { GuideKind } from './guideLogic'
 
-/** No summary figures: the charts alone, so a first look stays light. A card holds one month grid, so it sits beside the others; with the person's own practices each one is shown. */
+/**
+ * No summary figures (stats, a chart's average headline): the charts alone, so a first look stays light. A card holds one
+ * month grid, so it sits beside the others; with the person's own practices each one is shown.
+ * Drawn as the template draws it now, then without the template, so the renderer doesn't rebuild the figures back in.
+ */
 function fit(kind: GuideKind, definition: PanelsReport, compact: boolean, own: boolean): PanelsReport {
-  const panels = definition.panels.filter((p) => p.kind !== 'Stats')
-  return { ...definition, panels: compact && kind === 'days' && !own ? panels.slice(0, 1) : panels }
+  const panels = current(definition).panels.flatMap((p): Panel[] => (p.kind === 'Stats' ? [] : p.kind === 'Chart' ? [{ ...p, headline: false }] : [p]))
+  return { ...definition, template: null, panels: compact && kind === 'days' && !own ? panels.slice(0, 1) : panels }
 }
 
 /**

@@ -253,7 +253,7 @@ describe('Time spent and Days I did it', () => {
     const user = await start(['time'])
     await user.click(screen.getByRole('button', { name: 'Reading' }))
     const goal = screen.getByLabelText('Time a day')
-    await user.type(goal, '0130')
+    await user.type(goal, '90')
     fireEvent.blur(goal)
     expect(applied('time').goal).toBe(90)
     await user.click(screen.getByRole('button', { name: 'Clear Time a day' }))

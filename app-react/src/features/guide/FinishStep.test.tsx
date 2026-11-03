@@ -399,7 +399,7 @@ describe('the closing screen', () => {
     await user.click(screen.getByRole('button', { name: /^(Next|Create report)/ }))
     await user.click(screen.getByRole('button', { name: en.guide.suggest.time1 }))
     const goal = screen.getByLabelText('Time a day')
-    fireEvent.change(goal, { target: { value: '01:30' } })
+    fireEvent.change(goal, { target: { value: '90' } })
     fireEvent.blur(goal)
     await user.click(screen.getByRole('button', { name: /^(Next|Create report)/ }))
     await screen.findByText('Here’s what’s set up')

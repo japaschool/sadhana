@@ -362,8 +362,9 @@ describe('a Duration report', () => {
     e(today, 'Reading', D(500)), e(days[1], 'Listening', null),
   ]
   const def = durationPanels({ practices: ['a', 'b', 'c'], goal: 120 })
-  const avg = (d = def) => (d.panels[0] as Extract<Panel, { kind: 'Stats' }>).stats[0].value
   const chart = (v: Panel[]) => v.find((x) => x.kind === 'Chart') as Extract<Panel, { kind: 'Chart' }>
+  // What the chart's headline averages: the daily total.
+  const avg = (d = def) => ({ Average: { of: chart(d.panels).target!.of, pick: null, format: 'Duration' as const, scope: { today: false, missing_zero: true } } })
 
   it('the average per day equals Insights’ own', () => {
     const l = makeLookup(rows, undefined, ps)

@@ -1,4 +1,4 @@
-import { useId, type Key, type ReactNode } from 'react'
+import { useId, useState, type Key, type ReactNode } from 'react'
 import { Bar, CartesianGrid, Cell, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import type { ChartPanel, Panel, Series } from '../../../api/charts'
@@ -87,13 +87,16 @@ function MarkGlyph({ mark, colour }: { mark: Series['mark']; colour: string }) {
   )
 }
 
-function PanelLegend({ panel, first, lookup }: { panel: ChartPanel; first: boolean; lookup: Lookup }) {
+/** Stacked practices with their own colours can be tapped to hide them from the chart. */
+function PanelLegend({ panel, first, lookup, hidden, onToggle }: {
+  panel: ChartPanel; first: boolean; lookup: Lookup; hidden: Set<number>; onToggle: (i: number) => void
+}) {
   const { t } = useTranslation()
   const u = { h: t('today.unitH'), min: t('today.unitMin') }
   const hrs = (v: number) => formatDuration(v, u)
   const target = first && panel.target?.colour ? panel.target : null
   const goal = targetKey(panel)
-  const items: { key: string; glyph: ReactNode; text: string }[] = []
+  const items: { key: string; glyph: ReactNode; text: string; toggle?: number }[] = []
   if (target && goal) {
     if (target.min !== null) {
       items.push({ key: 'ok', glyph: <Swatch state="ok" />, text: t(`${goal}Met`) })
@@ -133,7 +136,7 @@ function PanelLegend({ panel, first, lookup }: { panel: ChartPanel; first: boole
   } else if (panel.bar_layout === 'Stacked') {
     panel.series.forEach((s, i) => items.push({
       key: `s${i}`, glyph: <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: seriesColour(s, i, panel.bar_layout) }} />,
-      text: seriesName(s, lookup, t),
+      text: seriesName(s, lookup, t), toggle: panel.series.length > 1 ? i : undefined,
     }))
   }
   if (goal && panel.target?.lines && panel.target.min !== null) {
@@ -145,14 +148,19 @@ function PanelLegend({ panel, first, lookup }: { panel: ChartPanel; first: boole
     <ul aria-label={t('reportPanels.legend')} className="flex flex-wrap gap-x-3.5 gap-y-1.5">
       {items.map((x) => (
         <li key={x.key} className="inline-flex items-center gap-1.5 text-xs leading-[1.3] font-bold text-ui-ink2">
-          {x.glyph}<span>{x.text}</span>
+          {x.toggle === undefined ? <>{x.glyph}<span>{x.text}</span></> : (
+            <button type="button" aria-pressed={!hidden.has(x.toggle)} onClick={() => onToggle(x.toggle!)}
+              className={`-my-2 inline-flex items-center gap-1.5 py-2 ${hidden.has(x.toggle) ? 'line-through opacity-40' : ''}`}>
+              {x.glyph}<span>{x.text}</span>
+            </button>
+          )}
         </li>
       ))}
     </ul>
   )
 }
 
-/** The first series' daily average and its change vs the previous window, drawn as the generic report draws it. */
+/** The daily average of what the target judges (else the first series) and its change vs the previous window, as the generic report draws it. */
 function PanelHeadline({ panel, days, prevDays, range, lookup, todayCob, wide }: {
   panel: ChartPanel; days: string[]; prevDays: string[]; range?: Range; lookup: Lookup; todayCob: string; wide: boolean
 }) {
@@ -160,7 +168,7 @@ function PanelHeadline({ panel, days, prevDays, range, lookup, todayCob, wide }:
   const locale = i18n.language || 'en'
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const average = (d: string[]) => statResult({
-    Average: { of: panel.series[0].source, pick: null, format: panel.format, scope: { today: false, missing_zero: true } },
+    Average: { of: panel.target?.of ?? panel.series[0].source, pick: null, format: panel.format, scope: { today: false, missing_zero: true } },
   }, d, lookup, todayCob).value
   const value = average(days)
   if (value === null || !days.length) return null
@@ -180,6 +188,8 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], range, look
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const stripes = `stripes-${useId().replace(/[^a-zA-Z0-9]/g, '')}`
+  const [hidden, setHidden] = useState<Set<number>>(new Set())
+  const toggle = (i: number) => setHidden((h) => { const n = new Set(h); if (!n.delete(i)) n.add(i); return n })
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const rows = chartRows(panel, days, lookup)
   const thin = days.length > THIN_FROM
@@ -187,7 +197,7 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], range, look
   const placement = barPlacement(marks.map(asTrace), panel.bar_layout)
   const overlayAxes = placement.flatMap((p) => (p?.xAxisId ? [p.xAxisId] : []))
   const values = rows.flatMap((r: PanelRow) => panel.series.flatMap((_, i) => {
-    const v: Resolved = r[`s${i}`]
+    const v: Resolved = hidden.has(i) ? null : r[`s${i}`]
     return v === null ? [] : Array.isArray(v) ? v : [v]
   }))
 
@@ -199,7 +209,7 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], range, look
   const hourTicks = Array.from({ length: hours + 1 }, (_, k) => lo + k * 60)
   // A stack reaches its total and a goal line must fit, or the top tick falls short of them.
   const tops = panel.bar_layout === 'Stacked'
-    ? rows.map((r) => panel.series.reduce((sum, _, i) => { const v = r[`s${i}`]; return sum + (typeof v === 'number' ? v : 0) }, 0))
+    ? rows.map((r) => panel.series.reduce((sum, _, i) => { const v = hidden.has(i) ? null : r[`s${i}`]; return sum + (typeof v === 'number' ? v : 0) }, 0))
     : values
   const reach = panel.target?.lines ? [panel.target.min ?? 0, panel.target.max ?? 0] : []
   const maxHour = Math.ceil(Math.max(0, ...tops, ...reach) / 60)
@@ -257,6 +267,7 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], range, look
               tickFormatter={yTick}
               {...(clock ? { ticks: hourTicks, interval: 0 as const } : panel.format === 'Duration' ? { ticks: durationTicks, interval: 0 as const } : {})} {...AXIS} />
             {panel.series.map((s, i) => {
+              if (hidden.has(i)) return null
               const colour = seriesColour(s, i, panel.bar_layout)
               if (s.mark === 'Dot') {
                 const base = s.only_with
@@ -315,7 +326,7 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], range, look
           <p className="absolute inset-0 flex items-center justify-center pb-6 text-sm font-extrabold text-ui-ink">{t('insights.noData')}</p>
         )}
       </div>
-      <PanelLegend panel={panel} first={first} lookup={lookup} />
+      <PanelLegend panel={panel} first={first} lookup={lookup} hidden={hidden} onToggle={toggle} />
     </section>
   )
 }

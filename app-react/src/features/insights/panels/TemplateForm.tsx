@@ -8,7 +8,7 @@ import { CARD, FIELD, HINT } from '../../yatras/settings/mobile/AdminPage'
 import { TypeIcon, typeLabelKey } from '../../yatras/settings/mobile/TypeChip'
 import { useDebouncedCommit } from '../../yatras/settings/useDebouncedCommit'
 import { parseTime } from '../../today/inputFormat'
-import { typeTime } from '../../today/values'
+import { formatDuration, typeTime } from '../../today/values'
 import { SlotPickerSheet } from './SlotPickerSheet'
 import { DAYS_SLOT, daysPanels, DURATION_SLOT, durationPanels, fits, JAPA_SLOTS, japaPanels, MAX_DAYS, MAX_PRACTICES, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, suggestFor, type Slot } from './templates'
 
@@ -83,12 +83,16 @@ const roundsText = (v: number | null) => (v === null ? '' : String(v))
 // ponytail: four digits keeps a target inside the server's i32 without a range check.
 const typeRounds = (next: string) => next.replace(/\D/g, '').slice(0, 4)
 
-/** A number typed as text. Time limits by default; with `suffix`, a required whole number that has no clear button. */
-export function LimitField({ id, label, placeholder, value, onChange, suffix }: {
-  id: string; label: string; placeholder: string; value: number | null; onChange: (v: number | null) => void; suffix?: string
+/**
+ * A number typed as text. Time limits (hh:mm) by default; with `duration`, minutes typed like Today's Duration row and
+ * shown as 2h 20m; with `suffix`, a required whole number that has no clear button.
+ */
+export function LimitField({ id, label, placeholder, value, onChange, suffix, duration }: {
+  id: string; label: string; placeholder: string; value: number | null; onChange: (v: number | null) => void; suffix?: string; duration?: boolean
 }) {
   const { t } = useTranslation()
-  const [parseLimit, limitText] = suffix ? [parseRounds, roundsText] : [parseHours, hoursText]
+  const digits = suffix || duration
+  const [parseLimit, limitText] = digits ? [parseRounds, roundsText] : [parseHours, hoursText]
   const [text, setText] = useState(limitText(value))
   const [focused, setFocused] = useState(false)
   const [seen, setSeen] = useState(value)
@@ -101,16 +105,21 @@ export function LimitField({ id, label, placeholder, value, onChange, suffix }: 
   const { schedule, flush } = useDebouncedCommit(() => {
     if (parsed !== value) onChange(parsed)
   })
+  const units = { h: t('today.unitH'), min: t('today.unitMin') }
+  const shown = duration && !focused && parsed !== null ? formatDuration(parsed, units) : text
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
       {label && <label htmlFor={id} className="text-xs leading-snug font-bold text-ui-muted">{label}</label>}
       <div className="relative">
-        <input id={id} value={text} placeholder={placeholder} inputMode="numeric" autoComplete="off"
+        <input id={id} value={shown} placeholder={placeholder} inputMode="numeric" autoComplete="off"
           className={`${FIELD} ${suffix ? '' : 'pr-11'} font-ui-mono placeholder:font-[Manrope] placeholder:text-[15px] placeholder:font-semibold`}
           onFocus={() => setFocused(true)}
           onBlur={() => { setFocused(false); flush() }}
-          onChange={(e) => { setText(suffix ? typeRounds(e.target.value) : typeTime(e.target.value, text)); schedule() }} />
+          onChange={(e) => { setText(digits ? typeRounds(e.target.value) : typeTime(e.target.value, text)); schedule() }} />
         {suffix && <span className="absolute inset-y-0 right-3.5 my-auto flex items-center text-sm font-semibold text-ui-muted">{suffix}</span>}
+        {duration && focused && text && (
+          <span className="pointer-events-none absolute inset-y-0 right-12 my-auto flex items-center text-sm font-semibold text-ui-muted">{units.min}</span>
+        )}
         {text && !suffix && (
           <button type="button" aria-label={t('templateForm.clear', { label })} onClick={() => { setText(''); onChange(null) }}
             className="absolute inset-y-0 right-0.5 my-auto flex h-11 w-11 items-center justify-center">
@@ -318,7 +327,7 @@ export function TemplateForm({ value, onChange, practices, name, flagMissing }: 
               <span className="text-xs font-bold whitespace-nowrap text-ui-faint">{t('templateForm.optional')}</span>
             </div>
             <div className={`${CARD} flex flex-col gap-2 p-4`}>
-              <LimitField id="duration-goal" label={t('templateForm.goal')} placeholder={t('templateForm.noGoal')} value={value.goal} onChange={(goal) => onChange({ ...value, goal })} />
+              <LimitField id="duration-goal" duration label={t('templateForm.goal')} placeholder={t('templateForm.noGoal')} value={value.goal} onChange={(goal) => onChange({ ...value, goal })} />
               <p className={HINT}>{t('templateForm.goalHint')}</p>
             </div>
           </section>

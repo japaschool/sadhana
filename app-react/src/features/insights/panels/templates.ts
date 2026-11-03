@@ -106,10 +106,10 @@ export function japaPanels(t: JapaTemplate): PanelsReport {
   }
 }
 
-/** A saved Japa report drawn as the template draws it now, so older ones pick up the current chart. */
+/** A saved Japa or Time spent report drawn as the template draws it now, so older ones pick up the current chart. */
 export function current(def: PanelsReport): PanelsReport {
   const t = def.template
-  return t && 'Japa' in t ? japaPanels(t.Japa) : def
+  return t && 'Japa' in t ? japaPanels(t.Japa) : t && 'Duration' in t ? durationPanels(t.Duration) : def
 }
 
 /** Builds the Panels report of the Duration template from its settings. */
@@ -117,12 +117,11 @@ export function durationPanels(t: DurationTemplate): PanelsReport {
   // Every term optional: a day with nothing logged totals 0, which is how a missing day counts here.
   const total: Source = { Calc: { terms: t.practices.map((id) => term(1, id, 0, true)) } }
   const several = t.practices.length > 1
-  const stats: Stat[] = [
-    { label: key('avgPerDay'), value: { Average: { of: total, pick: null, format: 'Duration', scope: past } }, under: null },
-    ...(t.goal === null ? [] : [{ label: key('daysOnGoal'), value: { OnTarget: { of: total, min: t.goal, max: null, scope: past } }, under: null }]),
-  ]
+  // The daily average heads the chart, so only days on goal is left as a stat.
+  const stats: Stat[] = t.goal === null ? [] : [{ label: key('daysOnGoal'), value: { OnTarget: { of: total, min: t.goal, max: null, scope: past } }, under: null }]
   const chart: ChartPanel = {
-    title: key('dailyTotals'),
+    title: null,
+    headline: true,
     series: t.practices.map((id) => ({ label: null, mark: 'Bar', source: practice(id), axis: 'Left', only_with: null })),
     bar_layout: several ? 'Stacked' : 'Grouped',
     format: 'Duration',
@@ -135,7 +134,7 @@ export function durationPanels(t: DurationTemplate): PanelsReport {
     version: 1,
     template: { Duration: t },
     required: t.practices.map((id) => ({ practice: id, label: key('dailyTotals') })),
-    panels: [{ kind: 'Stats', stats }, { kind: 'Chart', ...chart }],
+    panels: [...(stats.length ? [{ kind: 'Stats' as const, stats }] : []), { kind: 'Chart', ...chart }],
   }
 }
 

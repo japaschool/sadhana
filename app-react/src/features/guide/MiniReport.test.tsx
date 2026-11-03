@@ -78,6 +78,13 @@ describe('MiniReport', () => {
     expect(screen.queryByText('After 4 weeks')).toBeNull()
   })
 
+  it.each(['count', 'time'] as const)('%s shows its chart without the daily average above it', (kind) => {
+    const { container } = render(<MiniReport kind={kind} />)
+    expect(container.querySelector('.recharts-bar-rectangle')).not.toBeNull()
+    expect(screen.queryByText(/^Daily average/)).toBeNull()
+    expect(screen.queryByText('Days on target')).toBeNull()
+  })
+
   it('days shows its grids without the month figures; a real report keeps them', () => {
     const { unmount } = render(<MiniReport kind="days" />)
     expect(screen.queryByText('This month')).toBeNull()

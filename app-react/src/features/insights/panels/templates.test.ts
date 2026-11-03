@@ -187,12 +187,13 @@ describe('durationPanels', () => {
     const [c] = charts(durationPanels({ practices: ids, goal: null }).panels)
     expect(c.target?.of).toEqual({ Calc: { terms: ids.map((practice) => ({ sign: 1, practice, day_offset: 0, optional: true })) } })
   })
-  it('average per day; days on goal only with a goal', () => {
-    const scope = { today: false, missing_zero: true }
-    const withGoal = statsOf(durationPanels({ practices: ids, goal: 120 }).panels)
-    expect(withGoal.map((s) => Object.keys(s.value)[0])).toEqual(['Average', 'OnTarget'])
-    for (const s of withGoal) expect(scopeOf(s)).toEqual(scope)
-    expect(statsOf(durationPanels({ practices: ids, goal: null }).panels)).toHaveLength(1)
+  it('the average heads the chart; days on goal is the only stat, and only with a goal', () => {
+    const r = durationPanels({ practices: ids, goal: 120 })
+    expect(charts(r.panels)[0]).toMatchObject({ headline: true, title: null })
+    const withGoal = statsOf(r.panels)
+    expect(withGoal.map((s) => Object.keys(s.value)[0])).toEqual(['OnTarget'])
+    expect(scopeOf(withGoal[0])).toEqual({ today: false, missing_zero: true })
+    expect(durationPanels({ practices: ids, goal: null }).panels.map((p) => p.kind)).toEqual(['Chart'])
   })
   it('requires each practice, under one label', () => {
     const r = durationPanels({ practices: ids, goal: null })

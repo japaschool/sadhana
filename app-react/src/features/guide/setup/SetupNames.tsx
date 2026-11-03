@@ -48,7 +48,7 @@ export function SetupNames({ setup, slot, suggestions, max }: { setup: Setup<'ti
       {setup.kind === 'time' && (
         <Section title={t('templateForm.dailyGoal')} tag={t('templateForm.optional')}>
           <div className={`${CARD} flex flex-col gap-2 p-4`}>
-            <LimitField id="setup-goal" label={t('guide.setup.goalLabel')} placeholder={t('templateForm.noGoal')} value={setup.value.goal} onChange={(goal) => setup.set({ goal })} />
+            <LimitField id="setup-goal" duration label={t('guide.setup.goalLabel')} placeholder={t('templateForm.noGoal')} value={setup.value.goal} onChange={(goal) => setup.set({ goal })} />
             <p className={HINT}>{t('guide.setup.goalHint')}</p>
           </div>
         </Section>

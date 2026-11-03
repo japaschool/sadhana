@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { cloneElement, type ReactElement, type ReactNode } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -367,7 +367,27 @@ describe('a Duration report', () => {
   it('a deleted practice: the other draws, the message shows once', () => {
     show(durationPanels({ practices: ['a', 'b', 'c', 'd'], goal: null }), [A, B])
     expect(screen.getByRole('heading', { name: 'This report needs a practice for “Daily totals”' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Daily totals', level: 2 })).toBeInTheDocument()
+    expect(screen.getByText(/^Daily average/)).toBeInTheDocument()
+  })
+  it('heads the chart with the average of the daily total', () => {
+    show(durationPanels({ practices: ['a', 'b'], goal: null }))
+    // Today out: Reading 30/90 alternating plus Listening 90 = 6×60 + 6×90 over 6 days.
+    expect(screen.getByText(/^Daily average/).nextElementSibling).toHaveTextContent('2h 30m')
+  })
+  it('tapping a practice in the key hides it from the chart, and tapping again brings it back', () => {
+    const { container } = show(durationPanels({ practices: ['a', 'b'], goal: null }))
+    const reading = screen.getByRole('button', { name: 'Reading' })
+    const bars = () => container.querySelectorAll('.recharts-bar-rectangle').length
+    const all = bars()
+    fireEvent.click(reading)
+    expect(reading).toHaveAttribute('aria-pressed', 'false')
+    expect(bars()).toBe(all / 2)
+    fireEvent.click(reading)
+    expect(bars()).toBe(all)
+  })
+  it('one practice has nothing to tap', () => {
+    show(durationPanels({ practices: ['a'], goal: 60 }))
+    expect(screen.queryByRole('button', { name: 'Reading' })).toBeNull()
   })
 })
 

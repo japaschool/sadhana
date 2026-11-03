@@ -170,9 +170,14 @@ export function exampleSummary(kind: GuideKind, todayCob: string, t: TFunction):
     const list = practices.map((p) => `${p.practice}: ${monthCounts(p.id, month, todayCob, l).thisMonth}`).join('; ')
     return t('guide.example.summaryDays', { band, list })
   }
-  const on = stat(kind === 'sleep' ? 3 : 1)
+  const on = statResult(stats.find((s) => 'OnTarget' in s.value)!.value, days, l, todayCob)
   const common = { band, on: on.value ?? 0, of: on.of ?? 0 }
   if (kind === 'sleep') return t('guide.example.summarySleep', { ...common, avg: formatDuration(stat(0).value ?? 0, units) })
-  if (kind === 'count') return t('guide.example.summaryCount', { ...common, name: practices[0].practice, avg: stat(0).value ?? 0 })
-  return t('guide.example.summaryTime', { ...common, names: practices.map((p) => p.practice).join(', '), avg: formatDuration(stat(0).value ?? 0, units) })
+  // Count and time draw their average as the chart's headline, not as a stat.
+  const chart = definition.panels.find((p) => p.kind === 'Chart')!
+  const avg = statResult({
+    Average: { of: chart.target?.of ?? chart.series[0].source, pick: null, format: chart.format, scope: { today: false, missing_zero: true } },
+  }, days, l, todayCob).value ?? 0
+  if (kind === 'count') return t('guide.example.summaryCount', { ...common, name: practices[0].practice, avg })
+  return t('guide.example.summaryTime', { ...common, names: practices.map((p) => p.practice).join(', '), avg: formatDuration(avg, units) })
 }
