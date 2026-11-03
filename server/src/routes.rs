@@ -1,13 +1,10 @@
-use crate::{
-    app::{self, shared::version::VersionResponse},
-};
+use crate::app::{self, shared::version::VersionResponse};
 use actix_files::{Files, NamedFile};
 use actix_web::{
-    HttpRequest,
-    HttpResponse,
     dev::{HttpServiceFactory, ServiceRequest, ServiceResponse},
-    http::header::{CACHE_CONTROL, HeaderValue},
-    get, web,
+    get,
+    http::header::{HeaderValue, CACHE_CONTROL},
+    web, HttpRequest, HttpResponse,
 };
 use std::fs;
 use std::path::Path;
@@ -118,10 +115,7 @@ fn api_scope() -> impl HttpServiceFactory {
         .service(
             web::scope("/password-reset").route("", web::put().to(app::user::api::reset_password)),
         )
-        .service(
-            web::scope("/oauth")
-                .route("/google", web::post().to(app::oauth::google_signin)),
-        )
+        .service(web::scope("/oauth").route("/google", web::post().to(app::oauth::google_signin)))
         .service(
             web::scope("/user")
                 .service(
@@ -272,7 +266,7 @@ fn dist_files() -> actix_files::Files {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::{App, body::to_bytes, http::StatusCode, test};
+    use actix_web::{body::to_bytes, http::StatusCode, test, App};
 
     struct EnvGuard {
         git_sha: Option<String>,
@@ -322,7 +316,8 @@ mod tests {
         .await;
 
         for route in ["/version", "/api/version"] {
-            let response = test::call_service(&app, test::TestRequest::get().uri(route).to_request()).await;
+            let response =
+                test::call_service(&app, test::TestRequest::get().uri(route).to_request()).await;
 
             assert_eq!(response.status(), StatusCode::OK);
 
@@ -359,12 +354,7 @@ mod tests {
                 .body("x".repeat(1024))
         }
 
-        let app = test::init_service(
-            App::new()
-                .wrap(Compress::default())
-                .service(big_text),
-        )
-        .await;
+        let app = test::init_service(App::new().wrap(Compress::default()).service(big_text)).await;
 
         let req = test::TestRequest::get()
             .uri("/echo")

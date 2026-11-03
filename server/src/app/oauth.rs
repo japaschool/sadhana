@@ -43,11 +43,7 @@ fn unauthorized() -> AppError {
 
 /// The token must be issued to our client (else any app's token signs in as its user),
 /// and Google must have verified the email, since sign-in links to an existing account by email.
-fn check_google(
-    client_id: Option<&str>,
-    aud: &str,
-    email_verified: bool,
-) -> Result<(), AppError> {
+fn check_google(client_id: Option<&str>, aud: &str, email_verified: bool) -> Result<(), AppError> {
     match client_id {
         Some(id) if !id.is_empty() && id == aud && email_verified => Ok(()),
         _ => Err(unauthorized()),
@@ -94,11 +90,16 @@ pub async fn google_signin(
         .or(info.given_name)
         .unwrap_or_else(|| info.email.split('@').next().unwrap_or("User").to_string());
     let email = info.email;
-    let GoogleBody { lang, skip_defaults, .. } = body.into_inner();
+    let GoogleBody {
+        lang,
+        skip_defaults,
+        ..
+    } = body.into_inner();
 
     let mut conn = state.get_conn()?;
     let (user, token, created) =
-        web::block(move || User::signin_oauth(&mut conn, &email, &name, &lang, skip_defaults)).await??;
+        web::block(move || User::signin_oauth(&mut conn, &email, &name, &lang, skip_defaults))
+            .await??;
     let mut res = UserResponse::from((user, token));
     res.user.created = Some(created);
     Ok(HttpResponse::Ok().json(res))

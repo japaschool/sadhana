@@ -445,3 +445,16 @@ describe('month panel', () => {
     expect(missingRequired(month('yn'), l)).toEqual([])
   })
 })
+
+describe('lookup text', () => {
+  const ps = [{ ...P('ev', 'Event', 'Text'), dropdown_variants: 'Fast, Feast' }, P('n', 'Count', 'Int')]
+  it('reads trimmed text, null when empty or not Text', () => {
+    expect(lk([e('2026-10-05', 'Event', { Text: '  Fast ' })], undefined, ps).text('ev', '2026-10-05')).toBe('Fast')
+    expect(lk([e('2026-10-05', 'Event', { Text: '' })], undefined, ps).text('ev', '2026-10-05')).toBeNull()
+    expect(lk([e('2026-10-05', 'Count', { Int: 3 })], undefined, ps).text('n', '2026-10-05')).toBeNull()
+  })
+  it('lists dropdown options', () => {
+    expect(lk([], undefined, ps).options('ev')).toEqual(['Fast', 'Feast'])
+    expect(lk([], undefined, ps).options('n')).toEqual([])
+  })
+})

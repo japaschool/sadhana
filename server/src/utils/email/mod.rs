@@ -1,9 +1,9 @@
 use crate::vars;
 use common::error::AppError;
 use lettre::{
-    AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
-    message::{SinglePartBuilder, header::ContentType},
+    message::{header::ContentType, SinglePartBuilder},
     transport::smtp::{authentication::Credentials, client::Tls, extension::ClientId},
+    AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
 };
 
 pub async fn send_email_smtp(to: &str, subject: &str, body: String) -> Result<(), AppError> {

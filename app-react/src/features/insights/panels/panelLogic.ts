@@ -5,7 +5,7 @@ import type {
 import type { PracticeDataType, UserPractice } from '../../../types/api'
 import { addDays, fromDateStr, toDateStr } from '../../today/date'
 import { formatMinutesAsHHMM, valueToNumber } from '../chartLogic'
-import { formatDuration, type DurationUnits } from '../../today/values'
+import { formatDuration, parseOptions, type DurationUnits } from '../../today/values'
 
 export interface Lookup {
   /** Numeric value on a day; null when empty, or the practice is unavailable. */
@@ -14,15 +14,23 @@ export interface Lookup {
   available(practice: string, type?: PracticeDataType): boolean
   type(practice: string): PracticeDataType | undefined
   name(practice: string): string | undefined
+  /** The trimmed Text value; null when empty, not Text, or unavailable. */
+  text(practice: string, cob: string): string | null
+  /** A dropdown practice's options, else []. */
+  options(practice: string): string[]
 }
 export type Resolved = number | [number, number] | null
 export type BarState = 'ok' | 'under' | 'over' | 'neutral'
 
 const DAY = 1440
 /** Text counts only where a number can be read from it (a numeric dropdown); `valueToNumber` keeps its meaning elsewhere. */
-function textNumber(raw: unknown): number | null {
+const rawText = (raw: unknown): string | null => {
   const s = typeof raw === 'string' ? raw : (raw as { Text?: unknown } | null | undefined)?.Text
-  if (typeof s !== 'string' || !s.trim()) return null
+  return typeof s === 'string' && s.trim() ? s.trim() : null
+}
+function textNumber(raw: unknown): number | null {
+  const s = rawText(raw)
+  if (s === null) return null
   const n = Number(s)
   return Number.isFinite(n) ? n : null
 }
@@ -42,6 +50,11 @@ export function makeLookup(
     available,
     type: (practice) => byId.get(practice)?.data_type,
     name: (practice) => byId.get(practice)?.practice,
+    text(practice, cob) {
+      const p = byId.get(practice)
+      return p && available(practice, 'Text') ? rawText(raw.get(`${p.practice}\u0000${cob}`)) : null
+    },
+    options: (practice) => parseOptions(byId.get(practice)?.dropdown_variants),
     value(practice, cob) {
       const p = byId.get(practice)
       if (!p || !p.is_active) return null
