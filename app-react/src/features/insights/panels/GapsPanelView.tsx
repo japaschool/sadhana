@@ -33,7 +33,11 @@ function Marker({ i, cx, cy }: { i: number; cx: number; cy: number }) {
 
 /** A thin stem from 0 up to the gap, with the option's marker on top. */
 function lollipop(i: number) {
-  return function Lollipop({ x = 0, y = 0, width = 0, height = 0 }: { x?: number; y?: number; width?: number; height?: number }) {
+  return function Lollipop({ x = 0, y = 0, width = 0, height = 0, payload }: {
+    x?: number; y?: number; width?: number; height?: number; payload?: Record<string, number | null>
+  }) {
+    // The other options' series still pass every row, as an empty slot in the stack: draw nothing there.
+    if (payload?.[`o${i}`] == null) return <g />
     const cx = x + width / 2
     return (
       <g data-mark="gap">

@@ -583,6 +583,12 @@ describe('a Days between events report', () => {
     expect(container.querySelectorAll('[data-mark="gap"] line')).toHaveLength(11)
   })
 
+  it('a dropdown event draws one marker per event, never a stray one for the other option', () => {
+    // Fast on 12 days, Feast on 3: 15 events, the first with no gap.
+    const { container } = gapsView(KIND, (i) => (i % 5 === 2 ? { Text: 'Fast' } : i % 20 === 4 ? { Text: 'Feast' } : null))
+    expect(container.querySelectorAll('[data-mark="gap"]')).toHaveLength(14)
+  })
+
   it('6 events: says how many more the table needs', () => {
     gapsView(EV, (i) => (i % 10 === 2 ? { Bool: true } : null))
     expect(screen.getByText('4 more events needed for this table')).toBeInTheDocument()
