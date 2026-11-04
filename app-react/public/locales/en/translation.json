@@ -982,10 +982,11 @@
     "usual": "Usual",
     "moreEvents_one": "{{count}} more event needed for this table",
     "moreEvents_other": "{{count}} more events needed for this table",
-    "aroundNote": "Average on those days, against your usual over this range. Tinted when it’s clearly different.",
+    "aroundNote": "Average on those days, against your usual over the past year. Tinted when it’s clearly different.",
     "aroundCell": "{{value}}, usual {{usual}}",
     "event": "Event",
     "option": "Option",
+    "allOptions": "All",
     "daysSince": "Days since the one before",
     "eventCount_one": "{{count}} event",
     "eventCount_other": "{{count}} events"

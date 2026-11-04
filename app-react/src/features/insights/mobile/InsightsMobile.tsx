@@ -55,7 +55,7 @@ export function InsightsMobile() {
           <InsightsTable grouped={ins.grouped} traces={ins.traces} entries={ins.entries} todayCob={ins.todayCob} onOpenDay={setOpenDay} />
         ) : panels ? (
           <PanelsReportView key={ins.selectedId} report={ins.report!} definition={panels} entries={ins.entries} previous={ins.previousEntries}
-            practices={ins.practices} todayCob={ins.todayCob} chartHeight={230} formLink={`/settings/charts/${ins.selectedId}`} cols={2} month={ins.month ?? undefined} range={ins.range} />
+            practices={ins.practices} todayCob={ins.todayCob} chartHeight={230} formLink={`/settings/charts/${ins.selectedId}`} cols={2} month={ins.month ?? undefined} range={ins.range} yearEntries={ins.yearEntries} />
         ) : (
           <section className={`${CARD} p-4`}>
             {ins.isLoading ? (

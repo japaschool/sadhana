@@ -33,6 +33,8 @@ interface PanelsReportViewProps {
   monthFigures?: boolean
   /** The window's length, which words a headline's change; none in examples. */
   range?: Range
+  /** The year to the window's end, read by the days-around table; it falls back to the window without it. */
+  yearEntries?: ReportDataEntry[]
 }
 
 /** A required practice was deleted or hidden (15m19, 15t10). */
@@ -74,7 +76,7 @@ function MonthLegend() {
   )
 }
 
-export function PanelsReportView({ report, definition, entries, previous, practices, todayCob, chartHeight, formLink, cols = 4, month = todayCob.slice(0, 7), interactive = true, legendLast = false, monthFigures = true, range }: PanelsReportViewProps) {
+export function PanelsReportView({ report, definition, entries, previous, practices, todayCob, chartHeight, formLink, cols = 4, month = todayCob.slice(0, 7), interactive = true, legendLast = false, monthFigures = true, range, yearEntries }: PanelsReportViewProps) {
   const { t } = useTranslation()
   const lookup = makeLookup(entries, previous, practices)
   const days = windowDays(entries)
@@ -84,7 +86,8 @@ export function PanelsReportView({ report, definition, entries, previous, practi
   const missing = missingRequired(def, lookup)
   const firstChart = panels.findIndex((p) => p.kind === 'Chart')
   const labels = [...new Set(missing.map((r) => labelText(r.label, t)))].join(', ')
-  const legend = panels.some((p) => p.kind === 'Month') && <MonthLegend />
+  const year = yearEntries ? { lookup: makeLookup(yearEntries, undefined, practices), days: windowDays(yearEntries) } : { lookup, days }
+  const legend =panels.some((p) => p.kind === 'Month') && <MonthLegend />
 
   return (
     <div aria-label={report.name} role="group" className="flex flex-col gap-3">
@@ -94,7 +97,7 @@ export function PanelsReportView({ report, definition, entries, previous, practi
         <GapsPanelView key={i} event={p.event} days={days} prevDays={prevDays} lookup={lookup} todayCob={todayCob}
           height={chartHeight} cols={cols} interactive={interactive} />
       ) : p.kind === 'Around' ? (
-        <AroundPanelView key={i} event={p.event} rows={p.rows} days={days} prevDays={prevDays} lookup={lookup} todayCob={todayCob} />
+        <AroundPanelView key={i} event={p.event} rows={p.rows} days={year.days} prevDays={[]} lookup={year.lookup} todayCob={todayCob} />
       ) : p.kind === 'Month' ? (
         <MonthPanelView key={i} practice={p.practice} month={month} end={monthEnd(month, todayCob)} todayCob={todayCob} lookup={lookup} figures={monthFigures} />
       ) : p.kind === 'Stats' ? (
