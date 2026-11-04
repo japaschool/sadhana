@@ -45,14 +45,20 @@ impl Report {
                 ReportType::Grid => {
                     ReportDefinition::Grid(GridReport::from_db(report.group_columns, traces))
                 }
-                ReportType::Panels => ReportDefinition::Panels(
-                    serde_json::from_value(
-                        report
-                            .definition
-                            .ok_or(err("Missing definition for panels report"))?,
-                    )
-                    .map_err(|_| err("Invalid panels report definition"))?,
-                ),
+                ReportType::Panels => {
+                    let def = report
+                        .definition
+                        .ok_or(err("Missing definition for panels report"))?;
+                    // A newer server (preview, same DB) may have saved a kind this one can't read:
+                    // leave that report out rather than failing the whole list.
+                    match serde_json::from_value(def) {
+                        Ok(p) => ReportDefinition::Panels(p),
+                        Err(e) => {
+                            log::warn!("Skipping unreadable panels report {}: {e}", report.id);
+                            continue;
+                        }
+                    }
+                }
             };
 
             if let ReportDefinition::Panels(p) = &definition {

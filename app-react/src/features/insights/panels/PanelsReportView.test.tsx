@@ -589,6 +589,11 @@ describe('a Days between events report', () => {
     expect(container.querySelectorAll('[data-mark="gap"]')).toHaveLength(14)
   })
 
+  it('a dropdown event with one option in the window still names it in the legend', () => {
+    gapsView(KIND, (i) => (i % 5 === 2 ? { Text: 'Fast' } : null))
+    expect(within(screen.getByRole('list', { name: 'Key' })).getByText('Fast')).toBeInTheDocument()
+  })
+
   it('6 events: says how many more the table needs', () => {
     gapsView(EV, (i) => (i % 10 === 2 ? { Bool: true } : null))
     expect(screen.getByText('4 more events needed for this table')).toBeInTheDocument()

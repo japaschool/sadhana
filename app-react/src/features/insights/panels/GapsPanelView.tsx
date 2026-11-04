@@ -113,7 +113,7 @@ export function GapsPanelView({ event, days, prevDays, lookup, height, cols, int
             </ComposedChart>
           </ResponsiveContainer>
         )}
-        {options.length >= 2 && (
+        {options.length >= 1 && (
           <ul aria-label={t('reportPanels.legend')} className="flex flex-wrap gap-x-3.5 gap-y-1.5">
             {options.map((o, i) => (
               <li key={o} className="inline-flex items-center gap-1.5 text-xs leading-[1.3] font-bold text-ui-ink2">
