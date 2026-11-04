@@ -77,6 +77,13 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     queryFn: () => src.data(prevEnd!, duration),
     enabled: prevEnd !== null,
   })
+  // The days-around table needs 10 events of one option, more than a week or a month holds: it reads the year to the window's end.
+  const hasAround = !!report && isPanels(report) && report.definition.Panels.panels.some((p) => p.kind === 'Around')
+  const year = useQuery({
+    queryKey: [...src.key, 'report-data', endCob, 'Year'],
+    queryFn: () => src.data(endCob, 'Year'),
+    enabled: hasAround && duration !== 'Year',
+  })
 
   const traces = tracesFor(report, practicesQ.data ?? [], COLORS)
   const entries = current.data ?? []
@@ -103,6 +110,8 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     rows: buildChartData(entries, traces, locale),
     barLayout,
     previousEntries: previous.data,
+    /** The year to the window's end, for the days-around table; undefined while it loads or without one. */
+    yearEntries: duration === 'Year' ? current.data : year.data,
     panels: report && isPanels(report) ? report.definition.Panels : null,
     practices: practicesQ.data ?? [],
     /** A table's Group columns setting (on unless the report says otherwise). */

@@ -94,6 +94,14 @@ describe('PracticeRow', () => {
     expect(onSave).toHaveBeenLastCalledWith(null)
   })
 
+  it('a tap outside the options menu closes it without saving', () => {
+    const onSave = setup({ practice: 'Quality', data_type: 'Int', dropdown_variants: '1,2,3' }, { Int: 2 })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Quality' }))
+    fireEvent.click(screen.getByTestId('menu-backdrop'))
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
   it('Text with newline options saves the text option', () => {
     const onSave = setup({ practice: 'Mood', data_type: 'Text', dropdown_variants: 'Low\nCalm' })
     fireEvent.click(screen.getByRole('button', { name: 'Edit Mood' }))

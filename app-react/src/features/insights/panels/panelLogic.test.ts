@@ -445,3 +445,40 @@ describe('month panel', () => {
     expect(missingRequired(month('yn'), l)).toEqual([])
   })
 })
+
+describe('lookup text', () => {
+  const ps = [{ ...P('ev', 'Event', 'Text'), dropdown_variants: 'Fast, Feast' }, P('n', 'Count', 'Int')]
+  it('reads trimmed text, null when empty or not Text', () => {
+    expect(lk([e('2026-10-05', 'Event', { Text: '  Fast ' })], undefined, ps).text('ev', '2026-10-05')).toBe('Fast')
+    expect(lk([e('2026-10-05', 'Event', { Text: '' })], undefined, ps).text('ev', '2026-10-05')).toBeNull()
+    expect(lk([e('2026-10-05', 'Count', { Int: 3 })], undefined, ps).text('n', '2026-10-05')).toBeNull()
+  })
+  it('lists dropdown options', () => {
+    expect(lk([], undefined, ps).options('ev')).toEqual(['Fast', 'Feast'])
+    expect(lk([], undefined, ps).options('n')).toEqual([])
+  })
+})
+
+describe('gaps panels', () => {
+  const ev = P('ev', 'Event', 'Bool')
+  const def: PanelsReport = {
+    version: 1, template: null,
+    required: [{ practice: 'ev', label: { Key: 'reportPanels.event' } }],
+    panels: [
+      { kind: 'Gaps', event: 'ev' },
+      { kind: 'Around', event: 'ev', rows: [{ label: null, source: { Practice: { practice: 'n' } } }] },
+    ],
+  }
+  it('keeps both while the event is Bool or Text', () => {
+    expect(visiblePanels(def, lk([], undefined, [...practices, ev])).map((p) => p.kind)).toEqual(['Gaps', 'Around'])
+  })
+  it('an event retyped to Int drops both and reads as missing', () => {
+    const l = lk([], undefined, [...practices, P('ev', 'Event', 'Int')])
+    expect(visiblePanels(def, l)).toEqual([])
+    expect(missingRequired(def, l).map((r) => r.practice)).toEqual(['ev'])
+  })
+  it('an Around panel with only a Bool row is dropped', () => {
+    const only: PanelsReport = { ...def, panels: [{ kind: 'Around', event: 'ev', rows: [{ label: null, source: { Practice: { practice: 'ev' } } }] }] }
+    expect(visiblePanels(only, lk([], undefined, [...practices, ev]))).toEqual([])
+  })
+})

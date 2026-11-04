@@ -50,6 +50,16 @@
   --ui-chart-6: #C77A3E;
   --ui-chart-7: #5F82D6;
   --ui-chart-8: #C2689A;
+  /* Days-around cells: teal = above usual (or earlier), amber = below; never red or green. */
+  --ui-div-p3: #0C7F78;
+  --ui-div-p2: #93D0C9;
+  --ui-div-p1: #DCEFEB;
+  --ui-div-0: #EEE8DE;
+  --ui-div-m1: #F6E5D5;
+  --ui-div-m2: #E6B78E;
+  --ui-div-m3: #A9622B;
+  --ui-on-div-p3: #FFFFFF;
+  --ui-on-div-m3: #FFFFFF;
   /* Yatra colour zones (ZoneColour), worst → best; ink text sits on them. */
   --ui-zone-muted-red: #E8A797;
   --ui-zone-red: #F5D2C7;
@@ -123,6 +133,15 @@
   --ui-chart-6: #E08A4C;
   --ui-chart-7: #7C9DF0;
   --ui-chart-8: #E07FB0;
+  --ui-div-p3: #3FC2B8;
+  --ui-div-p2: #1F6B66;
+  --ui-div-p1: #1E3B3E;
+  --ui-div-0: #2C2738;
+  --ui-div-m1: #43302A;
+  --ui-div-m2: #7E5230;
+  --ui-div-m3: #E59A5E;
+  --ui-on-div-p3: #15121D;
+  --ui-on-div-m3: #15121D;
   --ui-zone-muted-red: #74322C;
   --ui-zone-red: #55302F;
   --ui-zone-yellow: #5A4A2E;
@@ -187,6 +206,15 @@
     --ui-chart-6: #E08A4C;
     --ui-chart-7: #7C9DF0;
     --ui-chart-8: #E07FB0;
+    --ui-div-p3: #3FC2B8;
+    --ui-div-p2: #1F6B66;
+    --ui-div-p1: #1E3B3E;
+    --ui-div-0: #2C2738;
+    --ui-div-m1: #43302A;
+    --ui-div-m2: #7E5230;
+    --ui-div-m3: #E59A5E;
+    --ui-on-div-p3: #15121D;
+    --ui-on-div-m3: #15121D;
     --ui-zone-muted-red: #74322C;
     --ui-zone-red: #55302F;
     --ui-zone-yellow: #5A4A2E;

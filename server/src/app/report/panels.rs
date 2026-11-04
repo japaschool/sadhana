@@ -31,6 +31,7 @@ pub enum Template {
     Japa(JapaTemplate),
     Duration(DurationTemplate),
     Days(DaysTemplate),
+    Gaps(GapsTemplate),
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -67,6 +68,23 @@ pub struct DaysTemplate {
     pub practices: Vec<Uuid>,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct GapsTemplate {
+    pub event: Uuid,
+    pub rows: Vec<Uuid>,
+    /// Calculated Sleep as one more compare row.
+    pub sleep: Option<SleepRows>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SleepRows {
+    pub bedtime: Uuid,
+    pub wake: Uuid,
+    pub nap: Option<Uuid>,
+}
+
 /// Key: translated at display, so shared pages follow the viewer's language. Text: a user's own words.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -86,6 +104,23 @@ pub enum Panel {
     Month {
         practice: Uuid,
     },
+    /// Days between events of one practice. Level 3: older clients must not get it.
+    Gaps {
+        event: Uuid,
+    },
+    /// Rows on the days around those events. Level 3.
+    Around {
+        event: Uuid,
+        rows: Vec<AroundRow>,
+    },
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AroundRow {
+    /// None = the practice's name.
+    pub label: Option<Label>,
+    pub source: Source,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -236,6 +271,7 @@ pub const MAX_PANELS: usize = 8;
 pub const MAX_SERIES: usize = 12;
 pub const MAX_STATS: usize = 8;
 pub const MAX_TERMS: usize = 16;
+pub const MAX_AROUND_ROWS: usize = 4;
 pub const MAX_BYTES: usize = 32 * 1024;
 
 fn invalid<S: Into<String>>(msg: S) -> AppError {
@@ -298,6 +334,19 @@ impl PanelsReport {
         self.panels.iter().any(|p| matches!(p, Panel::Month { .. }))
     }
 
+    /// The lowest `panels` query level that can draw this report.
+    pub fn level(&self) -> u8 {
+        if self
+            .panels
+            .iter()
+            .any(|p| matches!(p, Panel::Gaps { .. } | Panel::Around { .. }))
+        {
+            3
+        } else {
+            1
+        }
+    }
+
     /// Every practice the definition refers to.
     pub fn practice_ids(&self) -> HashSet<Uuid> {
         let mut out = HashSet::new();
@@ -357,6 +406,17 @@ impl PanelsReport {
                 }
                 out.extend(d.practices.iter().copied());
             }
+            Some(Template::Gaps(g)) => {
+                if g.rows.len() + g.sleep.is_some() as usize > MAX_AROUND_ROWS {
+                    return Err(invalid("Too many rows"));
+                }
+                out.insert(g.event);
+                out.extend(g.rows.iter().copied());
+                if let Some(s) = &g.sleep {
+                    out.extend([s.bedtime, s.wake]);
+                    out.extend(s.nap);
+                }
+            }
             None => {}
         }
         for panel in &self.panels {
@@ -369,8 +429,17 @@ impl PanelsReport {
                         stat.walk(out)?;
                     }
                 }
-                Panel::Month { practice } => {
+                Panel::Month { practice } | Panel::Gaps { event: practice } => {
                     out.insert(*practice);
+                }
+                Panel::Around { event, rows } => {
+                    if rows.len() > MAX_AROUND_ROWS {
+                        return Err(invalid("Too many rows"));
+                    }
+                    for row in rows {
+                        row.source.collect(out)?;
+                    }
+                    out.insert(*event);
                 }
                 Panel::Chart(chart) => {
                     if chart.series.len() > MAX_SERIES {

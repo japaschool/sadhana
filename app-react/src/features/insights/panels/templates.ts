@@ -1,4 +1,4 @@
-import type { ChartPanel, DaysTemplate, DurationTemplate, JapaTemplate, Label, Panel, PanelsReport, Scope, SleepTemplate, Source, Stat, Target } from '../../../api/charts'
+import type { ChartPanel, DaysTemplate, DurationTemplate, GapsTemplate, JapaTemplate, Label, Panel, PanelsReport, Report, Scope, SleepRows, SleepTemplate, Source, Stat, Target } from '../../../api/charts'
 import type { PracticeDataType, UserPractice } from '../../../types/api'
 
 const key = (k: string): Label => ({ Key: `reportPanels.${k}` })
@@ -9,12 +9,16 @@ const past: Scope = { today: false, missing_zero: true }
 const term = (sign: number, practice: string, day_offset: number, optional = false) =>
   ({ sign, practice, day_offset, optional })
 
+/** A night's sleep plus an optional nap, as the Sleep template totals it. */
+export function sleepSource(s: SleepRows): Source {
+  const terms = [term(1, s.wake, 0), term(-1, s.bedtime, -1)]
+  return { Calc: { terms: s.nap ? [...terms, term(1, s.nap, 0, true)] : terms } }
+}
+
 /** Builds the Panels report of the Sleep template from its settings. */
 export function sleepPanels(t: SleepTemplate): PanelsReport {
   const night: Source = { Calc: { terms: [term(1, t.wake, 0), term(-1, t.bedtime, -1)] } }
-  const total: Source = t.nap
-    ? { Calc: { terms: [term(1, t.wake, 0), term(-1, t.bedtime, -1), term(1, t.nap, 0, true)] } }
-    : night
+  const total = sleepSource(t)
   const range: Source = { Range: { from: { practice: t.bedtime, day_offset: -1 }, to: { practice: t.wake, day_offset: 0 } } }
   const limited = t.min !== null || t.max !== null
 
@@ -148,10 +152,24 @@ export function daysPanels(t: DaysTemplate): PanelsReport {
   }
 }
 
+/** Builds the Days between events report: the gaps, then the rows on the days around them (calculated Sleep last). */
+export function gapsPanels(t: GapsTemplate): PanelsReport {
+  const rows = [
+    ...t.rows.map((id) => ({ label: null, source: practice(id) })),
+    ...(t.sleep ? [{ label: key('sleep'), source: sleepSource(t.sleep) }] : []),
+  ]
+  return {
+    version: 1,
+    template: { Gaps: t },
+    required: [{ practice: t.event, label: key('event') }],
+    panels: [{ kind: 'Gaps', event: t.event }, ...(rows.length ? [{ kind: 'Around' as const, event: t.event, rows }] : [])],
+  }
+}
+
 /** The word a report's own strings go by. */
 export const templateSlug = (def: PanelsReport) => {
   const t = def.template
-  return t && 'Duration' in t ? 'duration' : t && 'Japa' in t ? 'japa' : t && 'Days' in t ? 'days' : 'sleep'
+  return t && 'Duration' in t ? 'duration' : t && 'Japa' in t ? 'japa' : t && 'Days' in t ? 'days' : t && 'Gaps' in t ? 'gaps' : 'sleep'
 }
 
 export interface Slot { key: string; types: PracticeDataType[]; required: boolean; hints: string[]; many?: boolean }
@@ -177,6 +195,12 @@ export const DAYS_SLOT: Slot = { key: 'practices', types: ['Bool'], required: tr
 /** One Month panel a practice, and the server allows 8 panels. */
 export const MAX_DAYS = 8
 
+// ponytail: no hints, so no Use suggestion: no practice name says "event". Add hints if users ask.
+export const GAPS_EVENT_SLOT: Slot = { key: 'event', types: ['Bool', 'Text'], required: true, hints: [] }
+export const GAPS_ROWS_SLOT: Slot = { key: 'compare', types: ['Int', 'Duration', 'Time'], required: false, hints: [], many: true }
+/** The server's MAX_AROUND_ROWS, calculated Sleep included. */
+export const MAX_ROWS = 4
+
 const typeFits = (slot: Slot, p: UserPractice) => slot.types.includes(p.data_type)
 
 export const fits = (slot: Slot, p: UserPractice) => p.is_active && typeFits(slot, p)
@@ -197,4 +221,19 @@ export function pickerGroups(slot: Slot, practices: UserPractice[]): { compatibl
     compatible: active.filter((p) => typeFits(slot, p)),
     cant: active.filter((p) => !typeFits(slot, p)).map((practice) => ({ practice, reason: 'type' as const })),
   }
+}
+
+/** Calculated Sleep's practices: a Sleep report's, else a bedtime and a wake-up found by name; no nap. */
+export function sleepRowsFor(reports: Report[], practices: UserPractice[]): SleepRows | null {
+  const ok = (slot: Slot, id: string) => practices.some((p) => p.id === id && fits(slot, p))
+  const named = [...reports].sort((a, b) => a.name.localeCompare(b.name))
+  for (const r of named) {
+    const t = 'Panels' in r.definition ? r.definition.Panels.template : null
+    if (t && 'Sleep' in t && ok(SLEEP_SLOTS[0], t.Sleep.bedtime) && ok(SLEEP_SLOTS[1], t.Sleep.wake)) {
+      return { bedtime: t.Sleep.bedtime, wake: t.Sleep.wake, nap: t.Sleep.nap && ok(SLEEP_SLOTS[2], t.Sleep.nap) ? t.Sleep.nap : null }
+    }
+  }
+  const bed = suggestFor(SLEEP_SLOTS[0], practices, new Set())
+  const wake = bed && suggestFor(SLEEP_SLOTS[1], practices, new Set([bed.id]))
+  return bed && wake ? { bedtime: bed.id, wake: wake.id, nap: null } : null
 }

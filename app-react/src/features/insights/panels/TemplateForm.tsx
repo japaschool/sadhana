@@ -2,36 +2,43 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import type { PanelsReport } from '../../../api/charts'
+import type { PanelsReport, SleepRows } from '../../../api/charts'
 import type { UserPractice } from '../../../types/api'
 import { CARD, FIELD, HINT } from '../../yatras/settings/mobile/AdminPage'
 import { TypeIcon, typeLabelKey } from '../../yatras/settings/mobile/TypeChip'
 import { useDebouncedCommit } from '../../yatras/settings/useDebouncedCommit'
 import { parseTime } from '../../today/inputFormat'
 import { formatDuration, typeTime } from '../../today/values'
+import { useReports } from '../useReports'
 import { SlotPickerSheet } from './SlotPickerSheet'
-import { DAYS_SLOT, daysPanels, DURATION_SLOT, durationPanels, fits, JAPA_SLOTS, japaPanels, MAX_DAYS, MAX_PRACTICES, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, suggestFor, type Slot } from './templates'
+import {
+  DAYS_SLOT, daysPanels, DURATION_SLOT, durationPanels, fits, GAPS_EVENT_SLOT, GAPS_ROWS_SLOT, gapsPanels, JAPA_SLOTS, japaPanels, MAX_DAYS, MAX_PRACTICES, MAX_ROWS,
+  SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, sleepRowsFor, suggestFor, type Slot,
+} from './templates'
 
 export type TemplateDraft =
   | { kind: 'Sleep'; bedtime: string | null; wake: string | null; nap: string | null; min: number | null; max: number | null }
   | { kind: 'Japa'; total: string | null; target: number | null; morning: string | null }
   | { kind: 'Duration'; practices: string[]; goal: number | null }
   | { kind: 'Days'; practices: string[] }
+  | { kind: 'Gaps'; event: string | null; rows: string[]; sleep: SleepRows | null }
 
 export const NEW_DRAFTS = {
   sleep: (): TemplateDraft => ({ kind: 'Sleep', bedtime: null, wake: null, nap: null, ...SLEEP_DEFAULTS }),
   japa: (): TemplateDraft => ({ kind: 'Japa', total: null, target: null, morning: null }),
   duration: (): TemplateDraft => ({ kind: 'Duration', practices: [], goal: null }),
   days: (): TemplateDraft => ({ kind: 'Days', practices: [] }),
+  gaps: (): TemplateDraft => ({ kind: 'Gaps', event: null, rows: [], sleep: null }),
 }
 
-const slotsOf = (d: TemplateDraft) => (d.kind === 'Sleep' ? SLEEP_SLOTS : d.kind === 'Japa' ? JAPA_SLOTS : [])
+const slotsOf = (d: TemplateDraft) => (d.kind === 'Sleep' ? SLEEP_SLOTS : d.kind === 'Japa' ? JAPA_SLOTS : d.kind === 'Gaps' ? [GAPS_EVENT_SLOT] : [])
 const MAX = { Duration: MAX_PRACTICES, Days: MAX_DAYS }
 const slotValue = (d: TemplateDraft, slot: Slot) => (d as unknown as Record<string, string | null>)[slot.key]
 
 export function draftProblem(d: TemplateDraft): 'required' | 'minMax' | 'tooMany' | null {
   if (d.kind === 'Duration' || d.kind === 'Days') return d.practices.length === 0 ? 'required' : d.practices.length > MAX[d.kind] ? 'tooMany' : null
   if (d.kind === 'Japa') return !d.total || d.target === null ? 'required' : null
+  if (d.kind === 'Gaps') return !d.event ? 'required' : d.rows.length + (d.sleep ? 1 : 0) > MAX_ROWS ? 'tooMany' : null
   if (!d.bedtime || !d.wake) return 'required'
   return d.min !== null && d.max !== null && d.min > d.max ? 'minMax' : null
 }
@@ -40,6 +47,7 @@ export function draftToDefinition(d: TemplateDraft): { Panels: PanelsReport } | 
   if (draftProblem(d)) return null
   if (d.kind === 'Duration') return { Panels: durationPanels({ practices: d.practices, goal: d.goal }) }
   if (d.kind === 'Days') return { Panels: daysPanels({ practices: d.practices }) }
+  if (d.kind === 'Gaps') return { Panels: gapsPanels({ event: d.event!, rows: d.rows, sleep: d.sleep }) }
   if (d.kind === 'Japa') {
     // Quality and done markers are no longer drawn, so a saved report drops its old ones.
     return { Panels: japaPanels({ total: d.total!, target: d.target!, morning: d.morning, quality: null, attunement: null }) }
@@ -61,6 +69,16 @@ export function draftOf(def: PanelsReport, practices: UserPractice[]): TemplateD
   }
   if ('Days' in template) {
     return { kind: 'Days', practices: template.Days.practices.filter((id) => practices.some((p) => p.id === id && fits(DAYS_SLOT, p))) }
+  }
+  if ('Gaps' in template) {
+    const { event, rows, sleep } = template.Gaps
+    const ok = (slot: Slot, id: string) => practices.some((p) => p.id === id && fits(slot, p))
+    return {
+      kind: 'Gaps',
+      event: ok(GAPS_EVENT_SLOT, event) ? event : null,
+      rows: rows.filter((id) => ok(GAPS_ROWS_SLOT, id)),
+      sleep: sleep && ok(SLEEP_SLOTS[0], sleep.bedtime) && ok(SLEEP_SLOTS[1], sleep.wake) ? sleep : null,
+    }
   }
   const draft: TemplateDraft = 'Sleep' in template ? { kind: 'Sleep', ...template.Sleep } : {
     kind: 'Japa', total: template.Japa.total, target: template.Japa.target, morning: template.Japa.morning,
@@ -132,39 +150,70 @@ export function LimitField({ id, label, placeholder, value, onChange, suffix, du
 }
 
 /** Every practice that fits the slot, ticked in or out (15m14): one or more, so no picker to open. */
-function PracticeChecks({ slot, max, none, hint, value, onChange, practices, flagMissing }: {
+function PracticeChecks({ slot, max, none, hint, value, onChange, practices, flagMissing, optional, heading = 'practicesSelected', extra }: {
   slot: Slot; max: number; none: string; hint: string
   value: string[]; onChange: (ids: string[]) => void; practices: UserPractice[]; flagMissing?: boolean
+  /** Shows Optional, and an empty list is never missing. */
+  optional?: boolean
+  heading?: string
+  /** A calculated row listed first, counted with the rest. */
+  extra?: { label: string; checked: boolean; onChange: (on: boolean) => void } | null
 }) {
   const { t } = useTranslation()
   const list = practices.filter((p) => fits(slot, p))
   const toggle = (id: string) => onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id])
+  const count = value.length + (extra?.checked ? 1 : 0)
+  const row = 'flex min-h-[52px] items-center gap-3 px-3.5 py-1.5'
+  const box = 'h-5 w-5 shrink-0 accent-[var(--ui-accent-fill)]'
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between gap-2 px-1">
-        <h2 className={GROUP.replace('px-1 ', '')}>{t('templateForm.practicesSelected', { count: value.length })}</h2>
-        <span className="text-xs font-bold whitespace-nowrap text-ui-accent">{t('templateForm.required')}</span>
+        <h2 className={GROUP.replace('px-1 ', '')}>{t(`templateForm.${heading}`, { count })}</h2>
+        <span className={`text-xs font-bold whitespace-nowrap ${optional ? 'text-ui-faint' : 'text-ui-accent'}`}>{t(optional ? 'templateForm.optional' : 'templateForm.required')}</span>
       </div>
-      {list.length === 0 ? (
+      {list.length === 0 && !extra ? (
         <div className={`${CARD} flex flex-col gap-1 p-4`}>
           <p className="text-sm leading-snug font-semibold text-ui-muted">{t(`templateForm.${none}`)}</p>
           <Link to="/settings/practices" className="text-[13px] leading-snug font-bold text-ui-accent">{t('templateForm.addOne')}</Link>
         </div>
       ) : (
         <div className={`${CARD} flex flex-col divide-y divide-ui-hairline overflow-hidden`}>
+          {extra && (
+            <label className={row}>
+              <input type="checkbox" checked={extra.checked} onChange={() => extra.onChange(!extra.checked)} className={box} />
+              <span className="text-ui-ink2"><TypeIcon type="Duration" /></span>
+              <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-ui-ink">{extra.label}</span>
+            </label>
+          )}
           {list.map((p) => (
-            <label key={p.id} className="flex min-h-[52px] items-center gap-3 px-3.5 py-1.5">
-              <input type="checkbox" checked={value.includes(p.id)} onChange={() => toggle(p.id)} className="h-5 w-5 shrink-0 accent-[var(--ui-accent-fill)]" />
-              <span className="text-ui-ink2"><TypeIcon type={slot.types[0]} /></span>
+            <label key={p.id} className={row}>
+              <input type="checkbox" checked={value.includes(p.id)} onChange={() => toggle(p.id)} className={box} />
+              <span className="text-ui-ink2"><TypeIcon type={p.data_type} /></span>
               <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-ui-ink">{p.practice}</span>
             </label>
           ))}
         </div>
       )}
-      {flagMissing && value.length === 0 && <p className="px-1 text-[13px] leading-snug font-bold text-ui-danger">{t('templateForm.missing')}</p>}
-      {value.length > max && <p role="alert" className="px-1 text-[13px] font-semibold text-ui-danger">{t('templateForm.tooMany', { count: max })}</p>}
+      {flagMissing && !optional && value.length === 0 && <p className="px-1 text-[13px] leading-snug font-bold text-ui-danger">{t('templateForm.missing')}</p>}
+      {count > max && <p role="alert" className="px-1 text-[13px] font-semibold text-ui-danger">{t('templateForm.tooMany', { count: max })}</p>}
       <p className={`${HINT} px-1`}>{t(`templateForm.${hint}`)}</p>
     </section>
+  )
+}
+
+/** The compare rows, with calculated Sleep first when its practices can be found. */
+function GapsRows({ value, onChange, practices }: {
+  value: Extract<TemplateDraft, { kind: 'Gaps' }>; onChange: (d: TemplateDraft) => void; practices: UserPractice[]
+}) {
+  const { t } = useTranslation()
+  const sleep = sleepRowsFor(useReports().data ?? [], practices)
+  return (
+    <PracticeChecks slot={GAPS_ROWS_SLOT} max={MAX_ROWS} none="noneCompare" hint="compareHint" heading="compare" optional
+      value={value.rows} practices={practices} onChange={(rows) => onChange({ ...value, rows })}
+      extra={sleep || value.sleep ? {
+        label: t('templateForm.sleepCalculated'), checked: !!value.sleep,
+        onChange: (on) => onChange({ ...value, sleep: on ? sleep : null }),
+      } : null} />
   )
 }
 
@@ -177,6 +226,7 @@ function SlotRow({ slot, chosen, suggestion, none, missing, onOpen, onUse }: {
   const { t } = useTranslation()
   const label = t(`templateForm.${slot.key}`)
   const type = slot.types[0]
+  const noneKey = slot.types.length > 1 ? `templateForm.none_${slot.key}` : `templateForm.none${type}`
   const hint = missing ? <p className="text-[13px] leading-snug font-bold text-ui-danger">{t('templateForm.missing')}</p>
     : none ? <Link to="/settings/practices" className="text-[13px] leading-snug font-bold text-ui-accent">{t('templateForm.addOne')}</Link>
     : <p className="text-xs leading-snug text-ui-muted">{t(`templateForm.hint_${slot.key}`)}</p>
@@ -184,16 +234,16 @@ function SlotRow({ slot, chosen, suggestion, none, missing, onOpen, onUse }: {
   if (chosen) box = (
     <button type="button" onClick={onOpen} aria-label={`${label}: ${chosen.practice}`}
       className={`${SLOT_BOX} min-h-[52px] w-full border border-ui-control bg-ui-surface py-1.5 pr-3 pl-3.5 text-left`}>
-      <span className="text-ui-ink2"><TypeIcon type={type} /></span>
+      <span className="text-ui-ink2"><TypeIcon type={chosen.data_type} /></span>
       <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-ui-ink">{chosen.practice}</span>
-      <span className="shrink-0 text-xs text-ui-faint">{t(typeLabelKey(type))}</span>
+      <span className="shrink-0 text-xs text-ui-faint">{t(typeLabelKey(chosen.data_type))}</span>
       <span aria-hidden className="text-ui-muted">⌄</span>
     </button>
   )
   else if (suggestion) box = (
     <div className={`${SLOT_BOX} min-h-[60px] border-[1.5px] border-dashed border-ui-accent bg-ui-accent-soft p-1.5 pl-3.5`}>
       <button type="button" onClick={onOpen} aria-label={`${label}: ${t('templateForm.choose')}`} className="flex min-w-0 flex-1 items-center gap-2.5 text-left">
-        <span className="text-ui-accent"><TypeIcon type={type} /></span>
+        <span className="text-ui-accent"><TypeIcon type={suggestion.data_type} /></span>
         <span className="flex min-w-0 flex-col gap-px">
           <span className="text-[11px] font-bold text-ui-accent">{t('templateForm.suggested')}</span>
           <span className="truncate text-[15px] font-bold text-ui-ink">{suggestion.practice}</span>
@@ -206,7 +256,7 @@ function SlotRow({ slot, chosen, suggestion, none, missing, onOpen, onUse }: {
   else if (none) box = (
     <div className={`${SLOT_BOX} min-h-[52px] border-[1.5px] border-dashed border-ui-control px-3.5 py-2 text-sm leading-snug font-semibold text-ui-muted`}>
       <span className="text-ui-faint"><TypeIcon type={type} /></span>
-      <span className="flex-1">{t(`templateForm.none${type}`)}</span>
+      <span className="flex-1">{t(noneKey)}</span>
     </div>
   )
   else box = (
@@ -336,6 +386,15 @@ export function TemplateForm({ value, onChange, practices, name, flagMissing }: 
       {value.kind === 'Days' && (
         <PracticeChecks slot={DAYS_SLOT} max={MAX_DAYS} none="noneBool" hint="onlyDaysHint" value={value.practices} practices={practices} flagMissing={flagMissing}
           onChange={(ids) => onChange({ ...value, practices: ids })} />
+      )}
+      {value.kind === 'Gaps' && (
+        <>
+          <section className="flex flex-col gap-2">
+            <h2 className={GROUP}>{t('templateForm.practices')}</h2>
+            {rows([GAPS_EVENT_SLOT])}
+          </section>
+          <GapsRows value={value} onChange={onChange} practices={practices} />
+        </>
       )}
       {picking && (
         <SlotPickerSheet slot={picking} value={slotValue(value, picking)} suggested={suggestions.get(picking.key) ?? null} practices={practices} onClose={() => setPicking(null)}

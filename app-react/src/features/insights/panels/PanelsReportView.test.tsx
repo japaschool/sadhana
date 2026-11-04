@@ -531,3 +531,107 @@ describe('month panels', () => {
     expect(screen.getByRole('group', { name: 'Walk' })).toBeInTheDocument()
   })
 })
+
+describe('a Days between events report', () => {
+  afterEach(cleanup)
+  const EV = P('44444444-dddd', 'Fasting', 'Bool')
+  const KIND = { ...P('55555555-eeee', 'Kind', 'Text'), dropdown_variants: 'Fast, Feast' }
+  const ROUNDS = P('66666666-ffff', 'Rounds', 'Int')
+  const gapsDef = (event: string): PanelsReport => ({
+    version: 1, template: null,
+    required: [{ practice: event, label: { Key: 'reportPanels.event' } }],
+    panels: [
+      { kind: 'Gaps', event },
+      { kind: 'Around', event, rows: [{ label: null, source: { Practice: { practice: ROUNDS.id } } }] },
+    ],
+  })
+  /** 60 days to today; Rounds 16 a day, 10 on event days; `event(i)` gives day i's event value or null. */
+  function gapsView(event: UserPractice, value: (i: number) => unknown, { year = false, length = 60 } = {}) {
+    const all = Array.from({ length: 60 }, (_, i) => dayAt(TODAY, i - 59)).flatMap((cob, i) => {
+      const v = value(i)
+      return [e(cob, ROUNDS.practice, { Int: v === null ? 16 : 10 }), ...(v === null ? [] : [e(cob, event.practice, v)])]
+    })
+    const entries = all.filter((x) => x.cob_date > dayAt(TODAY, -length))
+    const def = gapsDef(event.id)
+    return render(
+      <MemoryRouter>
+        <PanelsReportView report={report(def)} definition={def} entries={entries} previous={[]}
+          practices={[EV, KIND, ROUNDS]} todayCob={TODAY} chartHeight={300} formLink={null} yearEntries={year ? all : undefined} />
+      </MemoryRouter>,
+    )
+  }
+
+  it('12 events: the figures and a table of the days around them, each cell naming its usual', () => {
+    gapsView(EV, (i) => (i % 5 === 2 ? { Bool: true } : null))
+    for (const label of ['Typical gap', 'Longest gap', 'Latest gap']) expect(screen.getByText(label)).toBeInTheDocument()
+    expect(screen.getAllByText('5 days').length).toBeGreaterThan(0)
+    const table = screen.getByRole('table')
+    expect(within(table).getAllByRole('columnheader').map((c) => c.textContent)).toEqual(
+      expect.arrayContaining(['Day before', 'Same day', 'Next day', '2 days after', 'Usual']),
+    )
+    const same = within(table).getAllByRole('cell')[1]
+    expect(same.textContent).toBe('10.0')
+    expect(same.getAttribute('aria-label')).toMatch(/usual 14\.\d/)
+  })
+
+  it('draws a stem and a marker per event with a gap, over calendar time (16m16)', () => {
+    const { container } = gapsView(EV, (i) => (i % 5 === 2 ? { Bool: true } : null))
+    expect(screen.getByText('Days since the one before')).toBeInTheDocument()
+    expect(screen.getByText('12 events')).toBeInTheDocument()
+    // The first event has nothing before it in the window, so 11 gaps.
+    expect(container.querySelectorAll('[data-mark="gap"]')).toHaveLength(11)
+    expect(container.querySelectorAll('[data-mark="gap"] line')).toHaveLength(11)
+  })
+
+  it('a dropdown event draws one marker per event, never a stray one for the other option', () => {
+    // Fast on 12 days, Feast on 3: 15 events, the first with no gap.
+    const { container } = gapsView(KIND, (i) => (i % 5 === 2 ? { Text: 'Fast' } : i % 20 === 4 ? { Text: 'Feast' } : null))
+    expect(container.querySelectorAll('[data-mark="gap"]')).toHaveLength(14)
+  })
+
+  it('6 events: says how many more the table needs', () => {
+    gapsView(EV, (i) => (i % 10 === 2 ? { Bool: true } : null))
+    expect(screen.getByText('4 more events needed for this table')).toBeInTheDocument()
+    expect(screen.queryByRole('table')).toBeNull()
+  })
+
+  it('a short window: the table reads the year, so it still has its 10 events', () => {
+    gapsView(EV, (i) => (i % 5 === 2 ? { Bool: true } : null), { length: 10 })
+    expect(screen.queryByRole('table')).toBeNull()
+    cleanup()
+    gapsView(EV, (i) => (i % 5 === 2 ? { Bool: true } : null), { length: 10, year: true })
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(screen.getByText('2 events')).toBeInTheDocument() // the Gaps chart still covers only the window
+  })
+
+  it('a dropdown event: a switch picks the option the table shows', () => {
+    // Fast on 12 days, Feast on 3.
+    gapsView(KIND, (i) => (i % 5 === 2 ? { Text: 'Fast' } : i % 20 === 4 ? { Text: 'Feast' } : null))
+    expect(screen.getByRole('radio', { name: 'All' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('radio', { name: 'Feast' }))
+    expect(screen.getByText('7 more events needed for this table')).toBeInTheDocument()
+  })
+
+  it('a dropdown event whose switch is too wide: a menu picks the option instead', () => {
+    const wide = vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockReturnValue(500)
+    gapsView(KIND, (i) => (i % 5 === 2 ? { Text: 'Fast' } : i % 20 === 4 ? { Text: 'Feast' } : null))
+    wide.mockRestore()
+    expect(screen.queryByRole('radio', { name: 'Feast' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Option: All' }))
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Feast' }))
+    expect(screen.getByText('7 more events needed for this table')).toBeInTheDocument()
+  })
+
+  it('All, the default, counts every option: 6 Fast and 4 Feast make the table', () => {
+    gapsView(KIND, (i) => (i % 10 === 2 ? { Text: 'Fast' } : i % 15 === 4 ? { Text: 'Feast' } : null))
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('radio', { name: 'Fast' }))
+    expect(screen.getByText('4 more events needed for this table')).toBeInTheDocument()
+  })
+
+  it('no events: says so', () => {
+    gapsView(EV, () => null)
+    expect(screen.getByText('No events in this range')).toBeInTheDocument()
+  })
+})

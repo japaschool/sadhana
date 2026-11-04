@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import type { ChartPanel, JapaTemplate, Panel, SleepTemplate, Stat } from '../../../api/charts'
+import type { ChartPanel, JapaTemplate, Panel, Report, SleepTemplate, Stat } from '../../../api/charts'
 import type { UserPractice } from '../../../types/api'
-import { DAYS_SLOT, daysPanels, DURATION_SLOT, durationPanels, MAX_DAYS, JAPA_SLOTS, japaPanels, pickerGroups, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, suggestFor } from './templates'
+import { DAYS_SLOT, daysPanels, gapsPanels, sleepRowsFor, sleepSource, templateSlug, DURATION_SLOT, durationPanels, MAX_DAYS, JAPA_SLOTS, japaPanels, pickerGroups, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, suggestFor } from './templates'
 
 const T: SleepTemplate = { bedtime: 'bed', wake: 'wake', nap: 'nap', min: 360, max: 540 }
 const charts = (ps: Panel[]) => ps.filter((p): p is Extract<Panel, { kind: 'Chart' }> => p.kind === 'Chart') as (ChartPanel & { kind: 'Chart' })[]
@@ -235,5 +235,39 @@ describe('daysPanels', () => {
   it('takes yes/no practices, several, up to 8', () => {
     expect(DAYS_SLOT).toMatchObject({ types: ['Bool'], many: true })
     expect(MAX_DAYS).toBe(8)
+  })
+})
+
+describe('gapsPanels', () => {
+  const sleep = { bedtime: 'b', wake: 'w', nap: null }
+  it('a Gaps panel, then Around with the rows and calculated Sleep last', () => {
+    const r = gapsPanels({ event: 'ev', rows: ['r'], sleep })
+    expect(r.required).toEqual([{ practice: 'ev', label: { Key: 'reportPanels.event' } }])
+    expect(r.panels.map((p) => p.kind)).toEqual(['Gaps', 'Around'])
+    const around = r.panels[1] as Extract<Panel, { kind: 'Around' }>
+    expect(around.rows.map((x) => x.source)).toEqual([{ Practice: { practice: 'r' } }, sleepSource(sleep)])
+    expect(around.rows[1].label).toEqual({ Key: 'reportPanels.sleep' })
+    expect(templateSlug(r)).toBe('gaps')
+  })
+  it('no rows: only the Gaps panel', () => {
+    expect(gapsPanels({ event: 'ev', rows: [], sleep: null }).panels.map((p) => p.kind)).toEqual(['Gaps'])
+  })
+  it('sleepSource is the Sleep template total', () => {
+    expect(sleepSource({ bedtime: 'bed', wake: 'wake', nap: 'nap' })).toEqual(total)
+  })
+})
+
+describe('sleepRowsFor', () => {
+  const ps = [p('bed2', 'Lights out', 'Time'), p('wake2', 'Got up', 'Time'), p('bed', 'Bed time', 'Time'), p('wake', 'Wake-up time', 'Time')]
+  const sleepReport = (name: string, bedtime: string, wake: string): Report =>
+    ({ id: name, name, definition: { Panels: sleepPanels({ bedtime, wake, nap: null, min: null, max: null }) } })
+  it('prefers a Sleep report’s practices over name matches', () => {
+    expect(sleepRowsFor([sleepReport('Sleep', 'bed2', 'wake2')], ps)).toEqual({ bedtime: 'bed2', wake: 'wake2', nap: null })
+  })
+  it('skips a Sleep report whose practices are gone, then matches by name', () => {
+    expect(sleepRowsFor([sleepReport('Sleep', 'gone', 'wake2')], ps)).toEqual({ bedtime: 'bed', wake: 'wake', nap: null })
+  })
+  it('nothing to find: null', () => {
+    expect(sleepRowsFor([], [p('x', 'Rounds', 'Int')])).toBeNull()
   })
 })

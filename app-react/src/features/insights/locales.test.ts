@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { durationPanels, japaPanels, sleepPanels } from './panels/templates'
+import { durationPanels, gapsPanels, japaPanels, sleepPanels } from './panels/templates'
 
 type Dict = { insights?: Record<string, string>; reportPanels?: Record<string, string>; templateForm?: Record<string, string> }
 const files = import.meta.glob<Dict>('../../../public/locales/*/translation.json', { eager: true, import: 'default' })
@@ -38,6 +38,7 @@ describe('reportPanels.* translations', () => {
     walk(sleepPanels({ ...t, nap: null, min: null, max: null }))
     walk(japaPanels({ total: 'a', target: 16, morning: 'b', quality: 'c', attunement: 'd' }))
     walk(durationPanels({ practices: ['a', 'b'], goal: 60 }))
+    walk(gapsPanels({ event: 'a', rows: ['b'], sleep: { bedtime: 'c', wake: 'd', nap: null } }))
     for (const k of ['reportPanels.target', 'reportPanels.goal']) { keys.add(`${k}Met`); keys.add(`${k}Line`) }
     keys.add('reportPanels.goalShort')
     keys.add('reportPanels.missed')
