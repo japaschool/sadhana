@@ -76,15 +76,24 @@ export type StatValue =
   | { CountTrue: { of: Source; scope: Scope } }
 export interface Stat { label: Label; value: StatValue; under: Stat | null }
 
+export interface AroundRow { label: Label | null; source: Source }
+
 export type Panel = { kind: 'Stats'; stats: Stat[] } | ({ kind: 'Chart' } & ChartPanel)
   | { kind: 'Month'; practice: string }
+  /** Days between events of one Bool or Text practice. */
+  | { kind: 'Gaps'; event: string }
+  /** Rows on the days around those events. */
+  | { kind: 'Around'; event: string; rows: AroundRow[] }
 
 export interface SleepTemplate { bedtime: string; wake: string; nap: string | null; min: number | null; max: number | null }
 /** `quality` and `attunement`: older reports may have them; no longer drawn, and saved as null. */
 export interface JapaTemplate { total: string; target: number; morning: string | null; quality: string | null; attunement: string | null }
 export interface DurationTemplate { practices: string[]; goal: number | null }
 export interface DaysTemplate { practices: string[] }
+export interface SleepRows { bedtime: string; wake: string; nap: string | null }
+export interface GapsTemplate { event: string; rows: string[]; sleep: SleepRows | null }
 export type Template = { Sleep: SleepTemplate } | { Japa: JapaTemplate } | { Duration: DurationTemplate } | { Days: DaysTemplate }
+  | { Gaps: GapsTemplate }
 export interface Required { practice: string; label: Label }
 
 export interface PanelsReport {
@@ -105,7 +114,8 @@ export interface Report {
 
 export const chartsApi = {
   async getReports(): Promise<Report[]> {
-    const res = await apiClient.get<{ reports: Report[] }>('/reports', { params: { panels: true, months: true } })
+    // panels is a level: 3 includes Gaps and Around. The shared list stays at 1; it never gets those.
+    const res = await apiClient.get<{ reports: Report[] }>('/reports', { params: { panels: 3, months: true } })
     return res.data.reports
   },
   async createReport(name: string, definition: ReportDefinition): Promise<string> {

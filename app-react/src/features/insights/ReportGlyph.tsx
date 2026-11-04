@@ -3,8 +3,19 @@ import { templateSlug } from './panels/templates'
 
 const BOX = 'inline-flex shrink-0'
 
-/** Bars for a graph, cells for a table, staggered bars for sleep, bars under a target line for japa (shown as Daily count), stacked bars for duration, a lit month for days. Colour comes from `className`. */
-export function KindGlyph({ kind, className = 'text-ui-faint' }: { kind: 'graph' | 'table' | 'sleep' | 'japa' | 'duration' | 'days'; className?: string }) {
+/**
+ * Bars for a graph, cells for a table, staggered bars for sleep, bars under a target line for japa (shown as Daily count),
+ * stacked bars for duration, a lit month for days, dots at different heights on a baseline for gaps. Colour comes from `className`.
+ */
+export function KindGlyph({ kind, className = 'text-ui-faint' }: { kind: 'graph' | 'table' | 'sleep' | 'japa' | 'duration' | 'days' | 'gaps'; className?: string }) {
+  if (kind === 'gaps') {
+    return (
+      <span aria-hidden data-glyph={kind} className={`${BOX} ${className} relative h-3 w-3.5 items-end justify-between`}>
+        {[4, 9, 6].map((b, i) => <span key={i} className="h-[3px] w-[3px] rounded-full bg-current" style={{ marginBottom: b }} />)}
+        <span className="absolute inset-x-0 bottom-0 h-[1.4px] bg-current" />
+      </span>
+    )
+  }
   if (kind === 'graph') {
     return (
       <span aria-hidden data-glyph={kind} className={`${BOX} ${className} h-3 w-3.5 items-end gap-0.5`}>

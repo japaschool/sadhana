@@ -19,7 +19,8 @@ export function SegmentedControl<T extends string>({ options, value, onChange, l
           aria-checked={o.value === value}
           tabIndex={radioTabIndex(values, value, o.value)}
           onClick={() => onChange(o.value)}
-          className={`rounded-[9px] px-3 py-2 ${o.value === value ? 'bg-ui-surface shadow-[0_1px_2px_rgba(0,0,0,.08)]' : 'text-ui-muted'}`}
+          title={o.label}
+          className={`max-w-40 truncate rounded-[9px] px-3 py-2 ${o.value === value ? 'bg-ui-surface shadow-[0_1px_2px_rgba(0,0,0,.08)]' : 'text-ui-muted'}`}
         >
           {o.label}
         </button>

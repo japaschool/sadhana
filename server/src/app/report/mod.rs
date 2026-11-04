@@ -29,10 +29,11 @@ impl Report {
     pub fn get_all(
         conn: &mut PgConnection,
         user_id: &Uuid,
-        panels: bool,
+        level: u8,
         months: bool,
+        shared: bool,
     ) -> Result<Vec<Self>, AppError> {
-        let data = DBReport::get_all(conn, user_id, panels)?;
+        let data = DBReport::get_all(conn, user_id, level > 0)?;
 
         let mut res = Vec::with_capacity(data.len());
 
@@ -55,7 +56,8 @@ impl Report {
             };
 
             if let ReportDefinition::Panels(p) = &definition {
-                if !months && p.has_month() {
+                // Level 3 reports stay private: they're for the owner's own reflection.
+                if (!months && p.has_month()) || p.level() > level || (shared && p.level() >= 3) {
                     continue;
                 }
             }
@@ -187,12 +189,22 @@ impl GridReport {
 
 #[derive(Debug, Deserialize)]
 pub struct ReportsQuery {
-    /// Older clients can't draw panels reports, so they are left out unless asked for.
-    #[serde(default)]
-    pub panels: bool,
+    /// The panels format level the client can draw: `true` = 1, missing = 0 (older clients
+    /// can't draw panels reports at all). A report needing a higher level is left out.
+    #[serde(default, deserialize_with = "level")]
+    pub panels: u8,
     /// Cached builds that know panels still can't draw a Month panel; left out unless asked for.
     #[serde(default)]
     pub months: bool,
+}
+
+fn level<'de, D: serde::Deserializer<'de>>(d: D) -> Result<u8, D::Error> {
+    let s = String::deserialize(d)?;
+    match s.as_str() {
+        "true" => Ok(1),
+        "false" => Ok(0),
+        _ => s.parse().map_err(serde::de::Error::custom),
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -210,8 +222,9 @@ pub async fn get_reports(
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
 
-    let res = web::block(move || Report::get_all(&mut conn, &user_id, query.panels, query.months))
-        .await??;
+    let res =
+        web::block(move || Report::get_all(&mut conn, &user_id, query.panels, query.months, false))
+            .await??;
 
     Ok(HttpResponse::Ok().json(GetAllReportsResponse { reports: res }))
 }
@@ -402,5 +415,24 @@ impl From<DBLineStyle> for LineStyle {
             DBLineStyle::Regular => LineStyle::Regular,
             DBLineStyle::Square => LineStyle::Square,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn panels_query_is_a_level() {
+        let q = |s| {
+            web::Query::<ReportsQuery>::from_query(s)
+                .unwrap()
+                .into_inner()
+        };
+        assert_eq!(q("panels=true&months=true").panels, 1);
+        assert_eq!(q("panels=3&months=true").panels, 3);
+        assert_eq!(q("").panels, 0);
+        assert_eq!(q("panels=false").panels, 0);
+        assert!(web::Query::<ReportsQuery>::from_query("panels=yes").is_err());
     }
 }

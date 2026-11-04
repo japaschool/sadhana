@@ -51,7 +51,8 @@ export function AnchoredMenu({ anchor, onClose, label, children }: AnchoredMenuP
 
   return (
     <UiPortal>
-      <div data-testid="menu-backdrop" className="fixed inset-0 z-50" onClick={onClose} />
+      {/* React bubbles portal clicks to the anchor's ancestors; a clickable row would reopen the menu. */}
+      <div data-testid="menu-backdrop" className="fixed inset-0 z-50" onClick={(e) => { e.stopPropagation(); onClose() }} />
       <div
         ref={ref}
         role="menu"

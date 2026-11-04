@@ -74,7 +74,7 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300, panelHei
           onOpenDay={(cob) => (onLogDate ? onLogDate(fromDateStr(cob)) : setOpenDay(cob))} />
       ) : panels ? (
         <PanelsReportView key={ins.selectedId} report={ins.report!} definition={panels} entries={ins.entries} previous={ins.previousEntries}
-          practices={ins.practices} todayCob={ins.todayCob} chartHeight={panelHeight} formLink={`/settings/charts/${ins.selectedId}`} month={ins.month ?? undefined} range={ins.range} />
+          practices={ins.practices} todayCob={ins.todayCob} chartHeight={panelHeight} formLink={`/settings/charts/${ins.selectedId}`} month={ins.month ?? undefined} range={ins.range} yearEntries={ins.yearEntries} />
       ) : (
         <section className="flex flex-col gap-[18px] rounded-[24px] border border-ui-hairline bg-ui-surface p-6">
           {ins.isLoading ? (
