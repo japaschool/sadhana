@@ -58,40 +58,40 @@ export function PeriodSheet({ period, prefill, focusEnd, onClose, onSaved }: {
 
   return (
     <>
-    <BottomSheet label={title} onClose={onClose} footer={footer}>
-      <SheetHeader title={title} onClose={onClose} />
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="period-name" className={LABEL}>{t('insights.overview.name')}</label>
-        <input id="period-name" value={name} maxLength={NAME_MAX} autoComplete="off" onChange={(e) => setName(e.target.value)}
-          aria-describedby="period-name-hint" className={FIELD} />
-        <p id="period-name-hint" className={HINT}>{t('insights.overview.nameHint')}</p>
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="period-start" className={LABEL}>{t('insights.overview.start')}</label>
-        <input id="period-start" type="date" value={start} onChange={(e) => setStart(e.target.value)} className={FIELD} />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-baseline justify-between gap-2">
-          <label htmlFor="period-end" className={LABEL}>{t('insights.overview.end')}</label>
-          {!end && <span className="text-[13px] font-semibold text-ui-ink2">{t('insights.overview.stillGoingValue')}</span>}
+      <BottomSheet label={title} onClose={onClose} footer={footer}>
+        <SheetHeader title={title} onClose={onClose} />
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="period-name" className={LABEL}>{t('insights.overview.name')}</label>
+          <input id="period-name" value={name} maxLength={NAME_MAX} autoComplete="off" onChange={(e) => setName(e.target.value)}
+            aria-describedby="period-name-hint" className={FIELD} />
+          <p id="period-name-hint" className={HINT}>{t('insights.overview.nameHint')}</p>
         </div>
-        <input id="period-end" ref={endRef} type="date" value={end} min={start} onChange={(e) => setEnd(e.target.value)}
-          aria-invalid={!!end && end < start} aria-describedby="period-end-hint" className={FIELD} />
-        <p id="period-end-hint" className={HINT}>{t('insights.overview.endHint')}</p>
-      </div>
-      <div className="flex items-center gap-3">
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="text-[15px] font-bold text-ui-ink">{t('insights.overview.leaveOut')}</span>
-          <span id="period-exclude-hint" className={HINT}>{t('insights.overview.leaveOutHint')}</span>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="period-start" className={LABEL}>{t('insights.overview.start')}</label>
+          <input id="period-start" type="date" value={start} onChange={(e) => setStart(e.target.value)} className={FIELD} />
         </div>
-        <Toggle checked={exclude} onChange={setExclude} label={t('insights.overview.leaveOut')} describedBy="period-exclude-hint" />
-      </div>
-    </BottomSheet>
-    {period && confirming && (
-      <ConfirmSheet title={t('insights.periods.deleteTitle', { name: period.name })} text={t('insights.periods.deleteText')}
-        confirm={t('common.delete')} busy={remove.isPending} onClose={() => setConfirming(false)}
-        onConfirm={() => { setFailed(false); remove.mutate(period.id, { onSuccess: onClose, onError: () => { setConfirming(false); setFailed(true) } }) }} />
-    )}
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-baseline justify-between gap-2">
+            <label htmlFor="period-end" className={LABEL}>{t('insights.overview.end')}</label>
+            {!end && <span className="text-[13px] font-semibold text-ui-ink2">{t('insights.overview.stillGoingValue')}</span>}
+          </div>
+          <input id="period-end" ref={endRef} type="date" value={end} min={start} onChange={(e) => setEnd(e.target.value)}
+            aria-invalid={!!end && end < start} aria-describedby="period-end-hint" className={FIELD} />
+          <p id="period-end-hint" className={HINT}>{t('insights.overview.endHint')}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="text-[15px] font-bold text-ui-ink">{t('insights.overview.leaveOut')}</span>
+            <span id="period-exclude-hint" className={HINT}>{t('insights.overview.leaveOutHint')}</span>
+          </div>
+          <Toggle checked={exclude} onChange={setExclude} label={t('insights.overview.leaveOut')} describedBy="period-exclude-hint" />
+        </div>
+      </BottomSheet>
+      {period && confirming && (
+        <ConfirmSheet title={t('insights.periods.deleteTitle', { name: period.name })} text={t('insights.periods.deleteText')}
+          confirm={t('common.delete')} busy={remove.isPending} onClose={() => setConfirming(false)}
+          onConfirm={() => { setFailed(false); remove.mutate(period.id, { onSuccess: onClose, onError: () => { setConfirming(false); setFailed(true) } }) }} />
+      )}
     </>
   )
 }

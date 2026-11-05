@@ -11,6 +11,7 @@ vi.mock('../../../../api/charts', () => ({
   chartsApi: { getReports: vi.fn(), getReportData: vi.fn(), updateReport: vi.fn(), createReport: vi.fn(), deleteReport: vi.fn() },
 }))
 vi.mock('../../../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn(), updateUserPractice: vi.fn(), getGroups: vi.fn() } }))
+vi.mock('../../../../api/markedPeriods', () => ({ useMarkedPeriods: () => ({ periods: [{ id: 'p1' }, { id: 'p2' }], isLoading: false }) }))
 import { chartsApi } from '../../../../api/charts'
 import { practicesApi } from '../../../../api/practices'
 const charts = vi.mocked(chartsApi)
@@ -62,6 +63,16 @@ describe('ChartEditorWide', () => {
     expect(charts.updateReport.mock.calls[0][2]).toMatchObject({ Graph: { traces: [{}, { type_: 'Dot' }] } })
     fireEvent.click(within(row).getByRole('button', { name: 'Done' }))
     expect(screen.queryByRole('listitem', { name: 'Wake-up time' })).not.toBeInTheDocument()
+  })
+
+  it('tablet: the rail leads with the Insights settings, so they stay reachable with charts', async () => {
+    setViewportWidth(800)
+    renderAt('/settings/charts/r1')
+    const column = await screen.findByRole('navigation', { name: 'Insights' })
+    expect(within(column).getByRole('switch', { name: 'Show streaks' })).toBeInTheDocument()
+    const periods = within(column).getByRole('link', { name: /Marked periods/ })
+    expect(periods).toHaveAttribute('href', '/settings/periods')
+    expect(periods).toHaveTextContent('2')
   })
 
   it('picking another chart after an edit opens that chart', async () => {

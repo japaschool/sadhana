@@ -20,14 +20,14 @@ import { AddPill, ROWS, SettingsSubpage } from './SettingsSubpage'
 const EMPTY = 'rounded-[18px] border border-dashed border-ui-control px-6 py-8 text-center text-sm text-ui-muted'
 
 /** Streaks, period suggestions, the sleep pair and marked periods (16m13). */
-function InsightsPrefsRows() {
+export function InsightsPrefsRows() {
   const { t } = useTranslation()
   const [prefs, setPrefs] = useInsightPrefs()
   const [asking, setAsking] = useState(false)
   const reports = useReports().data
   const practices = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices }).data
   const { periods } = useMarkedPeriods()
-  const sleep = practices && reports ? resolveSleep(prefs.sleep, practices, reports) : null
+  const sleep = practices ? resolveSleep(prefs.sleep, practices, reports ?? []) : null
   const nameOf = (id: string) => practices?.find((p) => p.id === id)?.practice ?? ''
   return (
     <div className={ROWS}>

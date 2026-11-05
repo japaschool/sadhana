@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { DesktopShell } from '../../../../layouts/desktop/DesktopShell'
 import { TabletShell } from '../../../../layouts/tablet/TabletShell'
 import { useLayout } from '../../../../layouts/useLayout'
+import { InsightsPrefsRows } from '../../../settings/SettingsLists'
 import { CARD } from '../../../yatras/settings/mobile/AdminPage'
 import { graphOf, useChartEditor } from '../useChartEditor'
 import {
@@ -31,6 +32,7 @@ export function ChartsColumn({ id, reports, newOn }: { id: string; reports: NonN
         </Link>
         <p className="text-[22px] leading-tight font-extrabold tracking-[-0.01em] text-ui-ink">{t('insights.title')}</p>
       </div>
+      <div className="mb-3"><InsightsPrefsRows /></div>
       <p className={`${GROUP} px-3 pb-1`}>{t('chartSettings.yourCharts')}</p>
       {reports.map((r) => {
         const active = r.id === id
