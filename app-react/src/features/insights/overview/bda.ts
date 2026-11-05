@@ -86,12 +86,18 @@ export function beforeDuringAfter(
   }
 }
 
+/** Days a period spans, an open one counted to today. */
+export const periodLength = (p: MarkedPeriod, todayCob: string) => dayCount(p.start_date, p.end_date ?? todayCob)
+
+/** Whether a period is long enough (3+ days) for a card and a detail screen. */
+export const hasDetail = (p: MarkedPeriod, todayCob: string) => periodLength(p, todayCob) >= MIN_CARD_DAYS
+
 /** Periods of 3+ days (open ones counted to today) that show a card: until 30 days after the end, newest first. */
 export function cardPeriods(periods: MarkedPeriod[], todayCob: string): MarkedPeriod[] {
   return periods
     .filter((p) => {
       const last = p.end_date ?? todayCob
-      return dayCount(p.start_date, last) >= MIN_CARD_DAYS && (p.end_date === null || todayCob <= shift(last, CARD_DAYS))
+      return hasDetail(p, todayCob) && (p.end_date === null || todayCob <= shift(last, CARD_DAYS))
     })
     .sort((a, b) => b.start_date.localeCompare(a.start_date))
 }
@@ -106,14 +112,19 @@ export function movingAverage(s: Series, from: string, to: string): Map<string, 
   return out
 }
 
+/** How far a row moved from before to during, in units of its usual range (at least 1 wide); null without a usual or a during value. */
+export function changeScore(r: BdaRow): number | null {
+  if (r.before === null || r.during === null || r.spread === null) return null
+  return Math.abs(r.during - r.before) / Math.max(r.spread, 1)
+}
+
 /** Key of the row that moved most from before to during, in units of its usual range (at least 1 wide); null if no row has both. Ties go to the first row. */
 export function changedMost(bda: Bda): string | null {
   let best: string | null = null
   let bestScore = -1
   for (const r of bda.rows) {
-    if (r.before === null || r.during === null || r.spread === null) continue
-    const score = Math.abs(r.during - r.before) / Math.max(r.spread, 1)
-    if (score > bestScore) { best = r.row.key; bestScore = score }
+    const score = changeScore(r)
+    if (score !== null && score > bestScore) { best = r.row.key; bestScore = score }
   }
   return best
 }

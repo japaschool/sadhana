@@ -471,6 +471,30 @@
       "sleep": "Отбой и подъём",
       "deleteTitle": "Удалить «{{name}}»?",
       "deleteText": "Период и его полосы на графиках будут удалены. Ваши отмеченные дни останутся как есть."
+    },
+    "period": {
+      "chip_progress": "Идёт сейчас",
+      "chip_settling": "Ещё устанавливается",
+      "chipBack_one": "Как обычно через {{count}} день",
+      "chipBack_few": "Как обычно через {{count}} дня",
+      "chipBack_many": "Как обычно через {{count}} дней",
+      "chipBack_other": "Как обычно через {{count}} дня",
+      "chip_different": "Всё ещё отличается",
+      "overlaps": "Пересекается: {{names}}",
+      "open": "Открыть",
+      "row": "Строка",
+      "before": "До",
+      "during": "Во время",
+      "after": "После",
+      "eachRow": "Каждая строка",
+      "footnote": "«До» — ваша обычная норма на начало периода. «После» — до 4 недель с дня окончания.",
+      "dateLine_one": "{{dates}} · {{count}} день",
+      "dateLine_few": "{{dates}} · {{count}} дня",
+      "dateLine_many": "{{dates}} · {{count}} дней",
+      "dateLine_other": "{{dates}} · {{count}} дня",
+      "average": "Среднее за 7 дней",
+      "notFound": "Этого периода больше нет.",
+      "detailsOf": "До, во время и после: {{name}}"
     }
   },
   "yatraSettings": {

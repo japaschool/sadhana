@@ -1,3 +1,4 @@
+import { BdaCards } from './BdaCard'
 import { LessRegular } from './LessRegular'
 import { MeVsNormal } from './MeVsNormal'
 import { OpenPeriodCard } from './OpenPeriodCard'
@@ -23,6 +24,7 @@ export function OverviewMobile() {
       {ov.regular ? (
         <>
           <MeVsNormal normal={ov.normal} practices={ov.practices} variant="stacked" />
+          <BdaCards rows={ov.rows} series={ov.series} periods={ov.periods} practices={ov.practices} todayCob={ov.todayCob} />
           <OverviewLinks />
         </>
       ) : (

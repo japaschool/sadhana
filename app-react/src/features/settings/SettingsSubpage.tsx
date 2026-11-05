@@ -19,12 +19,14 @@ export function AddPill({ label, onClick }: { label: string; onClick: () => void
 }
 
 /** A list one level under Settings (Insights, Yatras), with a back link to Settings, in the current layout's shell. */
-export function SettingsSubpage({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
+export function SettingsSubpage({ title, action, back: backTo, children }: {
+  title: string; action?: ReactNode; /** Where the back link goes; Settings by default. */ back?: { to: string; label: string }; children: ReactNode
+}) {
   const { t } = useTranslation()
   const layout = useLayout()
   const back = (cls: string) => (
-    <Link to="/settings" className={`flex items-center gap-1 font-semibold text-ui-accent ${cls}`}>
-      <span aria-hidden>‹</span>{t('nav.settings')}
+    <Link to={backTo?.to ?? '/settings'} className={`flex items-center gap-1 font-semibold text-ui-accent ${cls}`}>
+      <span aria-hidden>‹</span>{backTo?.label ?? t('nav.settings')}
     </Link>
   )
 

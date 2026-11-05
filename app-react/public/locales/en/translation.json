@@ -435,6 +435,26 @@
       "sleep": "Bedtime and wake-up",
       "deleteTitle": "Delete “{{name}}”?",
       "deleteText": "The period and its bands on charts are removed. Your logged days stay as they are."
+    },
+    "period": {
+      "chip_progress": "In progress",
+      "chip_settling": "Still settling",
+      "chipBack_one": "Back to usual after {{count}} day",
+      "chipBack_other": "Back to usual after {{count}} days",
+      "chip_different": "Still different",
+      "overlaps": "Overlaps: {{names}}",
+      "open": "Open",
+      "row": "Row",
+      "before": "Before",
+      "during": "During",
+      "after": "After",
+      "eachRow": "Each row",
+      "footnote": "Before is your usual when the period started. After is up to 4 weeks from the day it ended.",
+      "dateLine_one": "{{dates}} · {{count}} day",
+      "dateLine_other": "{{dates}} · {{count}} days",
+      "average": "7-day average",
+      "notFound": "This period isn’t here any more.",
+      "detailsOf": "Before, during and after: {{name}}"
     }
   },
   "yatraSettings": {
