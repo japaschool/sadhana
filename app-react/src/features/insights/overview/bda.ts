@@ -1,6 +1,6 @@
 import type { MarkedPeriod } from '../../../api/markedPeriods'
 import type { InsightRow, Series } from './series'
-import { leftOutDays, periodValue, shift, usualAt, withinUsual } from './usual'
+import { daysBetween, eachDay, leftOutDays, mean, periodValue, shift, usualAt, withinUsual } from './usual'
 import type { Usual } from './usual'
 
 export type Chip = { kind: 'progress' } | { kind: 'settling' } | { kind: 'back'; days: number } | { kind: 'different' }
@@ -16,17 +16,6 @@ const AFTER_DAYS = 28
 const DIFFERENT_AFTER = 30
 const CARD_DAYS = 30
 const MIN_CARD_DAYS = 3
-
-const mean = (xs: number[]) => xs.reduce((a, x) => a + x, 0) / xs.length
-
-function eachDay(from: string, to: string): string[] {
-  const out: string[] = []
-  for (let d = from; d <= to; d = shift(d, 1)) out.push(d)
-  return out
-}
-
-const dayCount = (from: string, to: string) => eachDay(from, to).length
-const daysBetween = (from: string, to: string) => (from <= to ? dayCount(from, to) - 1 : -(dayCount(to, from) - 1))
 
 function valuesIn(s: Series, from: string, to: string): number[] {
   return eachDay(from, to).flatMap((d) => (s.has(d) ? [s.get(d)!] : []))
@@ -87,7 +76,7 @@ export function beforeDuringAfter(
 }
 
 /** Days a period spans, an open one counted to today. */
-export const periodLength = (p: MarkedPeriod, todayCob: string) => dayCount(p.start_date, p.end_date ?? todayCob)
+export const periodLength = (p: MarkedPeriod, todayCob: string) => daysBetween(p.start_date, p.end_date ?? todayCob) + 1
 
 /** Whether a period is long enough (3+ days) for a card and a detail screen. */
 export const hasDetail = (p: MarkedPeriod, todayCob: string) => periodLength(p, todayCob) >= MIN_CARD_DAYS

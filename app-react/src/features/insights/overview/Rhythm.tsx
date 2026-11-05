@@ -1,7 +1,5 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useQuery } from '@tanstack/react-query'
-import { chartsApi } from '../../../api/charts'
 import { useMarkedPeriods } from '../../../api/markedPeriods'
 import { UiLoading } from '../../../layouts/ByLayout'
 import { SettingsSubpage } from '../../settings/SettingsSubpage'
@@ -11,6 +9,7 @@ import { rowName, rowValueText } from './format'
 import { rowSeries } from './series'
 import { stepStyle } from './stepStyle'
 import { useInsightRows } from './useInsightRows'
+import { useYearData } from './useYearData'
 import { shift } from './usual'
 import { mondayOf } from './yearMap'
 
@@ -22,7 +21,7 @@ export function Rhythm() {
   const locale = i18n.language || 'en'
   const todayCob = toDateStr(new Date())
   const { periods } = useMarkedPeriods()
-  const dataQ = useQuery({ queryKey: ['report-data', todayCob, 'Year'], queryFn: () => chartsApi.getReportData(todayCob, 'Year') })
+  const dataQ = useYearData(todayCob)
   const data = useInsightRows(dataQ, todayCob)
   const fp = useMemo(() => {
     const rows = fingerprintRows(data.practices)

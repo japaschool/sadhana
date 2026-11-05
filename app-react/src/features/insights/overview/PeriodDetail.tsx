@@ -20,6 +20,7 @@ import { Overlaps, StatusChip, chipText } from './BdaCard'
 import { rowName, rowValueText } from './format'
 import type { Series } from './series'
 import { useInsightRows } from './useInsightRows'
+import { useYearData } from './useYearData'
 import { leftOutDays, shift, usualAt } from './usual'
 
 const YEAR = 365
@@ -29,7 +30,7 @@ const YEAR_REACH = 97
 /** The data a period's detail needs: Year, or all data when the period began before Year's reach. */
 function usePeriodData(period: MarkedPeriod | undefined, todayCob: string) {
   const old = !!period && period.start_date < shift(todayCob, -YEAR + YEAR_REACH)
-  const yearQ = useQuery({ queryKey: ['report-data', todayCob, 'Year'], queryFn: () => chartsApi.getReportData(todayCob, 'Year'), enabled: !old })
+  const yearQ = useYearData(todayCob, !old)
   const allQ = useQuery({ queryKey: ['report-data', todayCob, 'AllData'], queryFn: () => chartsApi.getReportData(todayCob, 'AllData'), enabled: old })
   return useInsightRows(old ? allQ : yearQ, todayCob)
 }

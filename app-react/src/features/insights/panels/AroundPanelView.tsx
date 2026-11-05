@@ -6,6 +6,7 @@ import { SegmentedControl } from '../../../ui/primitives/SegmentedControl'
 import { Chevron } from '../../today/mobile/rowParts'
 import { formatDuration } from '../../today/values'
 import { AROUND_MIN, aroundTable, eventOptions, gapEvents, type AroundCell, type RowKind } from './gapLogic'
+import { stepStyle } from '../overview/stepStyle'
 import { clockText, labelText, type Lookup } from './panelLogic'
 
 interface AroundPanelProps {
@@ -18,13 +19,6 @@ interface AroundPanelProps {
 }
 
 const COLUMNS = ['dayBefore', 'sameDay', 'nextDay', 'twoDaysAfter'] as const
-
-/** Teal above usual (or earlier), amber below; the strongest steps take light text. */
-function cellStyle(step: AroundCell['step']) {
-  if (step === 0) return { background: 'var(--ui-div-0)' }
-  const key = `${step > 0 ? 'p' : 'm'}${Math.abs(step)}`
-  return { background: `var(--ui-div-${key})`, ...(Math.abs(step) === 3 && { color: `var(--ui-on-div-${key})` }) }
-}
 
 /** A segmented switch while it fits beside the title; a menu button once it doesn't. */
 type Choice = { value: string; label: string }
@@ -115,7 +109,7 @@ export function AroundPanelView({ event, rows, days, prevDays, lookup, todayCob 
                       {line.cells.map((c, i) => {
                         const label = t('reportPanels.aroundCell', { value: fmt(line.kind, c.value), usual })
                         return (
-                          <td key={i} title={label} aria-label={label} style={cellStyle(c.step)}
+                          <td key={i} title={label} aria-label={label} style={stepStyle(c.step)}
                             className="rounded-lg px-2 py-2 text-center font-ui-mono text-[13px] font-semibold whitespace-nowrap text-ui-ink">
                             {fmt(line.kind, c.value)}
                           </td>

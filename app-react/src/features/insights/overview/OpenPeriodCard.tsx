@@ -1,10 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import type { MarkedPeriod } from '../../../api/markedPeriods'
-import { fromDateStr } from '../../today/date'
 import { formatDay } from '../insightsLogic'
 import { PROMPT_BTN, PromptCard } from './SuggestionCard'
-
-const daysBetween = (a: string, b: string) => Math.round((fromDateStr(b).getTime() - fromDateStr(a).getTime()) / 864e5)
+import { daysBetween } from './usual'
 
 /** "Is {name} still going?", every 30 days of an ongoing period. */
 export function OpenPeriodCard({ period, todayCob, onYes, onEnded }: {

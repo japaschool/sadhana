@@ -1,10 +1,9 @@
 import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { chartsApi } from '../../../api/charts'
 import { useMarkedPeriods } from '../../../api/markedPeriods'
 import { toDateStr } from '../../today/date'
 import { resolveSleep, useInsightRows } from './useInsightRows'
 import { loggedDays } from './series'
+import { useYearData } from './useYearData'
 import { detectChange, openPeriodToAsk } from './suggest'
 import { isRegular, meVsNormal } from './usual'
 
@@ -14,10 +13,7 @@ export { resolveSleep }
 /** Everything the Overview shows, from the year of data to today. Shares its cache entries with useInsights. */
 export function useOverview() {
   const todayCob = toDateStr(new Date())
-  const dataQ = useQuery({
-    queryKey: ['report-data', todayCob, 'Year'],
-    queryFn: () => chartsApi.getReportData(todayCob, 'Year'),
-  })
+  const dataQ = useYearData(todayCob)
   const { periods } = useMarkedPeriods()
   const { rows, series, entries, practices, sleep, prefs, setPrefs, reportsPending, practicesPending, isLoading, isError } = useInsightRows(dataQ, todayCob)
 

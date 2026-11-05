@@ -1,9 +1,6 @@
-import { fromDateStr } from '../../today/date'
-import { shift } from './usual'
+import { daysBetween, shift } from './usual'
 
 export interface Run { start: string; end: string; length: number }
-
-const gapDays = (a: string, b: string) => Math.round((fromDateStr(b).getTime() - fromDateStr(a).getTime()) / 864e5)
 
 /** Current run ends today or yesterday; the longest is clipped to this calendar year. */
 export function runs(logged: string[], todayCob: string): { current: Run | null; longest: Run | null } {
@@ -13,7 +10,7 @@ export function runs(logged: string[], todayCob: string): { current: Run | null;
   if (end) {
     let start = end
     while (set.has(shift(start, -1))) start = shift(start, -1)
-    current = { start, end, length: gapDays(start, end) + 1 }
+    current = { start, end, length: daysBetween(start, end) + 1 }
   }
   let longest: Run | null = null
   let start = ''
@@ -22,7 +19,7 @@ export function runs(logged: string[], todayCob: string): { current: Run | null;
   for (const d of [...logged].filter((x) => x >= yearStart && x <= todayCob).sort()) {
     if (!prev || shift(prev, 1) !== d) start = d
     prev = d
-    const length = gapDays(start, d) + 1
+    const length = daysBetween(start, d) + 1
     if (!longest || length > longest.length) longest = { start, end: d, length }
   }
   return { current, longest }
