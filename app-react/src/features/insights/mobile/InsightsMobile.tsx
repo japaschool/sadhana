@@ -23,11 +23,11 @@ export function InsightsMobile() {
   const { t, i18n } = useTranslation()
   const { periods } = useMarkedPeriods()
   const ins = useInsights(undefined, true)
-  const more = useMoreMenu(ins.report)
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const [openDay, setOpenDay] = useState<string | null>(null)
   // Always opens on Overview; the choice isn't stored.
   const [view, setView] = useState<'overview' | 'charts'>('overview')
+  const more = useMoreMenu(view === 'charts' ? ins.report : null)
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const h = ins.headline
   const ready = !ins.isLoading && !ins.isError && ins.hasData

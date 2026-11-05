@@ -139,6 +139,21 @@ describe('Overview (mobile)', () => {
     expect(screen.queryByRole('region', { name: 'Me vs my normal' })).toBeNull()
   })
 
+  it('returning_user_with_a_usual_window_is_told_what_brings_the_comparison_back', () => {
+    const days: Record<string, Record<string, unknown>> = {}
+    for (let i = 60; i >= 15; i--) days[day(-i)] = { 'Подъём': T(6, 10), 'Кругов за день': 16 }
+    overview(days)
+    wrap(<OverviewMobile />)
+    expect(screen.getByText('Me vs my normal comes back once you’ve logged 3 days in the last two weeks.')).toBeInTheDocument()
+    expect(screen.queryByText(/so far/)).toBeNull()
+  })
+
+  it('days_practised_shows_last_months_count_beside_this_months', () => {
+    overview(sparse(), { todayCob: '2026-10-31' })
+    wrap(<OverviewMobile />)
+    expect(within(screen.getByRole('region', { name: 'Days practised' })).getByText('5 last month')).toBeInTheDocument()
+  })
+
   it('welcome_back_and_counts_of_past_days', () => {
     overview(sparse(), { todayCob: '2026-10-31' })
     wrap(<OverviewMobile />)

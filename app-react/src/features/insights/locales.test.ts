@@ -30,6 +30,24 @@ describe('insights.overview.* translations', () => {
   })
 })
 
+describe('insights marked-period screens translations', () => {
+  const nested = (d: Dict, ns: string) => (d.insights as unknown as Record<string, Record<string, string>>)[ns]
+  const base = (o: Record<string, string>) => [...new Set(Object.keys(o).map((k) => k.replace(/_(one|few|many|other)$/, '')))].sort()
+
+  it('has the same keys in en, ru and uk for periods, period, yearMap and rhythm', () => {
+    const dicts = Object.values(files)
+    for (const ns of ['periods', 'period', 'yearMap', 'rhythm']) {
+      const keys = base(nested(dicts[0], ns))
+      expect(keys.length, ns).toBeGreaterThan(5)
+      for (const d of dicts) expect(base(nested(d, ns)), ns).toEqual(keys)
+    }
+  })
+
+  it('has the marked-period legend label in en, ru and uk', () => {
+    for (const [path, dict] of Object.entries(files)) expect(dict.reportPanels?.markedPeriod, path).toBeTruthy()
+  })
+})
+
 describe('reportPanels.* translations', () => {
   it('has every key sleepPanels emits in en, ru and uk', () => {
     const keys = new Set<string>()

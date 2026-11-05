@@ -22,13 +22,11 @@ export function OverviewStatus({ ov }: { ov: Ov }) {
 
 /** The period and sleep-setup sheets that Overview cards open. */
 export function OverviewSheets({ ov, actions }: { ov: Ov; actions: ReturnType<typeof useOverviewActions> }) {
-  const { sheet, setSheet, sleepClosed, setSleepClosed, markAsked } = actions
+  const { sheet, setSheet, sleepClosed, setSleepClosed, onSheetSaved } = actions
   return (
     <>
       {sheet && (
-        <PeriodSheet {...sheet} onClose={() => setSheet(null)}
-          // Saved from "It ended on…" with End still empty: as good as Yes, so it doesn't ask again at once.
-          onSaved={(form) => { if (sheet.focusEnd && sheet.period && form.end_date === null) markAsked(sheet.period.id) }} />
+        <PeriodSheet {...sheet} onClose={() => setSheet(null)} onSaved={onSheetSaved} />
       )}
       {ov.askSleep && !sleepClosed && !sheet && (
         <SleepSetupSheet practices={ov.timePractices} onClose={() => setSleepClosed(true)}

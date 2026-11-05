@@ -26,14 +26,14 @@ const LONG = 'Morning sadhana with a very long report name'
 
 const toCharts = () => fireEvent.click(screen.getByRole('radio', { name: 'Charts' }))
 
-function renderScreen() {
+function renderScreen(view: 'overview' | 'charts' = 'charts') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const r = render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={['/charts']}><InsightsMobileScreen /></MemoryRouter>
     </QueryClientProvider>,
   )
-  toCharts()
+  if (view === 'charts') toCharts()
   return r
 }
 
@@ -137,6 +137,17 @@ describe('InsightsMobile', () => {
 
   it('hides Edit and Delete for All practices', async () => {
     renderScreen()
+    await openMore()
+    const menu = screen.getByRole('menu', { name: 'More' })
+    expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
+      'New chart', 'Share reports link', 'Download data (CSV)',
+    ])
+  })
+
+  it('hides report actions on Overview even with a report selected', async () => {
+    localStorage.setItem('insights-report', 'r1')
+    renderScreen('overview')
+    await waitFor(() => expect(charts.getReports).toHaveBeenCalled())
     await openMore()
     const menu = screen.getByRole('menu', { name: 'More' })
     expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual([

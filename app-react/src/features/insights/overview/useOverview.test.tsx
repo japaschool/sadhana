@@ -3,11 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { useOverview } from './useOverview'
+import type { MarkedPeriod } from '../../../api/markedPeriods'
+import { addDays, toDateStr } from '../../today/date'
 import { entries, FOUR, practice } from './fixtures'
 
 vi.mock('../../../api/charts', () => ({ chartsApi: { getReports: vi.fn(), getReportData: vi.fn() } }))
 vi.mock('../../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn() } }))
-vi.mock('../../../api/markedPeriods', () => ({ useMarkedPeriods: () => ({ periods: [], isLoading: false }) }))
+const markedPeriods = vi.fn()
+vi.mock('../../../api/markedPeriods', () => ({ useMarkedPeriods: () => markedPeriods() }))
 import { chartsApi } from '../../../api/charts'
 import { practicesApi } from '../../../api/practices'
 
@@ -31,6 +34,7 @@ const hasSleep = (r: ReturnType<typeof setup>) => r.result.current.rows.some((x)
 beforeEach(() => {
   localStorage.clear()
   vi.clearAllMocks()
+  markedPeriods.mockReturnValue({ periods: [], isLoading: false, isError: false })
   charts.getReports.mockResolvedValue([])
   charts.getReportData.mockResolvedValue([])
 })
@@ -113,5 +117,37 @@ describe('useOverview', () => {
     localStorage.setItem('sadhana.insights', JSON.stringify({ suggest: false }))
     const r = setup(); await load(r)
     expect(r.result.current.suggestion).toBeNull()
+  })
+
+  describe('while marked periods are not known', () => {
+    const day = (offset: number) => toDateStr(addDays(new Date(), offset))
+    const open: MarkedPeriod = { id: 'p1', name: 'Night shifts', start_date: day(-40), end_date: null, exclude_from_usual: true }
+    const shifted = () => {
+      const days: Record<string, Record<string, unknown>> = {}
+      for (let i = 60; i >= 0; i--) {
+        const out = i <= 10
+        days[day(-i)] = { 'Кругов за день': out ? 40 : 16 + (i % 3), 'Кругов до 7': out ? 20 : 8, 'Отбой': { Time: { h: 21, m: 45 } }, 'Подъём': { Time: { h: 4, m: 20 } } }
+      }
+      return entries(days)
+    }
+
+    it('suggestion_and_open_period_wait_for_them', async () => {
+      practices.getUserPractices.mockResolvedValue(FOUR)
+      charts.getReportData.mockResolvedValue(shifted())
+      const known = setup(); await load(known)
+      expect(known.result.current.suggestion).not.toBeNull()
+      markedPeriods.mockReturnValue({ periods: [open], isLoading: false, isError: false })
+      const asked = setup(); await load(asked)
+      expect(asked.result.current.openPeriod?.id).toBe('p1')
+
+      for (const state of [{ isLoading: true, isError: false }, { isLoading: false, isError: true }]) {
+        markedPeriods.mockReturnValue({ periods: [open], ...state })
+        const r = setup(); await load(r)
+        expect(r.result.current.openPeriod).toBeNull()
+        markedPeriods.mockReturnValue({ periods: [], ...state })
+        const s = setup(); await load(s)
+        expect(s.result.current.suggestion).toBeNull()
+      }
+    })
   })
 })

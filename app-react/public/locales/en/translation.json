@@ -395,6 +395,8 @@
       "onDaysText_one": "Plain averages of the {{count}} day you logged",
       "onDaysText_other": "Plain averages of the {{count}} days you logged",
       "showsUpAt": "Me vs my normal shows up once you’ve logged 14 days. {{n}} so far.",
+      "showsUpAtRecent": "Me vs my normal comes back once you’ve logged 3 days in the last two weeks.",
+      "lastMonthCount": "{{count}} last month",
       "yearMap": "Year map",
       "yearMapText": "Every week against your usual",
       "rhythm": "Rhythm fingerprint",

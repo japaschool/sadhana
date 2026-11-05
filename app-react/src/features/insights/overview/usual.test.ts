@@ -149,3 +149,24 @@ describe('isRegular', () => {
     expect(check(entries({ ...base, ...at([0, 1, 2], { 'Кругов за день': 16 }) })).regular).toBe(true)
   })
 })
+
+describe('hollow dot', () => {
+  const hollowFor = (periods: MarkedPeriod[], s: Series) => meVsNormal([row()], new Map([['r', s]]), periods, TODAY)[0].hollow
+
+  it('an_ongoing_period_gets_no_hollow_dot_when_the_week_is_not_eaten', () => {
+    const s = fill(0, 60, () => 5)
+    expect(hollowFor([period(20, null, false)], s)).toBeNull()
+    expect(hollowFor([period(2, null, true)], s)).toBeNull()
+  })
+
+  it('an_ongoing_period_gets_the_dot_only_when_it_ate_the_week', () => {
+    const s = fill(0, 60, () => 5)
+    for (let i = 0; i <= 7; i++) s.set(day(-i), 9)
+    expect(hollowFor([period(7, null)], s)?.value).toBe(9)
+  })
+
+  it('the_latest_ended_period_within_30_days_wins', () => {
+    const s = fill(0, 60, () => 5)
+    expect(hollowFor([period(50, 40, false), period(12, 5, false)], s)?.period.end_date).toBe(day(-5))
+  })
+})

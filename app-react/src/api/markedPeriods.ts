@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from './client'
+import { failedWithoutData } from './queryState'
 
 export interface MarkedPeriod {
   id: string
@@ -33,9 +34,10 @@ export const MARKED_PERIODS_KEY = ['marked-periods'] as const
 
 const NONE: MarkedPeriod[] = []
 
-export function useMarkedPeriods(): { periods: MarkedPeriod[]; isLoading: boolean } {
+/** `isError`: the fetch failed (or waits for the network) and there is no cached list to show. */
+export function useMarkedPeriods(): { periods: MarkedPeriod[]; isLoading: boolean; isError: boolean } {
   const q = useQuery({ queryKey: MARKED_PERIODS_KEY, queryFn: markedPeriodsApi.list })
-  return { periods: q.data ?? NONE, isLoading: q.isLoading }
+  return { periods: q.data ?? NONE, isLoading: q.isLoading, isError: failedWithoutData(q) }
 }
 
 /** Creates a period, or updates the one with `id`. Errors (a 422 for a bad form) surface through the mutation. */
