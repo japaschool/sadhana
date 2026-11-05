@@ -16,13 +16,17 @@ import { practicesApi } from '../../../api/practices'
 const charts = vi.mocked(chartsApi)
 const practices = vi.mocked(practicesApi)
 
-function renderScreen() {
+function renderScreen(view: 'charts' | 'overview' = 'charts') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(
+  const result = render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={['/charts']}><InsightsTabletScreen /></MemoryRouter>
     </QueryClientProvider>,
   )
+
+  // The screen opens on Overview; these tests are about the charts.
+  if (view === 'charts') fireEvent.click(screen.getByRole('radio', { name: 'Charts' }))
+  return result
 }
 
 describe('InsightsTablet', () => {
