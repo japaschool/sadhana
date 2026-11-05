@@ -12,7 +12,7 @@ const HOLLOW_DAYS = 30
 
 export const shift = (cob: string, n: number) => toDateStr(addDays(fromDateStr(cob), n))
 
-function eachDay(from: string, to: string): string[] {
+export function eachDay(from: string, to: string): string[] {
   const out: string[] = []
   for (let d = from; d <= to; d = shift(d, 1)) out.push(d)
   return out
@@ -58,7 +58,7 @@ export function usualAt(series: Series, cob: string, leftOut: Set<string>): Usua
   return { median: percentile(values, 0.5), p25: percentile(values, 0.25), p75: percentile(values, 0.75), n: values.length }
 }
 
-const mean = (xs: number[]) => xs.reduce((a, x) => a + x, 0) / xs.length
+export const mean = (xs: number[]) => xs.reduce((a, x) => a + x, 0) / xs.length
 
 /** Mean over the last 7 days without left-out days; null below 3 values. */
 export function nowValue(series: Series, todayCob: string, leftOut: Set<string>): number | null {
