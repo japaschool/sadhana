@@ -1,7 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useQuery } from '@tanstack/react-query'
-import { chartsApi } from '../../../api/charts'
 import { useMarkedPeriods } from '../../../api/markedPeriods'
 import { UiLoading } from '../../../layouts/ByLayout'
 import { useLayout } from '../../../layouts/useLayout'
@@ -11,6 +9,7 @@ import { formatDay } from '../insightsLogic'
 import { listText, rowName, rowValueText } from './format'
 import { stepStyle } from './stepStyle'
 import { useInsightRows } from './useInsightRows'
+import { useYearData } from './useYearData'
 import { shift } from './usual'
 import type { Word } from './usual'
 import { weekStarts, yearMap } from './yearMap'
@@ -29,7 +28,7 @@ export function YearMap() {
   const n = useLayout() === 'mobile' ? 26 : 52
   const todayCob = toDateStr(new Date())
   const { periods } = useMarkedPeriods()
-  const dataQ = useQuery({ queryKey: ['report-data', todayCob, 'Year'], queryFn: () => chartsApi.getReportData(todayCob, 'Year') })
+  const dataQ = useYearData(todayCob)
   const data = useInsightRows(dataQ, todayCob)
   const [active, setActive] = useState<{ key: string; week: string } | null>(null)
   const weeks = useMemo(() => weekStarts(n, todayCob), [n, todayCob])

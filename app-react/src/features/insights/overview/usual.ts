@@ -12,6 +12,9 @@ const HOLLOW_DAYS = 30
 
 export const shift = (cob: string, n: number) => toDateStr(addDays(fromDateStr(cob), n))
 
+/** Whole days from a to b; negative when b is earlier. */
+export const daysBetween = (a: string, b: string) => Math.round((fromDateStr(b).getTime() - fromDateStr(a).getTime()) / 864e5)
+
 export function eachDay(from: string, to: string): string[] {
   const out: string[] = []
   for (let d = from; d <= to; d = shift(d, 1)) out.push(d)
