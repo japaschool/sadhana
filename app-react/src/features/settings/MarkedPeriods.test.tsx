@@ -5,24 +5,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { MarkedPeriod } from '../../api/markedPeriods'
 import { setViewportWidth } from '../../test/viewport'
 import { useAuthStore } from '../../store/authStore'
-import { DEFAULT_PREFS } from '../insights/overview/prefs'
 
 vi.mock('../../api/client', () => ({ apiClient: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() } }))
 import { apiClient } from '../../api/client'
-vi.mock('../insights/overview/useOverview', () => ({ useOverview: vi.fn() }))
-import { useOverview } from '../insights/overview/useOverview'
 import { MarkedPeriods } from './MarkedPeriods'
 
 const TODAY = '2026-11-05'
 const night: MarkedPeriod = { id: 'p1', name: 'Night shifts', start_date: '2026-10-02', end_date: null, exclude_from_usual: true }
 const summer: MarkedPeriod = { id: 'p2', name: 'Summer schedule', start_date: '2026-06-01', end_date: '2026-08-31', exclude_from_usual: false }
 const retreat: MarkedPeriod = { id: 'p3', name: 'Retreat', start_date: '2026-10-09', end_date: '2026-10-18', exclude_from_usual: true }
-
-function overview(openPeriod: MarkedPeriod | null = null) {
-  vi.mocked(useOverview).mockReturnValue({
-    todayCob: TODAY, openPeriod, rows: [], practices: [], prefs: DEFAULT_PREFS, setPrefs: vi.fn(),
-  } as unknown as ReturnType<typeof useOverview>)
-}
 
 function renderPage() {
   return render(
@@ -34,12 +25,13 @@ function renderPage() {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(2026, 10, 5, 9))
   setViewportWidth(390)
   useAuthStore.setState({ user: { id: '1', email: 't@e.st', token: 'tok', name: 'Test User' }, token: 'tok' })
-  vi.mocked(apiClient.get).mockResolvedValue({ data: { periods: [night, retreat, summer] } })
-  overview()
+  vi.mocked(apiClient.get).mockResolvedValue({ data: { periods: [retreat, summer] } })
 })
-afterEach(() => localStorage.clear())
+afterEach(() => { vi.useRealTimers(); localStorage.clear() })
 
 describe('Marked periods', () => {
   it('detail_link_only_for_periods_of_3_days_or_more', async () => {
@@ -52,6 +44,7 @@ describe('Marked periods', () => {
   })
 
   it('periods_list_shows_status_and_usual_flag', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { periods: [night, retreat, summer] } })
     renderPage()
     const list = await screen.findByRole('list', { name: 'Your periods' })
     const rows = within(list).getAllByRole('listitem')
@@ -114,10 +107,21 @@ describe('Marked periods', () => {
   })
 
   it('shows_the_open_period_prompt', async () => {
-    overview(night)
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { periods: [night, retreat, summer] } })
     renderPage()
     expect(await screen.findByText('Is Night shifts still going?')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'It ended on…' }))
     expect(screen.getByLabelText('Name')).toHaveValue('Night shifts')
+  })
+
+  it('saving_it_ended_with_end_empty_counts_as_yes', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { periods: [night, retreat, summer] } })
+    vi.mocked(apiClient.put).mockResolvedValue({})
+    renderPage()
+    await screen.findByText('Is Night shifts still going?')
+    fireEvent.click(screen.getByRole('button', { name: 'It ended on…' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save period' }))
+    await waitFor(() => expect(JSON.parse(localStorage.getItem('sadhana.insights')!).openAsked).toEqual({ p1: TODAY }))
+    await waitFor(() => expect(screen.queryByText('Is Night shifts still going?')).toBeNull())
   })
 })

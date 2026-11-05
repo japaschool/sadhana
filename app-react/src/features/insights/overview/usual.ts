@@ -5,7 +5,7 @@ import type { InsightRow, Series } from './series'
 
 export interface Usual { median: number; p25: number; p75: number; n: number }
 
-const MIN_USUAL = 14
+export const MIN_USUAL = 14
 const USUAL_DAYS = 90
 const MAX_LOOKBACK = 365
 const HOLLOW_DAYS = 30
@@ -101,7 +101,7 @@ export interface NormalRow {
   recentDays: number
 }
 
-/** The period to show hollow: the ongoing left-out one when the week is eaten, else the latest that ended within 30 days. */
+/** The period to show hollow: the ongoing left-out one when the week is eaten, else the latest that ended within 30 days (an ongoing one never). */
 function hollowPeriod(periods: MarkedPeriod[], now: number | null, todayCob: string): MarkedPeriod | null {
   if (now === null) {
     const ongoing = periods.find((p) => p.exclude_from_usual && p.start_date <= todayCob && (p.end_date ?? todayCob) >= todayCob)
@@ -109,8 +109,8 @@ function hollowPeriod(periods: MarkedPeriod[], now: number | null, todayCob: str
   }
   const cutoff = shift(todayCob, -HOLLOW_DAYS)
   const recent = periods
-    .filter((p) => p.start_date <= todayCob && (p.end_date ?? todayCob) >= cutoff)
-    .sort((a, b) => (b.end_date ?? todayCob).localeCompare(a.end_date ?? todayCob))
+    .filter((p): p is MarkedPeriod & { end_date: string } => p.end_date !== null && p.end_date < todayCob && p.end_date >= cutoff)
+    .sort((a, b) => b.end_date.localeCompare(a.end_date))
   return recent[0] ?? null
 }
 

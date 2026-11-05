@@ -7,7 +7,7 @@ import { rowName, rowValueText } from './format'
 import { RowLabel, OV_CARD } from './MeVsNormal'
 import type { InsightRow, Series } from './series'
 import { monthCount, runs, type Run } from './streaks'
-import { leftOutDays, shift, usualWindowCount } from './usual'
+import { leftOutDays, MIN_USUAL, shift, usualWindowCount } from './usual'
 
 const AVERAGE_DAYS = 90
 const DAY = 'flex h-[34px] items-center justify-center rounded-lg font-ui-mono text-xs font-medium'
@@ -44,6 +44,7 @@ export function LessRegular({ logged, todayCob, streaks, rows, series, practices
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const month = todayCob.slice(0, 7)
   const count = monthCount(logged, month)
+  const lastMonth = monthCount(logged, shift(`${month}-01`, -1).slice(0, 7))
   const loggedSet = new Set(logged)
   const { blanks, days } = monthCells(month, todayCob)
   const weekdays = Array.from({ length: 7 }, (_, i) => new Date(2026, 9, 5 + i).toLocaleDateString(locale, { weekday: 'narrow' }))
@@ -67,6 +68,7 @@ export function LessRegular({ logged, todayCob, streaks, rows, series, practices
         <span className="flex items-baseline gap-1.5">
           <span data-testid="month-count" className="font-ui-mono text-[30px] font-semibold tracking-[-0.02em] text-ui-ink">{count}</span>
           <span className="text-sm font-semibold text-ui-muted">{t('insights.overview.daysUnit', { count })}</span>
+          <span className="ml-auto font-ui-mono text-xs font-medium text-ui-faint2">{t('insights.overview.lastMonthCount', { count: lastMonth })}</span>
         </span>
         <div role="img" aria-label={t('insights.overview.daysThisMonth', { count, month: monthName(month, locale) })} className="flex flex-col gap-1.5">
           <div className="grid grid-cols-7 gap-1.5">
@@ -110,7 +112,7 @@ export function LessRegular({ logged, todayCob, streaks, rows, series, practices
             </div>
           ))}
         </div>
-        <p className={`${NOTE} border-t border-ui-chip pt-2`}>{t('insights.overview.showsUpAt', { n: soFar })}</p>
+        <p className={`${NOTE} border-t border-ui-chip pt-2`}>{soFar >= MIN_USUAL ? t('insights.overview.showsUpAtRecent') : t('insights.overview.showsUpAt', { n: soFar })}</p>
       </section>
     </>
   )

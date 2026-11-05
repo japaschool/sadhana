@@ -68,6 +68,16 @@ describe('InsightsTablet', () => {
       .toEqual(['New chart', 'Share reports link', 'Download data (CSV)'])
   })
 
+  it('hides report actions on Overview even with a report selected', async () => {
+    charts.getReports.mockResolvedValue([{ id: 'g1', name: 'Grid one', definition: { Grid: { practices: ['p1', 'p2'] } } }])
+    localStorage.setItem('insights-report', 'g1')
+    renderScreen('overview')
+    await waitFor(() => expect(charts.getReports).toHaveBeenCalled())
+    fireEvent.click(await screen.findByRole('button', { name: 'More' }))
+    expect(within(screen.getByRole('menu', { name: 'More' })).getAllByRole('menuitem').map((i) => i.textContent))
+      .toEqual(['New chart', 'Share reports link', 'Download data (CSV)'])
+  })
+
   it('shows a Grid report as a table; a row opens the day as a sheet', async () => {
     charts.getReports.mockResolvedValue([{ id: 'g1', name: 'Grid one', definition: { Grid: { practices: ['p1', 'p2'] } } }])
     localStorage.setItem('insights-report', 'g1')

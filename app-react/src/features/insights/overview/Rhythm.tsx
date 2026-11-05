@@ -23,10 +23,12 @@ export function Rhythm() {
   const { periods } = useMarkedPeriods()
   const dataQ = useYearData(todayCob)
   const data = useInsightRows(dataQ, todayCob)
-  const fp = useMemo(() => {
-    const rows = fingerprintRows(data.practices)
-    return fingerprint(rows, rowSeries(rows, data.entries, data.practices, null, todayCob), periods, todayCob)
-  }, [data.practices, data.entries, periods, todayCob])
+  const rows = useMemo(() => fingerprintRows(data.practices), [data.practices])
+  const noRows = rows.length === 0
+  const fp = useMemo(
+    () => fingerprint(rows, rowSeries(rows, data.entries, data.practices, null, todayCob), periods, todayCob),
+    [rows, data.practices, data.entries, periods, todayCob],
+  )
   const weekdays = useMemo(() => Array.from({ length: 7 }, (_, i) =>
     new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(fromDateStr(shift(mondayOf(todayCob), i)))), [locale, todayCob])
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
@@ -35,7 +37,7 @@ export function Rhythm() {
   let body
   if (dataQ.isLoading || data.isLoading) body = <UiLoading />
   else if (data.isError) body = <p role="alert" className="py-10 text-center text-sm text-ui-danger">{t('insights.loadFailed')}</p>
-  else if (!fp) body = <p className="py-10 text-center text-sm text-ui-muted">{t('insights.rhythm.notYet')}</p>
+  else if (!fp) body = <p className="py-10 text-center text-sm text-ui-muted">{t(noRows ? 'insights.rhythm.footnote' : 'insights.rhythm.notYet')}</p>
   else body = (
     <>
       <p className="text-[13px] leading-[1.45] text-ui-muted">{t('insights.rhythm.intro')}</p>

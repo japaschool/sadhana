@@ -14,7 +14,9 @@ export { resolveSleep }
 export function useOverview() {
   const todayCob = toDateStr(new Date())
   const dataQ = useYearData(todayCob)
-  const { periods } = useMarkedPeriods()
+  const { periods, isLoading: periodsLoading, isError: periodsFailed } = useMarkedPeriods()
+  // Until the marked periods are known, suggesting a stretch or asking about a period could repeat one already marked.
+  const periodsKnown = !periodsLoading && !periodsFailed
   const { rows, series, entries, practices, sleep, prefs, setPrefs, reportsPending, practicesPending, isLoading, isError } = useInsightRows(dataQ, todayCob)
 
   const timePractices = useMemo(() => practices.filter((p) => p.is_active && p.data_type === 'Time'), [practices])
@@ -25,10 +27,10 @@ export function useOverview() {
   const normal = useMemo(() => meVsNormal(rows, series, periods, todayCob), [rows, series, periods, todayCob])
   const regular = useMemo(() => isRegular(normal, logged, todayCob), [normal, logged, todayCob])
   const suggestion = useMemo(
-    () => (prefs.suggest ? detectChange(series, rows, logged, periods, prefs.dismissed, todayCob) : null),
-    [prefs.suggest, prefs.dismissed, series, rows, logged, periods, todayCob],
+    () => (prefs.suggest && periodsKnown ? detectChange(series, rows, logged, periods, prefs.dismissed, todayCob) : null),
+    [prefs.suggest, periodsKnown, prefs.dismissed, series, rows, logged, periods, todayCob],
   )
-  const openPeriod = useMemo(() => openPeriodToAsk(periods, prefs.openAsked, todayCob), [periods, prefs.openAsked, todayCob])
+  const openPeriod = useMemo(() => (periodsKnown ? openPeriodToAsk(periods, prefs.openAsked, todayCob) : null), [periodsKnown, periods, prefs.openAsked, todayCob])
 
   return {
     isLoading, isError, todayCob, rows, series, logged, normal, regular, suggestion, openPeriod, periods,

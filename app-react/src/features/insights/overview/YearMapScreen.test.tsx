@@ -13,9 +13,10 @@ const day = (offset: number) => toDateStr(addDays(fromDateStr(today), offset))
 const periods: MarkedPeriod[] = [{ id: 'p1', name: 'Retreat', start_date: day(-40), end_date: day(-20), exclude_from_usual: true }]
 vi.mock('../../../api/markedPeriods', () => ({ useMarkedPeriods: () => ({ periods, isLoading: false }) }))
 const getReportData = vi.fn()
+const getUserPractices = vi.fn()
 vi.mock('../../../api/charts', () => ({ chartsApi: { getReports: vi.fn(async () => []), getReportData: (...a: unknown[]) => getReportData(...a) } }))
 vi.mock('../../../api/practices', () => ({
-  practicesApi: { getUserPractices: vi.fn(async () => FOUR), getIncompleteDays: vi.fn(async () => []), getGroups: vi.fn(async () => []) },
+  practicesApi: { getUserPractices: (...a: unknown[]) => getUserPractices(...a), getIncompleteDays: vi.fn(async () => []), getGroups: vi.fn(async () => []) },
 }))
 import { YearMap } from './YearMapScreen'
 import { Rhythm } from './Rhythm'
@@ -30,7 +31,7 @@ function show(ui: React.ReactElement) {
   return render(<QueryClientProvider client={qc}><MemoryRouter>{ui}</MemoryRouter></QueryClientProvider>)
 }
 
-beforeEach(() => { vi.clearAllMocks(); getReportData.mockImplementation(async () => data(200)) })
+beforeEach(() => { vi.clearAllMocks(); getUserPractices.mockImplementation(async () => FOUR); getReportData.mockImplementation(async () => data(200)) })
 afterEach(() => localStorage.clear())
 
 describe('YearMap', () => {
@@ -67,6 +68,14 @@ describe('Rhythm', () => {
     getReportData.mockImplementation(async () => data(21))
     show(<Rhythm />)
     expect(await screen.findByText('Your rhythm shows up after 8 weeks of entries.')).toBeInTheDocument()
+  })
+
+  it('without_number_or_duration_practices_it_explains_instead_of_waiting', async () => {
+    setViewportWidth(390)
+    getUserPractices.mockImplementation(async () => FOUR.slice(0, 2))
+    show(<Rhythm />)
+    expect(await screen.findByText('Rows come from your number and duration practices.')).toBeInTheDocument()
+    expect(screen.queryByText(/shows up after 8 weeks/)).toBeNull()
   })
 
   it('shows_typical_and_seven_averages_per_row', async () => {

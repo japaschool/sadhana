@@ -6,7 +6,8 @@ import { formatDay } from '../insights/insightsLogic'
 import { hasDetail } from '../insights/overview/bda'
 import { OpenPeriodCard } from '../insights/overview/OpenPeriodCard'
 import { PeriodSheet } from '../insights/overview/PeriodSheet'
-import { useOverview } from '../insights/overview/useOverview'
+import { useInsightPrefs } from '../insights/overview/prefs'
+import { openPeriodToAsk } from '../insights/overview/suggest'
 import { useOverviewActions } from '../insights/overview/useOverviewActions'
 import { toDateStr } from '../today/date'
 import { AddPill, ROWS, SettingsSubpage } from './SettingsSubpage'
@@ -15,10 +16,13 @@ import { AddPill, ROWS, SettingsSubpage } from './SettingsSubpage'
 export function MarkedPeriods() {
   const { t, i18n } = useTranslation()
   const { periods, isLoading } = useMarkedPeriods()
-  const actions = useOverviewActions(useOverview())
-  const { sheet, setSheet, openPeriodProps } = actions
+  const [prefs, setPrefs] = useInsightPrefs()
   const locale = i18n.language || 'en'
   const todayCob = toDateStr(new Date())
+  const openPeriod = isLoading ? null : openPeriodToAsk(periods, prefs.openAsked, todayCob)
+  const { sheet, setSheet, openPeriodProps, onSheetSaved } = useOverviewActions({
+    suggestion: null, openPeriod, rows: [], practices: [], prefs, setPrefs, todayCob,
+  })
   const dates = (p: MarkedPeriod) => p.end_date
     ? `${formatDay(p.start_date, locale, true)} – ${formatDay(p.end_date, locale, true)}`
     : t('insights.periods.ongoing', { date: formatDay(p.start_date, locale) })
@@ -57,7 +61,7 @@ export function MarkedPeriods() {
         </ul>
       )}
       <p className="px-1 text-xs leading-[1.4] text-ui-muted">{t('insights.periods.footer')}</p>
-      {sheet && <PeriodSheet {...sheet} onClose={() => setSheet(null)} />}
+      {sheet && <PeriodSheet {...sheet} onClose={() => setSheet(null)} onSaved={onSheetSaved} />}
     </SettingsSubpage>
   )
 }
