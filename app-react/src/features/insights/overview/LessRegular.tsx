@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import type { MarkedPeriod } from '../../../api/markedPeriods'
 import type { UserPractice } from '../../../types/api'
 import { formatDay } from '../insightsLogic'
 import { monthCells, monthName } from '../panels/panelLogic'
@@ -6,9 +7,8 @@ import { rowName, rowValueText } from './format'
 import { RowLabel, OV_CARD } from './MeVsNormal'
 import type { InsightRow, Series } from './series'
 import { monthCount, runs, type Run } from './streaks'
-import { shift } from './usual'
+import { leftOutDays, shift, usualWindowCount } from './usual'
 
-const MIN_USUAL = 14
 const AVERAGE_DAYS = 90
 const DAY = 'flex h-[34px] items-center justify-center rounded-lg font-ui-mono text-xs font-medium'
 const TITLE = 'text-lg font-extrabold text-ui-ink'
@@ -36,8 +36,8 @@ function RunFigure({ label, run, locale }: { label: string; run: Run | null; loc
 }
 
 /** For a new or less regular user: days practised this month, optional streaks, and plain averages (16m12, 16m14). */
-export function LessRegular({ logged, todayCob, streaks, rows, series, practices }: {
-  logged: string[]; todayCob: string; streaks: boolean; rows: InsightRow[]; series: Map<string, Series>; practices: UserPractice[]
+export function LessRegular({ logged, todayCob, streaks, rows, series, practices, periods }: {
+  periods: MarkedPeriod[]; logged: string[]; todayCob: string; streaks: boolean; rows: InsightRow[]; series: Map<string, Series>; practices: UserPractice[]
 }) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
@@ -47,8 +47,10 @@ export function LessRegular({ logged, todayCob, streaks, rows, series, practices
   const loggedSet = new Set(logged)
   const { blanks, days } = monthCells(month, todayCob)
   const weekdays = Array.from({ length: 7 }, (_, i) => new Date(2026, 9, 5 + i).toLocaleDateString(locale, { weekday: 'narrow' }))
-  const from = shift(todayCob, -(AVERAGE_DAYS - 1))
-  const recent = logged.filter((d) => d >= from && d <= todayCob)
+  // Past days only: today isn't in the Int, Duration or Total averages, so it isn't counted either.
+  const from = shift(todayCob, -AVERAGE_DAYS)
+  const recent = logged.filter((d) => d >= from && d < todayCob)
+  const soFar = usualWindowCount(logged, todayCob, leftOutDays(periods, todayCob))
   const averages = rows.map((row) => {
     const s = series.get(row.key)
     return { row, value: mean(recent.flatMap((d) => (s?.has(d) ? [s.get(d)!] : []))) }
@@ -108,9 +110,7 @@ export function LessRegular({ logged, todayCob, streaks, rows, series, practices
             </div>
           ))}
         </div>
-        {recent.length < MIN_USUAL && (
-          <p className={`${NOTE} border-t border-ui-chip pt-2`}>{t('insights.overview.showsUpAt', { n: recent.length })}</p>
-        )}
+        <p className={`${NOTE} border-t border-ui-chip pt-2`}>{t('insights.overview.showsUpAt', { n: soFar })}</p>
       </section>
     </>
   )

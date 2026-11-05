@@ -10,17 +10,18 @@ const LABEL = 'text-xs font-bold text-ui-muted'
 
 /** Asks once which two Time practices are bedtime and wake-up, so Sleep can be worked out (16m15). */
 export function SleepSetupSheet({ practices, onSave, onSkip, onClose }: {
-  /** Active Time practices. */
+  /** Active Time practices. Nothing is preselected: no guessed pair. */
   practices: UserPractice[]; onSave: (rows: SleepRows) => void; onSkip: () => void; onClose: () => void
 }) {
   const { t } = useTranslation()
-  const [bedtime, setBedtime] = useState(practices[0]?.id ?? '')
-  const [wake, setWake] = useState(practices[1]?.id ?? '')
+  const [bedtime, setBedtime] = useState('')
+  const [wake, setWake] = useState('')
   const title = t('insights.overview.sleepTitle')
   const picker = (id: string, label: string, value: string, set: (v: string) => void) => (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className={LABEL}>{label}</label>
       <select id={id} value={value} onChange={(e) => set(e.target.value)} aria-describedby={`${id}-hint`} className={`${FIELD} font-semibold`}>
+        <option value="" disabled>{t('insights.overview.choose')}</option>
         {practices.map((p) => <option key={p.id} value={p.id}>{p.practice}</option>)}
       </select>
       <p id={`${id}-hint`} className="text-xs text-ui-muted">{t('insights.overview.timePractice')}</p>

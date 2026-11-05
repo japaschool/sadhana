@@ -35,6 +35,7 @@ export function OverviewMobile() {
     return row ? rowName(row, ov.practices, t) : ''
   }
   const { suggestion, openPeriod } = ov
+  const markAsked = (id: string) => ov.setPrefs({ openAsked: { ...ov.prefs.openAsked, [id]: ov.todayCob } })
 
   return (
     <>
@@ -45,7 +46,7 @@ export function OverviewMobile() {
       )}
       {openPeriod && (
         <OpenPeriodCard period={openPeriod} todayCob={ov.todayCob}
-          onYes={() => ov.setPrefs({ openAsked: { ...ov.prefs.openAsked, [openPeriod.id]: ov.todayCob } })}
+          onYes={() => markAsked(openPeriod.id)}
           onEnded={() => setSheet({ period: openPeriod, focusEnd: true })} />
       )}
       <WelcomeBack logged={ov.logged} todayCob={ov.todayCob} />
@@ -55,9 +56,13 @@ export function OverviewMobile() {
           <OverviewLinks />
         </>
       ) : (
-        <LessRegular logged={ov.logged} todayCob={ov.todayCob} streaks={ov.prefs.streaks} rows={ov.rows} series={ov.series} practices={ov.practices} />
+        <LessRegular logged={ov.logged} todayCob={ov.todayCob} streaks={ov.prefs.streaks} rows={ov.rows} series={ov.series} practices={ov.practices} periods={ov.periods} />
       )}
-      {sheet && <PeriodSheet {...sheet} onClose={() => setSheet(null)} />}
+      {sheet && (
+        <PeriodSheet {...sheet} onClose={() => setSheet(null)}
+          // Saved from "It ended on…" with End still empty: as good as Yes, so it doesn't ask again at once.
+          onSaved={(form) => { if (sheet.focusEnd && sheet.period && form.end_date === null) markAsked(sheet.period.id) }} />
+      )}
       {ov.askSleep && !sleepClosed && !sheet && (
         <SleepSetupSheet practices={ov.timePractices} onClose={() => setSleepClosed(true)}
           onSave={(sleep) => ov.setPrefs({ sleep })} onSkip={() => ov.setPrefs({ sleep: 'skip' })} />

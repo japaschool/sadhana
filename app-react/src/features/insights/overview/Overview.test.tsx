@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SleepRows } from '../../../api/charts'
+import type { MarkedPeriod } from '../../../api/markedPeriods'
 import type { UserPractice } from '../../../types/api'
 import { setViewportWidth } from '../../../test/viewport'
 import { addDays, fromDateStr, toDateStr } from '../../today/date'
@@ -36,7 +37,7 @@ const SLEEP: SleepRows = { bedtime: 'bed', wake: 'wake', nap: null }
 /** useOverview's result, computed from raw days by the real logic. */
 function overview(days: Record<string, Record<string, unknown>>, opts: {
   todayCob?: string; practices?: UserPractice[]; sleep?: SleepRows | null; prefs?: Partial<InsightPrefs>
-  suggestion?: Suggestion | null; askSleep?: boolean
+  suggestion?: Suggestion | null; askSleep?: boolean; periods?: MarkedPeriod[]; openPeriod?: MarkedPeriod | null
 } = {}) {
   const todayCob = opts.todayCob ?? TODAY
   const practices = opts.practices ?? FOUR
@@ -45,11 +46,12 @@ function overview(days: Record<string, Record<string, unknown>>, opts: {
   const rows = insightRows(practices, sleep)
   const series = rowSeries(rows, data, practices, sleep, todayCob)
   const logged = loggedDays(data, todayCob)
-  const normal = meVsNormal(rows, series, [], todayCob)
+  const periods = opts.periods ?? []
+  const normal = meVsNormal(rows, series, periods, todayCob)
   const setPrefs = vi.fn()
   const value = {
     isLoading: false, isError: false, todayCob, rows, series, logged, normal,
-    regular: isRegular(normal, logged, todayCob), suggestion: opts.suggestion ?? null, openPeriod: null, periods: [],
+    regular: isRegular(normal, logged, todayCob), suggestion: opts.suggestion ?? null, openPeriod: opts.openPeriod ?? null, periods,
     sleep, askSleep: opts.askSleep ?? false, timePractices: practices.filter((p) => p.data_type === 'Time'), practices,
     prefs: { ...DEFAULT_PREFS, ...opts.prefs }, setPrefs,
   }
@@ -73,7 +75,7 @@ function wrap(children: ReactNode) {
   return render(<QueryClientProvider client={qc}><MemoryRouter>{children}</MemoryRouter></QueryClientProvider>)
 }
 
-beforeEach(() => { vi.clearAllMocks(); setViewportWidth(390) })
+beforeEach(() => { vi.clearAllMocks(); save.mockReset(); setViewportWidth(390) })
 afterEach(() => localStorage.clear())
 
 describe('Overview (mobile)', () => {
@@ -118,9 +120,11 @@ describe('Overview (mobile)', () => {
   }
 
   it('less_regular_view_for_8_days', () => {
-    overview(sparse(), { todayCob: '2026-10-31' })
+    const eight: Record<string, Record<string, unknown>> = {}
+    for (let d = 10; d <= 17; d++) eight[`2026-10-${d}`] = { 'Отбой': T(22, 40), 'Подъём': T(6, 10), 'Кругов за день': 8, 'Кругов до 7': 4 }
+    overview(eight, { todayCob: '2026-10-31' })
     wrap(<OverviewMobile />)
-    expect(screen.getByText('Good to see you back. You’ve logged 8 days this month, 3 more than last month.')).toBeInTheDocument()
+    expect(screen.queryByText(/Good to see you back/)).toBeNull() // last logged two weeks ago, not back yet
     const days = screen.getByRole('region', { name: 'Days practised' })
     expect(within(days).getByTestId('month-count')).toHaveTextContent('8')
     expect(days.querySelectorAll('[data-logged="true"]')).toHaveLength(8)
@@ -128,8 +132,18 @@ describe('Overview (mobile)', () => {
     expect(within(avg).getByRole('group', { name: 'Подъём' })).toHaveTextContent('06:10')
     expect(within(avg).getByRole('group', { name: 'Кругов за день' })).toHaveTextContent('8')
     expect(within(avg).getByRole('group', { name: /Sleep/ })).toHaveTextContent('7h 30m')
-    expect(screen.getByText('Me vs my normal shows up once you’ve logged 14 days. 13 so far.')).toBeInTheDocument()
+    expect(within(avg).getByText('Plain averages of the 8 days you logged')).toBeInTheDocument()
+    expect(screen.getByText('Me vs my normal shows up once you’ve logged 14 days. 8 so far.')).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Me vs my normal' })).toBeNull()
+  })
+
+  it('welcome_back_and_counts_of_past_days', () => {
+    overview(sparse(), { todayCob: '2026-10-31' })
+    wrap(<OverviewMobile />)
+    expect(screen.getByText('Good to see you back. You’ve logged 8 days this month, 3 more than last month.')).toBeInTheDocument()
+    // Today is left out of the averages and of the usual window.
+    expect(screen.getByText('Plain averages of the 12 days you logged')).toBeInTheDocument()
+    expect(screen.getByText('Me vs my normal shows up once you’ve logged 14 days. 12 so far.')).toBeInTheDocument()
   })
 
   it('streaks_hidden_by_default_shown_when_on', () => {
@@ -169,6 +183,10 @@ describe('Overview (mobile)', () => {
     const ov = overview(steady(), { sleep: null, askSleep: true })
     const { unmount } = wrap(<OverviewMobile />)
     const sheet = screen.getByRole('dialog', { name: 'Which practices are your bedtime and wake-up?' })
+    expect(within(sheet).getByRole('button', { name: 'Save' })).toBeDisabled() // nothing guessed
+    fireEvent.change(within(sheet).getByLabelText('Bedtime'), { target: { value: 'wake' } })
+    fireEvent.change(within(sheet).getByLabelText('Wake-up'), { target: { value: 'wake' } })
+    expect(within(sheet).getByRole('button', { name: 'Save' })).toBeDisabled() // the same practice twice
     fireEvent.change(within(sheet).getByLabelText('Bedtime'), { target: { value: 'bed' } })
     fireEvent.change(within(sheet).getByLabelText('Wake-up'), { target: { value: 'wake' } })
     fireEvent.click(within(sheet).getByRole('button', { name: 'Save' }))
@@ -196,6 +214,46 @@ describe('Overview (mobile)', () => {
       { id: undefined, form: { name: 'Retreat', start_date: '2026-10-25', end_date: '2026-10-30', exclude_from_usual: true } },
       expect.anything(),
     )
+  })
+
+  it('hollow_dot_for_a_recent_period', () => {
+    const retreat: MarkedPeriod = { id: 'r', name: 'Retreat', start_date: day(-20), end_date: day(-10), exclude_from_usual: true }
+    overview(steady(() => ({ 'Отбой': T(21, 45), 'Подъём': T(3, 25), 'Кругов за день': 22, 'Кругов до 7': 8 })), { periods: [retreat] })
+    wrap(<OverviewMobile />)
+    const wake = screen.getByRole('group', { name: 'Подъём' })
+    expect(wake.querySelector('[data-dot="hollow"]')).not.toBeNull()
+    expect(wake.querySelector('[data-dot="now"]')).not.toBeNull()
+    expect(wake).toHaveTextContent('Earlier')
+    expect(screen.getByRole('region', { name: 'Me vs my normal' })).toHaveTextContent('Retreat, Oct 16 – Oct 26')
+  })
+
+  const OPEN: MarkedPeriod = { id: 'p1', name: 'Autumn fast', start_date: '2026-09-01', end_date: null, exclude_from_usual: true }
+
+  it('open_period_yes_and_ended_without_end', () => {
+    save.mockImplementation((_v, o: { onSuccess: () => void }) => o.onSuccess())
+    const ov = overview(steady(), { openPeriod: OPEN, prefs: { openAsked: { other: '2026-01-01' } } })
+    wrap(<OverviewMobile />)
+    expect(screen.getByText('Is Autumn fast still going?')).toBeInTheDocument()
+    expect(screen.getByText('Started Sep 1, 65 days ago.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Yes' }))
+    expect(ov.setPrefs).toHaveBeenLastCalledWith({ openAsked: { other: '2026-01-01', p1: TODAY } })
+    ov.setPrefs.mockClear()
+    fireEvent.click(screen.getByRole('button', { name: 'It ended on…' }))
+    const sheet = screen.getByRole('dialog', { name: 'Autumn fast' })
+    expect(within(sheet).getByLabelText('End')).toHaveFocus()
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Save period' }))
+    expect(ov.setPrefs).toHaveBeenCalledWith({ openAsked: { other: '2026-01-01', p1: TODAY } })
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('period_sheet_save_error_keeps_sheet_open', () => {
+    save.mockImplementation((_v, o: { onError: () => void }) => o.onError())
+    const onClose = vi.fn()
+    wrap(<PeriodSheet onClose={onClose} period={OPEN} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Save period' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong')
+    expect(screen.getByRole('dialog', { name: 'Autumn fast' })).toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
   })
 
   it('opens_on_overview_and_switches_to_charts', async () => {
