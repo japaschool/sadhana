@@ -1,15 +1,19 @@
 import { render, screen, within } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ChartsSettings, YatrasSettings } from './SettingsLists'
 import { setViewportWidth } from '../../test/viewport'
+import { fireEvent } from '@testing-library/react'
 import { useAuthStore } from '../../store/authStore'
 
 vi.mock('../../api/yatras', () => ({ yatrasApi: { getYatras: vi.fn(), getYatraUsers: vi.fn() } }))
 import { yatrasApi } from '../../api/yatras'
 vi.mock('../../api/charts', () => ({ chartsApi: { getReports: vi.fn() } }))
 import { chartsApi } from '../../api/charts'
+vi.mock('../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn() } }))
+import { practicesApi } from '../../api/practices'
+vi.mock('../../api/markedPeriods', () => ({ useMarkedPeriods: () => ({ periods: [{ id: 'p1' }, { id: 'p2' }, { id: 'p3' }, { id: 'p4' }], isLoading: false }) }))
 
 const renderAt = (path: string) => render(
   <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -28,6 +32,10 @@ describe('Settings lists', () => {
     setViewportWidth(390)
     useAuthStore.setState({ user: { id: '1', email: 't@e.st', token: 'tok', name: 'Test User' }, token: 'tok' })
     vi.mocked(chartsApi.getReports).mockResolvedValue([{ id: 'r1', name: 'Morning', definition: { Grid: { practices: [] } } }])
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([
+      { id: 'bed', practice: 'Bedtime', data_type: 'Time', is_active: true },
+      { id: 'wake', practice: 'Wake-up', data_type: 'Time', is_active: true },
+    ])
     vi.mocked(yatrasApi.getYatras).mockResolvedValue([{ id: 'y1', name: 'League', show_stability_metrics: false }])
     vi.mocked(yatrasApi.getYatraUsers).mockResolvedValue([{ user_id: '1', user_name: 'Test User', is_admin: true }])
   })
@@ -68,5 +76,41 @@ describe('Settings lists', () => {
     const row = await screen.findByRole('link', { name: /League/ })
     expect(row).toHaveAttribute('href', '/yatra/y1/settings')
     expect(await within(row).findByText('Admin')).toBeInTheDocument()
+  })
+
+  describe('Insights section', () => {
+    afterEach(() => localStorage.clear())
+
+    it('toggles_write_prefs', async () => {
+      renderAt('/settings/charts')
+      const streaks = await screen.findByRole('switch', { name: 'Show streaks' })
+      expect(streaks).not.toBeChecked()
+      expect(screen.getByText(/Adds plain run lengths, like “3 days in a row”, under Days practised. Off by default./)).toBeInTheDocument()
+      fireEvent.click(streaks)
+      const suggest = screen.getByRole('switch', { name: 'Suggest periods to mark' })
+      expect(suggest).toBeChecked()
+      fireEvent.click(suggest)
+      expect(JSON.parse(localStorage.getItem('sadhana.insights')!)).toMatchObject({ streaks: true, suggest: false })
+      expect(screen.getByRole('switch', { name: 'Show streaks' })).toBeChecked()
+    })
+
+    it('marked_periods_row_counts_and_links', async () => {
+      renderAt('/settings/charts')
+      const link = await screen.findByRole('link', { name: /Marked periods/ })
+      expect(link).toHaveAttribute('href', '/settings/periods')
+      expect(link).toHaveTextContent('4')
+    })
+
+    it('sleep_row_shows_the_pair_or_off_and_saves_from_the_sheet', async () => {
+      renderAt('/settings/charts')
+      const row = await screen.findByRole('button', { name: /Bedtime and wake-up/ })
+      expect(row).toHaveTextContent('Off')
+      fireEvent.click(row)
+      fireEvent.change(await screen.findByLabelText('Bedtime'), { target: { value: 'bed' } })
+      fireEvent.change(screen.getByLabelText('Wake-up'), { target: { value: 'wake' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+      expect(await screen.findByRole('button', { name: /Bedtime and wake-up/ })).toHaveTextContent('Bedtime · Wake-up')
+      expect(JSON.parse(localStorage.getItem('sadhana.insights')!).sleep).toEqual({ bedtime: 'bed', wake: 'wake', nap: null })
+    })
   })
 })

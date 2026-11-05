@@ -418,6 +418,23 @@
       "skip": "Skip for now",
       "skipHint": "If you skip, Sleep stays off. Change it any time in Settings › Insights.",
       "choose": "Choose…"
+    },
+    "periods": {
+      "title": "Marked periods",
+      "intro": "Name stretches of time to compare them with your usual. They show as bands on every chart.",
+      "yours": "Your periods",
+      "inProgress": "In progress",
+      "ongoing": "{{date}} – ongoing",
+      "leftOut": "Left out of usual range",
+      "counted": "Counted in usual range",
+      "footer": "Leaving a period out keeps an unusual stretch from moving what counts as your normal.",
+      "showStreaks": "Show streaks",
+      "streaksHint": "Adds plain run lengths, like “3 days in a row”, under Days practised. Off by default.",
+      "suggest": "Suggest periods to mark",
+      "suggestHint": "A quiet prompt when several practices move in the same week.",
+      "sleep": "Bedtime and wake-up",
+      "deleteTitle": "Delete “{{name}}”?",
+      "deleteText": "The period and its bands on charts are removed. Your logged days stay as they are."
     }
   },
   "yatraSettings": {
