@@ -10,7 +10,7 @@ const USUAL_DAYS = 90
 const MAX_LOOKBACK = 365
 const HOLLOW_DAYS = 30
 
-const shift = (cob: string, n: number) => toDateStr(addDays(fromDateStr(cob), n))
+export const shift = (cob: string, n: number) => toDateStr(addDays(fromDateStr(cob), n))
 
 function eachDay(from: string, to: string): string[] {
   const out: string[] = []
@@ -27,7 +27,7 @@ export function leftOutDays(periods: MarkedPeriod[], todayCob: string): Set<stri
   return out
 }
 
-function percentile(sorted: number[], q: number): number {
+export function percentile(sorted: number[], q: number): number {
   const rank = q * (sorted.length - 1)
   const lo = Math.floor(rank)
   const hi = Math.ceil(rank)
