@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ru from '../../../../public/locales/ru/translation.json'
 import uk from '../../../../public/locales/uk/translation.json'
 import type { Panel, PanelsReport, Report, ReportDataEntry, SleepTemplate } from '../../../api/charts'
+import type { MarkedPeriod } from '../../../api/markedPeriods'
 import type { PracticeDataType, UserPractice } from '../../../types/api'
 import { setViewportWidth } from '../../../test/viewport'
 import { addDays, fromDateStr, toDateStr } from '../../today/date'
@@ -32,7 +33,8 @@ vi.mock('../../../api/charts', () => ({
 vi.mock('../../../api/practices', () => ({
   practicesApi: { getUserPractices: vi.fn(), getIncompleteDays: vi.fn(), getDiaryEntries: vi.fn(), saveDiaryEntry: vi.fn() },
 }))
-vi.mock('../../../api/markedPeriods', () => ({ useMarkedPeriods: () => ({ periods: [], isLoading: false }) }))
+const marked = vi.hoisted(() => ({ periods: [] as MarkedPeriod[] }))
+vi.mock('../../../api/markedPeriods', () => ({ useMarkedPeriods: () => ({ periods: marked.periods, isLoading: false }) }))
 import { chartsApi } from '../../../api/charts'
 import { practicesApi } from '../../../api/practices'
 
@@ -65,14 +67,14 @@ const tmpl = (over: Partial<SleepTemplate> = {}): SleepTemplate =>
   ({ bedtime: BED.id, wake: WAKE.id, nap: NAP.id, min: 360, max: 540, ...over })
 const report = (definition: PanelsReport): Report => ({ id: 'r1', name: 'My sleep', definition: { Panels: definition } })
 
-function view(over: { def?: PanelsReport; practices?: UserPractice[]; formLink?: string | null; days?: number } = {}) {
+function view(over: { def?: PanelsReport; practices?: UserPractice[]; formLink?: string | null; days?: number; periods?: MarkedPeriod[] } = {}) {
   const def = over.def ?? sleepPanels(tmpl())
   const { entries, previous } = nights(over.days)
   return render(
     <MemoryRouter>
       <PanelsReportView report={report(def)} definition={def} entries={entries} previous={previous}
         practices={over.practices ?? PRACTICES} todayCob={TODAY} chartHeight={300}
-        formLink={over.formLink === undefined ? '/settings/charts/r1' : over.formLink} />
+        formLink={over.formLink === undefined ? '/settings/charts/r1' : over.formLink} periods={over.periods} />
     </MemoryRouter>,
   )
 }
@@ -207,6 +209,18 @@ describe('PanelsReportView', () => {
     await i18n.changeLanguage('uk')
     view()
     expect(screen.getByText('7 год 18 хв')).toHaveClass('text-[20px]')
+  })
+
+  it('marked periods show as named bands with a legend row; none without periods', () => {
+    const period: MarkedPeriod = { id: 'p1', name: 'Autumn fast', start_date: dayAt(TODAY, -10), end_date: null, exclude_from_usual: false }
+    const { container } = view({ periods: [period] })
+    expect(container.querySelectorAll('.recharts-reference-area').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Autumn fast').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Marked period').length).toBeGreaterThan(0)
+    cleanup()
+    view()
+    expect(screen.queryByText('Autumn fast')).toBeNull()
+    expect(screen.queryByText('Marked period')).toBeNull()
   })
 
   it('no form link on shared pages', () => {
@@ -410,6 +424,7 @@ describe('panels reports on each screen', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    marked.periods = []
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date(2026, 9, 6, 9))
     localStorage.setItem('insights-report', 'r1')
@@ -447,10 +462,12 @@ describe('panels reports on each screen', () => {
     hidesGeneric()
   })
 
-  it('shared mobile: no CSV menu', async () => {
+  it('shared mobile: no CSV menu, and no marked periods', async () => {
+    marked.periods = [{ id: 'p1', name: 'Autumn fast', start_date: dayAt(TODAY, -10), end_date: null, exclude_from_usual: false }]
     setViewportWidth(390)
     renderAt(<SharedMobile />, '/shared/u1')
     await figures()
+    expect(screen.queryByText('Autumn fast')).toBeNull()
     hidesGeneric()
     expect(screen.queryByRole('button', { name: 'More' })).toBeNull()
   })

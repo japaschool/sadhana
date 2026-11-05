@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react'
-import { Bar, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import type { BarLayout } from '../../../api/charts'
+import type { MarkedPeriod } from '../../../api/markedPeriods'
+import { periodBands, type Band } from '../periodBands'
 import { formatMinutesAsHHMM, type ChartDataRow, type Trace } from '../chartLogic'
 import { assignAxes, AXES, isLeft, type Axis } from '../axes'
 import { barPlacement, seriesRows, formatTick, spansYears, type AverageLine } from '../insightsLogic'
@@ -15,9 +17,30 @@ interface InsightsChartProps {
   rows: ChartDataRow[]; traces: Trace[]; barLayout: BarLayout; averages: AverageLine[]; height?: number
   /** Trace positions switched off in the legend. Remount the chart when this changes (see the screens' key). */
   hidden?: Set<number>
+  /** The signed-in user's marked periods, drawn as bands behind the series. Shared pages pass none. */
+  periods?: MarkedPeriod[]
+}
+
+/** Bands behind the series: render these before them. */
+export function PeriodAreas({ bands, yAxisId, xAxisId }: { bands: Band[]; yAxisId?: string | number; xAxisId?: string | number }) {
+  return bands.map((b, i) => (
+    <ReferenceArea key={i} xAxisId={xAxisId} yAxisId={yAxisId} x1={b.x1} x2={b.x2} fill="var(--ui-chip)" fillOpacity={0.6} ifOverflow="hidden"
+      label={{ value: b.name, position: 'insideTopLeft', fontSize: 10, fontFamily: TICK.fontFamily, fill: 'var(--ui-ink2)' }} />
+  ))
+}
+
+/** The legend swatch for a band (16m11). */
+export function PeriodKey() {
+  const { t } = useTranslation()
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs leading-[1.3] font-bold text-ui-ink2">
+      <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px] bg-ui-chip" />{t('reportPanels.markedPeriod')}
+    </span>
+  )
 }
 
 const NONE = new Set<number>()
+const NO_PERIODS: MarkedPeriod[] = []
 
 function pointText(v: number, dt: Trace['dataType'], u: DurationUnits): string {
   if (dt === 'Bool' || dt === 'Text') return '✓'
@@ -66,7 +89,7 @@ function PointTip({ active, label, payload, traces, units, locale }: TipProps & 
 
 // Colours are var(--ui-chart-n) strings in SVG attributes. If iOS Safari ignores them (Task 8 check),
 // resolve them with getComputedStyle on the .ui-root ancestor instead.
-export function InsightsChart({ rows, traces, barLayout, averages, height = 170, hidden = NONE }: InsightsChartProps) {
+export function InsightsChart({ rows, traces, barLayout, averages, height = 170, hidden = NONE, periods = NO_PERIODS }: InsightsChartProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
@@ -93,8 +116,10 @@ export function InsightsChart({ rows, traces, barLayout, averages, height = 170,
   const placement = barPlacement(traces, barLayout, hidden)
   const data = seriesRows(rows, traces)
   const overlayAxes = placement.flatMap((p) => (p?.xAxisId ? [p.xAxisId] : []))
+  const bands = periodBands(periods, rows.map((r) => r.cob))
 
   return (
+    <>
     <ResponsiveContainer width="100%" height={height}>
       {/* Without a Y axis on a side, leave room for the end date ticks there. */}
       <ComposedChart data={data} barGap={1} margin={{ top: 6, right: hasRight ? 0 : 16, bottom: 0, left: hasLeft ? 0 : 16 }}>
@@ -110,6 +135,7 @@ export function InsightsChart({ rows, traces, barLayout, averages, height = 170,
               {...AXIS} tick={{ ...TICK, fill: single ?? TICK.fill }} />
           )
         })}
+        <PeriodAreas bands={bands} yAxisId={used[0]} />
         {traces.map((tr, i) => {
           if (hidden.has(i)) return null
           const axis = axes[i]
@@ -138,5 +164,7 @@ export function InsightsChart({ rows, traces, barLayout, averages, height = 170,
         ))}
       </ComposedChart>
     </ResponsiveContainer>
+    {bands.length > 0 && <PeriodKey />}
+    </>
   )
 }

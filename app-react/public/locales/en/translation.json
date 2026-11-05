@@ -1013,6 +1013,7 @@
     "night": "Night",
     "nap": "Nap",
     "total": "Total",
+    "markedPeriod": "Marked period",
     "legend": "Key",
     "ofTotal": "{{value}} <muted>of {{total}}</muted>",
     "inRange": "In range · {{range}}",

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import type { MarkedPeriod } from '../../../api/markedPeriods'
 import type { PanelsReport, Report, ReportDataEntry } from '../../../api/charts'
 import type { UserPractice } from '../../../types/api'
 import { ChartPanelView } from './ChartPanelView'
@@ -35,6 +36,8 @@ interface PanelsReportViewProps {
   range?: Range
   /** The year to the window's end, read by the days-around table; it falls back to the window without it. */
   yearEntries?: ReportDataEntry[]
+  /** The signed-in user's marked periods, drawn as bands on charts; none on shared pages. */
+  periods?: MarkedPeriod[]
 }
 
 /** A required practice was deleted or hidden (15m19, 15t10). */
@@ -76,7 +79,7 @@ function MonthLegend() {
   )
 }
 
-export function PanelsReportView({ report, definition, entries, previous, practices, todayCob, chartHeight, formLink, cols = 4, month = todayCob.slice(0, 7), interactive = true, legendLast = false, monthFigures = true, range, yearEntries }: PanelsReportViewProps) {
+export function PanelsReportView({ report, definition, entries, previous, practices, todayCob, chartHeight, formLink, cols = 4, month = todayCob.slice(0, 7), interactive = true, legendLast = false, monthFigures = true, range, yearEntries, periods }: PanelsReportViewProps) {
   const { t } = useTranslation()
   const lookup = makeLookup(entries, previous, practices)
   const days = windowDays(entries)
@@ -95,7 +98,7 @@ export function PanelsReportView({ report, definition, entries, previous, practi
       {!legendLast && legend}
       {panels.map((p, i) => (p.kind === 'Gaps' ? (
         <GapsPanelView key={i} event={p.event} days={days} prevDays={prevDays} lookup={lookup} todayCob={todayCob}
-          height={chartHeight} cols={cols} interactive={interactive} />
+          height={chartHeight} cols={cols} interactive={interactive} periods={periods} />
       ) : p.kind === 'Around' ? (
         <AroundPanelView key={i} event={p.event} rows={p.rows} days={year.days} prevDays={[]} lookup={year.lookup} todayCob={todayCob} />
       ) : p.kind === 'Month' ? (
@@ -105,7 +108,7 @@ export function PanelsReportView({ report, definition, entries, previous, practi
       ) : (
         // The first chart leads; the rest are shorter (15m6, 15m12).
         <ChartPanelView key={i} panel={p} panels={panels} days={days} prevDays={prevDays} range={range} lookup={lookup} todayCob={todayCob}
-          height={i === firstChart ? chartHeight : Math.round(chartHeight * 0.72)} first={i === firstChart} compact={cols === 2} interactive={interactive} />
+          height={i === firstChart ? chartHeight : Math.round(chartHeight * 0.72)} first={i === firstChart} compact={cols === 2} interactive={interactive} periods={periods} />
       )))}
       {legendLast && legend}
     </div>

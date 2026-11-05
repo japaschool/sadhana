@@ -2,11 +2,13 @@ import { useId, useState, type Key, type ReactNode } from 'react'
 import { Bar, CartesianGrid, Cell, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import type { ChartPanel, Panel, Series } from '../../../api/charts'
+import type { MarkedPeriod } from '../../../api/markedPeriods'
+import { periodBands } from '../periodBands'
 import type { Trace } from '../chartLogic'
 import { barPlacement, formatDay, formatDelta, formatTick, spansYears } from '../insightsLogic'
 import type { Range } from '../useInsights'
 import { Headline } from '../Headline'
-import { AXIS, TICK, tipDate, TipRow, TipShell } from '../mobile/InsightsChart'
+import { AXIS, PeriodAreas, TICK, tipDate, TipRow, TipShell } from '../mobile/InsightsChart'
 import { formatDuration } from '../../today/values'
 import {
   chartRows, clockText, durationFloor, fitHours, labelText, seriesColour, seriesName, statResult, tipLines, type BarState, type Lookup, type PanelRow, type Resolved,
@@ -28,6 +30,8 @@ interface ChartPanelProps {
   compact: boolean
   /** Off in examples: no tooltip. */
   interactive?: boolean
+  /** Marked periods, drawn as bands; none on shared pages. */
+  periods?: MarkedPeriod[]
 }
 
 /** About 1px a bar: outlines and stripes can't render (15m8). */
@@ -88,8 +92,8 @@ function MarkGlyph({ mark, colour }: { mark: Series['mark']; colour: string }) {
 }
 
 /** Stacked practices with their own colours can be tapped to hide them from the chart. */
-function PanelLegend({ panel, first, lookup, hidden, onToggle }: {
-  panel: ChartPanel; first: boolean; lookup: Lookup; hidden: Set<number>; onToggle: (i: number) => void
+function PanelLegend({ panel, first, lookup, hidden, onToggle, bands }: {
+  panel: ChartPanel; first: boolean; lookup: Lookup; hidden: Set<number>; onToggle: (i: number) => void; bands: boolean
 }) {
   const { t } = useTranslation()
   const u = { h: t('today.unitH'), min: t('today.unitMin') }
@@ -143,6 +147,7 @@ function PanelLegend({ panel, first, lookup, hidden, onToggle }: {
     const value = panel.format === 'Count' ? String(panel.target.min) : hrs(panel.target.min)
     items.push({ key: 'goal', glyph: <LineGlyph dashed />, text: t(`${goal}Line`, { value }) })
   }
+  if (bands) items.push({ key: 'period', glyph: <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px] bg-ui-chip" />, text: t('reportPanels.markedPeriod') })
   if (!items.length) return null
   return (
     <ul aria-label={t('reportPanels.legend')} className="flex flex-wrap gap-x-3.5 gap-y-1.5">
@@ -184,7 +189,7 @@ function PanelHeadline({ panel, days, prevDays, range, lookup, todayCob, wide }:
 
 const LINE_LABEL = { fontSize: 10, fontFamily: TICK.fontFamily, fill: 'var(--ui-ink)', stroke: 'var(--ui-surface)', strokeWidth: 3, paintOrder: 'stroke' }
 
-export function ChartPanelView({ panel, panels, days, prevDays = [], range, lookup, todayCob, height, first, compact, interactive = true }: ChartPanelProps) {
+export function ChartPanelView({ panel, panels, days, prevDays = [], range, lookup, todayCob, height, first, compact, interactive = true, periods = [] }: ChartPanelProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const stripes = `stripes-${useId().replace(/[^a-zA-Z0-9]/g, '')}`
@@ -192,6 +197,7 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], range, look
   const toggle = (i: number) => setHidden((h) => { const n = new Set(h); if (!n.delete(i)) n.add(i); return n })
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const rows = chartRows(panel, days, lookup)
+  const bands = periodBands(periods, days)
   const thin = days.length > THIN_FROM
   const marks = panel.series.map((s) => s.mark)
   const placement = barPlacement(marks.map(asTrace), panel.bar_layout)
@@ -266,6 +272,7 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], range, look
             <YAxis width={44} domain={clock ? [lo, hi] : floored ? [fromHour * 60, topHour * 60] : [0, 'auto']} allowDataOverflow={floored}
               tickFormatter={yTick}
               {...(clock ? { ticks: hourTicks, interval: 0 as const } : panel.format === 'Duration' ? { ticks: durationTicks, interval: 0 as const } : {})} {...AXIS} />
+            <PeriodAreas bands={bands} />
             {panel.series.map((s, i) => {
               if (hidden.has(i)) return null
               const colour = seriesColour(s, i, panel.bar_layout)
@@ -326,7 +333,7 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], range, look
           <p className="absolute inset-0 flex items-center justify-center pb-6 text-sm font-extrabold text-ui-ink">{t('insights.noData')}</p>
         )}
       </div>
-      <PanelLegend panel={panel} first={first} lookup={lookup} hidden={hidden} onToggle={toggle} />
+      <PanelLegend panel={panel} first={first} lookup={lookup} hidden={hidden} onToggle={toggle} bands={bands.length > 0} />
     </section>
   )
 }
