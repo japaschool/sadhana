@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { durationPanels, gapsPanels, japaPanels, sleepPanels } from './panels/templates'
 
-type Dict = { insights?: Record<string, string>; reportPanels?: Record<string, string>; templateForm?: Record<string, string> }
+type Dict = { insights?: Record<string, string> & { overview?: Record<string, string> }; reportPanels?: Record<string, string>; templateForm?: Record<string, string> }
 const files = import.meta.glob<Dict>('../../../public/locales/*/translation.json', { eager: true, import: 'default' })
 
 const KEYS = [
@@ -18,6 +18,15 @@ describe('insights.* translations', () => {
     for (const [path, dict] of Object.entries(files)) {
       for (const k of KEYS) expect(dict.insights?.[k], `${path} insights.${k}`).toBeTruthy()
     }
+  })
+})
+
+describe('insights.overview.* translations', () => {
+  it('has the same keys in en, ru and uk, plural forms aside', () => {
+    const base = (d: Dict) => [...new Set(Object.keys(d.insights?.overview ?? {}).map((k) => k.replace(/_(one|few|many|other)$/, '')))].sort()
+    const dicts = Object.values(files)
+    expect(base(dicts[0]).length).toBeGreaterThan(40)
+    for (const d of dicts) expect(base(d)).toEqual(base(dicts[0]))
   })
 })
 
