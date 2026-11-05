@@ -471,6 +471,30 @@
       "sleep": "Відбій і підйом",
       "deleteTitle": "Видалити «{{name}}»?",
       "deleteText": "Період і його смуги на графіках буде видалено. Ваші відмічені дні залишаться як є."
+    },
+    "period": {
+      "chip_progress": "Триває",
+      "chip_settling": "Ще стабілізується",
+      "chipBack_one": "Як зазвичай через {{count}} день",
+      "chipBack_few": "Як зазвичай через {{count}} дні",
+      "chipBack_many": "Як зазвичай через {{count}} днів",
+      "chipBack_other": "Як зазвичай через {{count}} дня",
+      "chip_different": "Досі відрізняється",
+      "overlaps": "Перетинається: {{names}}",
+      "open": "Відкрити",
+      "row": "Рядок",
+      "before": "До",
+      "during": "Під час",
+      "after": "Після",
+      "eachRow": "Кожен рядок",
+      "footnote": "«До» — ваша звичайна норма на початок періоду. «Після» — до 4 тижнів від дня завершення.",
+      "dateLine_one": "{{dates}} · {{count}} день",
+      "dateLine_few": "{{dates}} · {{count}} дні",
+      "dateLine_many": "{{dates}} · {{count}} днів",
+      "dateLine_other": "{{dates}} · {{count}} дня",
+      "average": "Середнє за 7 днів",
+      "notFound": "Цього періоду вже немає.",
+      "detailsOf": "До, під час і після: {{name}}"
     }
   },
   "yatraSettings": {

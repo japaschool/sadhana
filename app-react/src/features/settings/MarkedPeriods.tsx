@@ -1,11 +1,14 @@
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useMarkedPeriods, type MarkedPeriod } from '../../api/markedPeriods'
 import { UiLoading } from '../../layouts/ByLayout'
 import { formatDay } from '../insights/insightsLogic'
+import { hasDetail } from '../insights/overview/bda'
 import { OpenPeriodCard } from '../insights/overview/OpenPeriodCard'
 import { PeriodSheet } from '../insights/overview/PeriodSheet'
 import { useOverview } from '../insights/overview/useOverview'
 import { useOverviewActions } from '../insights/overview/useOverviewActions'
+import { toDateStr } from '../today/date'
 import { AddPill, ROWS, SettingsSubpage } from './SettingsSubpage'
 
 /** /settings/periods: every marked period, to open, change or delete (16m9). */
@@ -15,6 +18,7 @@ export function MarkedPeriods() {
   const actions = useOverviewActions(useOverview())
   const { sheet, setSheet, openPeriodProps } = actions
   const locale = i18n.language || 'en'
+  const todayCob = toDateStr(new Date())
   const dates = (p: MarkedPeriod) => p.end_date
     ? `${formatDay(p.start_date, locale, true)} – ${formatDay(p.end_date, locale, true)}`
     : t('insights.periods.ongoing', { date: formatDay(p.start_date, locale) })
@@ -30,8 +34,8 @@ export function MarkedPeriods() {
       {isLoading ? <UiLoading /> : (
         <ul aria-label={t('insights.periods.yours')} className={ROWS}>
           {periods.map((p) => (
-            <li key={p.id} className="bg-ui-surface">
-              <button type="button" onClick={() => setSheet({ period: p })} className="flex min-h-[52px] w-full flex-col gap-0.5 px-4 py-3 text-left">
+            <li key={p.id} className="flex items-stretch bg-ui-surface">
+              <button type="button" onClick={() => setSheet({ period: p })} className="flex min-h-[52px] min-w-0 flex-1 flex-col gap-0.5 px-4 py-3 text-left">
                 <span className="flex items-center gap-2">
                   <span className="min-w-0 truncate text-[15px] font-semibold text-ui-ink">{p.name}</span>
                   {!p.end_date && (
@@ -42,6 +46,12 @@ export function MarkedPeriods() {
                   {dates(p)} · {t(p.exclude_from_usual ? 'insights.periods.leftOut' : 'insights.periods.counted')}
                 </span>
               </button>
+              {hasDetail(p, todayCob) && (
+                <Link to={`/insights/period/${p.id}`} aria-label={t('insights.period.detailsOf', { name: p.name })}
+                  className="flex min-w-11 shrink-0 items-center justify-center pr-2 text-sm font-bold text-ui-accent">
+                  {t('insights.period.open')}
+                </Link>
+              )}
             </li>
           ))}
         </ul>

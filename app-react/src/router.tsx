@@ -26,6 +26,7 @@ const PracticesMobileScreen = lazy(() => import('./features/practices/mobile/Pra
 const PracticesWide = lazy(() => import('./features/practices/wide/PracticesWide').then((m) => ({ default: m.PracticesWide })))
 const ChartsSettings = lazy(() => import('./features/settings/SettingsLists').then((m) => ({ default: m.ChartsSettings })))
 const MarkedPeriods = lazy(() => import('./features/settings/MarkedPeriods').then((m) => ({ default: m.MarkedPeriods })))
+const PeriodDetail = lazy(() => import('./features/insights/overview/PeriodDetail').then((m) => ({ default: m.PeriodDetail })))
 const YatrasSettings = lazy(() => import('./features/settings/SettingsLists').then((m) => ({ default: m.YatrasSettings })))
 const GuideScreen = lazy(() => import('./features/guide/GuideScreen').then((m) => ({ default: m.GuideScreen })))
 const PracticeEditorMobile = lazy(() => import('./features/yatras/settings/mobile/PracticeEditorMobile').then((m) => ({ default: m.PracticeEditorMobile })))
@@ -125,6 +126,7 @@ export const router = createBrowserRouter([
       { path: '/user/practice/:id/edit', element: <ToPracticeSettings /> },
       { path: '/settings/charts', element: ui(<ChartsSettings />) },
       { path: '/settings/periods', element: ui(<MarkedPeriods />) },
+      { path: '/insights/period/:id', element: ui(<PeriodDetail />) },
       { path: '/settings/yatras', element: ui(<YatrasSettings />) },
       { path: '/charts/:id/edit', element: <ToChartSettings /> },
       { path: '/settings/charts/new/:template', element: ui(<NewTemplateScreen />) },
