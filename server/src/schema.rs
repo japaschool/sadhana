@@ -71,6 +71,20 @@ diesel::table! {
 }
 
 diesel::table! {
+    marked_periods (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        #[max_length = 100]
+        name -> Varchar,
+        start_date -> Date,
+        end_date -> Nullable<Date>,
+        exclude_from_usual -> Bool,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     practice_groups (id) {
         id -> Uuid,
         user_id -> Uuid,
@@ -193,6 +207,7 @@ diesel::table! {
 diesel::joinable!(diary -> user_practices (practice_id));
 diesel::joinable!(diary -> users (user_id));
 diesel::joinable!(guide_runs -> users (user_id));
+diesel::joinable!(marked_periods -> users (user_id));
 diesel::joinable!(practice_groups -> users (user_id));
 diesel::joinable!(report_traces -> reports (report_id));
 diesel::joinable!(report_traces -> user_practices (practice_id));
@@ -210,6 +225,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     default_user_practices,
     diary,
     guide_runs,
+    marked_periods,
     practice_groups,
     report_traces,
     reports,

@@ -1,5 +1,6 @@
 pub mod diary;
 pub mod guide;
+pub mod marked_periods;
 pub mod oauth;
 pub mod practice_groups;
 pub mod report;

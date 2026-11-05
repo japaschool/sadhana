@@ -173,6 +173,16 @@ fn api_scope() -> impl HttpServiceFactory {
                 .route("", web::get().to(app::shared::get_shared_report_data)),
         )
         .service(
+            web::scope("/marked-periods")
+                .route("", web::get().to(app::marked_periods::list_periods))
+                .route("", web::post().to(app::marked_periods::create_period)),
+        )
+        .service(
+            web::scope("/marked-period/{id}")
+                .route("", web::put().to(app::marked_periods::update_period))
+                .route("", web::delete().to(app::marked_periods::delete_period)),
+        )
+        .service(
             web::scope("/yatras")
                 .route("", web::post().to(app::yatras::create_yatra))
                 .route("", web::get().to(app::yatras::user_yatras)),
