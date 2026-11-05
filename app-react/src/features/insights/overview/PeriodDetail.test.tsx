@@ -56,5 +56,6 @@ describe('PeriodDetail', () => {
     current = period(300, 290)
     show()
     await waitFor(() => expect(getReportData).toHaveBeenCalledWith(today, 'AllData'))
+    expect(getReportData).not.toHaveBeenCalledWith(today, 'Year')
   })
 })
