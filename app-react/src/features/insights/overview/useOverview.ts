@@ -40,11 +40,12 @@ export function useOverview() {
       if (active(stored.bedtime) && active(stored.wake)) {
         return { ...stored, nap: stored.nap && active(stored.nap) ? stored.nap : null }
       }
+      return null // a stale choice: Sleep disappears and the sheet asks again
     }
     return sleepRowsFor(reports, practices)
   }, [prefs.sleep, timePractices, reports, practices])
 
-  const askSleep = !sleep && prefs.sleep !== 'skip' && timePractices.length >= 2
+  const askSleep = !reportsQ.isLoading && !practicesQ.isLoading && !sleep && prefs.sleep !== 'skip' && timePractices.length >= 2
 
   const rows = useMemo(() => insightRows(practices, sleep), [practices, sleep])
   const series = useMemo(() => rowSeries(rows, entries, practices, sleep, todayCob), [rows, entries, practices, sleep, todayCob])
