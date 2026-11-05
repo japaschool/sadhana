@@ -416,7 +416,8 @@
       "wake": "Wake-up",
       "timePractice": "A time-of-day practice",
       "skip": "Skip for now",
-      "skipHint": "If you skip, Sleep stays off. Change it any time in Settings › Insights."
+      "skipHint": "If you skip, Sleep stays off. Change it any time in Settings › Insights.",
+      "choose": "Choose…"
     }
   },
   "yatraSettings": {

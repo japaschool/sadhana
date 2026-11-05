@@ -34,17 +34,25 @@ export function percentile(sorted: number[], q: number): number {
   return sorted[lo] + (sorted[hi] - sorted[lo]) * (rank - lo)
 }
 
-/** The usual range as if `cob` were today: up to 90 kept days ending a week before it. */
-export function usualAt(series: Series, cob: string, leftOut: Set<string>): Usual | null {
+/** The days a usual range is drawn from as if `cob` were today: up to 90 kept days ending a week before it, reaching back up to a year. */
+function usualDays(cob: string, leftOut: Set<string>): string[] {
   const oldest = shift(cob, -MAX_LOOKBACK)
-  const values: number[] = []
-  let kept = 0
-  for (let d = shift(cob, -7); d >= oldest && kept < USUAL_DAYS; d = shift(d, -1)) {
-    if (leftOut.has(d)) continue
-    kept++
-    const v = series.get(d)
-    if (v !== undefined) values.push(v)
+  const out: string[] = []
+  for (let d = shift(cob, -7); d >= oldest && out.length < USUAL_DAYS; d = shift(d, -1)) {
+    if (!leftOut.has(d)) out.push(d)
   }
+  return out
+}
+
+/** Logged days inside today's usual window: what unlocks Me vs my normal at 14. */
+export function usualWindowCount(logged: string[], todayCob: string, leftOut: Set<string>): number {
+  const set = new Set(logged)
+  return usualDays(todayCob, leftOut).filter((d) => set.has(d)).length
+}
+
+/** The usual range as if `cob` were today. */
+export function usualAt(series: Series, cob: string, leftOut: Set<string>): Usual | null {
+  const values = usualDays(cob, leftOut).flatMap((d) => (series.has(d) ? [series.get(d)!] : []))
   if (values.length < MIN_USUAL) return null
   values.sort((a, b) => a - b)
   return { median: percentile(values, 0.5), p25: percentile(values, 0.25), p75: percentile(values, 0.75), n: values.length }

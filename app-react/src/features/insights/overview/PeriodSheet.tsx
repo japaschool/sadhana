@@ -11,8 +11,10 @@ export const NAME_MAX = 100
 const LABEL = 'text-[13px] font-bold text-ui-muted'
 
 /** New or edit a marked period (16m10). `focusEnd` opens with End focused, for "It ended on…". */
-export function PeriodSheet({ period, prefill, focusEnd, onClose }: {
+export function PeriodSheet({ period, prefill, focusEnd, onClose, onSaved }: {
   period?: MarkedPeriod; prefill?: Partial<MarkedPeriodForm>; focusEnd?: boolean; onClose: () => void
+  /** After a successful save, before closing. */
+  onSaved?: (form: MarkedPeriodForm) => void
 }) {
   const { t } = useTranslation()
   const save = useSavePeriod()
@@ -36,7 +38,8 @@ export function PeriodSheet({ period, prefill, focusEnd, onClose }: {
   function submit() {
     if (!valid) return
     setFailed(false)
-    save.mutate({ id: period?.id, form: { name: trimmed, start_date: start, end_date: end || null, exclude_from_usual: exclude } }, done)
+    const form = { name: trimmed, start_date: start, end_date: end || null, exclude_from_usual: exclude }
+    save.mutate({ id: period?.id, form }, { ...done, onSuccess: () => { onSaved?.(form); onClose() } })
   }
 
   const title = period ? period.name : t('insights.overview.newPeriod')
