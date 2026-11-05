@@ -11,6 +11,8 @@ vi.mock('../../../api/charts', () => ({
 vi.mock('../../../api/practices', () => ({
   practicesApi: { getUserPractices: vi.fn(), getIncompleteDays: vi.fn(), getDiaryEntries: vi.fn(), saveDiaryEntry: vi.fn(), getGroups: vi.fn() },
 }))
+// The screen opens on Overview, which reads marked periods.
+vi.mock('../../../api/markedPeriods', () => ({ useMarkedPeriods: () => ({ periods: [], isLoading: false }) }))
 import { chartsApi } from '../../../api/charts'
 import { practicesApi } from '../../../api/practices'
 const charts = vi.mocked(chartsApi)
@@ -22,13 +24,17 @@ function LocationProbe() {
 }
 const LONG = 'Morning sadhana with a very long report name'
 
+const toCharts = () => fireEvent.click(screen.getByRole('radio', { name: 'Charts' }))
+
 function renderScreen() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(
+  const r = render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={['/charts']}><InsightsMobileScreen /></MemoryRouter>
     </QueryClientProvider>,
   )
+  toCharts()
+  return r
 }
 
 // The ▾ is aria-hidden, so the link's accessible name is just the report name.
@@ -151,6 +157,7 @@ describe('InsightsMobile', () => {
         </MemoryRouter>
       </QueryClientProvider>,
     )
+    toCharts()
     await screen.findByRole('button', { name: LONG })
     await openMore()
     expect(screen.getByRole('menuitem', { name: 'Delete report' })).toBeInTheDocument()

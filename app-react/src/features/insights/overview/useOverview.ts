@@ -62,6 +62,6 @@ export function useOverview() {
     isLoading: dataQ.isLoading || practicesQ.isLoading || reportsQ.isLoading,
     isError: failedWithoutData(dataQ) || failedWithoutData(practicesQ) || failedWithoutData(reportsQ),
     todayCob, rows, series, logged, normal, regular, suggestion, openPeriod, periods,
-    sleep, askSleep, timePractices, prefs, setPrefs,
+    sleep, askSleep, timePractices, practices, prefs, setPrefs,
   }
 }

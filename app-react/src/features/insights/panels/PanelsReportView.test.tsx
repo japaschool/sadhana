@@ -32,6 +32,7 @@ vi.mock('../../../api/charts', () => ({
 vi.mock('../../../api/practices', () => ({
   practicesApi: { getUserPractices: vi.fn(), getIncompleteDays: vi.fn(), getDiaryEntries: vi.fn(), saveDiaryEntry: vi.fn() },
 }))
+vi.mock('../../../api/markedPeriods', () => ({ useMarkedPeriods: () => ({ periods: [], isLoading: false }) }))
 import { chartsApi } from '../../../api/charts'
 import { practicesApi } from '../../../api/practices'
 
@@ -433,6 +434,7 @@ describe('panels reports on each screen', () => {
   it('mobile', async () => {
     setViewportWidth(390)
     renderAt(<InsightsMobileScreen />)
+    fireEvent.click(screen.getByRole('radio', { name: 'Charts' }))
     await figures()
     hidesGeneric()
   })
