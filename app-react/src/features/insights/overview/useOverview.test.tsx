@@ -70,6 +70,23 @@ describe('useOverview', () => {
     expect(r.result.current.askSleep).toBe(true)
   })
 
+  it('stale_choice_ignores_report_and_default_names', async () => {
+    practices.getUserPractices.mockResolvedValue(FOUR)
+    charts.getReports.mockResolvedValue([SLEEP_REPORT('bed', 'wake')])
+    localStorage.setItem('sadhana.insights', JSON.stringify({ sleep: { bedtime: 'gone', wake: 'wake', nap: null } }))
+    const r = setup(); await load(r)
+    expect(hasSleep(r)).toBe(false)
+    expect(r.result.current.askSleep).toBe(true)
+  })
+
+  it('inactive_nap_is_dropped', async () => {
+    practices.getUserPractices.mockResolvedValue([...OTHER, practice('n', 'Nap', 'Time', { is_active: false })])
+    localStorage.setItem('sadhana.insights', JSON.stringify({ sleep: { bedtime: 'a', wake: 'b', nap: 'n' } }))
+    const r = setup(); await load(r)
+    expect(hasSleep(r)).toBe(true)
+    expect(r.result.current.askSleep).toBe(false)
+  })
+
   it('skip_hides_sleep_without_asking', async () => {
     practices.getUserPractices.mockResolvedValue(FOUR)
     localStorage.setItem('sadhana.insights', JSON.stringify({ sleep: 'skip' }))
