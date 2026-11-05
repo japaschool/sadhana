@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { chartsApi } from '../../../api/charts'
-import type { SleepRows } from '../../../api/charts'
+import type { Report, SleepRows } from '../../../api/charts'
+import type { UserPractice } from '../../../types/api'
 import { useMarkedPeriods } from '../../../api/markedPeriods'
 import { practicesApi } from '../../../api/practices'
 import { failedWithoutData } from '../../../api/queryState'
@@ -14,6 +15,19 @@ import { detectChange, openPeriodToAsk } from './suggest'
 import { isRegular, meVsNormal } from './usual'
 
 const NONE: never[] = []
+
+/** The Time practices that make up calculated Sleep: the stored choice, else a guess; null when skipped, stale or not found. */
+export function resolveSleep(stored: SleepRows | 'skip' | null, practices: UserPractice[], reports: Report[]): SleepRows | null {
+  if (stored === 'skip') return null
+  if (stored) {
+    const active = (id: string) => practices.some((p) => p.id === id && p.is_active && p.data_type === 'Time')
+    if (active(stored.bedtime) && active(stored.wake)) {
+      return { ...stored, nap: stored.nap && active(stored.nap) ? stored.nap : null }
+    }
+    return null // a stale choice: Sleep disappears and the sheet asks again
+  }
+  return sleepRowsFor(reports, practices)
+}
 
 /** Everything the Overview shows, from the year of data to today. Shares its cache entries with useInsights. */
 export function useOverview() {
@@ -32,18 +46,7 @@ export function useOverview() {
 
   const timePractices = useMemo(() => practices.filter((p) => p.is_active && p.data_type === 'Time'), [practices])
 
-  const sleep = useMemo<SleepRows | null>(() => {
-    const stored = prefs.sleep
-    if (stored === 'skip') return null
-    if (stored) {
-      const active = (id: string) => timePractices.some((p) => p.id === id)
-      if (active(stored.bedtime) && active(stored.wake)) {
-        return { ...stored, nap: stored.nap && active(stored.nap) ? stored.nap : null }
-      }
-      return null // a stale choice: Sleep disappears and the sheet asks again
-    }
-    return sleepRowsFor(reports, practices)
-  }, [prefs.sleep, timePractices, reports, practices])
+  const sleep = useMemo(() => resolveSleep(prefs.sleep, practices, reports), [prefs.sleep, practices, reports])
 
   const askSleep = !reportsQ.isPending && !practicesQ.isPending && !sleep && prefs.sleep !== 'skip' && timePractices.length >= 2
 

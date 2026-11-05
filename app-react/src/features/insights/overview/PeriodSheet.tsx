@@ -5,7 +5,7 @@ import { BottomSheet } from '../../../ui/primitives/BottomSheet'
 import { Toggle } from '../../../ui/primitives/Toggle'
 import { toDateStr } from '../../today/date'
 import { BTN, FIELD, HINT } from '../../yatras/settings/mobile/AdminPage'
-import { SheetHeader } from '../../yatras/settings/mobile/fields'
+import { ConfirmSheet, SheetHeader } from '../../yatras/settings/mobile/fields'
 
 export const NAME_MAX = 100
 const LABEL = 'text-[13px] font-bold text-ui-muted'
@@ -25,6 +25,7 @@ export function PeriodSheet({ period, prefill, focusEnd, onClose, onSaved }: {
   const [end, setEnd] = useState(init.end_date ?? '')
   const [exclude, setExclude] = useState(init.exclude_from_usual ?? true)
   const [failed, setFailed] = useState(false)
+  const [confirming, setConfirming] = useState(false)
   const endRef = useRef<HTMLInputElement>(null)
 
   // After BottomSheet focuses itself: a parent's effect runs after its children's.
@@ -49,13 +50,14 @@ export function PeriodSheet({ period, prefill, focusEnd, onClose, onSaved }: {
       <button type="button" onClick={submit} disabled={!valid || busy} aria-busy={save.isPending}
         className={`${BTN} w-full bg-ui-accent-fill text-ui-ink disabled:opacity-50`}>{t('insights.overview.savePeriod')}</button>
       {period && (
-        <button type="button" disabled={busy} onClick={() => { setFailed(false); remove.mutate(period.id, done) }}
+        <button type="button" disabled={busy} onClick={() => setConfirming(true)}
           className={`${BTN} w-full text-ui-danger disabled:opacity-50`}>{t('common.delete')}</button>
       )}
     </div>
   )
 
   return (
+    <>
     <BottomSheet label={title} onClose={onClose} footer={footer}>
       <SheetHeader title={title} onClose={onClose} />
       <div className="flex flex-col gap-1.5">
@@ -85,5 +87,11 @@ export function PeriodSheet({ period, prefill, focusEnd, onClose, onSaved }: {
         <Toggle checked={exclude} onChange={setExclude} label={t('insights.overview.leaveOut')} describedBy="period-exclude-hint" />
       </div>
     </BottomSheet>
+    {period && confirming && (
+      <ConfirmSheet title={t('insights.periods.deleteTitle', { name: period.name })} text={t('insights.periods.deleteText')}
+        confirm={t('common.delete')} busy={remove.isPending} onClose={() => setConfirming(false)}
+        onConfirm={() => { setFailed(false); remove.mutate(period.id, { onSuccess: onClose, onError: () => { setConfirming(false); setFailed(true) } }) }} />
+    )}
+    </>
   )
 }
