@@ -6,8 +6,6 @@ import { CartesianGrid, ComposedChart, Area, Line, ResponsiveContainer, Tooltip,
 import { chartsApi } from '../../../api/charts'
 import { useMarkedPeriods } from '../../../api/markedPeriods'
 import type { MarkedPeriod } from '../../../api/markedPeriods'
-import { practicesApi } from '../../../api/practices'
-import { failedWithoutData } from '../../../api/queryState'
 import { UiLoading } from '../../../layouts/ByLayout'
 import { SettingsSubpage } from '../../settings/SettingsSubpage'
 import { toDateStr } from '../../today/date'
@@ -16,41 +14,24 @@ import { AXIS, PeriodAreas, PeriodKey, tipDate, TipRow, TipShell } from '../mobi
 import { periodBands } from '../periodBands'
 import type { RowKind } from '../panels/gapLogic'
 import { clockText } from '../panels/panelLogic'
-import { useReports } from '../useReports'
 import { beforeDuringAfter, changedMost, movingAverage, periodLength } from './bda'
 import type { Bda } from './bda'
 import { Overlaps, StatusChip, chipText } from './BdaCard'
 import { rowName, rowValueText } from './format'
-import { useInsightPrefs } from './prefs'
-import { insightRows, rowSeries } from './series'
 import type { Series } from './series'
+import { useInsightRows } from './useInsightRows'
 import { leftOutDays, shift, usualAt } from './usual'
-import { resolveSleep } from './useOverview'
 
-const NONE: never[] = []
 const YEAR = 365
 /** Report data reaches back about this far from today beyond the Year window before it stops covering a period. */
 const YEAR_REACH = 97
 
 /** The data a period's detail needs: Year, or all data when the period began before Year's reach. */
 function usePeriodData(period: MarkedPeriod | undefined, todayCob: string) {
-  const [prefs] = useInsightPrefs()
-  const reportsQ = useReports()
-  const practicesQ = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices })
   const old = !!period && period.start_date < shift(todayCob, -YEAR + YEAR_REACH)
   const yearQ = useQuery({ queryKey: ['report-data', todayCob, 'Year'], queryFn: () => chartsApi.getReportData(todayCob, 'Year'), enabled: !old })
   const allQ = useQuery({ queryKey: ['report-data', todayCob, 'AllData'], queryFn: () => chartsApi.getReportData(todayCob, 'AllData'), enabled: old })
-  const dataQ = old ? allQ : yearQ
-  const practices = practicesQ.data ?? NONE
-  const entries = dataQ.data ?? NONE
-  const sleep = useMemo(() => resolveSleep(prefs.sleep, practices, reportsQ.data ?? NONE), [prefs.sleep, practices, reportsQ.data])
-  const rows = useMemo(() => insightRows(practices, sleep), [practices, sleep])
-  const series = useMemo(() => rowSeries(rows, entries, practices, sleep, todayCob), [rows, entries, practices, sleep, todayCob])
-  return {
-    rows, series, practices, old,
-    isLoading: dataQ.isLoading || practicesQ.isLoading || reportsQ.isLoading,
-    isError: failedWithoutData(dataQ) || failedWithoutData(practicesQ) || failedWithoutData(reportsQ),
-  }
+  return useInsightRows(old ? allQ : yearQ, todayCob)
 }
 
 interface Point { d: string; avg: number | null; range: [number, number] | null; median: number | null }
@@ -74,8 +55,8 @@ function RowChart({ series, periods, todayCob, from, kind, label }: {
   }, [series, periods, todayCob, from])
   const text = (v: number) => rowValueText(kind, v, units)
   return (
-    <div role="img" aria-label={label} className="flex flex-col gap-2.5">
-      <div className="h-[220px] w-full">
+    <div className="flex flex-col gap-2.5">
+      <div role="img" aria-label={label} className="h-[220px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid vertical={false} stroke="var(--ui-hairline)" />

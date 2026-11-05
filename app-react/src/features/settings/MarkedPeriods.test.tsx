@@ -42,6 +42,15 @@ beforeEach(() => {
 afterEach(() => localStorage.clear())
 
 describe('Marked periods', () => {
+  it('detail_link_only_for_periods_of_3_days_or_more', async () => {
+    const single: MarkedPeriod = { id: 'p4', name: 'One day', start_date: '2026-10-20', end_date: '2026-10-20', exclude_from_usual: true }
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { periods: [retreat, single] } })
+    renderPage()
+    const rows = within(await screen.findByRole('list', { name: 'Your periods' })).getAllByRole('listitem')
+    expect(within(rows[0]).getByRole('link')).toHaveAttribute('href', '/insights/period/p3')
+    expect(within(rows[1]).queryByRole('link')).toBeNull()
+  })
+
   it('periods_list_shows_status_and_usual_flag', async () => {
     renderPage()
     const list = await screen.findByRole('list', { name: 'Your periods' })
