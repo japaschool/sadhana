@@ -29,6 +29,8 @@ import { useOverview } from './useOverview'
 import { OverviewMobile } from './OverviewMobile'
 import { PeriodSheet } from './PeriodSheet'
 import { InsightsMobileScreen } from '../mobile/InsightsMobile'
+import { InsightsTabletScreen } from '../tablet/InsightsTablet'
+import { InsightsDesktopScreen } from '../desktop/InsightsDesktop'
 
 const T = (h: number, m: number) => ({ Time: { h, m } })
 const day = (offset: number, from = TODAY) => toDateStr(addDays(fromDateStr(from), offset))
@@ -263,6 +265,31 @@ describe('Overview (mobile)', () => {
     expect(screen.getByRole('region', { name: 'Me vs my normal' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('radio', { name: 'Charts' }))
     expect(await screen.findByRole('button', { name: /^All practices/ })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Me vs my normal' })).toBeNull()
+  })
+})
+
+describe.each([['tablet', 834, InsightsTabletScreen], ['desktop', 1440, InsightsDesktopScreen]] as const)('Overview (%s)', (_name, width, Screen) => {
+  it('opens_on_overview_with_columns_and_switches_to_charts', async () => {
+    setViewportWidth(width)
+    overview(steady(() => ({ 'Отбой': T(21, 45), 'Подъём': T(3, 25), 'Кругов за день': 22, 'Кругов до 7': 8 })), { suggestion: { start: '2026-10-25', rows: ['wake', 'bed'] } })
+    wrap(<Screen />)
+    expect(screen.getByRole('radio', { name: 'Overview' })).toHaveAttribute('aria-checked', 'true')
+    const card = screen.getByRole('region', { name: 'Me vs my normal' })
+    expect(within(card).getByRole('group', { name: 'Подъём' })).toHaveTextContent('03:25')
+    expect(within(card).getByText('Now')).toBeInTheDocument() // the columns header
+    expect(screen.getByText('Something changed around Oct 25. Want to name it?')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Year map/ })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('radio', { name: 'Charts' }))
+    expect(await screen.findByRole('button', { name: /^All practices/ })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Me vs my normal' })).toBeNull()
+  })
+
+  it('less_regular_shows_days_practised', () => {
+    setViewportWidth(width)
+    overview({ [day(-3)]: { 'Подъём': T(6, 10) } })
+    wrap(<Screen />)
+    expect(screen.getByRole('region', { name: 'Days practised' })).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Me vs my normal' })).toBeNull()
   })
 })

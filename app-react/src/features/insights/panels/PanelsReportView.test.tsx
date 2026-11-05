@@ -442,6 +442,7 @@ describe('panels reports on each screen', () => {
   it('tablet', async () => {
     setViewportWidth(834)
     renderAt(<InsightsTabletScreen />)
+    fireEvent.click(screen.getByRole('radio', { name: 'Charts' }))
     await figures()
     hidesGeneric()
   })
