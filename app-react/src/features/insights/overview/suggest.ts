@@ -14,6 +14,10 @@ const MIN_BASE = 14
 const MIN_ROWS_OUT = 2
 const MIN_RUN = 3
 const FRESH_DAYS = 14
+const MEDIAN_Q = 0.5
+const LOW_Q = 0.1
+const HIGH_Q = 0.9
+const ASK_EVERY_DAYS = 30
 
 function valuesIn(s: Series, from: string, to: string): number[] {
   const out: number[] = []
@@ -33,8 +37,8 @@ function rowsOutOn(d: string, rows: InsightRow[], series: Map<string, Series>): 
     const recent = valuesIn(s, shift(d, -(RECENT_DAYS - 1)), d)
     const base = valuesIn(s, shift(d, -(RECENT_DAYS - 1 + BASE_DAYS)), shift(d, -RECENT_DAYS))
     if (recent.length < MIN_RECENT || base.length < MIN_BASE) continue
-    const m = percentile(recent, 0.5)
-    if (m < percentile(base, 0.1) || m > percentile(base, 0.9)) out.push(row.key)
+    const m = percentile(recent, MEDIAN_Q)
+    if (m < percentile(base, LOW_Q) || m > percentile(base, HIGH_Q)) out.push(row.key)
   }
   return out
 }
@@ -45,7 +49,7 @@ export function detectChange(
   dismissed: string[], todayCob: string,
 ): Suggestion | null {
   if (logged.length < MIN_LOGGED) return null
-  const first = logged[MIN_LOGGED - 1]
+  const first = [...logged].sort()[MIN_LOGGED - 1]
   const runs: { days: string[]; out: Set<string> }[] = []
   let cur: { days: string[]; out: Set<string> } | null = null
   for (let d = shift(todayCob, -SCAN_DAYS); d <= todayCob; d = shift(d, 1)) {
@@ -70,6 +74,6 @@ export function detectChange(
 export function openPeriodToAsk(
   periods: MarkedPeriod[], openAsked: Record<string, string>, todayCob: string,
 ): MarkedPeriod | null {
-  const cutoff = shift(todayCob, -30)
+  const cutoff = shift(todayCob, -ASK_EVERY_DAYS)
   return periods.find((p) => p.end_date === null && p.start_date <= cutoff && (!openAsked[p.id] || openAsked[p.id] <= cutoff)) ?? null
 }

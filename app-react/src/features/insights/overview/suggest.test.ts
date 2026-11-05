@@ -11,8 +11,21 @@ const rows: InsightRow[] = [
   { key: 'rounds', kind: 'Count', practice: 'rounds', special: null },
   { key: 'bed', kind: 'Clock', practice: 'bed', special: null },
 ]
-/** Deterministic noise in -1..1. */
-const noise = (i: number) => ((i * 7) % 5) / 2 - 1
+/** Seeded noise in -1..1 (mulberry32), aperiodic. */
+const rand = (() => {
+  let a = 12345
+  return () => {
+    a = (a + 0x6d2b79f5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+})()
+const noiseAt = new Map<number, number>()
+const noise = (i: number) => {
+  if (!noiseAt.has(i)) noiseAt.set(i, rand() * 2 - 1)
+  return noiseAt.get(i)!
+}
 const WAKE = 980 // 4:20 as minutes after noon
 
 function build(days: number, shiftFrom: number | null, moving: string[] = ['wake', 'rounds']) {
