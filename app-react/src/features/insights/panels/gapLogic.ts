@@ -71,7 +71,7 @@ export interface AroundLine { row: AroundRow; kind: RowKind; usual: number | nul
 const mean = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / xs.length
 const EPS = 1e-9
 
-function stepOf(z: number): Step {
+export function stepOf(z: number): Step {
   const a = Math.abs(z) + EPS
   const n = a >= 1 ? 3 : a >= 0.6 ? 2 : a >= 0.3 ? 1 : 0
   return (n === 0 ? 0 : Math.sign(z) * n) as Step
