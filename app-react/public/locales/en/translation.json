@@ -455,6 +455,33 @@
       "average": "7-day average",
       "notFound": "This period isn’t here any more.",
       "detailsOf": "Before, during and after: {{name}}"
+    },
+    "yearMap": {
+      "title": "Year map",
+      "subtitle": "Each week against your usual · last {{n}} weeks",
+      "grid": "Weeks against your usual",
+      "weekOf": "Week of {{date}} · {{n}} of 7 days",
+      "avg": "avg {{avg}} · usual {{usual}}",
+      "steps": "{{word}} · {{k}} of 3 steps",
+      "inPeriods": "In {{names}}",
+      "earlier": "Earlier · above",
+      "later": "Later · below",
+      "noDays": "No days logged",
+      "explain": "Each cell is one week’s average against your usual, up to 3 steps either way. Tap or hover a cell for its numbers.",
+      "phone": "Turn the phone or open on a larger screen for 52 weeks.",
+      "cell": "Week of {{date}}, {{row}}: {{detail}}"
+    },
+    "rhythm": {
+      "title": "Rhythm fingerprint",
+      "intro": "Average for each weekday over the last 6 months. Tint shows how far a day sits from that row’s typical day.",
+      "grid": "Average for each weekday",
+      "typical": "typical {{v}}",
+      "above": "Above",
+      "below": "Below",
+      "noDays": "No days logged",
+      "footnote": "Rows come from your number and duration practices.",
+      "notYet": "Your rhythm shows up after 8 weeks of entries.",
+      "cell": "{{row}}, {{day}}: {{value}}"
     }
   },
   "yatraSettings": {
