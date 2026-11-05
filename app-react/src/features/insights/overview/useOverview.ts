@@ -45,7 +45,7 @@ export function useOverview() {
     return sleepRowsFor(reports, practices)
   }, [prefs.sleep, timePractices, reports, practices])
 
-  const askSleep = !reportsQ.isLoading && !practicesQ.isLoading && !sleep && prefs.sleep !== 'skip' && timePractices.length >= 2
+  const askSleep = !reportsQ.isPending && !practicesQ.isPending && !sleep && prefs.sleep !== 'skip' && timePractices.length >= 2
 
   const rows = useMemo(() => insightRows(practices, sleep), [practices, sleep])
   const series = useMemo(() => rowSeries(rows, entries, practices, sleep, todayCob), [rows, entries, practices, sleep, todayCob])
@@ -62,6 +62,6 @@ export function useOverview() {
     isLoading: dataQ.isLoading || practicesQ.isLoading || reportsQ.isLoading,
     isError: failedWithoutData(dataQ) || failedWithoutData(practicesQ) || failedWithoutData(reportsQ),
     todayCob, rows, series, logged, normal, regular, suggestion, openPeriod, periods,
-    askSleep, timePractices, prefs, setPrefs,
+    sleep, askSleep, timePractices, prefs, setPrefs,
   }
 }

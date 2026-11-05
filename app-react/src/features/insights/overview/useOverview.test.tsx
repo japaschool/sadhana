@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { useOverview } from './useOverview'
-import { FOUR, practice } from './fixtures'
+import { entries, FOUR, practice } from './fixtures'
 
 vi.mock('../../../api/charts', () => ({ chartsApi: { getReports: vi.fn(), getReportData: vi.fn() } }))
 vi.mock('../../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn() } }))
@@ -81,10 +81,16 @@ describe('useOverview', () => {
 
   it('inactive_nap_is_dropped', async () => {
     practices.getUserPractices.mockResolvedValue([...OTHER, practice('n', 'Nap', 'Time', { is_active: false })])
+    charts.getReportData.mockResolvedValue(entries({
+      '2026-11-01': { Alpha: { Time: { h: 22, m: 0 } } },
+      '2026-11-02': { Beta: { Time: { h: 4, m: 0 } }, Nap: { Time: { h: 1, m: 0 } } },
+    }))
     localStorage.setItem('sadhana.insights', JSON.stringify({ sleep: { bedtime: 'a', wake: 'b', nap: 'n' } }))
     const r = setup(); await load(r)
     expect(hasSleep(r)).toBe(true)
     expect(r.result.current.askSleep).toBe(false)
+    expect(r.result.current.series.get('sleep')!.get('2026-11-02')).toBe(360)
+    expect(r.result.current.sleep).toEqual({ bedtime: 'a', wake: 'b', nap: null })
   })
 
   it('skip_hides_sleep_without_asking', async () => {
