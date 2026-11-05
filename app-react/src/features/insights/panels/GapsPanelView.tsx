@@ -1,8 +1,10 @@
-import { Bar, CartesianGrid, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, CartesianGrid, ComposedChart, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useTranslation } from 'react-i18next'
+import type { MarkedPeriod } from '../../../api/markedPeriods'
 import { fromDateStr, toDateStr } from '../../today/date'
+import { periodBands } from '../periodBands'
 import { formatDay, formatTick, spansYears } from '../insightsLogic'
-import { AXIS, tipDate, TipRow, TipShell } from '../mobile/InsightsChart'
+import { AXIS, PeriodKey, TICK, tipDate, TipRow, TipShell } from '../mobile/InsightsChart'
 import { FigureGrid, type Figure } from './StatsPanelView'
 import { eventOptions, gapEvents, gapFigures, TYPICAL_MIN, type GapEvent } from './gapLogic'
 import type { Lookup } from './panelLogic'
@@ -18,6 +20,8 @@ interface GapsPanelProps {
   cols: 2 | 4
   /** Off in examples: no tooltip. */
   interactive?: boolean
+  /** Marked periods, drawn as bands; none on shared pages. */
+  periods?: MarkedPeriod[]
 }
 
 /** Option markers (16m16): amber circle, purple square, then the chart palette. */
@@ -49,7 +53,7 @@ function lollipop(i: number) {
 }
 
 /** The gap figures, then a lollipop per event (16m16): a stem to the days since the one before, the option's marker on top, over calendar time. */
-export function GapsPanelView({ event, days, prevDays, lookup, height, cols, interactive = true }: GapsPanelProps) {
+export function GapsPanelView({ event, days, prevDays, lookup, height, cols, interactive = true, periods = [] }: GapsPanelProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const events = gapEvents(event, days, prevDays, lookup)
@@ -76,6 +80,7 @@ export function GapsPanelView({ event, days, prevDays, lookup, height, cols, int
   const rows = events.filter((x) => x.gap !== null)
     .map((x) => ({ t: at(x.cob), ...Object.fromEntries(keys.map((o, i) => [`o${i}`, x.option === o ? x.gap : null])) }))
   const xTicks = days.length ? [...new Set([days[0], days[Math.floor((days.length - 1) / 2)], days[days.length - 1]])].map(at) : []
+  const bands = periodBands(periods, days)
   const name = (x: GapEvent) => x.option ?? lookup.name(event) ?? ''
 
   return (
@@ -95,6 +100,10 @@ export function GapsPanelView({ event, days, prevDays, lookup, height, cols, int
               <XAxis dataKey="t" type="number" scale="time" domain={[xTicks[0], xTicks[xTicks.length - 1]]} ticks={xTicks} interval={0}
                 tickFormatter={(v: number) => formatTick(toDateStr(new Date(v)), locale, y)} padding={{ left: 6, right: 6 }} {...AXIS} />
               <YAxis width={32} allowDecimals={false} tickCount={3} domain={[0, 'auto']} {...AXIS} />
+              {bands.map((b, i) => (
+                <ReferenceArea key={i} x1={at(b.x1)} x2={at(b.x2)} fill="var(--ui-chip)" fillOpacity={0.6} ifOverflow="hidden"
+                  label={{ value: b.name, position: 'insideTopLeft', fontSize: 10, fontFamily: TICK.fontFamily, fill: 'var(--ui-ink2)' }} />
+              ))}
               {/* One stack: an event has one option, so its marks never sit side by side. */}
               {keys.map((_, i) => (
                 <Bar key={i} dataKey={`o${i}`} stackId="gaps" barSize={8} shape={lollipop(i)} isAnimationActive={false} />
@@ -113,13 +122,14 @@ export function GapsPanelView({ event, days, prevDays, lookup, height, cols, int
             </ComposedChart>
           </ResponsiveContainer>
         )}
-        {options.length >= 1 && (
+        {(options.length >= 1 || bands.length > 0) && (
           <ul aria-label={t('reportPanels.legend')} className="flex flex-wrap gap-x-3.5 gap-y-1.5">
             {options.map((o, i) => (
               <li key={o} className="inline-flex items-center gap-1.5 text-xs leading-[1.3] font-bold text-ui-ink2">
                 <svg aria-hidden width="10" height="10" className="shrink-0"><Marker i={i} cx={5} cy={5} /></svg>{o}
               </li>
             ))}
+            {bands.length > 0 && <li><PeriodKey /></li>}
           </ul>
         )}
       </section>

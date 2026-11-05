@@ -1096,6 +1096,7 @@
     "night": "Ночь",
     "nap": "Дневной сон",
     "total": "Всего",
+    "markedPeriod": "Отмеченный период",
     "legend": "Условные обозначения",
     "ofTotal": "{{value}} <muted>из {{total}}</muted>",
     "inRange": "В норме · {{range}}",

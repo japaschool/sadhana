@@ -1,3 +1,4 @@
+import { useMarkedPeriods } from '../../../api/markedPeriods'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppBar } from '../../../layouts/mobile/AppBar'
@@ -20,6 +21,7 @@ const CARD = 'rounded-[22px] border border-ui-hairline bg-ui-surface'
 
 export function InsightsMobile() {
   const { t, i18n } = useTranslation()
+  const { periods } = useMarkedPeriods()
   const ins = useInsights(undefined, true)
   const more = useMoreMenu(ins.report)
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
@@ -64,7 +66,7 @@ export function InsightsMobile() {
               <InsightsTable grouped={ins.grouped} traces={ins.traces} entries={ins.entries} todayCob={ins.todayCob} onOpenDay={setOpenDay} />
             ) : panels ? (
               <PanelsReportView key={ins.selectedId} report={ins.report!} definition={panels} entries={ins.entries} previous={ins.previousEntries}
-                practices={ins.practices} todayCob={ins.todayCob} chartHeight={230} formLink={`/settings/charts/${ins.selectedId}`} cols={2} month={ins.month ?? undefined} range={ins.range} yearEntries={ins.yearEntries} />
+                practices={ins.practices} todayCob={ins.todayCob} chartHeight={230} formLink={`/settings/charts/${ins.selectedId}`} cols={2} month={ins.month ?? undefined} range={ins.range} yearEntries={ins.yearEntries} periods={periods} />
             ) : (
               <section className={`${CARD} p-4`}>
                 {ins.isLoading ? (
@@ -85,7 +87,7 @@ export function InsightsMobile() {
                     )}
                     {/* Remount per report and legend toggle: Recharts hangs updating in place when the series layout changes. */}
                     <InsightsChart key={`${ins.selectedId}|${[...ins.hidden]}`} rows={ins.rows} traces={ins.traces} barLayout={ins.barLayout}
-                      averages={ins.averages} hidden={ins.hidden} />
+                      averages={ins.averages} hidden={ins.hidden} periods={periods} />
                   </>
                 )}
               </section>
