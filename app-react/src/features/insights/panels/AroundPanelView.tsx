@@ -5,7 +5,7 @@ import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import { SegmentedControl } from '../../../ui/primitives/SegmentedControl'
 import { Chevron } from '../../today/mobile/rowParts'
 import { formatDuration } from '../../today/values'
-import { AROUND_MIN, aroundTable, eventOptions, gapEvents, type AroundCell, type RowKind } from './gapLogic'
+import { AROUND_MIN, aroundTable, eventOptions, gapEvents, type RowKind } from './gapLogic'
 import { stepStyle } from '../overview/stepStyle'
 import { clockText, labelText, type Lookup } from './panelLogic'
 
