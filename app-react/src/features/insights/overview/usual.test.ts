@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { MarkedPeriod } from '../../../api/markedPeriods'
 import { addDays, fromDateStr, toDateStr } from '../../today/date'
-import { TODAY } from './fixtures'
+import { entries, FOUR, TODAY } from './fixtures'
+import { insightRows, loggedDays, rowSeries } from './series'
 import type { InsightRow, Series } from './series'
 import { isRegular, leftOutDays, meVsNormal, nowValue, usualAt, wordFor } from './usual'
 
@@ -26,9 +27,11 @@ describe('usualAt', () => {
   })
 
   it('usual_skips_last_7_days', () => {
-    const s = fill(8, 30, () => 5)
-    for (let i = 0; i <= 7; i++) s.set(day(-i), 99)
-    expect(usualAt(s, TODAY, none)).toMatchObject({ median: 5, p75: 5 })
+    const s = fill(8, 37, () => 5)
+    for (let i = 0; i <= 6; i++) s.set(day(-i), 99)
+    s.set(day(-7), 7)
+    // day 7 is the first day counted (n = 30 + 1); days 0..6 are not
+    expect(usualAt(s, TODAY, none)).toMatchObject({ n: 31, median: 5, p75: 5 })
   })
 
   it('left_out_days_are_skipped_and_window_reaches_back', () => {
@@ -108,12 +111,41 @@ describe('meVsNormal', () => {
 })
 
 describe('isRegular', () => {
-  const normal = (usual: boolean) => meVsNormal([row()], new Map([['r', usual ? fill(8, 40, () => 5) : new Map()]]), [], TODAY)
-  const logged = (n: number) => Array.from({ length: n }, (_, i) => day(-i))
+  const T = (h: number, m: number) => ({ Time: { h, m } })
+  const at = (offsets: number[], values: Record<string, unknown>) =>
+    Object.fromEntries(offsets.map((i) => [day(-i), values]))
+  const all = { 'Отбой': T(23, 0), 'Подъём': T(5, 0), 'Кругов за день': 16, 'Кругов до 7': 8 }
+  const check = (data: ReturnType<typeof entries>) => {
+    const rows = insightRows(FOUR, null)
+    const normal = meVsNormal(rows, rowSeries(rows, data, FOUR, null, TODAY), [], TODAY)
+    return { normal, regular: isRegular(normal, loggedDays(data, TODAY), TODAY) }
+  }
+  const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, i) => from + i)
 
   it('regular_vs_less_regular', () => {
-    expect(isRegular(normal(true), logged(20), TODAY)).toBe(true)
-    expect(isRegular(normal(true), logged(2), TODAY)).toBe(false)
-    expect(isRegular(normal(false), logged(20), TODAY)).toBe(false)
+    // 20 logged days: 3 recent plus 17 older ones, enough for a usual range on every row
+    const twenty = check(entries(at([0, 1, 2, ...range(8, 24)], all)))
+    expect(twenty.regular).toBe(true)
+    expect(twenty.normal.every((n) => n.usual)).toBe(true)
+    // 8 logged days, all inside the last week: no usual range anywhere
+    const eight = check(entries(at(range(0, 7), all)))
+    expect(eight.regular).toBe(false)
+    expect(eight.normal.some((n) => n.usual)).toBe(false)
+  })
+
+  it('one_row_with_a_range_is_regular', () => {
+    const data = entries({
+      ...at(range(0, 5), { 'Отбой': T(23, 0), 'Подъём': T(5, 0) }),
+      ...at([0, 1, 2, ...range(8, 24)], { 'Кругов за день': 16 }),
+    })
+    const { normal, regular } = check(data)
+    expect(regular).toBe(true)
+    expect(normal.filter((n) => n.usual).map((n) => n.row.key)).toEqual(['rounds'])
+  })
+
+  it('needs_3_logged_days_in_the_last_14', () => {
+    const base = at(range(14, 30), { 'Кругов за день': 16 })
+    expect(check(entries({ ...base, ...at([0, 1], { 'Кругов за день': 16 }) })).regular).toBe(false)
+    expect(check(entries({ ...base, ...at([0, 1, 2], { 'Кругов за день': 16 }) })).regular).toBe(true)
   })
 })
