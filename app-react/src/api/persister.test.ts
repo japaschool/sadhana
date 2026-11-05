@@ -27,7 +27,7 @@ const client = { timestamp: 1, buster: '1', clientState: { queries: [], mutation
 
 describe('shouldPersist', () => {
   it('saves the user’s own loaded data', () => {
-    for (const k of ['practices', 'practice-groups', 'diary', 'incomplete-days', 'reports', 'report-data', 'yatras', 'yatra-data']) {
+    for (const k of ['practices', 'practice-groups', 'diary', 'incomplete-days', 'reports', 'report-data', 'yatras', 'yatra-data', 'marked-periods']) {
       expect(shouldPersist(q([k, 'x']))).toBe(true)
     }
   })
