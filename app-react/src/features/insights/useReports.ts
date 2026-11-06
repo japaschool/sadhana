@@ -7,9 +7,9 @@ import type { PanelsReport, Report } from '../../api/charts'
 
 /**
  * Older builds read ['reports'] (tracesFor throws on a Panels row) and ['reports', 'panels'] (a Gaps panel is drawn as a
- * chart and throws) from the shared IndexedDB cache, so the list asked for at panels level 3 has its own key.
+ * chart and throws) from the shared IndexedDB cache, so the list asked for at panels level 4 (Goals panels, which level 3 builds can't draw) has its own key.
  */
-export const REPORTS_KEY = ['reports', 'panels', 3] as const
+export const REPORTS_KEY = ['reports', 'panels', 4] as const
 
 export function sortReports(list: Report[], locale: string): Report[] {
   const collator = new Intl.Collator(locale, { sensitivity: 'base' })

@@ -1,4 +1,4 @@
-import type { ChartPanel, DaysTemplate, DurationTemplate, GapsTemplate, JapaTemplate, Label, Panel, PanelsReport, Report, Scope, SleepRows, SleepTemplate, Source, Stat, Target } from '../../../api/charts'
+import type { ChartPanel, DaysTemplate, DurationTemplate, GapsTemplate, GoalsTemplate, JapaTemplate, Label, Panel, PanelsReport, Report, Scope, SleepRows, SleepTemplate, Source, Stat, Target } from '../../../api/charts'
 import type { PracticeDataType, UserPractice } from '../../../types/api'
 
 const key = (k: string): Label => ({ Key: `reportPanels.${k}` })
@@ -166,10 +166,15 @@ export function gapsPanels(t: GapsTemplate): PanelsReport {
   }
 }
 
+/** Builds the Panels report of the Goals template: one Goals panel holding the goals. */
+export function goalsPanels(t: GoalsTemplate): PanelsReport {
+  return { version: 1, template: { Goals: t }, required: [], panels: [{ kind: 'Goals', goals: t.goals }] }
+}
+
 /** The word a report's own strings go by. */
 export const templateSlug = (def: PanelsReport) => {
   const t = def.template
-  return t && 'Duration' in t ? 'duration' : t && 'Japa' in t ? 'japa' : t && 'Days' in t ? 'days' : t && 'Gaps' in t ? 'gaps' : 'sleep'
+  return t && 'Duration' in t ? 'duration' : t && 'Japa' in t ? 'japa' : t && 'Days' in t ? 'days' : t && 'Gaps' in t ? 'gaps' : t && 'Goals' in t ? 'goals' : 'sleep'
 }
 
 export interface Slot { key: string; types: PracticeDataType[]; required: boolean; hints: string[]; many?: boolean }
@@ -200,6 +205,10 @@ export const GAPS_EVENT_SLOT: Slot = { key: 'event', types: ['Bool', 'Text'], re
 export const GAPS_ROWS_SLOT: Slot = { key: 'compare', types: ['Int', 'Duration', 'Time'], required: false, hints: [], many: true }
 /** The server's MAX_AROUND_ROWS, calculated Sleep included. */
 export const MAX_ROWS = 4
+
+export const GOAL_SLOT: Slot = { key: 'goalPractice', types: ['Bool', 'Int', 'Duration'], required: true, hints: [] }
+/** The server's cap on goals in one report. */
+export const MAX_GOALS = 12
 
 const typeFits = (slot: Slot, p: UserPractice) => slot.types.includes(p.data_type)
 

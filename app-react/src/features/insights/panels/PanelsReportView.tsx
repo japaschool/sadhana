@@ -120,7 +120,7 @@ export function PanelsReportView({ report, definition, entries, previous, practi
               <AroundPanelView event={p.event} only={picked} rows={p.rows} days={year.days} prevDays={[]} lookup={year.lookup} todayCob={todayCob} />
             ) : p.kind === 'Month' ? (
               <MonthPanelView practice={p.practice} month={month} end={monthEnd(month, todayCob)} todayCob={todayCob} lookup={lookup} figures={monthFigures} />
-            ) : p.kind === 'Stats' ? (
+            ) : p.kind === 'Goals' ? null /* drawn in a later task */ : p.kind === 'Stats' ? (
               <StatsPanelView stats={p.stats} days={days} lookup={lookup} todayCob={todayCob} cols={cols} />
             ) : (
               // The first chart leads; the rest are shorter (15m6, 15m12).

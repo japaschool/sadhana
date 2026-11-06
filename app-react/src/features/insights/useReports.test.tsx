@@ -39,6 +39,10 @@ describe('REPORTS_KEY', () => {
   it('is not the key builds without Gaps panels read', () => {
     expect(REPORTS_KEY).not.toEqual(['reports', 'panels'])
   })
+  // Builds before level 4 read ['reports', 'panels', 3] and cannot draw a Goals panel.
+  it('is not the key level 3 builds read', () => {
+    expect(REPORTS_KEY).toEqual(['reports', 'panels', 4])
+  })
 })
 
 describe('isPanels', () => {

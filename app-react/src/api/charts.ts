@@ -84,6 +84,14 @@ export type Panel = { kind: 'Stats'; stats: Stat[] } | ({ kind: 'Chart' } & Char
   | { kind: 'Gaps'; event: string }
   /** Rows on the days around those events. */
   | { kind: 'Around'; event: string; rows: AroundRow[] }
+  | { kind: 'Goals'; goals: Goal[] }
+
+export type Direction = 'AtLeast' | 'AtMost'
+export type GoalPeriod = 'Day' | 'Week' | 'Month'
+/** Total: the amount logged; Days: the days with something logged. */
+export type Counts = 'Total' | 'Days'
+export interface Goal { practice: string; direction: Direction; amount: number; period: GoalPeriod; counts: Counts }
+export interface GoalsTemplate { goals: Goal[] }
 
 export interface SleepTemplate { bedtime: string; wake: string; nap: string | null; min: number | null; max: number | null }
 /** `quality` and `attunement`: older reports may have them; no longer drawn, and saved as null. */
@@ -93,7 +101,7 @@ export interface DaysTemplate { practices: string[] }
 export interface SleepRows { bedtime: string; wake: string; nap: string | null }
 export interface GapsTemplate { event: string; rows: string[]; sleep: SleepRows | null }
 export type Template = { Sleep: SleepTemplate } | { Japa: JapaTemplate } | { Duration: DurationTemplate } | { Days: DaysTemplate }
-  | { Gaps: GapsTemplate }
+  | { Gaps: GapsTemplate } | { Goals: GoalsTemplate }
 export interface Required { practice: string; label: Label }
 
 export interface PanelsReport {
@@ -114,8 +122,8 @@ export interface Report {
 
 export const chartsApi = {
   async getReports(): Promise<Report[]> {
-    // panels is a level: 3 includes Gaps and Around. The shared list stays at 1; it never gets those.
-    const res = await apiClient.get<{ reports: Report[] }>('/reports', { params: { panels: 3, months: true } })
+    // panels is a level: 3 includes Gaps and Around, 4 Goals. The shared list stays at 1; it never gets those.
+    const res = await apiClient.get<{ reports: Report[] }>('/reports', { params: { panels: 4, months: true } })
     return res.data.reports
   },
   async createReport(name: string, definition: ReportDefinition): Promise<string> {

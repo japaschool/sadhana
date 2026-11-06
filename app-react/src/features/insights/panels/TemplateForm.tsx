@@ -70,6 +70,7 @@ export function draftOf(def: PanelsReport, practices: UserPractice[]): TemplateD
   if ('Days' in template) {
     return { kind: 'Days', practices: template.Days.practices.filter((id) => practices.some((p) => p.id === id && fits(DAYS_SLOT, p))) }
   }
+  if ('Goals' in template) return null // ponytail: the Goals form is a later task
   if ('Gaps' in template) {
     const { event, rows, sleep } = template.Gaps
     const ok = (slot: Slot, id: string) => practices.some((p) => p.id === id && fits(slot, p))

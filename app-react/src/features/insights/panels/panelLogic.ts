@@ -208,6 +208,7 @@ export function visiblePanels(def: PanelsReport, l: Lookup): Panel[] {
       if (eventOk(panel.event, l) && rows.length) out.push({ ...panel, rows })
       continue
     }
+    if (panel.kind === 'Goals') continue // ponytail: drawn in Task 4
     if (panel.kind === 'Month') {
       if (l.available(panel.practice, 'Bool')) out.push(panel)
       continue
@@ -241,7 +242,7 @@ export function visiblePanels(def: PanelsReport, l: Lookup): Panel[] {
 
 function panelSources(def: PanelsReport): Source[] {
   const ofStat = (s: Stat): Source[] => [statParts(s.value)[1].of, ...(s.under ? ofStat(s.under) : [])]
-  return def.panels.flatMap((p) => (p.kind === 'Month' || p.kind === 'Gaps' ? [] : p.kind === 'Around'
+  return def.panels.flatMap((p) => (p.kind === 'Month' || p.kind === 'Gaps' || p.kind === 'Goals' ? [] : p.kind === 'Around'
     ? p.rows.map((r) => r.source)
     : p.kind === 'Stats'
       ? p.stats.flatMap(ofStat)

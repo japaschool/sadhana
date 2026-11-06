@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { ChartPanel, JapaTemplate, Panel, Report, SleepTemplate, Stat } from '../../../api/charts'
 import type { UserPractice } from '../../../types/api'
-import { DAYS_SLOT, daysPanels, gapsPanels, sleepRowsFor, sleepSource, templateSlug, DURATION_SLOT, durationPanels, MAX_DAYS, JAPA_SLOTS, japaPanels, pickerGroups, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, suggestFor } from './templates'
+import { DAYS_SLOT, GOAL_SLOT, MAX_GOALS, goalsPanels, daysPanels, gapsPanels, sleepRowsFor, sleepSource, templateSlug, DURATION_SLOT, durationPanels, MAX_DAYS, JAPA_SLOTS, japaPanels, pickerGroups, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, suggestFor } from './templates'
 
 const T: SleepTemplate = { bedtime: 'bed', wake: 'wake', nap: 'nap', min: 360, max: 540 }
 const charts = (ps: Panel[]) => ps.filter((p): p is Extract<Panel, { kind: 'Chart' }> => p.kind === 'Chart') as (ChartPanel & { kind: 'Chart' })[]
@@ -269,5 +269,20 @@ describe('sleepRowsFor', () => {
   })
   it('nothing to find: null', () => {
     expect(sleepRowsFor([], [p('x', 'Rounds', 'Int')])).toBeNull()
+  })
+})
+
+describe('goalsPanels', () => {
+  const goals = [{ practice: 'p', direction: 'AtLeast' as const, amount: 3, period: 'Week' as const, counts: 'Days' as const }]
+  it('puts the goals in the template and a single Goals panel', () => {
+    const r = goalsPanels({ goals })
+    expect(r.template).toEqual({ Goals: { goals } })
+    expect(r.required).toEqual([])
+    expect(r.panels).toEqual([{ kind: 'Goals', goals }])
+    expect(templateSlug(r)).toBe('goals')
+  })
+  it('slot and cap', () => {
+    expect(GOAL_SLOT).toMatchObject({ key: 'goalPractice', types: ['Bool', 'Int', 'Duration'], required: true })
+    expect(MAX_GOALS).toBe(12)
   })
 })
