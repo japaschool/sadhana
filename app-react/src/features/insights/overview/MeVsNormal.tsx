@@ -146,7 +146,6 @@ function Legend({ periods, locale }: { periods: MarkedPeriod[]; locale: string }
   return (
     <div className="flex flex-wrap gap-x-4 gap-y-1.5 border-t border-ui-chip pt-3 text-xs font-semibold text-ui-muted">
       <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2.5 w-[18px] rounded-[5px] bg-[var(--ui-div-0)]" />{t('insights.overview.usualRange')}</span>
-      <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-3.5 w-[1.5px] bg-ui-faint2" />{t('insights.overview.usualTick')}</span>
       <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2.5 w-2.5 rounded-full bg-ui-ink2" />{t('insights.overview.last7')}</span>
       {periods.map((p) => (
         <span key={p.id} className="inline-flex items-center gap-1.5">

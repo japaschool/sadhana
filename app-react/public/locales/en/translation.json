@@ -420,8 +420,7 @@
       "skip": "Skip for now",
       "skipHint": "If you skip, Sleep stays off. Change it any time in Settings › Insights.",
       "choose": "Choose…",
-      "streaks": "Streaks",
-      "usualTick": "Your usual (middle value)"
+      "streaks": "Streaks"
     },
     "periods": {
       "title": "Marked periods",
