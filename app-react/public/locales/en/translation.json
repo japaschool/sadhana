@@ -319,6 +319,10 @@
     "tabSettings": "Settings"
   },
   "insights": {
+    "rows": {
+      "title": "Overview rows",
+      "intro": "Choose what the Insights overview shows. Totals add up every time practice in their group, shown or not."
+    },
     "title": "Insights",
     "reports": "Reports",
     "range": "Range",

@@ -37,6 +37,7 @@ export function InsightsPrefsRows() {
         control={<Toggle label={t('insights.periods.suggest')} checked={prefs.suggest} onChange={(suggest) => setPrefs({ suggest })} />} />
       <SettingsRow label={t('insights.periods.sleep')} onClick={() => setAsking(true)}
         value={sleep ? `${nameOf(sleep.bedtime)} · ${nameOf(sleep.wake)}` : t('settings.off')} />
+      <SettingsRow label={t('insights.rows.title')} to="/settings/overview-rows" />
       <SettingsRow label={t('insights.periods.title')} to="/settings/periods" value={String(periods.length)} />
       {asking && practices && (
         <SleepSetupSheet current={sleep} practices={practices.filter((p) => p.is_active && p.data_type === 'Time')} onClose={() => setAsking(false)}
