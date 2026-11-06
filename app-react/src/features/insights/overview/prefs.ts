@@ -1,5 +1,9 @@
-import { useSyncExternalStore } from 'react'
+import { useMemo } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import type { SleepRows } from '../../../api/charts'
+import { INSIGHT_PREFS_KEY, insightPrefsApi } from '../../../api/insightPrefs'
+import { useToast } from '../../../hooks/useToast'
 
 export interface InsightPrefs {
   streaks: boolean
@@ -7,16 +11,17 @@ export interface InsightPrefs {
   sleep: SleepRows | 'skip' | null
   dismissed: string[]
   openAsked: Record<string, string>
+  /** Overview row overrides by row key; a row without one shows by its default. */
+  visibility: Record<string, boolean>
 }
 
+/** Where prefs lived before the server kept them; older cached builds still use it. */
 const KEY = 'sadhana.insights'
-export const DEFAULT_PREFS: InsightPrefs = { streaks: false, suggest: true, sleep: null, dismissed: [], openAsked: {} }
+export const DEFAULT_PREFS: InsightPrefs = { streaks: false, suggest: true, sleep: null, dismissed: [], openAsked: {}, visibility: {} }
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 
-function parse(raw: string): InsightPrefs {
-  let v: unknown
-  try { v = JSON.parse(raw) } catch { return DEFAULT_PREFS }
+export function parsePrefs(v: unknown): InsightPrefs {
   if (!isObj(v)) return DEFAULT_PREFS
   const sleep = v.sleep
   return {
@@ -30,44 +35,63 @@ function parse(raw: string): InsightPrefs {
     openAsked: isObj(v.openAsked)
       ? Object.fromEntries(Object.entries(v.openAsked).filter((e): e is [string, string] => typeof e[1] === 'string'))
       : {},
+    visibility: isObj(v.visibility)
+      ? Object.fromEntries(Object.entries(v.visibility).filter((e): e is [string, boolean] => typeof e[1] === 'boolean'))
+      : {},
   }
 }
 
-let current = DEFAULT_PREFS
-let lastRaw: string | null = null
-const listeners = new Set<() => void>()
-
-function snapshot(): InsightPrefs {
-  let raw: string | null
+/** The pre-server prefs, or null when there are none (or storage is blocked). */
+function readLocal(): InsightPrefs | null {
   try {
-    raw = localStorage.getItem(KEY)
+    const raw = localStorage.getItem(KEY)
+    if (raw === null) return null
+    try { return parsePrefs(JSON.parse(raw)) } catch { return DEFAULT_PREFS }
   } catch {
-    return current // Blocked storage: this visit keeps its in-memory state.
+    return null
   }
-  if (raw !== lastRaw) {
-    lastRaw = raw
-    current = raw === null ? DEFAULT_PREFS : parse(raw)
-  }
-  return current
 }
 
-function subscribe(fn: () => void): () => void {
-  listeners.add(fn)
-  return () => listeners.delete(fn)
+function removeLocal(): void {
+  try { localStorage.removeItem(KEY) } catch { /* blocked storage: nothing to remove */ }
 }
 
-function update(patch: Partial<InsightPrefs>): void {
-  current = { ...snapshot(), ...patch }
-  const raw = JSON.stringify(current)
-  try {
-    localStorage.setItem(KEY, raw)
-    lastRaw = raw
-  } catch {
-    // Blocked storage: the change lasts until reload.
+/** Loads the server's prefs, moving the local ones there the first time. A failed move fails the query and keeps the local key. */
+async function load(): Promise<InsightPrefs> {
+  const server = await insightPrefsApi.get()
+  let local: InsightPrefs | null = null
+  if (server === null) {
+    local = readLocal()
+    if (local) await insightPrefsApi.save(local)
   }
-  listeners.forEach((fn) => fn())
+  removeLocal()
+  return server === null ? (local ?? DEFAULT_PREFS) : parsePrefs(server)
 }
 
-export function useInsightPrefs(): [InsightPrefs, (patch: Partial<InsightPrefs>) => void] {
-  return [useSyncExternalStore(subscribe, snapshot), update]
+/** `ready`: the server has answered. Until then prefs come from the local key (or defaults) and first-run prompts wait. */
+export function useInsightPrefs(): [InsightPrefs, (patch: Partial<InsightPrefs>) => void, boolean] {
+  const qc = useQueryClient()
+  const { t } = useTranslation()
+  const { showToast } = useToast()
+  const q = useQuery({ queryKey: INSIGHT_PREFS_KEY, queryFn: load })
+  const prefs = useMemo(() => q.data ?? readLocal() ?? DEFAULT_PREFS, [q.data])
+
+  const save = useMutation({
+    mutationFn: ({ next }: { next: InsightPrefs; prev: InsightPrefs | undefined }) => insightPrefsApi.save(next),
+    onError: (_e, { prev }) => {
+      if (prev) qc.setQueryData(INSIGHT_PREFS_KEY, prev)
+      else void qc.resetQueries({ queryKey: INSIGHT_PREFS_KEY })
+      showToast({ message: t('common.error'), variant: 'error' })
+    },
+  })
+
+  // Optimistic, written before the mutation starts so every reader sees it in the same render.
+  const setPrefs = (patch: Partial<InsightPrefs>) => {
+    const prev = qc.getQueryData<InsightPrefs>(INSIGHT_PREFS_KEY)
+    const next = { ...(prev ?? readLocal() ?? DEFAULT_PREFS), ...patch }
+    void qc.cancelQueries({ queryKey: INSIGHT_PREFS_KEY })
+    qc.setQueryData(INSIGHT_PREFS_KEY, next)
+    save.mutate({ next, prev })
+  }
+  return [prefs, setPrefs, q.data !== undefined]
 }

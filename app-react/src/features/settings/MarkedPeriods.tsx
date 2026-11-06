@@ -16,10 +16,10 @@ import { AddPill, ROWS, SettingsSubpage } from './SettingsSubpage'
 export function MarkedPeriods() {
   const { t, i18n } = useTranslation()
   const { periods, isLoading } = useMarkedPeriods()
-  const [prefs, setPrefs] = useInsightPrefs()
+  const [prefs, setPrefs, prefsReady] = useInsightPrefs()
   const locale = i18n.language || 'en'
   const todayCob = toDateStr(new Date())
-  const openPeriod = isLoading ? null : openPeriodToAsk(periods, prefs.openAsked, todayCob)
+  const openPeriod = isLoading || !prefsReady ? null : openPeriodToAsk(periods, prefs.openAsked, todayCob)
   const { sheet, setSheet, openPeriodProps, onSheetSaved } = useOverviewActions({
     suggestion: null, openPeriod, rows: [], practices: [], prefs, setPrefs, todayCob,
   })

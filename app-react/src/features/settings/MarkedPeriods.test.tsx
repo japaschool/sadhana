@@ -8,6 +8,8 @@ import { useAuthStore } from '../../store/authStore'
 
 vi.mock('../../api/client', () => ({ apiClient: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() } }))
 import { apiClient } from '../../api/client'
+vi.mock('../../api/insightPrefs', () => ({ insightPrefsApi: { get: vi.fn(), save: vi.fn() }, INSIGHT_PREFS_KEY: ['insight-prefs'] }))
+import { insightPrefsApi } from '../../api/insightPrefs'
 import { MarkedPeriods } from './MarkedPeriods'
 
 const TODAY = '2026-11-05'
@@ -30,6 +32,8 @@ beforeEach(() => {
   setViewportWidth(390)
   useAuthStore.setState({ user: { id: '1', email: 't@e.st', token: 'tok', name: 'Test User' }, token: 'tok' })
   vi.mocked(apiClient.get).mockResolvedValue({ data: { periods: [retreat, summer] } })
+  vi.mocked(insightPrefsApi.get).mockResolvedValue(null)
+  vi.mocked(insightPrefsApi.save).mockResolvedValue(undefined)
 })
 afterEach(() => { vi.useRealTimers(); localStorage.clear() })
 
@@ -122,7 +126,7 @@ describe('Marked periods', () => {
     await screen.findByText('Is Night shifts still going?')
     fireEvent.click(screen.getByRole('button', { name: 'It ended on…' }))
     fireEvent.click(screen.getByRole('button', { name: 'Save period' }))
-    await waitFor(() => expect(JSON.parse(localStorage.getItem('sadhana.insights')!).openAsked).toEqual({ p1: TODAY }))
+    await waitFor(() => expect(insightPrefsApi.save).toHaveBeenLastCalledWith(expect.objectContaining({ openAsked: { p1: TODAY } })))
     await waitFor(() => expect(screen.queryByText('Is Night shifts still going?')).toBeNull())
   })
 })

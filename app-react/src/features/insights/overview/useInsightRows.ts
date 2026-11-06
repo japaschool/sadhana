@@ -27,7 +27,7 @@ export function resolveSleep(stored: SleepRows | 'skip' | null, practices: UserP
 
 /** Rows and their daily series from a report-data query, with the practices, reports and sleep choice they depend on. */
 export function useInsightRows(dataQ: UseQueryResult<ReportDataEntry[]>, todayCob: string) {
-  const [prefs, setPrefs] = useInsightPrefs()
+  const [prefs, setPrefs, prefsReady] = useInsightPrefs()
   const reportsQ = useReports()
   const practicesQ = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices })
   const reports = reportsQ.data ?? NONE
@@ -38,7 +38,7 @@ export function useInsightRows(dataQ: UseQueryResult<ReportDataEntry[]>, todayCo
   const rows = useMemo(() => insightRows(practices, sleep), [practices, sleep])
   const series = useMemo(() => rowSeries(rows, entries, practices, sleep, todayCob), [rows, entries, practices, sleep, todayCob])
   return {
-    rows, series, entries, practices, sleep, prefs, setPrefs,
+    rows, series, entries, practices, sleep, prefs, setPrefs, prefsReady,
     reportsPending: reportsQ.isPending, practicesPending: practicesQ.isPending,
     isLoading: dataQ.isLoading || practicesQ.isLoading || reportsQ.isLoading,
     isError: failedWithoutData(dataQ) || failedWithoutData(practicesQ) || failedWithoutData(reportsQ),

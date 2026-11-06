@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -13,6 +13,8 @@ vi.mock('../../api/charts', () => ({ chartsApi: { getReports: vi.fn() } }))
 import { chartsApi } from '../../api/charts'
 vi.mock('../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn() } }))
 import { practicesApi } from '../../api/practices'
+vi.mock('../../api/insightPrefs', () => ({ insightPrefsApi: { get: vi.fn(), save: vi.fn() }, INSIGHT_PREFS_KEY: ['insight-prefs'] }))
+import { insightPrefsApi } from '../../api/insightPrefs'
 vi.mock('../../api/markedPeriods', () => ({ useMarkedPeriods: () => ({ periods: [{ id: 'p1' }, { id: 'p2' }, { id: 'p3' }, { id: 'p4' }], isLoading: false }) }))
 
 const renderAt = (path: string) => render(
@@ -37,6 +39,8 @@ describe('Settings lists', () => {
       { id: 'wake', practice: 'Wake-up', data_type: 'Time', is_active: true },
     ])
     vi.mocked(yatrasApi.getYatras).mockResolvedValue([{ id: 'y1', name: 'League', show_stability_metrics: false }])
+    vi.mocked(insightPrefsApi.get).mockResolvedValue(null)
+    vi.mocked(insightPrefsApi.save).mockResolvedValue(undefined)
     vi.mocked(yatrasApi.getYatraUsers).mockResolvedValue([{ user_id: '1', user_name: 'Test User', is_admin: true }])
   })
 
@@ -90,7 +94,7 @@ describe('Settings lists', () => {
       const suggest = screen.getByRole('switch', { name: 'Suggest periods to mark' })
       expect(suggest).toBeChecked()
       fireEvent.click(suggest)
-      expect(JSON.parse(localStorage.getItem('sadhana.insights')!)).toMatchObject({ streaks: true, suggest: false })
+      await waitFor(() => expect(insightPrefsApi.save).toHaveBeenLastCalledWith(expect.objectContaining({ streaks: true, suggest: false })))
       expect(screen.getByRole('switch', { name: 'Show streaks' })).toBeChecked()
     })
 
@@ -110,7 +114,7 @@ describe('Settings lists', () => {
       fireEvent.change(screen.getByLabelText('Wake-up'), { target: { value: 'wake' } })
       fireEvent.click(screen.getByRole('button', { name: 'Save' }))
       expect(await screen.findByRole('button', { name: /Bedtime and wake-up/ })).toHaveTextContent('Bedtime · Wake-up')
-      expect(JSON.parse(localStorage.getItem('sadhana.insights')!).sleep).toEqual({ bedtime: 'bed', wake: 'wake', nap: null })
+      expect(insightPrefsApi.save).toHaveBeenLastCalledWith(expect.objectContaining({ sleep: { bedtime: 'bed', wake: 'wake', nap: null } }))
       // Reopening shows the saved pair.
       fireEvent.click(screen.getByRole('button', { name: /Bedtime and wake-up/ }))
       expect(await screen.findByLabelText('Bedtime')).toHaveValue('bed')

@@ -9,6 +9,8 @@ import { entries, FOUR, practice } from './fixtures'
 
 vi.mock('../../../api/charts', () => ({ chartsApi: { getReports: vi.fn(), getReportData: vi.fn() } }))
 vi.mock('../../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn() } }))
+vi.mock('../../../api/insightPrefs', () => ({ insightPrefsApi: { get: vi.fn(), save: vi.fn() }, INSIGHT_PREFS_KEY: ['insight-prefs'] }))
+import { insightPrefsApi } from '../../../api/insightPrefs'
 const markedPeriods = vi.fn()
 vi.mock('../../../api/markedPeriods', () => ({ useMarkedPeriods: () => markedPeriods() }))
 import { chartsApi } from '../../../api/charts'
@@ -37,6 +39,7 @@ beforeEach(() => {
   markedPeriods.mockReturnValue({ periods: [], isLoading: false, isError: false })
   charts.getReports.mockResolvedValue([])
   charts.getReportData.mockResolvedValue([])
+  vi.mocked(insightPrefsApi.get).mockResolvedValue(null)
 })
 
 describe('useOverview', () => {
@@ -59,7 +62,7 @@ describe('useOverview', () => {
   it('stored_choice_wins', async () => {
     practices.getUserPractices.mockResolvedValue([...OTHER, practice('c', 'Gamma', 'Time')])
     charts.getReports.mockResolvedValue([SLEEP_REPORT('a', 'b')])
-    localStorage.setItem('sadhana.insights', JSON.stringify({ sleep: { bedtime: 'b', wake: 'c', nap: null } }))
+    vi.mocked(insightPrefsApi.get).mockResolvedValue({ sleep: { bedtime: 'b', wake: 'c', nap: null } })
     const r = setup(); await load(r)
     expect(hasSleep(r)).toBe(true)
     expect(r.result.current.askSleep).toBe(false)
@@ -68,7 +71,7 @@ describe('useOverview', () => {
 
   it('stale_choice_asks_again', async () => {
     practices.getUserPractices.mockResolvedValue(OTHER)
-    localStorage.setItem('sadhana.insights', JSON.stringify({ sleep: { bedtime: 'gone', wake: 'b', nap: null } }))
+    vi.mocked(insightPrefsApi.get).mockResolvedValue({ sleep: { bedtime: 'gone', wake: 'b', nap: null } })
     const r = setup(); await load(r)
     expect(hasSleep(r)).toBe(false)
     expect(r.result.current.askSleep).toBe(true)
@@ -77,7 +80,7 @@ describe('useOverview', () => {
   it('stale_choice_ignores_report_and_default_names', async () => {
     practices.getUserPractices.mockResolvedValue(FOUR)
     charts.getReports.mockResolvedValue([SLEEP_REPORT('bed', 'wake')])
-    localStorage.setItem('sadhana.insights', JSON.stringify({ sleep: { bedtime: 'gone', wake: 'wake', nap: null } }))
+    vi.mocked(insightPrefsApi.get).mockResolvedValue({ sleep: { bedtime: 'gone', wake: 'wake', nap: null } })
     const r = setup(); await load(r)
     expect(hasSleep(r)).toBe(false)
     expect(r.result.current.askSleep).toBe(true)
@@ -89,7 +92,7 @@ describe('useOverview', () => {
       '2026-11-01': { Alpha: { Time: { h: 22, m: 0 } } },
       '2026-11-02': { Beta: { Time: { h: 4, m: 0 } }, Nap: { Time: { h: 1, m: 0 } } },
     }))
-    localStorage.setItem('sadhana.insights', JSON.stringify({ sleep: { bedtime: 'a', wake: 'b', nap: 'n' } }))
+    vi.mocked(insightPrefsApi.get).mockResolvedValue({ sleep: { bedtime: 'a', wake: 'b', nap: 'n' } })
     const r = setup(); await load(r)
     expect(hasSleep(r)).toBe(true)
     expect(r.result.current.askSleep).toBe(false)
@@ -99,7 +102,7 @@ describe('useOverview', () => {
 
   it('skip_hides_sleep_without_asking', async () => {
     practices.getUserPractices.mockResolvedValue(FOUR)
-    localStorage.setItem('sadhana.insights', JSON.stringify({ sleep: 'skip' }))
+    vi.mocked(insightPrefsApi.get).mockResolvedValue({ sleep: 'skip' })
     const r = setup(); await load(r)
     expect(hasSleep(r)).toBe(false)
     expect(r.result.current.askSleep).toBe(false)
@@ -112,9 +115,17 @@ describe('useOverview', () => {
     expect(r.result.current.askSleep).toBe(false)
   })
 
+  it('no_sleep_prompt_until_prefs_ready', async () => {
+    practices.getUserPractices.mockResolvedValue(OTHER)
+    vi.mocked(insightPrefsApi.get).mockReturnValue(new Promise(() => {}))
+    const r = setup(); await load(r)
+    expect(hasSleep(r)).toBe(false)
+    expect(r.result.current.askSleep).toBe(false)
+  })
+
   it('suggestion_off_by_pref', async () => {
     practices.getUserPractices.mockResolvedValue(FOUR)
-    localStorage.setItem('sadhana.insights', JSON.stringify({ suggest: false }))
+    vi.mocked(insightPrefsApi.get).mockResolvedValue({ suggest: false })
     const r = setup(); await load(r)
     expect(r.result.current.suggestion).toBeNull()
   })
