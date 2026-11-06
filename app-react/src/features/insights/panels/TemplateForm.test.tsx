@@ -649,6 +649,15 @@ describe('the Goals template', () => {
       expect(amount).toHaveValue(shownAfter)
     })
 
+  it('the picker says why a time-of-day practice can’t be a goal', () => {
+    render(<GoalsForm start={NEW_DRAFTS.goals()} />)
+    fireEvent.click(screen.getByRole('button', { name: /^Goal 1 practice:/ }))
+    const sheet = screen.getByRole('dialog', { name: 'Practice' })
+    expect(within(sheet).getByText('Can’t be a goal')).toBeInTheDocument()
+    expect(within(sheet).getAllByText('Time of day · a goal needs yes/no, a number or a duration').length).toBeGreaterThan(0)
+    expect(within(sheet).queryByRole('radio', { name: /Bed time/ })).not.toBeInTheDocument()
+  })
+
   it('moving from a Duration practice to another type counts the total again', () => {
     render(<GoalsForm start={goals({ practice: 'read', counts: 'Days', amount: 3 })} />)
     pick('Goal 1', /Japa rounds/)

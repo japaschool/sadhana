@@ -1287,7 +1287,9 @@
     "atLeastOne": "At least needs 1 or more.",
     "amountMissing": "Set an amount to save your changes.",
     "goalsPrivate": "Goals reports are never shown on your shared page.",
-    "previewSubGoals": "Last 12 periods · updates as you fill in the form"
+    "previewSubGoals": "Last 12 periods · updates as you fill in the form",
+    "cant_goalPractice": "Can’t be a goal",
+    "why_goalPractice": "a goal needs yes/no, a number or a duration"
   },
   "guide": {
     "title": "What would you like to see about your days?",
