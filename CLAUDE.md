@@ -47,20 +47,12 @@ CI (`.github/workflows/ci.yml`) runs React lint/test/build and clippy + `cargo t
 
 **Service worker:** `app-react/public/service_worker.js` (+ pure logic in `sw-lib.js`) is served at the Rust UI's worker path with no-cache headers; `__GIT_SHA__` is substituted at Docker build (a worker whose `GIT_SHA` still starts with `__GIT` is DEV and skips precaching). It serves the shell from `static-vr-<sha>` (precached from `/precache-manifest.js`), queues diary entry PUTs in IndexedDB `sadhana-outbox` before trying the network (`202` + `X-Queued` when not sent), overlays pending values on `GET /api/diary/{date}`, and takes over from the Rust worker (moving its `SadhanaProPostDB` queue). The page's data is React Query persisted to IndexedDB `sadhana-query` (queries use `gcTime: Infinity`; a saved user `sadhana.user` must match the token, else the cache is dropped). `/#reset` wipes all but the outbox. Touch this area carefully: it governs what installed clients run. Spec: `docs/superpowers/specs/2026-10-09-offline-mode-design.md`.
 
-## Local dev environment
+## UI design (`app-react/`)
 
-On this machine the dev environment runs inside a VS Code dev container(`.devcontainer/devcontainer.json`). The Rust toolchain and Node live inside the container, not on the host — the host has no cargo. (The host does have Node, but its v26 breaks jsdom's `localStorage` in tests; run `npm test` with Node 22.) The repo is mounted in the container at `/workspaces/sadhana-pro`.
-
-To build/test/run, exec into the running dev container rather than invoking tooling on the host, e.g.:
-
-`docker exec <container> bash -lc 'cd /workspaces/sadhana-pro && cargo test ...'`
-## UI redesign (`redesign` branch, `app-react/`)
-
-`app-react/` is the React rewrite of the frontend. It is being redesigned again, screen by screen, from the claude.ai/design project "Sadhana Redesign" (`Sadhana Redesign.dc.html`): https://claude.ai/design/p/cccefa4d-5554-41b1-be47-2704b1233b68?file=Sadhana+Redesign.dc.html. Read the mockups through the `claude_design` MCP (`https://api.anthropic.com/v1/design/mcp`, auth via `/design-login`). Screens with no mockup (e.g. Settings) are derived from the Today screen's design language. Spec and plan: `docs/superpowers/specs/2026-10-06-mobile-today-redesign-design.md`, `docs/superpowers/plans/2026-10-06-mobile-today-redesign.md`.
+Screens come from the claude.ai/design project "Sadhana Redesign" (`Sadhana Redesign.dc.html`): https://claude.ai/design/p/cccefa4d-5554-41b1-be47-2704b1233b68?file=Sadhana+Redesign.dc.html. Read the mockups through the `claude_design` MCP (`https://api.anthropic.com/v1/design/mcp`, auth via `/design-login`). Screens with no mockup (e.g. Settings) are derived from the Today screen's design language.
 
 - **Three real layouts (mobile / tablet / desktop)**, each with its own component tree, not one layout with media queries. `useLayout()` + `<ByLayout mobile tablet desktop>` pick per route; a screen that is the same on every layout is wrapped in `ui()` in `router.tsx`.
-- **Code lives in** `src/ui` (tokens, primitives), `src/layouts` (shells, route guards) and `src/features/<screen>` (logic in hooks; components per layout). The legacy UI (`pages/`, `AppShell`, DaisyUI) is gone.
-- **Theme:** the design's palette replaces the old one. Light is the default; dark follows `prefers-color-scheme` and uses only the "1a · dark" colours (plus `#C2412D` danger). Tokens are CSS vars scoped to `.ui-root` (`src/ui/theme.css`), used as `ui-*` Tailwind colours. Portals go through `UiPortal`.
+- **Code lives in** `src/ui` (tokens, primitives), `src/layouts` (shells, route guards) and `src/features/<screen>` (logic in hooks; components per layout).
+- **Theme:** the design's palette. Light is the default; dark follows `prefers-color-scheme` and uses only the "1a · dark" colours (plus `#C2412D` danger). Tokens are CSS vars scoped to `.ui-root` (`src/ui/theme.css`), used as `ui-*` Tailwind colours. Portals go through `UiPortal`.
 - **Fonts:** Manrope + IBM Plex Mono (both have Cyrillic, so they cover ru/uk). All strings are in en/ru/uk.
-- **Practice groups are out of scope for now.** One hardcoded "Practices" group.
 - **Data rules:** local `yyyy-mm-dd` dates (never `toISOString()`); an empty input saves `null`; dropdown options are comma- or newline-separated.
