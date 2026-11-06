@@ -742,6 +742,128 @@ mod tests {
         });
     }
 
+    fn goals_report(goals: Vec<super::super::panels::Goal>) -> PanelsReport {
+        use super::super::panels::*;
+        PanelsReport {
+            version: 1,
+            template: Some(Template::Goals(GoalsTemplate {
+                goals: goals.clone(),
+            })),
+            required: vec![],
+            panels: vec![Panel::Goals { goals }],
+        }
+    }
+
+    fn goal(
+        practice: Uuid,
+        direction: super::super::panels::Direction,
+        amount: i32,
+    ) -> super::super::panels::Goal {
+        use super::super::panels::*;
+        Goal {
+            practice,
+            direction,
+            amount,
+            period: Period::Week,
+            counts: Counts::Total,
+        }
+    }
+
+    #[test]
+    fn goals_report_needs_level_4() {
+        run(|conn| {
+            use super::super::panels::Direction::AtLeast;
+            let (u, [a, b, _, _]) = user_with_practices(conn);
+            Report::create(conn, &u, "s", &panels(sleep_report(a, b)))?;
+            Report::create(
+                conn,
+                &u,
+                "o",
+                &panels(goals_report(vec![goal(a, AtLeast, 3)])),
+            )?;
+            assert_eq!(names(ApiReport::get_all(conn, &u, 1, true, false)?), ["s"]);
+            assert_eq!(names(ApiReport::get_all(conn, &u, 3, true, false)?), ["s"]);
+            assert_eq!(
+                names(ApiReport::get_all(conn, &u, 4, true, false)?),
+                ["o", "s"]
+            );
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn shared_never_gets_goals() {
+        run(|conn| {
+            use super::super::panels::Direction::AtLeast;
+            let (u, [a, b, _, _]) = user_with_practices(conn);
+            Report::create(conn, &u, "s", &panels(sleep_report(a, b)))?;
+            Report::create(
+                conn,
+                &u,
+                "o",
+                &panels(goals_report(vec![goal(a, AtLeast, 3)])),
+            )?;
+            assert_eq!(names(ApiReport::get_all(conn, &u, 4, true, true)?), ["s"]);
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn goals_round_trips() {
+        run(|conn| {
+            use super::super::panels::{Counts, Direction::*, Period};
+            let (u, [a, b, _, _]) = user_with_practices(conn);
+            let mut month = goal(b, AtMost, 5);
+            month.period = Period::Month;
+            month.counts = Counts::Days;
+            let sent = goals_report(vec![goal(a, AtLeast, 3), month]);
+            let id = Report::create(conn, &u, "o", &panels(sent.clone()))?;
+            let read = |conn: &mut PgConnection| match ApiReport::get_all(conn, &u, 4, true, false)
+                .unwrap()
+                .remove(0)
+                .definition
+            {
+                ReportDefinition::Panels(got) => got,
+                _ => panic!("not panels"),
+            };
+            assert_eq!(read(conn), sent);
+            let one = goals_report(vec![goal(a, AtLeast, 3)]);
+            Report::update(conn, &u, &id, "o", &panels(one.clone()))?;
+            assert_eq!(read(conn), one);
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn goals_validate() {
+        run(|conn| {
+            use super::super::panels::{Direction::*, Panel, Template};
+            let (u, [a, _, _, _]) = user_with_practices(conn);
+            let create = |conn: &mut PgConnection, r: PanelsReport| {
+                Report::create(conn, &u, &Uuid::new_v4().to_string(), &panels(r))
+            };
+            unprocessable(create(conn, goals_report(vec![])));
+            unprocessable(create(conn, goals_report(vec![goal(a, AtLeast, 1); 13])));
+            unprocessable(create(conn, goals_report(vec![goal(a, AtLeast, 0)])));
+            unprocessable(create(conn, goals_report(vec![goal(a, AtMost, -1)])));
+            let other = Uuid::new_v4();
+            unprocessable(create(conn, goals_report(vec![goal(other, AtLeast, 1)])));
+            let mut panel_only = goals_report(vec![goal(a, AtLeast, 1)]);
+            panel_only.panels = vec![Panel::Goals {
+                goals: vec![goal(other, AtLeast, 1)],
+            }];
+            unprocessable(create(conn, panel_only));
+            let mut template_only = goals_report(vec![goal(a, AtLeast, 1)]);
+            template_only.template = Some(Template::Goals(super::super::panels::GoalsTemplate {
+                goals: vec![goal(other, AtLeast, 1)],
+            }));
+            unprocessable(create(conn, template_only));
+            create(conn, goals_report(vec![goal(a, AtMost, 0)]))?;
+            create(conn, goals_report(vec![goal(a, AtLeast, 1); 12]))?;
+            Ok(())
+        });
+    }
+
     #[test]
     fn panels_rejects_unknown_field() {
         let (a, b) = (Uuid::new_v4(), Uuid::new_v4());

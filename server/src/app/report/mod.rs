@@ -62,7 +62,7 @@ impl Report {
             };
 
             if let ReportDefinition::Panels(p) = &definition {
-                // Level 3 reports stay private: they're for the owner's own reflection.
+                // Level 3+ reports stay private: they're for the owner's own reflection.
                 if (!months && p.has_month()) || p.level() > level || (shared && p.level() >= 3) {
                     continue;
                 }

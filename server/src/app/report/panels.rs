@@ -32,6 +32,7 @@ pub enum Template {
     Duration(DurationTemplate),
     Days(DaysTemplate),
     Gaps(GapsTemplate),
+    Goals(GoalsTemplate),
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -85,6 +86,45 @@ pub struct SleepRows {
     pub nap: Option<Uuid>,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct GoalsTemplate {
+    pub goals: Vec<Goal>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Goal {
+    pub practice: Uuid,
+    pub direction: Direction,
+    pub amount: i32,
+    pub period: Period,
+    pub counts: Counts,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub enum Direction {
+    AtLeast,
+    AtMost,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub enum Period {
+    Day,
+    Week,
+    Month,
+}
+
+/// Total: the sum of the values. Days: the number of days with the practice done.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub enum Counts {
+    Total,
+    Days,
+}
+
 /// Key: translated at display, so shared pages follow the viewer's language. Text: a user's own words.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -112,6 +152,10 @@ pub enum Panel {
     Around {
         event: Uuid,
         rows: Vec<AroundRow>,
+    },
+    /// Targets over a day, week or month. Level 4: older clients must not get it.
+    Goals {
+        goals: Vec<Goal>,
     },
 }
 
@@ -272,6 +316,7 @@ pub const MAX_SERIES: usize = 12;
 pub const MAX_STATS: usize = 8;
 pub const MAX_TERMS: usize = 16;
 pub const MAX_AROUND_ROWS: usize = 4;
+pub const MAX_GOALS: usize = 12;
 pub const MAX_BYTES: usize = 32 * 1024;
 
 fn invalid<S: Into<String>>(msg: S) -> AppError {
@@ -286,6 +331,26 @@ fn check_bounds(min: Option<i32>, max: Option<i32>) -> Result<(), AppError> {
         if min > max {
             return Err(invalid("Target min is above max"));
         }
+    }
+    Ok(())
+}
+
+fn check_goals(goals: &[Goal], out: &mut HashSet<Uuid>) -> Result<(), AppError> {
+    if goals.is_empty() {
+        return Err(invalid("Choose at least one goal"));
+    }
+    if goals.len() > MAX_GOALS {
+        return Err(invalid("Too many goals"));
+    }
+    for g in goals {
+        let min = match g.direction {
+            Direction::AtLeast => 1,
+            Direction::AtMost => 0,
+        };
+        if g.amount < min {
+            return Err(invalid("Goal amount is out of range"));
+        }
+        out.insert(g.practice);
     }
     Ok(())
 }
@@ -336,7 +401,9 @@ impl PanelsReport {
 
     /// The lowest `panels` query level that can draw this report.
     pub fn level(&self) -> u8 {
-        if self
+        if self.panels.iter().any(|p| matches!(p, Panel::Goals { .. })) {
+            4
+        } else if self
             .panels
             .iter()
             .any(|p| matches!(p, Panel::Gaps { .. } | Panel::Around { .. }))
@@ -417,6 +484,7 @@ impl PanelsReport {
                     out.extend(s.nap);
                 }
             }
+            Some(Template::Goals(g)) => check_goals(&g.goals, out)?,
             None => {}
         }
         for panel in &self.panels {
@@ -432,6 +500,7 @@ impl PanelsReport {
                 Panel::Month { practice } | Panel::Gaps { event: practice } => {
                     out.insert(*practice);
                 }
+                Panel::Goals { goals } => check_goals(goals, out)?,
                 Panel::Around { event, rows } => {
                     if rows.len() > MAX_AROUND_ROWS {
                         return Err(invalid("Too many rows"));
