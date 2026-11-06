@@ -6,7 +6,7 @@ import { chartsApi } from '../../api/charts'
 import type { GraphReport, Report, ReportDuration } from '../../api/charts'
 import { practicesApi } from '../../api/practices'
 import { buildChartData, tracesFor } from './chartLogic'
-import { isPanels, REPORTS_KEY, useReportSort } from './useReports'
+import { hasPanel, isPanels, REPORTS_KEY, useReportSort } from './useReports'
 import { addDays, fromDateStr, toDateStr } from '../today/date'
 import { averageLines, headline } from './insightsLogic'
 import { monthEnd } from './panels/panelLogic'
@@ -59,17 +59,19 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
   const report = reports.find((r) => r.id === stored) ?? reports[0] ?? null
   const todayCob = toDateStr(new Date())
   // A month report has no range or end date: it reads half a year to the shown month's end, which covers that month, the one before and any 90 days.
-  const hasMonth = !!report && isPanels(report) && report.definition.Panels.panels.some((p) => p.kind === 'Month')
+  // A goals report has no range or end date either: it reads the last year to today, whatever the range or log date.
+  const goals = hasPanel(report, 'Goals')
+  const hasMonth = !goals && !!report && isPanels(report) && report.definition.Panels.panels.some((p) => p.kind === 'Month')
   const month = hasMonth ? picked ?? todayCob.slice(0, 7) : null
-  const duration = hasMonth ? 'HalfYear' : DURATION[range]
-  const endCob = month ? monthEnd(month, todayCob) : toDateStr(logDate ?? end ?? new Date())
+  const duration = goals ? 'Year' : hasMonth ? 'HalfYear' : DURATION[range]
+  const endCob = goals ? todayCob : month ? monthEnd(month, todayCob) : toDateStr(logDate ?? end ?? new Date())
 
   const current = useQuery({
     queryKey: [...src.key, 'report-data', endCob, duration],
     queryFn: () => src.data(endCob, duration),
   })
   // From the response, so it matches the server's calendar-month/-year arithmetic. All data has no previous window.
-  const first = range === 'all' || hasMonth ? undefined : current.data?.[0]?.cob_date
+  const first = range === 'all' || hasMonth || goals ? undefined : current.data?.[0]?.cob_date
   const prevEnd = first ? toDateStr(addDays(fromDateStr(first), -1)) : null
   const previous = useQuery({
     queryKey: [...src.key, 'report-data', prevEnd, duration],
@@ -101,6 +103,8 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     end,
     setEnd: (d: Date | null) => setEndState(d && toDateStr(d) !== todayCob ? d : null),
     todayCob,
+    /** The report has a Goals panel: no range or end date. */
+    goals,
     /** yyyy-mm shown by a month report; null for any other. */
     month,
     setMonth: setPicked,

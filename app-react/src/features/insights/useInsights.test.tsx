@@ -187,4 +187,28 @@ describe('useInsights', () => {
       expect(result.current.month).toBe('2026-10')
     })
   })
+
+  describe('goals panel', () => {
+    const GOALS = { id: 'go1', name: 'Goals', definition: { Panels: { version: 1, template: null, required: [], panels: [{ kind: 'Goals' as const, goals: [] }] } } }
+    it('reads the year to today whatever the range, end date or log date, with no previous window', async () => {
+      const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+      charts.getReports.mockResolvedValue([GOALS, PANELS])
+      localStorage.setItem('insights-report', 'go1')
+      const { result } = renderHook(() => useInsights(new Date(2026, 8, 3)), { wrapper })
+      await waitFor(() => expect(result.current.goals).toBe(true))
+      await waitFor(() => expect(result.current.isLoading).toBe(false))
+      const before = charts.getReportData.mock.calls.length
+      act(() => { result.current.setRange('7d'); result.current.setEnd(new Date(2026, 8, 30)) })
+      await new Promise((r) => setTimeout(r, 20))
+      expect(charts.getReportData).toHaveBeenCalledWith('2026-10-06', 'Year')
+      expect(charts.getReportData.mock.calls.slice(before)).toEqual([])
+      expect(result.current.yearEntries).toBe(result.current.entries)
+    })
+    it('is false for other reports', async () => {
+      const { result } = setup()
+      await waitFor(() => expect(result.current.isLoading).toBe(false))
+      expect(result.current.goals).toBe(false)
+    })
+  })
 })

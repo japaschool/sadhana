@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { chartsApi } from '../../../api/charts'
-import { isPanels, REPORTS_KEY, useReports } from '../useReports'
+import { hasPanel, isPanels, REPORTS_KEY, useReports } from '../useReports'
 import type { GraphReport, PracticeTrace, Report } from '../../../api/charts'
 import { practicesApi } from '../../../api/practices'
 import { useToast } from '../../../hooks/useToast'
@@ -42,7 +42,7 @@ export function useChartEditor(id: string) {
   // Tablet and desktop keep the editor mounted while another chart is picked; a draft is only for its own chart.
   const report = (draft?.id === id ? draft : null) ?? reportsQ.data?.find((r) => r.id === id) ?? null
   // The same query as Insights, so the preview is usually cached already: 30 days, or half a year for month grids.
-  const duration = isPanels(report) && report.definition.Panels.panels.some((p) => p.kind === 'Month') ? 'HalfYear' : 'Month'
+  const duration = hasPanel(report, 'Goals') ? 'Year' : hasPanel(report, 'Month') ? 'HalfYear' : 'Month'
   const dataQ = useQuery({ queryKey: ['report-data', todayCob, duration], queryFn: () => chartsApi.getReportData(todayCob, duration) })
   const latest = useRef(report)
   latest.current = report

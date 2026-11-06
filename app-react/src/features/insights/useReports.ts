@@ -31,5 +31,7 @@ export function useReports(): UseQueryResult<Report[]> {
 export const nameTaken = (reports: Report[], name: string, exceptId?: string) =>
   reports.some((r) => r.id !== exceptId && r.name === name.trim())
 
+export const hasPanel = (r: Report | null, kind: string) => isPanels(r) && r.definition.Panels.panels.some((p) => p.kind === kind)
+
 export const isPanels = (r: Report | null): r is Report & { definition: { Panels: PanelsReport } } =>
   !!r && 'Panels' in r.definition

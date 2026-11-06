@@ -76,7 +76,7 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300, panelHei
             <span aria-hidden className="shrink-0">▾</span>
           </button>
 
-          {ins.month ? <MonthNav month={ins.month} todayCob={ins.todayCob} onChange={ins.setMonth} /> : (
+          {ins.goals ? null : ins.month ? <MonthNav month={ins.month} todayCob={ins.todayCob} onChange={ins.setMonth} /> : (
             <div className="flex items-center justify-between gap-3">
               <div className="font-ui-mono [&_button]:px-3.5 [&_button]:text-[13px]">
                 <SegmentedControl label={t('insights.range')} value={ins.range} onChange={ins.setRange}

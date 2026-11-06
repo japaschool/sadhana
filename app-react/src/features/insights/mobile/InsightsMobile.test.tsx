@@ -272,6 +272,22 @@ describe('InsightsMobile', () => {
     expect(within(table).queryByText('Morning')).toBeNull()
   })
 
+  it('a goals report has no range or end date control; a graph report has', async () => {
+    charts.getReports.mockResolvedValue([
+      { id: 'go1', name: 'Goals', definition: { Panels: { version: 1, template: null, required: [], panels: [{ kind: 'Goals', goals: [] }] } } },
+    ])
+    localStorage.setItem('insights-report', 'go1')
+    const { unmount } = renderScreen()
+    await waitFor(() => expect(charts.getReportData).toHaveBeenCalledWith('2026-10-06', 'Year'))
+    await waitFor(() => expect(screen.queryByRole('radiogroup', { name: 'Range' })).toBeNull())
+    expect(screen.queryByText('Ending today')).toBeNull()
+    unmount()
+    localStorage.clear()
+    charts.getReports.mockResolvedValue([{ id: 'g2', name: 'Sleep', definition: { Graph: { bar_layout: 'Grouped', traces: [] } } }])
+    renderScreen()
+    expect(await screen.findByRole('radiogroup', { name: 'Range' })).toBeInTheDocument()
+  })
+
   it('a month report swaps the range control for month navigation', async () => {
     charts.getReports.mockResolvedValue([
       { id: 'm1', name: 'Days I did it', definition: { Panels: { version: 1, template: null, required: [], panels: [{ kind: 'Month', practice: 'p3' }] } } },
