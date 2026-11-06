@@ -9,7 +9,7 @@ vi.mock('../../../api/charts', () => ({
   chartsApi: { getReports: vi.fn(), getReportData: vi.fn(), deleteReport: vi.fn() },
 }))
 vi.mock('../../../api/practices', () => ({
-  practicesApi: { getUserPractices: vi.fn(), getIncompleteDays: vi.fn(), getDiaryEntries: vi.fn(), saveDiaryEntry: vi.fn() },
+  practicesApi: { getGroups: vi.fn().mockResolvedValue([]), getUserPractices: vi.fn(), getIncompleteDays: vi.fn(), getDiaryEntries: vi.fn(), saveDiaryEntry: vi.fn() },
 }))
 import { chartsApi } from '../../../api/charts'
 import { practicesApi } from '../../../api/practices'

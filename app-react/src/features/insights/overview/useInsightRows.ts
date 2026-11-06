@@ -30,17 +30,19 @@ export function useInsightRows(dataQ: UseQueryResult<ReportDataEntry[]>, todayCo
   const [prefs, setPrefs, prefsReady] = useInsightPrefs()
   const reportsQ = useReports()
   const practicesQ = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices })
+  const groupsQ = useQuery({ queryKey: ['practice-groups'], queryFn: practicesApi.getGroups })
   const reports = reportsQ.data ?? NONE
   const practices = practicesQ.data ?? NONE
+  const groups = groupsQ.data ?? NONE
   const entries = dataQ.data ?? NONE
 
   const sleep = useMemo(() => resolveSleep(prefs.sleep, practices, reports), [prefs.sleep, practices, reports])
-  const rows = useMemo(() => insightRows(practices, sleep), [practices, sleep])
+  const rows = useMemo(() => insightRows(practices, groups, sleep, prefs.visibility), [practices, groups, sleep, prefs.visibility])
   const series = useMemo(() => rowSeries(rows, entries, practices, sleep, todayCob), [rows, entries, practices, sleep, todayCob])
   return {
     rows, series, entries, practices, sleep, prefs, setPrefs, prefsReady,
     reportsPending: reportsQ.isPending, practicesPending: practicesQ.isPending,
-    isLoading: dataQ.isLoading || practicesQ.isLoading || reportsQ.isLoading,
-    isError: failedWithoutData(dataQ) || failedWithoutData(practicesQ) || failedWithoutData(reportsQ),
+    isLoading: dataQ.isLoading || practicesQ.isLoading || groupsQ.isLoading || reportsQ.isLoading,
+    isError: failedWithoutData(dataQ) || failedWithoutData(practicesQ) || failedWithoutData(groupsQ) || failedWithoutData(reportsQ),
   }
 }

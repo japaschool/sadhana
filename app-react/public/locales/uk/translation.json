@@ -390,7 +390,7 @@
       "word_later": "Пізніше",
       "calculated": "розрахунковий",
       "sleep": "Сон",
-      "totalTime": "Увесь час",
+      "groupTotal": "{{group}} · усього",
       "since": "з {{date}}",
       "changedAround": "Щось змінилося близько {{date}}. Хочете назвати цей період?",
       "rowsMoved": "{{rows}} — усе змінилося того тижня.",

@@ -116,7 +116,7 @@ describe('isRegular', () => {
     Object.fromEntries(offsets.map((i) => [day(-i), values]))
   const all = { 'Отбой': T(23, 0), 'Подъём': T(5, 0), 'Кругов за день': 16, 'Кругов до 7': 8 }
   const check = (data: ReturnType<typeof entries>) => {
-    const rows = insightRows(FOUR, null)
+    const rows = insightRows(FOUR, [], null, {})
     const normal = meVsNormal(rows, rowSeries(rows, data, FOUR, null, TODAY), [], TODAY)
     return { normal, regular: isRegular(normal, loggedDays(data, TODAY), TODAY) }
   }

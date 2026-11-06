@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import { useInsights, ALL } from './useInsights'
 
 vi.mock('../../api/charts', () => ({ chartsApi: { getReports: vi.fn(), getSharedReports: vi.fn(), getSharedPractices: vi.fn(), getSharedReportData: vi.fn(), getReportData: vi.fn() } }))
-vi.mock('../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn() } }))
+vi.mock('../../api/practices', () => ({ practicesApi: { getGroups: vi.fn().mockResolvedValue([]), getUserPractices: vi.fn() } }))
 import { chartsApi } from '../../api/charts'
 import { practicesApi } from '../../api/practices'
 const charts = vi.mocked(chartsApi)

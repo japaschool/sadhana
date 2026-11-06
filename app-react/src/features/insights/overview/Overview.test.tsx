@@ -45,7 +45,7 @@ function overview(days: Record<string, Record<string, unknown>>, opts: {
   const practices = opts.practices ?? FOUR
   const sleep = opts.sleep === undefined ? SLEEP : opts.sleep
   const data = entries(days)
-  const rows = insightRows(practices, sleep)
+  const rows = insightRows(practices, [], sleep, {})
   const series = rowSeries(rows, data, practices, sleep, todayCob)
   const logged = loggedDays(data, todayCob)
   const periods = opts.periods ?? []

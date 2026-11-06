@@ -366,7 +366,7 @@
       "word_later": "Later",
       "calculated": "calculated",
       "sleep": "Sleep",
-      "totalTime": "Total time",
+      "groupTotal": "{{group}} · total",
       "since": "since {{date}}",
       "changedAround": "Something changed around {{date}}. Want to name it?",
       "rowsMoved": "{{rows}} all moved that week.",

@@ -8,7 +8,7 @@ import { addDays, toDateStr } from '../../today/date'
 import { entries, FOUR, practice } from './fixtures'
 
 vi.mock('../../../api/charts', () => ({ chartsApi: { getReports: vi.fn(), getReportData: vi.fn() } }))
-vi.mock('../../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn() } }))
+vi.mock('../../../api/practices', () => ({ practicesApi: { getGroups: vi.fn().mockResolvedValue([]), getUserPractices: vi.fn() } }))
 vi.mock('../../../api/insightPrefs', () => ({ insightPrefsApi: { get: vi.fn(), save: vi.fn() }, INSIGHT_PREFS_KEY: ['insight-prefs'] }))
 import { insightPrefsApi } from '../../../api/insightPrefs'
 const markedPeriods = vi.fn()

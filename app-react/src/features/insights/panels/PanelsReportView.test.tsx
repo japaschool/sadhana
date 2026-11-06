@@ -31,7 +31,7 @@ vi.mock('../../../api/charts', () => ({
   },
 }))
 vi.mock('../../../api/practices', () => ({
-  practicesApi: { getUserPractices: vi.fn(), getIncompleteDays: vi.fn(), getDiaryEntries: vi.fn(), saveDiaryEntry: vi.fn() },
+  practicesApi: { getGroups: vi.fn().mockResolvedValue([]), getUserPractices: vi.fn(), getIncompleteDays: vi.fn(), getDiaryEntries: vi.fn(), saveDiaryEntry: vi.fn() },
 }))
 const marked = vi.hoisted(() => ({ periods: [] as MarkedPeriod[] }))
 vi.mock('../../../api/markedPeriods', () => ({ useMarkedPeriods: () => ({ periods: marked.periods, isLoading: false }) }))

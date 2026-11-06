@@ -23,7 +23,7 @@ export function CalculatedTag() {
 
 export function RowLabel({ n, practices }: { n: Pick<NormalRow, 'row'>; practices: UserPractice[] }) {
   const { t } = useTranslation()
-  return <span className={ROW_NAME}>{rowName(n.row, practices, t)}{n.row.special === 'sleep' && <CalculatedTag />}</span>
+  return <span className={ROW_NAME}>{rowName(n.row, practices, t)}{n.row.special !== null && <CalculatedTag />}</span>
 }
 
 function WordChip({ word }: { word: Word }) {

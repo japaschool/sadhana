@@ -1,22 +1,53 @@
 import type { ReportDataEntry, SleepRows } from '../../../api/charts'
-import type { UserPractice } from '../../../types/api'
+import type { PracticeGroup, UserPractice } from '../../../types/api'
+import { groupPractices } from '../../practices/groups'
 import { sleepSource } from '../panels/templates'
 import type { RowKind } from '../panels/gapLogic'
 import { makeLookup, resolve, scalar, windowDays } from '../panels/panelLogic'
 
-export interface InsightRow { key: string; kind: RowKind; practice: string | null; special: 'sleep' | 'total' | null }
+export interface InsightRow {
+  key: string; kind: RowKind; practice: string | null; special: 'sleep' | 'total' | null
+  /** A group total's Duration practices. */
+  members?: string[]
+  groupName?: string
+}
 /** cob -> value. Clock values are minutes after noon. */
 export type Series = Map<string, number>
 
-export function insightRows(practices: UserPractice[], sleep: SleepRows | null): InsightRow[] {
-  const rows: InsightRow[] = practices
-    .filter((p) => p.is_active && (p.data_type === 'Time' || p.data_type === 'Int'))
-    .map((p) => ({ key: p.id, kind: p.data_type === 'Time' ? 'Clock' : 'Count', practice: p.id, special: null }))
-  if (sleep) rows.push({ key: 'sleep', kind: 'Duration', practice: null, special: 'sleep' })
-  if (practices.some((p) => p.is_active && p.data_type === 'Duration')) {
-    rows.push({ key: 'total', kind: 'Duration', practice: null, special: 'total' })
+/** A row with the group it's listed under and whether it shows when the user hasn't chosen. */
+export interface OverviewRow extends InsightRow { group: PracticeGroup; defaultVisible: boolean }
+
+const KIND: Partial<Record<UserPractice['data_type'], RowKind>> = { Time: 'Clock', Int: 'Count', Duration: 'Duration' }
+
+/** Every row the overview can show, in diary order: each group's practices, then its total, with Sleep last.
+ *  A named group with 2+ active Duration practices gets a total and hides them by default. */
+export function overviewRows(practices: UserPractice[], groups: PracticeGroup[], sleep: SleepRows | null): OverviewRow[] {
+  const sections = groupPractices(groups, practices.filter((p) => p.is_active))
+  const rows: OverviewRow[] = []
+  for (const { group, practices: ps } of sections) {
+    const own: OverviewRow[] = ps.flatMap((p) => {
+      const kind = KIND[p.data_type]
+      return kind ? [{ key: p.id, kind, practice: p.id, special: null, group, defaultVisible: true }] : []
+    })
+    const durations = own.filter((r) => r.kind === 'Duration')
+    if (!group.is_default && durations.length >= 2) {
+      durations.forEach((r) => { r.defaultVisible = false })
+      own.push({
+        key: `total:${group.id}`, kind: 'Duration', practice: null, special: 'total',
+        members: durations.map((r) => r.practice!), groupName: group.name, group, defaultVisible: true,
+      })
+    }
+    rows.push(...own)
   }
+  if (sleep) rows.push({ key: 'sleep', kind: 'Duration', practice: null, special: 'sleep', group: sections.find((x) => x.group.is_default)!.group, defaultVisible: true })
   return rows
+}
+
+/** The rows the user sees: their choice, else the default. Sleep has its own setting and always stays. */
+export function insightRows(
+  practices: UserPractice[], groups: PracticeGroup[], sleep: SleepRows | null, visibility: Record<string, boolean>,
+): InsightRow[] {
+  return overviewRows(practices, groups, sleep).filter((r) => r.special === 'sleep' || (visibility[r.key] ?? r.defaultVisible))
 }
 
 /** Sorted days with at least one non-null value. */
@@ -41,7 +72,6 @@ export function rowSeries(
     if (v !== null) return v
     return filled.has(id) && counted.some((p) => l.value(p.id, cob) !== null) ? 0 : null
   }
-  const durations = active.filter((p) => p.data_type === 'Duration')
   const sleepSrc = sleep ? sleepSource(sleep) : null
 
   const out = new Map<string, Series>()
@@ -51,7 +81,7 @@ export function rowSeries(
       let v: number | null = null
       if (row.special === 'sleep') v = sleepSrc ? scalar(resolve(sleepSrc, cob, l), null) : null
       else if (row.special === 'total') {
-        const parts = durations.map((p) => count(p.id, cob))
+        const parts = (row.members ?? []).map((id) => count(id, cob))
         v = parts.some((x) => x !== null) ? parts.reduce<number>((a, x) => a + (x ?? 0), 0) : null
       } else if (row.kind === 'Clock') {
         const t = l.value(row.practice!, cob)

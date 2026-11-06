@@ -390,7 +390,7 @@
       "word_later": "Позже",
       "calculated": "расчётное",
       "sleep": "Сон",
-      "totalTime": "Всё время",
+      "groupTotal": "{{group}} · всего",
       "since": "с {{date}}",
       "changedAround": "Что-то изменилось около {{date}}. Хотите назвать этот период?",
       "rowsMoved": "{{rows}} — всё изменилось на той неделе.",

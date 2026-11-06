@@ -14,7 +14,7 @@ const T = (h: number, m: number) => ({ Time: { h, m } })
 function setup(periods: MarkedPeriod[]) {
   const days: Record<string, Record<string, unknown>> = {}
   for (let i = 90; i >= 1; i--) days[day(-i)] = { 'Подъём': T(4, 20), 'Кругов за день': i <= 15 && i > 5 ? 24 : 16 }
-  const rows = insightRows(FOUR, null)
+  const rows = insightRows(FOUR, [], null, {})
   const series = rowSeries(rows, entries(days), FOUR, null, TODAY)
   return render(<MemoryRouter><BdaCards rows={rows} series={series} periods={periods} practices={FOUR} todayCob={TODAY} /></MemoryRouter>)
 }

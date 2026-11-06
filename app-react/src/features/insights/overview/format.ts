@@ -18,7 +18,7 @@ export function rowValueText(kind: RowKind, v: number | null, units: DurationUni
 
 export function rowName(row: InsightRow, practices: UserPractice[], t: TFunction): string {
   if (row.special === 'sleep') return t('insights.overview.sleep')
-  if (row.special === 'total') return t('insights.overview.totalTime')
+  if (row.special === 'total') return t('insights.overview.groupTotal', { group: row.groupName })
   return practices.find((p) => p.id === row.practice)?.practice ?? ''
 }
 
