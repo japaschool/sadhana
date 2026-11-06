@@ -44,11 +44,16 @@ export function InsightsMobile() {
           <SegmentedControl label={t('insights.overview.view')} value={view} onChange={setView}
             options={[{ value: 'overview', label: t('insights.overview.overview') }, { value: 'charts', label: t('insights.overview.charts') }]} />
         </div>
-        {view === 'overview' ? <OverviewMobile /> : (
+        {view === 'overview' ? <OverviewMobile /> : ins.noReports ? (
+          <section className="flex flex-col items-center gap-3 rounded-[22px] border border-ui-hairline bg-ui-surface px-4 py-10">
+            <p className="text-sm text-ui-muted">{t('charts.empty')}</p>
+            <button type="button" onClick={more.create} className="min-h-12 rounded-[14px] bg-ui-accent-fill px-5 text-[15px] font-extrabold text-ui-ink">{t('insights.newChart')}</button>
+          </section>
+        ) : (
           <>
             <button type="button" aria-haspopup="menu" onClick={(e) => setMenuAnchor(e.currentTarget)}
               className="flex min-h-9 max-w-full items-center gap-1 self-start text-[17px] font-bold text-ui-accent">
-              <span className="truncate">{ins.report?.name ?? t('charts.allPractices')}</span>
+              <span className="truncate">{ins.report?.name}</span>
               <span aria-hidden className="shrink-0">▾</span>
             </button>
 

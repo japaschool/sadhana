@@ -257,7 +257,6 @@ if (!i18n.isInitialized) {
             saveReport: 'Save report',
             noPractices: 'No active practices',
             manage: 'Manage reports',
-            allPractices: 'All practices',
             duration: 'Duration',
             noData: 'No data',
             share: 'Share',

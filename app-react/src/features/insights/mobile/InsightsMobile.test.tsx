@@ -38,7 +38,7 @@ function renderScreen(view: 'overview' | 'charts' = 'charts') {
 }
 
 // The ▾ is aria-hidden, so the link's accessible name is just the report name.
-const reportLink = () => screen.findByRole('button', { name: /^(All practices|Morning sadhana)/ })
+const reportLink = () => screen.findByRole('button', { name: /^(Grid one|Morning sadhana)/ })
 
 describe('InsightsMobile', () => {
   beforeEach(() => {
@@ -65,10 +65,11 @@ describe('InsightsMobile', () => {
             { cob_date: '2026-10-05', practice: 'Japa', value: { Duration: 60 } },
             { cob_date: '2026-10-06', practice: 'Japa', value: { Duration: 30 } },
           ])
+    localStorage.setItem('insights-report', 'r1')
   })
   afterEach(() => { vi.useRealTimers(); localStorage.clear() })
 
-  it('shows the headline, delta, window and legend for All practices', async () => {
+  it('shows the headline, delta, window and legend for a graph report', async () => {
     renderScreen()
     // Today (Oct 6) is excluded: the headline is Oct 5's 60m; the previous window (Oct 4) had 40 → +50%.
     expect(await screen.findByText('+50% vs previous 30 days')).toBeInTheDocument()
@@ -77,7 +78,6 @@ describe('InsightsMobile', () => {
     expect(screen.getAllByText('1h')).toHaveLength(2) // headline + Japa legend row
     const legend = screen.getByRole('list', { name: 'Averages' })
     expect(within(legend).getByText('Japa').parentElement).toHaveTextContent('1h')
-    expect(within(legend).getByText('Reading').parentElement).toHaveTextContent('—')
   })
 
   it('a legend row toggles its series', async () => {
@@ -94,12 +94,11 @@ describe('InsightsMobile', () => {
     renderScreen()
     fireEvent.click(await reportLink())
     const menu = screen.getByRole('menu', { name: 'Reports' })
-    expect(within(menu).getByRole('menuitemradio', { name: 'All practices' })).toHaveAttribute('aria-checked', 'true')
-    expect(within(menu).getByRole('menuitemradio', { name: 'Grid one' })).toBeInTheDocument()
-    fireEvent.click(within(menu).getByRole('menuitemradio', { name: LONG }))
+    expect(within(menu).getByRole('menuitemradio', { name: LONG })).toHaveAttribute('aria-checked', 'true')
+    fireEvent.click(within(menu).getByRole('menuitemradio', { name: 'Grid one' }))
     expect(screen.queryByRole('menu')).toBeNull()
-    expect(await reportLink()).toHaveTextContent(LONG)
-    expect(localStorage.getItem('insights-report')).toBe('r1')
+    expect(await reportLink()).toHaveTextContent('Grid one')
+    expect(localStorage.getItem('insights-report')).toBe('g1')
   })
 
   it('switches the range', async () => {
@@ -135,8 +134,18 @@ describe('InsightsMobile', () => {
 
   const openMore = async () => fireEvent.click(await screen.findByRole('button', { name: 'More' }))
 
-  it('hides Edit and Delete for All practices', async () => {
+  it('without reports shows an empty state whose button creates a chart', async () => {
+    charts.getReports.mockResolvedValue([])
     renderScreen()
+    fireEvent.click(await screen.findByRole('button', { name: 'New chart' }))
+    expect(screen.getByText('No reports yet')).toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+
+  it('hides Edit and Delete without a report', async () => {
+    charts.getReports.mockResolvedValue([])
+    renderScreen()
+    await screen.findByText('No reports yet')
     await openMore()
     const menu = screen.getByRole('menu', { name: 'More' })
     expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
@@ -176,7 +185,7 @@ describe('InsightsMobile', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/settings/charts/r1')
   })
 
-  it('deletes the report after confirming and falls back to All practices', async () => {
+  it('deletes the last report after confirming and shows the empty state', async () => {
     localStorage.setItem('insights-report', 'r1')
     charts.deleteReport.mockImplementation(async () => {
       charts.getReports.mockResolvedValue([])
@@ -189,7 +198,7 @@ describe('InsightsMobile', () => {
     fireEvent.click(within(sheet).getByRole('button', { name: 'Delete' }))
     await waitFor(() => expect(charts.deleteReport).toHaveBeenCalledWith('r1'))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
-    expect(await screen.findByRole('button', { name: 'All practices' })).toBeInTheDocument()
+    expect(await screen.findByText('No reports yet')).toBeInTheDocument()
   })
 
   it('keeps the sheet open and shows an error when delete fails', async () => {

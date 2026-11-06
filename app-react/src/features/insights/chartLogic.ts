@@ -1,6 +1,5 @@
 import type { Report, TraceType } from '../../api/charts'
 import type { PracticeDataType, UserPractice } from '../../types/api'
-import { withLandedAxes } from './axes'
 
 export type AxisKind = 'num' | 'time' | 'unit'
 
@@ -204,7 +203,7 @@ export function resolveAxisId(yAxis: string | null, dataType: PracticeDataType):
 
 const REGULAR_LINE: TraceType = { Line: { style: 'Regular' } }
 
-/** Traces for a report; `null` = "All practices" (every active practice as a line). Colours go by index. */
+/** Traces for a report (none without one). Colours go by index. */
 export function tracesFor(report: Report | null, practices: UserPractice[], colors: readonly string[]): Trace[] {
   const byId = new Map(practices.map((p) => [p.id, p]))
   const color = (i: number) => colors[i % colors.length]
@@ -213,7 +212,7 @@ export function tracesFor(report: Report | null, practices: UserPractice[], colo
     dataType: byId.get(pid)?.data_type ?? 'Int',
     type_: REGULAR_LINE, color: color(i), showAverage: false, yAxis: null,
   })
-  if (report === null) return withLandedAxes(practices.filter((p) => p.is_active).map((p, i) => line(p.id, i)))
+  if (report === null) return []
   if ('Grid' in report.definition) return report.definition.Grid.practices.map(line)
   if ('Panels' in report.definition) return []
   return report.definition.Graph.traces.map((t, i) => ({

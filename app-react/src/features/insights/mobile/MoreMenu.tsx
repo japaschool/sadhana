@@ -12,7 +12,7 @@ import { copyShareLink, downloadCsv } from '../../today/actions'
 import { NewChartSheet } from '../settings/mobile/NewChartSheet'
 import type { Report } from '../../../api/charts'
 
-export function useMoreMenu(report: Report | null): { actions: AppBarAction[]; sheet: ReactNode } {
+export function useMoreMenu(report: Report | null): { actions: AppBarAction[]; sheet: ReactNode; create: () => void } {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -57,5 +57,5 @@ export function useMoreMenu(report: Report | null): { actions: AppBarAction[]; s
     </BottomSheet>
   ) : null
 
-  return { actions, sheet: <>{sheet}{creating && <NewChartSheet onClose={() => setCreating(false)} />}</> }
+  return { create: () => setCreating(true), actions, sheet: <>{sheet}{creating && <NewChartSheet onClose={() => setCreating(false)} />}</> }
 }

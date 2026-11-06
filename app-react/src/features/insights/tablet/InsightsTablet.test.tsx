@@ -40,7 +40,8 @@ describe('InsightsTablet', () => {
       { id: 'p2', practice: 'Reading', data_type: 'Duration', is_active: true },
     ])
     practices.getIncompleteDays.mockResolvedValue([])
-    charts.getReports.mockResolvedValue([])
+    const line = (practice: string) => ({ label: null, type_: { Line: { style: 'Regular' as const } }, practice, y_axis: null, show_average: false })
+    charts.getReports.mockResolvedValue([{ id: 'r1', name: 'Morning', definition: { Graph: { bar_layout: 'Grouped', traces: [line('p1'), line('p2')] } } }])
     charts.getReportData.mockImplementation(async (cob) =>
       cob === '2026-10-04'
         ? [{ cob_date: '2026-10-04', practice: 'Japa', value: { Duration: 40 } }]
@@ -65,7 +66,7 @@ describe('InsightsTablet', () => {
     await waitFor(() => expect(charts.getReportData).toHaveBeenCalledWith('2026-09-30', 'Month'))
     fireEvent.click(screen.getByRole('button', { name: 'More' }))
     expect(within(screen.getByRole('menu', { name: 'More' })).getAllByRole('menuitem').map((i) => i.textContent))
-      .toEqual(['New chart', 'Share reports link', 'Download data (CSV)'])
+      .toEqual(['New chart', 'Edit “Morning”', 'Share reports link', 'Download data (CSV)', 'Delete report'])
   })
 
   it('hides report actions on Overview even with a report selected', async () => {

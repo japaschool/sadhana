@@ -25,13 +25,6 @@ export function landing(series: AxisSeries[], dataType: PracticeDataType): { axi
   return { axis: AXES.find((a) => !axes.includes(a)) ?? 'Y', shared: false }
 }
 
-/** Every series given its axis outright, each landing as if added in order (for All practices, which has no report). */
-export function withLandedAxes<T extends AxisSeries>(series: T[]): T[] {
-  const out: T[] = []
-  for (const s of series) out.push({ ...s, yAxis: landing(out, s.dataType).axis })
-  return out
-}
-
 /** For the manual picker: who holds each axis apart from series `index`. */
 export function axisUse(series: AxisSeries[], index: number): Map<Axis, PracticeDataType> {
   const axes = assignAxes(series)

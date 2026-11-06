@@ -68,10 +68,8 @@ export function KindGlyph({ kind, className = 'text-ui-faint' }: { kind: 'graph'
   )
 }
 
-/** The muted type glyph before a report's name (Report Templates 15m17). `null` is All practices. */
-export function ReportGlyph({ report }: { report: Report | null }) {
-  // All practices is a table of every practice (15m17).
-  if (report === null) return <KindGlyph kind="table" />
+/** The muted type glyph before a report's name (Report Templates 15m17). */
+export function ReportGlyph({ report }: { report: Report }) {
   const d = report.definition
   return <KindGlyph kind={'Graph' in d ? 'graph' : 'Panels' in d ? templateSlug(d.Panels) : 'table'} />
 }

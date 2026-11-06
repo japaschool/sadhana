@@ -2,7 +2,7 @@ import { renderHook, waitFor, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { useInsights, ALL } from './useInsights'
+import { useInsights } from './useInsights'
 
 vi.mock('../../api/charts', () => ({ chartsApi: { getReports: vi.fn(), getSharedReports: vi.fn(), getSharedPractices: vi.fn(), getSharedReportData: vi.fn(), getReportData: vi.fn() } }))
 vi.mock('../../api/practices', () => ({ practicesApi: { getGroups: vi.fn().mockResolvedValue([]), getUserPractices: vi.fn() } }))
@@ -36,12 +36,21 @@ describe('useInsights', () => {
   })
   afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); localStorage.clear() })
 
-  it('lists Graph reports only and defaults to All practices', async () => {
+  it('lists Graph reports only and defaults to the first', async () => {
     const { result } = setup()
     await waitFor(() => expect(result.current.isLoading).toBe(false))
     expect(result.current.reports.map((r) => r.id)).toEqual(['r1'])
-    expect(result.current.selectedId).toBe(ALL)
+    expect(result.current.selectedId).toBe('r1')
     expect(result.current.traces.map((t) => t.name)).toEqual(['Japa'])
+    expect(result.current.noReports).toBe(false)
+  })
+
+  it('says when there are no reports', async () => {
+    charts.getReports.mockResolvedValue([GRID])
+    const { result } = setup()
+    await waitFor(() => expect(result.current.noReports).toBe(true))
+    expect(result.current.report).toBeNull()
+    expect(result.current.traces).toEqual([])
   })
 
   it.each([true, false])('lists and selects a panels report (withTables %s)', async (withTables) => {
@@ -81,11 +90,11 @@ describe('useInsights', () => {
     expect(result.current.traces[0].showAverage).toBe(true)
   })
 
-  it.each(['zzz', 'g1'])('unknown or Grid id %s falls back to All practices', async (id) => {
+  it.each(['zzz', 'g1', '__all__'])('unknown or Grid id %s falls back to the first report', async (id) => {
     localStorage.setItem('insights-report', id)
     const { result } = setup()
     await waitFor(() => expect(result.current.isLoading).toBe(false))
-    expect(result.current.selectedId).toBe(ALL)
+    expect(result.current.selectedId).toBe('r1')
   })
 
   it('writes a selection change to storage', async () => {
@@ -101,7 +110,7 @@ describe('useInsights', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked') })
     const { result } = setup()
     await waitFor(() => expect(result.current.isLoading).toBe(false))
-    expect(result.current.selectedId).toBe(ALL)
+    expect(result.current.selectedId).toBe('r1')
     act(() => result.current.select('r1'))
     expect(result.current.selectedId).toBe('r1')
   })

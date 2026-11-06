@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assignAxes, axisUse, landing, withLandedAxes } from './axes'
+import { assignAxes, axisUse, landing } from './axes'
 
 const unset = (dataType: 'Int' | 'Duration' | 'Time' | 'Bool') => ({ dataType, yAxis: null })
 const on = (dataType: 'Int' | 'Duration' | 'Time' | 'Bool', yAxis: string) => ({ dataType, yAxis })
@@ -14,10 +14,6 @@ describe('assignAxes', () => {
     expect(landing(s, 'Duration')).toEqual({ axis: 'Y', shared: true })
     expect(landing(s, 'Int')).toEqual({ axis: 'Y3', shared: false })
     expect(landing([], 'Int')).toEqual({ axis: 'Y', shared: false })
-  })
-  it('spreads types over axes when every series lands in turn', () => {
-    expect(withLandedAxes([unset('Duration'), unset('Duration'), unset('Time'), unset('Int')]).map((s) => s.yAxis))
-      .toEqual(['Y', 'Y', 'Y2', 'Y3'])
   })
   it('lists the axes other series hold', () => {
     expect([...axisUse([unset('Duration'), on('Time', 'Y2')], 1)]).toEqual([['Y', 'Duration']])

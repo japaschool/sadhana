@@ -90,7 +90,6 @@
   },
   "charts": {
     "empty": "No reports yet",
-    "allPractices": "All practices",
     "copied": "Copied!",
     "downloadCsv": "Download data (CSV)",
     "shareLink": "Share reports link",

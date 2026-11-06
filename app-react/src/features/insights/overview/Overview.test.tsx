@@ -290,7 +290,7 @@ describe('Overview (mobile)', () => {
     expect(screen.getByRole('radio', { name: 'Overview' })).toHaveAttribute('aria-checked', 'true')
     expect(screen.getByRole('region', { name: 'Me vs my normal' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('radio', { name: 'Charts' }))
-    expect(await screen.findByRole('button', { name: /^All practices/ })).toBeInTheDocument()
+    expect(await screen.findByText('No reports yet')).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Me vs my normal' })).toBeNull()
   })
 })
@@ -307,7 +307,7 @@ describe.each([['tablet', 834, InsightsTabletScreen], ['desktop', 1440, Insights
     expect(screen.getByText('Something changed around Oct 25. Want to name it?')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Year map/ })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('radio', { name: 'Charts' }))
-    expect(await screen.findByRole('button', { name: /^All practices/ })).toBeInTheDocument()
+    expect(await screen.findByText('No reports yet')).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Me vs my normal' })).toBeNull()
   })
 

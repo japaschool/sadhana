@@ -11,7 +11,6 @@ import { addDays, fromDateStr, toDateStr } from '../today/date'
 import { averageLines, headline } from './insightsLogic'
 import { monthEnd } from './panels/panelLogic'
 
-export const ALL = '__all__'
 const KEY = 'insights-report'
 export const COLORS = Array.from({ length: 8 }, (_, i) => `var(--ui-chart-${i + 1})`)
 
@@ -24,7 +23,7 @@ const isGraph = (r: Report): r is GraphReportRow => 'Graph' in r.definition
 export const isTable = (r: Report | null) => !!r && 'Grid' in r.definition
 
 function readStored(): string {
-  try { return localStorage.getItem(KEY) ?? ALL } catch { return ALL }
+  try { return localStorage.getItem(KEY) ?? '' } catch { return '' }
 }
 
 export function writeStored(id: string) {
@@ -33,7 +32,7 @@ export function writeStored(id: string) {
 
 /** `logDate` (desktop) pins the window's end to the log panel's day instead of the screen's own end date.
  *  `withTables` also lists Grid (table) reports; layouts without a table view leave them out.
- *  `sharedUser` reads that user's shared reports (/shared/:userId) instead: there's no All practices, the first report is the default. */
+ *  `sharedUser` reads that user's shared reports (/shared/:userId) instead. */
 export function useInsights(logDate?: Date, withTables = false, sharedUser?: string) {
   const { i18n } = useTranslation()
   const locale = i18n.language || 'en'
@@ -56,8 +55,8 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
   const [hiddenFor, setHiddenFor] = useState<{ id: string; set: Set<number> }>({ id: '', set: new Set() })
 
   const reports = (reportsQ.data ?? []).filter((r) => withTables || !('Grid' in r.definition))
-  // An unknown or deleted id (or a Grid one, without tables) simply isn't found, so the screen shows All practices.
-  const report = reports.find((r) => r.id === stored) ?? (sharedUser ? reports[0] ?? null : null)
+  // An unknown or deleted id (or a Grid one, without tables) simply isn't found, so the screen shows the first report.
+  const report = reports.find((r) => r.id === stored) ?? reports[0] ?? null
   const todayCob = toDateStr(new Date())
   // A month report has no range or end date: it reads half a year to the shown month's end, which covers that month, the one before and any 90 days.
   const hasMonth = !!report && isPanels(report) && report.definition.Panels.panels.some((p) => p.kind === 'Month')
@@ -89,7 +88,7 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
   const entries = current.data ?? []
   const names = new Set(traces.map((t) => t.name))
   const barLayout = report && isGraph(report) ? report.definition.Graph.bar_layout : 'Grouped'
-  const selectedId = report?.id ?? ALL
+  const selectedId = report?.id ?? ''
   const hidden = hiddenFor.id === selectedId ? hiddenFor.set : new Set<number>()
 
   return {
@@ -128,5 +127,7 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     isLoading: reportsQ.isLoading || practicesQ.isLoading || current.isLoading,
     isError: failedWithoutData(current),
     reportsError: failedWithoutData(reportsQ),
+    /** Loaded, and there are no reports to show. */
+    noReports: reportsQ.isSuccess && reports.length === 0,
   }
 }
