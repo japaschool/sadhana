@@ -320,6 +320,8 @@ describe('the Japa template', () => {
     expect(target).toHaveValue('16')
     fireEvent.blur(target)
     expect(shown()).toMatchObject({ target: 16 })
+     fireEvent.change(target, { target: { value: '123456' } })
+    expect(target).toHaveValue('1234') // four digits; only a goal's count takes six
   })
 
   it('suggests total rounds, filling nothing until Use', () => {
@@ -648,6 +650,22 @@ describe('the Goals template', () => {
       expect(draft().goals[0].amount).toBe(minutes)
       expect(amount).toHaveValue(shownAfter)
     })
+
+  it('an amount still being typed (no blur, as on iOS) doesn’t undo a Counts change', () => {
+    render(<GoalsForm start={goals({ practice: 'read', amount: null })} />)
+    fireEvent.change(screen.getByLabelText('Amount'), { target: { value: '0130' } })
+    fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Counts' })).getByRole('radio', { name: 'Days' }))
+    expect(draft().goals[0]).toMatchObject({ counts: 'Days', amount: null })
+    expect(screen.getByLabelText('Amount')).toHaveValue('')
+  })
+
+  it('a count amount takes up to 6 digits (10000 steps a day)', () => {
+    render(<GoalsForm start={goals({ amount: null })} />)
+    const amount = screen.getByLabelText('Amount')
+    fireEvent.change(amount, { target: { value: '12345678' } })
+    fireEvent.blur(amount)
+    expect(draft().goals[0].amount).toBe(123456)
+  })
 
   it('the picker says why a time-of-day practice can’t be a goal', () => {
     render(<GoalsForm start={NEW_DRAFTS.goals()} />)

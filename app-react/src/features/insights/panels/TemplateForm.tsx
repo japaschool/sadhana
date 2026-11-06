@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -130,8 +130,8 @@ const GROUP = 'px-1 text-[11px] font-bold uppercase tracking-[.1em] text-ui-mute
 
 const parseRounds = (text: string) => (text ? Number(text) : null)
 const roundsText = (v: number | null) => (v === null ? '' : String(v))
-// ponytail: four digits keeps a target inside the server's i32 without a range check.
-const typeRounds = (next: string) => next.replace(/\D/g, '').slice(0, 4)
+// ponytail: four digits (six for a goal's count, 10000 steps a day) keeps it inside the server's i32 without a range check.
+const typeRounds = (next: string, max: number) => next.replace(/\D/g, '').slice(0, max)
 
 /**
  * A number typed as text. Time limits (hh:mm) by default; with `duration`, minutes typed like Today's Duration row and
@@ -167,7 +167,7 @@ export function LimitField({ id, label, placeholder, value, onChange, suffix, du
           className={`${FIELD} ${required ? '' : 'pr-11'} font-ui-mono placeholder:font-[Manrope] placeholder:text-[15px] placeholder:font-semibold`}
           onFocus={() => setFocused(true)}
           onBlur={() => { setFocused(false); flush() }}
-          onChange={(e) => { setText(digits ? typeRounds(e.target.value) : hours ? typeLongHours(e.target.value) : typeTime(e.target.value, text)); schedule() }} />
+          onChange={(e) => { setText(digits ? typeRounds(e.target.value, count ? 6 : 4) : hours ? typeLongHours(e.target.value) : typeTime(e.target.value, text)); schedule() }} />
         {suffix && <span className="absolute inset-y-0 right-3.5 my-auto flex items-center text-sm font-semibold text-ui-muted">{suffix}</span>}
         {duration && focused && text && (
           <span className="pointer-events-none absolute inset-y-0 right-12 my-auto flex items-center text-sm font-semibold text-ui-muted">{units.min}</span>
@@ -325,6 +325,10 @@ function GoalCard({ goal, n, practices, onChange, onRemove, onPick, flagMissing 
   const { t } = useTranslation()
   const chosen = practices.find((p) => p.id === goal.practice && fits(GOAL_SLOT, p))
   const mode = amountMode(chosen?.data_type, goal.counts)
+  // The amount field remounts when the unit changes, and its unmount sends a pending edit made in the old unit with
+  // the old goal (iOS doesn't blur on a tap): that would undo the change, so the old field's edits are dropped.
+  const modeNow = useRef(mode)
+  useLayoutEffect(() => { modeNow.current = mode })
   const title = t('templateForm.goalN', { n })
   const label = 'text-xs leading-snug font-bold text-ui-muted'
   const hint = mode === 'time' ? 'goalHintTime' : mode === 'days' ? 'goalHintDays' : !chosen ? 'goalPickFirst' : chosen.data_type === 'Bool' ? 'goalHintBool' : 'goalHintInt'
@@ -364,7 +368,7 @@ function GoalCard({ goal, n, practices, onChange, onRemove, onPick, flagMissing 
         <div className="flex min-w-0 flex-[1_1_120px] flex-col">
           {mode ? (
             <LimitField key={mode} id={`goal-${n}-amount`} label={amountLabel} placeholder={mode === 'time' ? t('templateForm.hmm') : ''} value={goal.amount}
-              count={mode !== 'time'} hours={mode === 'time'} suffix={mode === 'days' ? t('templateForm.unitDays') : undefined} onChange={(amount) => onChange({ ...goal, amount })} />
+              count={mode !== 'time'} hours={mode === 'time'} suffix={mode === 'days' ? t('templateForm.unitDays') : undefined} onChange={(amount) => { if (modeNow.current === mode) onChange({ ...goal, amount }) }} />
           ) : (
             <div className="flex flex-col gap-1.5">
               <span className={label}>{amountLabel}</span>
