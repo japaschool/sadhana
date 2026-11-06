@@ -88,7 +88,9 @@ function StackedRow({ n, practices }: { n: NormalRow; practices: UserPractice[] 
   )
 }
 
-const COLS = 'grid grid-cols-[minmax(0,1fr)_64px_104px_minmax(120px,178px)_116px] items-center gap-3'
+const COLS = 'grid grid-cols-[minmax(0,1fr)_64px_104px_minmax(120px,178px)_116px] items-center gap-3 @max-[40rem]:grid-cols-[minmax(0,1fr)_64px_104px_116px]'
+// Narrow card (small tablet): the strip and the note drop to a second line under now / usual / word.
+const NARROW_LINE2 = '@max-[40rem]:col-span-3 @max-[40rem]:col-start-2 @max-[40rem]:row-start-2'
 
 function ColumnsRow({ n, practices }: { n: NormalRow; practices: UserPractice[] }) {
   const { t } = useTranslation()
@@ -96,16 +98,16 @@ function ColumnsRow({ n, practices }: { n: NormalRow; practices: UserPractice[] 
   return (
     <div role="group" aria-label={rowName(n.row, practices, t)} className={`${COLS} border-t border-ui-chip py-3 first:border-0`}>
       <RowLabel n={n} practices={practices} />
-      <span className={`text-right font-ui-mono text-base font-semibold ${value === null ? 'text-ui-faint2' : 'text-ui-ink'}`}>{fmt(value)}</span>
+      <span className={`text-right font-ui-mono text-base font-semibold whitespace-nowrap ${value === null ? 'text-ui-faint2' : 'text-ui-ink'}`}>{fmt(value)}</span>
       {n.usual ? (
         <span className="flex flex-col gap-px font-ui-mono">
           <span className="text-[13px] font-medium text-ui-ink2">{fmt(n.usual.median)}</span>
           <span className="text-[11px] text-ui-faint2">{fmt(n.usual.p25)}–{fmt(n.usual.p75)}</span>
         </span>
       ) : <span />}
-      {note ? <span className="col-span-2 text-[13px] leading-[1.4] font-semibold text-ui-muted">{note}</span> : (
+      {note ? <span className={`col-span-2 ${NARROW_LINE2} text-[13px] leading-[1.4] font-semibold text-ui-muted`}>{note}</span> : (
         <>
-          <Strip n={n} />
+          <div className={NARROW_LINE2}><Strip n={n} /></div>
           {n.word ? <WordChip word={n.word} /> : <span />}
         </>
       )}
@@ -128,7 +130,7 @@ export function MeVsNormal({ normal, practices, variant }: { normal: NormalRow[]
         </div>
         <p className="text-[13px] leading-[1.45] text-ui-muted">{t('insights.overview.usualExplain')}</p>
       </div>
-      <div className="flex flex-col">
+      <div className="@container flex flex-col">
         {variant === 'columns' && (
           <div aria-hidden className={`${COLS} pt-1 text-[11px] font-bold tracking-[.08em] text-ui-faint2 uppercase`}>
             <span /><span className="text-right">{t('insights.overview.now')}</span><span>{t('insights.overview.usual')}</span>
