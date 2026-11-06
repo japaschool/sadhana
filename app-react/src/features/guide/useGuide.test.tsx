@@ -30,8 +30,7 @@ describe('useGuide', () => {
 
   it('keeps a choice when going back, and moves one position at a time', () => {
     const { result } = setup(true)
-    act(() => result.current.guide.decide('sleep', true))
-    expect(result.current.guide.pos).toBe(1)
+    act(() => { result.current.guide.toggle('sleep'); result.current.guide.setPos(1) })
     act(() => result.current.guide.back())
     expect(result.current.guide.pos).toBe(0)
     expect(result.current.guide.tracked).toEqual(['sleep'])
@@ -107,7 +106,7 @@ describe('useGuide', () => {
     act(() => result.current.guide.toggle('sleep'))
     act(() => result.current.guide.setChoice('sleep', sleep))
     expect(result.current.guide.chosen.sleep).toEqual(sleep)
-    act(() => result.current.guide.decide('sleep', false))
+    act(() => result.current.guide.toggle('sleep'))
     expect(result.current.guide.chosen.sleep).toBeNull()
     act(() => result.current.guide.leave())
     expect(result.current.guide.confirming).toBe(false)
@@ -130,8 +129,8 @@ describe('useGuide', () => {
   it('goes on when guide_runs fails', async () => {
     api.start.mockRejectedValue(new Error('down'))
     const { result } = setup(true)
-    act(() => result.current.guide.decide('sleep', true))
-    expect(result.current.guide.pos).toBe(1)
+    act(() => result.current.guide.toggle('sleep'))
+    expect(result.current.guide.tracked).toEqual(['sleep'])
     act(() => result.current.guide.leave())
     expect(result.current.path).toBe('/')
   })

@@ -306,9 +306,9 @@ function SlotRow({ slot, chosen, suggestion, none, missing, onOpen, onUse }: {
 const amountMode = (type: PracticeDataType | undefined, counts: Counts) =>
   !type ? null : type !== 'Duration' ? 'count' : counts === 'Days' ? 'days' : 'time'
 
-/** One goal (16m3): its practice, direction, Counts for a Duration practice, amount and period. */
-function GoalCard({ goal, n, practices, onChange, onRemove, onPick, flagMissing }: {
-  goal: GoalDraft; n: number; practices: UserPractice[]; onChange: (g: GoalDraft) => void; onRemove: (() => void) | null; onPick: () => void; flagMissing?: boolean
+/** One goal (16m3): its practice, direction, Counts for a Duration practice, amount and period. `field` stands in for the practice picker (the guide names its own). */
+export function GoalCard({ goal, n, practices, onChange, onRemove, onPick, flagMissing, field }: {
+  goal: GoalDraft; n: number; practices: UserPractice[]; onChange: (g: GoalDraft) => void; onRemove: (() => void) | null; onPick?: () => void; flagMissing?: boolean; field?: ReactNode
 }) {
   const { t } = useTranslation()
   const chosen = practices.find((p) => p.id === goal.practice && fits(GOAL_SLOT, p))
@@ -331,7 +331,7 @@ function GoalCard({ goal, n, practices, onChange, onRemove, onPick, flagMissing 
           </button>
         )}
       </div>
-      <div className="flex flex-col gap-1.5">
+      {field ?? <div className="flex flex-col gap-1.5">
         <span className={label}>{t('templateForm.goalPractice')}</span>
         <button type="button" onClick={onPick} aria-label={`${t('templateForm.goalPracticeN', { n })}: ${chosen?.practice ?? t('templateForm.choose')}`}
           className={`${SLOT_BOX} min-h-[52px] w-full py-1.5 pr-3 pl-3.5 text-left text-[15px] font-bold ${chosen ? 'border border-ui-control bg-ui-surface text-ui-ink' : 'border-[1.5px] border-dashed border-ui-control text-ui-ink2'}`}>
@@ -341,7 +341,7 @@ function GoalCard({ goal, n, practices, onChange, onRemove, onPick, flagMissing 
           <span aria-hidden className="text-ui-muted">⌄</span>
         </button>
         {flagMissing && !chosen && <p className="text-[13px] leading-snug font-bold text-ui-danger">{t('templateForm.missing')}</p>}
-      </div>
+      </div>}
       <SegmentedControl fill label={t('templateForm.goalDirection')} value={goal.direction} onChange={(direction) => onChange({ ...goal, direction })}
         options={[{ value: 'AtLeast', label: t('templateForm.atLeast') }, { value: 'AtMost', label: t('templateForm.atMost') }]} />
       {chosen?.data_type === 'Duration' && (

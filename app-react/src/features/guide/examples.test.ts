@@ -5,7 +5,7 @@ import { makeLookup, resolve, windowDays } from '../insights/panels/panelLogic'
 import { exampleDay, exampleReport, exampleSummary } from './examples'
 import type { GuideKind } from './guideLogic'
 
-const KINDS: GuideKind[] = ['sleep', 'count', 'time', 'days']
+const KINDS: GuideKind[] = ['sleep', 'count', 'time', 'days', 'gaps', 'goals']
 const TODAY = '2026-11-02'
 const t = i18n.t.bind(i18n)
 

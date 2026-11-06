@@ -17,7 +17,7 @@ vi.mock('recharts', async (importOriginal) => ({
 }))
 
 const today = () => toDateStr(new Date())
-const KINDS: GuideKind[] = ['sleep', 'count', 'time', 'days']
+const KINDS: GuideKind[] = ['sleep', 'count', 'time', 'days', 'gaps', 'goals']
 
 describe('MiniReport', () => {
   afterEach(async () => { cleanup(); await i18n.changeLanguage('en') })

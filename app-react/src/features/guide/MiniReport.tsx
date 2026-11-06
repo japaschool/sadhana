@@ -19,11 +19,16 @@ function fit(kind: GuideKind, definition: PanelsReport, compact: boolean, own: b
   return { ...definition, template: null, panels: compact && kind === 'days' && !own ? panels.slice(0, 1) : panels }
 }
 
+// ponytail: CSS only. The report's panel list wraps as columns at the card's height, each panel full width, and the
+// second column is clipped, so whatever doesn't fit whole is hidden. The first panel always stays, cut if it's taller still.
+const CLIP = 'min-h-0 flex-1 overflow-hidden [&>div]:h-full [&>div]:flex-wrap [&>div]:content-start [&>div>*]:w-full [&>div>*]:shrink-0'
+
 /**
  * An example report drawn by the real renderer on bundled data, so it works before anything exists.
  * "Example" is in the frame, not the data, and nothing in it responds to touch.
  */
-export function MiniReport({ kind, compact = false, head, footer, on = false, applied }: { kind: GuideKind; compact?: boolean; head?: ReactNode; footer?: ReactNode; on?: boolean; applied?: Applied }) {
+/** `clip`: the card has a set height, and a panel that doesn't fit whole is left out (it wraps to a column that's clipped). */
+export function MiniReport({ kind, compact = false, clip = false, head, footer, on = false, applied }: { kind: GuideKind; compact?: boolean; clip?: boolean; head?: ReactNode; footer?: ReactNode; on?: boolean; applied?: Applied }) {
   const { t, i18n } = useTranslation()
   const today = exampleDay(kind, toDateStr(new Date()))
   // i18n.language: the example's names and text are rebuilt when the language changes.
@@ -37,9 +42,9 @@ export function MiniReport({ kind, compact = false, head, footer, on = false, ap
           {t('guide.example.band')}
         </span>
       </div>
-      <div className="flex flex-col gap-3 p-3">
+      <div className={`flex flex-col gap-3 p-3 ${clip ? 'min-h-0 flex-1' : ''}`}>
         {head}
-        <div role="img" aria-label={exampleSummary(kind, today, t)} className="pointer-events-none flex flex-col gap-3">
+        <div role="img" aria-label={exampleSummary(kind, today, t)} className={`pointer-events-none flex flex-col gap-3 ${clip ? CLIP : ''}`}>
           <PanelsReportView report={{ id: `example-${kind}`, name: t('guide.example.band'), definition: { Panels: definition } }}
             definition={definition} entries={example.entries} previous={undefined} practices={example.practices} todayCob={today}
             chartHeight={compact ? 110 : 200} formLink={null} cols={compact ? 2 : 4} interactive={false} legendLast monthFigures={false} />

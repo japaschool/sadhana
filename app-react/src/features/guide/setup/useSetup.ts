@@ -2,8 +2,9 @@ import { useQuery } from '@tanstack/react-query'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { practicesApi } from '../../../api/practices'
-import type { UserPractice } from '../../../types/api'
-import { DAYS_SLOT, DURATION_SLOT, fits, JAPA_SLOTS, pickerGroups, SLEEP_DEFAULTS, SLEEP_SLOTS } from '../../insights/panels/templates'
+import type { PracticeDataType, UserPractice } from '../../../types/api'
+import { useReports } from '../../insights/useReports'
+import { DAYS_SLOT, DURATION_SLOT, fits, GAPS_EVENT_SLOT, GAPS_ROWS_SLOT, GOAL_SLOT, JAPA_SLOTS, pickerGroups, SLEEP_DEFAULTS, SLEEP_SLOTS, sleepRowsFor } from '../../insights/panels/templates'
 import type { Slot } from '../../insights/panels/templates'
 import { buildPlan, itemsOf, KINDS, nameProblem } from '../guideLogic'
 import type { Choices, GuideKind, NameProblem, PlannedPractice } from '../guideLogic'
@@ -15,6 +16,8 @@ type Value<K extends GuideKind> = NonNullable<Choices[K]>
 function defaults(kind: GuideKind, t: TFunction): Value<GuideKind> {
   if (kind === 'sleep') return { bedtime: t('reportPanels.bedtime'), wake: t('reportPanels.wakeUp'), nap: t('reportPanels.nap'), ...SLEEP_DEFAULTS }
   if (kind === 'count') return { count: '', target: null, early: null }
+  if (kind === 'gaps') return { event: '', rows: [], sleep: false }
+  if (kind === 'goals') return { goals: [] }
   return kind === 'time' ? { names: [], goal: null } : { names: [] }
 }
 
@@ -45,27 +48,42 @@ export function useSetup<K extends GuideKind>(guide: Guide, kind: K) {
     return { problem, have, existing: have && fits(slot, have) ? have : undefined }
   }
 
+  /** A name's type: the person's practice, else one planned earlier here, else a new yes/no practice. */
+  const typeOf = (name: string): PracticeDataType =>
+    practices.find((p) => p.practice === name.trim())?.data_type ?? others?.find((o) => o.name === name.trim())?.data_type ?? 'Bool'
+  /** Practices the person has or the guide plans before this one that this slot can use, by name. */
+  const usable = (slot: Slot) => [...new Set([
+    ...pickerGroups(slot, practices).compatible.map((p) => p.practice),
+    ...(others ?? []).filter((o) => slot.types.includes(o.data_type)).map((o) => o.name),
+  ])]
+  // Calculated Sleep needs a bedtime and a wake-up: from Sleep chosen here, or a report or practices the person has.
+  const reports = useReports().data ?? []
+  const canSleep = !!guide.chosen.sleep || !!sleepRowsFor(reports, practices)
+
   const named = items.filter((it) => it.name)
   // Paused is offline before a first load: nothing will come until the connection does.
   const loadFailed = (q.isError || q.isPaused) && !q.data
   const hint = ((): string | null => {
     if (loadFailed) return t('common.error')
     if (kind === 'count' && !(value as Value<'count'>).count.trim()) return t('guide.setup.needCount')
-    if ((kind === 'time' || kind === 'days') && !items.length) return t('guide.setup.needOne')
+    if (kind === 'gaps' && !(value as Value<'gaps'>).event.trim()) return t('guide.setup.needEvent')
+    if ((kind === 'time' || kind === 'days' || kind === 'goals') && !items.length) return t('guide.setup.needOne')
     if (named.length < items.length) return t('guide.setup.needName')
     if (others === null || items.some((it) => check(it.name, it.slot).problem)) return t('guide.setup.fixNames')
     if (kind === 'count' && (value as Value<'count'>).target === null) return t('guide.setup.needTarget')
+    if (kind === 'goals' && (value as Value<'goals'>).goals.some((g) => g.amount === null || (g.direction === 'AtLeast' && g.amount < 1))) return t('guide.setup.needAmount')
     const s = value as Value<'sleep'>
     if (kind === 'sleep' && s.min !== null && s.max !== null && s.min > s.max) return t('guide.setup.fixRange')
     return null
   })()
 
-  const slots = kind === 'sleep' ? SLEEP_SLOTS : kind === 'count' ? JAPA_SLOTS : [kind === 'time' ? DURATION_SLOT : DAYS_SLOT]
+  const slots = kind === 'sleep' ? SLEEP_SLOTS : kind === 'count' ? JAPA_SLOTS : kind === 'gaps' ? [GAPS_EVENT_SLOT, GAPS_ROWS_SLOT]
+    : [kind === 'time' ? DURATION_SLOT : kind === 'goals' ? GOAL_SLOT : DAYS_SLOT]
   const hasMine = slots.some((s) => pickerGroups(s, practices).compatible.length)
   const at = guide.tracked.indexOf(kind)
   const after = guide.tracked[at + 1]
   return {
-    kind, value, practices, check, hint,
+    kind, value, practices, check, hint, typeOf, usable, canSleep,
     /** The person's active practices this slot can use as they are. */
     fitting: (slot: Slot) => pickerGroups(slot, practices).compatible,
     /** Without the person's practices names can't be checked, so Next waits; this tries again. */

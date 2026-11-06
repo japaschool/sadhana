@@ -33,7 +33,7 @@ interface PanelsReportViewProps {
   interactive?: boolean
   /** The month legend under the grids, as in examples and form previews (17m3, 17t16); a report has it above them (17m23). */
   legendLast?: boolean
-  /** Off in examples: month panels show only their grid. */
+  /** Off in examples: month panels show only their grid, gaps panels only their chart. */
   monthFigures?: boolean
   /** The window's length, which words a headline's change; none in examples. */
   range?: Range
@@ -116,7 +116,7 @@ export function PanelsReportView({ report, definition, entries, previous, practi
             {filter}
             {p.kind === 'Gaps' ? (
               <GapsPanelView event={p.event} options={options} only={picked} days={days} prevDays={prevDays} lookup={lookup} todayCob={todayCob}
-                height={chartHeight} cols={cols} interactive={interactive} periods={periods} />
+                height={chartHeight} cols={cols} interactive={interactive} periods={periods} figures={monthFigures} />
             ) : p.kind === 'Around' ? (
               <AroundPanelView event={p.event} only={picked} rows={p.rows} days={year.days} prevDays={[]} lookup={year.lookup} todayCob={todayCob} />
             ) : p.kind === 'Month' ? (

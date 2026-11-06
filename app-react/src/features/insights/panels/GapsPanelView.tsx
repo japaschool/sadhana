@@ -27,6 +27,8 @@ interface GapsPanelProps {
   interactive?: boolean
   /** Marked periods, drawn as bands; none on shared pages. */
   periods?: MarkedPeriod[]
+  /** Off in examples: the chart alone, no gap figures. */
+  figures?: boolean
 }
 
 /** Option markers (16m16): amber circle, purple square, then the chart palette. */
@@ -89,7 +91,7 @@ export function OptionFilter({ options, only, onChange }: { options: string[]; o
 }
 
 /** The gap figures, then a lollipop per event (16m16): a stem to the days since the one before, the option's marker on top, over calendar time. */
-export function GapsPanelView({ event, options, only, days, prevDays, lookup, height, cols, interactive = true, periods = [] }: GapsPanelProps) {
+export function GapsPanelView({ event, options, only, days, prevDays, lookup, height, cols, interactive = true, periods = [], figures: showFigures = true }: GapsPanelProps) {
   const { t, i18n } = useTranslation()
   const tip = useChartTooltip()
   const locale = i18n.language || 'en'
@@ -121,7 +123,7 @@ export function GapsPanelView({ event, options, only, days, prevDays, lookup, he
 
   return (
     <>
-      <FigureGrid items={figures} cols={cols} />
+      {showFigures && <FigureGrid items={figures} cols={cols} />}
       <section className={`flex min-w-0 flex-col gap-3 rounded-[20px] border border-ui-hairline bg-ui-surface ${cols === 2 ? 'p-4' : 'p-6'}`}>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-base leading-[1.3] font-extrabold text-ui-ink">{t('reportPanels.daysSince')}</h2>

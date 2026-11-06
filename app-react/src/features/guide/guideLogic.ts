@@ -1,23 +1,28 @@
-import type { Report, ReportDefinition } from '../../api/charts'
+import type { Counts, Direction, GoalPeriod, Report, ReportDefinition, SleepRows } from '../../api/charts'
 import type { PracticeDataType, PracticeGroup, UserPractice } from '../../types/api'
 import { draftToDefinition } from '../insights/panels/TemplateForm'
 import type { TemplateDraft } from '../insights/panels/TemplateForm'
-import { DAYS_SLOT, DURATION_SLOT, fits, JAPA_SLOTS, SLEEP_SLOTS, templateSlug } from '../insights/panels/templates'
+import { DAYS_SLOT, DURATION_SLOT, fits, GAPS_EVENT_SLOT, GAPS_ROWS_SLOT, GOAL_SLOT, JAPA_SLOTS, SLEEP_SLOTS, sleepRowsFor, templateSlug } from '../insights/panels/templates'
 import type { Slot } from '../insights/panels/templates'
 
-export type GuideKind = 'sleep' | 'count' | 'time' | 'days'
+export type GuideKind = 'sleep' | 'count' | 'time' | 'days' | 'gaps' | 'goals'
+/** A goal on a practice by name. `type` is the practice's: one the person has, one planned earlier in the guide, else a new yes/no one. */
+export interface GuideGoal { name: string; type: PracticeDataType; direction: Direction; amount: number | null; period: GoalPeriod; counts: Counts }
 export interface Choices {
   sleep: { bedtime: string; wake: string; nap: string | null; min: number | null; max: number | null } | null
   count: { count: string; target: number | null; early: string | null } | null
   time: { names: string[]; goal: number | null } | null
   days: { names: string[] } | null
+  /** `rows` are practices the person has or the guide plans before this; `sleep` adds calculated Sleep when there's a way to work it out. */
+  gaps: { event: string; rows: string[]; sleep: boolean } | null
+  goals: { goals: GuideGoal[] } | null
 }
 export interface PlannedPractice { name: string; data_type: PracticeDataType }
 export interface GuidePlan { practices: PlannedPractice[]; reports: { kind: GuideKind; name: string; slug: string; group: string | null; choices: Choices[GuideKind] }[] }
 export type NameProblem = 'empty' | 'inUseHidden' | 'inUseOtherType' | 'twice'
 
-export const KINDS: GuideKind[] = ['sleep', 'count', 'time', 'days']
-const SLUGS: Record<GuideKind, string> = { sleep: 'sleep', count: 'japa', time: 'duration', days: 'days' }
+export const KINDS: GuideKind[] = ['sleep', 'count', 'time', 'days', 'gaps', 'goals']
+const SLUGS: Record<GuideKind, string> = { sleep: 'sleep', count: 'japa', time: 'duration', days: 'days', gaps: 'gaps', goals: 'goals' }
 export interface Item { name: string; slot: Slot; planned: PlannedPractice }
 /** What gets created has the slot's first type. */
 const item = (name: string, slot: Slot): Item => ({ name: name.trim(), slot, planned: { name: name.trim(), data_type: slot.types[0] } })
@@ -32,6 +37,11 @@ export function itemsOf(kind: GuideKind, c: NonNullable<Choices[GuideKind]>): It
     const k = c as NonNullable<Choices['count']>
     return [item(k.count, JAPA_SLOTS[0]), ...(k.early !== null ? [item(k.early, JAPA_SLOTS[1])] : [])]
   }
+  if (kind === 'gaps') {
+    const g = c as NonNullable<Choices['gaps']>
+    return [item(g.event, GAPS_EVENT_SLOT), ...g.rows.map((n) => item(n, GAPS_ROWS_SLOT))]
+  }
+  if (kind === 'goals') return (c as NonNullable<Choices['goals']>).goals.map((g) => item(g.name, GOAL_SLOT))
   const { names } = c as { names: string[] }
   return names.map((n) => item(n, kind === 'time' ? DURATION_SLOT : DAYS_SLOT))
 }
@@ -91,7 +101,9 @@ export interface GuideApi {
   createReport(name: string, d: ReportDefinition): Promise<string>
 }
 
-function draftOf(kind: GuideKind, c: NonNullable<Choices[GuideKind]>, id: (name: string) => string): TemplateDraft {
+/** `sleep`: calculated Sleep's practices, for a Days between report that asks for it. */
+function draftOf(kind: GuideKind, c: NonNullable<Choices[GuideKind]>, practice: (name: string) => UserPractice, sleep: SleepRows | null): TemplateDraft {
+  const id = (name: string) => practice(name).id
   if (kind === 'sleep') {
     const s = c as NonNullable<Choices['sleep']>
     return { kind: 'Sleep', bedtime: id(s.bedtime), wake: id(s.wake), nap: s.nap ? id(s.nap) : null, min: s.min, max: s.max }
@@ -104,7 +116,25 @@ function draftOf(kind: GuideKind, c: NonNullable<Choices[GuideKind]>, id: (name:
     const t = c as NonNullable<Choices['time']>
     return { kind: 'Duration', practices: t.names.map(id), goal: t.goal }
   }
+  if (kind === 'gaps') {
+    const g = c as NonNullable<Choices['gaps']>
+    return { kind: 'Gaps', event: id(g.event), rows: g.rows.map(id), sleep: g.sleep ? sleep : null }
+  }
+  if (kind === 'goals') {
+    // The type is read again from the practice as created: only a Duration one counts days.
+    return { kind: 'Goals', goals: (c as NonNullable<Choices['goals']>).goals.map(({ name, direction, amount, period, counts }) => (
+      { practice: id(name), direction, amount, period, counts: practice(name).data_type === 'Duration' ? counts : 'Total' })) }
+  }
   return { kind: 'Days', practices: (c as NonNullable<Choices['days']>).names.map(id) }
+}
+
+/** This guide's Sleep practices, else those of a Sleep report the person had (or a bedtime and wake-up found by name). */
+function sleepFor(plan: GuidePlan, practices: UserPractice[], reports: Report[]): SleepRows | null {
+  const s = plan.reports.find((r) => r.kind === 'sleep')?.choices as Choices['sleep'] | undefined
+  const id = (name: string) => practices.find((p) => p.practice === name.trim())?.id
+  const bedtime = s && id(s.bedtime)
+  const wake = s && id(s.wake)
+  return bedtime && wake ? { bedtime, wake, nap: null } : sleepRowsFor(reports, practices)
 }
 
 /**
@@ -141,8 +171,8 @@ export async function runPlan(plan: GuidePlan, api: GuideApi, onStep: (kind: Gui
         const p = practices.find((x) => x.practice === it.name)
         if (!p?.id || !fits(it.slot, p)) throw new Error(`${it.name} can't be used for ${kind}`)
       }
-      const id = (name: string) => practices.find((x) => x.practice === name.trim())!.id
-      const def = draftToDefinition(draftOf(kind, c, id))
+      const practice = (name: string) => practices.find((x) => x.practice === name.trim())!
+      const def = draftToDefinition(draftOf(kind, c, practice, sleepFor(plan, practices, reports)))
       if (!def) throw new Error(`incomplete ${kind} choices`)
       await api.createReport(r.name, def)
     }

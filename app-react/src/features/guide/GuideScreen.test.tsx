@@ -18,7 +18,7 @@ const routes = [{ path: '/guide', element: <GuideScreen /> }, { path: '/', eleme
 const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 const Providers = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>
 const router = (state?: unknown) => createMemoryRouter(routes, { initialEntries: [{ pathname: '/guide', state }] })
-const pos = (n: number) => screen.getByText(`${n} of 4`)
+const pos = (n: number) => screen.getByText(`${n} of 6`)
 const states = () => [...document.querySelectorAll('[data-state]')].map((d) => d.getAttribute('data-state'))
 
 beforeEach(() => {
@@ -34,8 +34,8 @@ describe('the system Back button', () => {
     createMemoryRouter([...routes, { path: from, element: <p>Where it came from</p> }], { initialEntries: [from, { pathname: '/guide', state }], initialIndex: 1 })
   const back = (r: ReturnType<typeof opened>) => act(async () => { await r.navigate(-1) })
   const toReader = async (user: ReturnType<typeof userEvent.setup>) => {
-    await user.click(screen.getByRole('button', { name: 'Track this' }))
-    for (let i = 0; i < 3; i++) await user.click(screen.getByRole('button', { name: 'Skip' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Sleep' }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
     await screen.findByRole('heading', { name: 'Sleep' })
     await user.click(await screen.findByRole('button', { name: /^Next/ }))
     await screen.findByRole('radio', { name: /^Yes/ })
@@ -111,19 +111,28 @@ describe('the system Back button', () => {
 })
 
 describe('GuideScreen on mobile', () => {
-  it('keeps Skip and Track in a bar fixed to the bottom of the screen', () => {
+  it('has one Next in a bar under the cards, disabled until a card is ticked', async () => {
+    const user = userEvent.setup()
     render(<Providers><RouterProvider router={router()} /></Providers>)
-    expect(screen.getByRole('button', { name: 'Track this' }).parentElement).toHaveClass('fixed', 'bottom-0', 'bg-ui-tabbar')
-    expect(screen.getByRole('button', { name: 'Skip' }).parentElement).toBe(screen.getByRole('button', { name: 'Track this' }).parentElement)
+    expect(screen.queryByRole('button', { name: /Skip|Track this/ })).not.toBeInTheDocument()
+    const next = screen.getByRole('button', { name: 'Next' })
+    expect(next.parentElement).toHaveClass('bg-ui-tabbar')
+    expect(next).toBeDisabled()
+    expect(screen.getByText('Choose at least one to continue')).toBeInTheDocument()
+    await user.click(screen.getByRole('checkbox', { name: 'Sleep' }))
+    expect(next).toBeEnabled()
+    expect(screen.queryByText('Choose at least one to continue')).not.toBeInTheDocument()
   })
 
-  it('a swipe back during a Track scroll moves the position back, not stuck on the target', async () => {
+  it('a swipe during the scroll back to a card moves the position, not stuck on the target', async () => {
     const width = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(300)
     Element.prototype.scrollIntoView = vi.fn()
     const user = userEvent.setup()
     const { container } = render(<Providers><RouterProvider router={router()} /></Providers>)
-    await user.click(screen.getByRole('button', { name: 'Track this' }))
-    pos(2)
+    await user.click(screen.getByRole('checkbox', { name: 'Days I did it' }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await user.click(await screen.findByRole('button', { name: 'Back' }))
+    pos(4)
     const strip = container.querySelector('.snap-x') as HTMLElement
     fireEvent.pointerDown(strip)
     strip.scrollLeft = 0
@@ -132,47 +141,45 @@ describe('GuideScreen on mobile', () => {
     width.mockRestore()
   })
 
-  it('Track and Skip move through the four reports and record each choice', async () => {
+  it('a swipe moves the position; ticked cards show in the dots; Next sets up the ticked ones in order', async () => {
+    const width = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(300)
     const user = userEvent.setup()
-    render(<Providers><RouterProvider router={router({ firstRun: true })} /></Providers>)
-    pos(1)
-    expect(states()).toEqual(['cur', 'pending', 'pending', 'pending'])
-    await user.click(screen.getByRole('button', { name: 'Track this' }))
-    pos(2)
-    await user.click(screen.getByRole('button', { name: 'Skip' }))
+    const { container } = render(<Providers><RouterProvider router={router({ firstRun: true })} /></Providers>)
+    expect(states()).toEqual(['cur', 'pending', 'pending', 'pending', 'pending', 'pending'])
+    await user.click(screen.getByRole('checkbox', { name: 'Daily count' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Sleep' }))
+    const strip = container.querySelector('.snap-x') as HTMLElement
+    strip.scrollLeft = 312 * 2
+    fireEvent.scroll(strip)
     pos(3)
-    expect(states()).toEqual(['tracked', 'skipped', 'cur', 'pending'])
-    await user.click(screen.getByRole('button', { name: 'Track this' }))
-    await user.click(screen.getByRole('button', { name: 'Skip' }))
+    expect(states()).toEqual(['tracked', 'tracked', 'cur', 'pending', 'pending', 'pending'])
+    await user.click(screen.getByRole('button', { name: 'Next' }))
     expect(screen.getByRole('heading', { name: 'Sleep' })).toBeInTheDocument()
+    expect(screen.getByText('Set up · 1 of 2')).toBeInTheDocument()
     await vi.waitFor(() => expect(api.update).toHaveBeenCalledWith('run-1', { last_step: 'setup_sleep' }))
+    width.mockRestore()
   })
 
-  it('shows the nothing-chosen screen after skipping all; look through again starts over', async () => {
-    const user = userEvent.setup()
-    render(<Providers><RouterProvider router={router()} /></Providers>)
-    for (let i = 0; i < 4; i++) await user.click(screen.getByRole('button', { name: 'Skip' }))
-    expect(screen.getByText('Nothing picked yet')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Look through again' }))
-    pos(1)
-  })
-
-  it('Build my own list goes to Today and marks left', async () => {
-    const user = userEvent.setup()
-    render(<Providers><RouterProvider router={router({ firstRun: true })} /></Providers>)
-    for (let i = 0; i < 4; i++) await user.click(screen.getByRole('button', { name: 'Skip' }))
-    const exits = screen.getAllByRole('button', { name: 'Build my own list' })
-    await user.click(exits[exits.length - 1])
-    expect(screen.getByText('Today')).toBeInTheDocument()
-    await vi.waitFor(() => expect(api.update).toHaveBeenCalledWith('run-1', { outcome: 'left' }))
-  })
-
-  it('can be left from the first card, and has no Back there on first run', async () => {
+  it('can be left from the first card, marking left, and has no Back there on first run', async () => {
     const user = userEvent.setup()
     render(<Providers><RouterProvider router={router({ firstRun: true })} /></Providers>)
     expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Build my own list' }))
     expect(screen.getByText('Today')).toBeInTheDocument()
+    await vi.waitFor(() => expect(api.update).toHaveBeenCalledWith('run-1', { outcome: 'left' }))
+  })
+
+  it('a tap on a card ticks it in place, and again unticks it', async () => {
+    const user = userEvent.setup()
+    render(<Providers><RouterProvider router={router()} /></Providers>)
+    const sleep = screen.getByRole('checkbox', { name: 'Sleep' })
+    await user.click(sleep)
+    expect(sleep).toBeChecked()
+    pos(1)
+    expect(states()[0]).toBe('cur')
+    expect(screen.getByText('1 chosen')).toBeInTheDocument()
+    await user.click(sleep)
+    expect(sleep).not.toBeChecked()
   })
 
   it('goes on when guide_runs fails', async () => {
@@ -180,8 +187,9 @@ describe('GuideScreen on mobile', () => {
     api.update.mockRejectedValue(new Error('down'))
     const user = userEvent.setup()
     render(<Providers><RouterProvider router={router()} /></Providers>)
-    await user.click(screen.getByRole('button', { name: 'Track this' }))
-    pos(2)
+    await user.click(screen.getByRole('checkbox', { name: 'Sleep' }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    expect(screen.getByRole('heading', { name: 'Sleep' })).toBeInTheDocument()
   })
 
   it('reads first run from history state, so a reload keeps it; without it the run is add_practice', async () => {
@@ -207,20 +215,23 @@ describe('GuideScreen on wide layouts', () => {
     unmount()
     const r = createMemoryRouter([...routes, { path: '/settings', element: <p>Settings</p> }], { initialEntries: [{ pathname: '/guide', state: { back: '/settings' } }] })
     render(<Providers><RouterProvider router={r} /></Providers>)
-    await user.click(screen.getByRole('switch', { name: 'Days I did it' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Days I did it' }))
     await user.click(screen.getByRole('button', { name: 'Next' }))
     await user.click(screen.getByRole('button', { name: 'Back' }))
     await user.click(screen.getByRole('button', { name: 'Back' }))
     expect(screen.getByText('Settings')).toBeInTheDocument()
   })
 
-  it('a chosen card says Tracking', async () => {
+  it('a click on a tile ticks it, and again unticks it', async () => {
     setViewportWidth(1200)
     const user = userEvent.setup()
     render(<Providers><RouterProvider router={router()} /></Providers>)
-    expect(screen.getAllByText('Track this')).toHaveLength(4)
-    await user.click(screen.getByRole('switch', { name: 'Sleep' }))
-    expect(screen.getByText('Tracking')).toBeInTheDocument()
+    const sleep = screen.getByRole('checkbox', { name: 'Sleep' })
+    expect(sleep).not.toBeChecked()
+    await user.click(screen.getAllByText('Sleep')[0])
+    expect(sleep).toBeChecked()
+    await user.click(sleep)
+    expect(sleep).not.toBeChecked()
   })
 
   it('Next is disabled until something is chosen, then goes to set up', async () => {
@@ -228,7 +239,7 @@ describe('GuideScreen on wide layouts', () => {
     const user = userEvent.setup()
     render(<Providers><RouterProvider router={router({ firstRun: true })} /></Providers>)
     expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
-    await user.click(screen.getByRole('switch', { name: 'Sleep' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Sleep' }))
     expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled()
     await user.click(screen.getByRole('button', { name: 'Next' }))
     expect(screen.getByRole('heading', { name: 'Sleep' })).toBeInTheDocument()
@@ -243,7 +254,7 @@ describe('a report the person already has', () => {
     render(<Providers><RouterProvider router={router()} /></Providers>)
     expect(await screen.findByText('You already have this report')).toBeInTheDocument()
     expect(screen.getAllByText('You already have this report')).toHaveLength(1)
-    await user.click(screen.getByRole('switch', { name: 'Sleep' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Sleep' }))
     expect(screen.getByRole('button', { name: /^Next/ })).toBeEnabled()
   })
 })

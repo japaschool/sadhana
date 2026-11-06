@@ -1300,16 +1300,11 @@
     "haveReport": "You already have this report",
     "exit": "Build my own list",
     "back": "Back",
-    "skip": "Skip",
-    "tracking": "Tracking",
-    "track": "Track this",
-    "trackShort": "Track",
     "next": "Next",
     "done": "Done",
     "position": "{{a}} of {{b}}",
     "chosen": "{{n}} chosen",
     "chooseOne": "Choose at least one to continue",
-    "noneChosen": "None chosen",
     "steps": {
       "label": "Steps",
       "choose": "Choose",
@@ -1333,12 +1328,15 @@
       "days": {
         "name": "Days I did it",
         "desc": "Which days you did each thing, month by month"
+      },
+      "gaps": {
+        "name": "Days between",
+        "desc": "How many days pass between one event and the next, and how other practices look around it"
+      },
+      "goals": {
+        "name": "Goals",
+        "desc": "How much a day, week or month, each period a square"
       }
-    },
-    "nothing": {
-      "title": "Nothing picked yet",
-      "body": "That’s fine. You can pick one here, look through the examples again, or set up your practices without a report. Reports can be added later from Insights.",
-      "again": "Look through again"
     },
     "leave": {
       "title": "Leave setup?",
@@ -1362,14 +1360,20 @@
       "days2": "Evening prayer",
       "days3": "Group gathering",
       "days4": "Journaling",
-      "days5": "Walk"
+      "days5": "Walk",
+      "gaps1": "Travel",
+      "gaps2": "Sick day",
+      "gaps3": "Late night",
+      "gaps4": "Day off"
     },
     "example": {
       "band": "Example · not your data",
       "summarySleep": "{{band}}. Sleep over a month: average {{avg}}, nights in range {{on}} of {{of}}. Some nights are missing.",
       "summaryCount": "{{band}}. {{name}} each day over four weeks: average {{avg}} a day, days on target {{on}} of {{of}}. A few days are missing.",
       "summaryTime": "{{band}}. Time spent over four weeks on {{names}}: average {{avg}} a day, days at the goal {{on}} of {{of}}.",
-      "summaryDays": "{{band}}. Days I did it, this month: {{list}}."
+      "summaryDays": "{{band}}. Days I did it, this month: {{list}}.",
+      "summaryGaps": "{{band}}. Days between {{name}} over three months: typically {{typical}} days.",
+      "summaryGoals": "{{band}}. Goals, a square for each period: {{list}}."
     },
     "setup": {
       "label": "Set up · {{a}} of {{b}}",
@@ -1379,7 +1383,9 @@
         "sleep": "These practices feed the report. Rename any of them; the names show on Today.",
         "count": "Pick what you count each day. The report works the same for any number.",
         "time": "Pick what you’d like to see time for. Each one becomes a practice you log in minutes.",
-        "days": "Pick the things you’d like to mark as done. Each gets its own month grid."
+        "days": "Pick the things you’d like to mark as done. Each gets its own month grid.",
+        "gaps": "Pick something that happens now and then. The report shows the days between, and how other practices look around it.",
+        "goals": "Pick what you’d like a goal for, then how much and how often."
       },
       "practices": "Practices",
       "renameHint": "Tap a name to rename",
@@ -1435,7 +1441,14 @@
       "usingFit": "Using",
       "tracked": "You already track this",
       "fixRange": "Fix the sleep range to continue",
-      "retry": "Try again"
+      "retry": "Try again",
+      "whatEvent": "What happens now and then?",
+      "eventNote": "Yes/no · tick it on the day it happens",
+      "compare": "Compare on the days around it",
+      "noCompare": "Practices you already have, or set up earlier here, can be compared around the event. You can add them to the report later.",
+      "whatGoals": "What would you like a goal for?",
+      "needEvent": "Choose an event to continue",
+      "needAmount": "Give every goal an amount to continue"
     },
     "reader": {
       "label": "Almost done · Sharing",
@@ -1470,7 +1483,9 @@
         "count": "Starts with your first log.",
         "time": "Starts with your first log.",
         "days": "The month grid fills in day by day.",
-        "past": "Your past entries are already in it."
+        "past": "Your past entries are already in it.",
+        "gaps": "Fills in as the event comes round.",
+        "goals": "Each period fills in as you log."
       },
       "goal": "goal {{value}}",
       "linkTitle": "Link for your reader",

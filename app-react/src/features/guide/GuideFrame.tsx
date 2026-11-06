@@ -12,7 +12,8 @@ function Chevron() {
 }
 
 /** The guide's page: the top bar on a phone; on tablet and desktop the header with the stepper, and the footer a step supplies. */
-export function GuideFrame({ guide, footer, children }: { guide: Guide; footer?: ReactNode; children: ReactNode }) {
+/** `fill`: on a phone, exactly one screen tall, so a child with flex-1 takes the height left and the page doesn't scroll. */
+export function GuideFrame({ guide, footer, fill = false, children }: { guide: Guide; footer?: ReactNode; fill?: boolean; children: ReactNode }) {
   const { t } = useTranslation()
   const mobile = useLayout() === 'mobile'
   const root = useRef<HTMLDivElement>(null)
@@ -29,7 +30,7 @@ export function GuideFrame({ guide, footer, children }: { guide: Guide; footer?:
 
   if (mobile) {
     return (
-      <div ref={root} className="ui-root min-h-dvh bg-ui-bg pb-8 text-ui-ink">
+      <div ref={root} className={`ui-root bg-ui-bg text-ui-ink ${fill ? 'flex h-dvh flex-col overflow-hidden' : 'min-h-dvh pb-8'}`}>
         <div className="flex min-h-[50px] items-center justify-between gap-2 pt-1.5 pr-3 pl-2">{back || <span className="w-11" />}{exit}</div>
         {children}
       </div>

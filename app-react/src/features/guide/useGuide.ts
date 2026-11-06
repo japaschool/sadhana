@@ -8,8 +8,8 @@ import { useGuideRun } from './useGuideRun'
 export type GuideStep = { at: 'choose' } | { at: 'setup'; kind: GuideKind } | { at: 'reader' } | { at: 'finish' }
 export type Guide = ReturnType<typeof useGuide>
 
-const NONE: Choices = { sleep: null, count: null, time: null, days: null }
-/** `last_step` as the server records it: choose, setup_sleep, setup_count, setup_time, setup_days, reader, creating, finish. */
+const NONE: Choices = { sleep: null, count: null, time: null, days: null, gaps: null, goals: null }
+/** `last_step` as the server records it: choose, setup_sleep, setup_count, setup_time, setup_days, setup_gaps, setup_goals, reader, creating, finish. */
 const stepName = (s: GuideStep, creating: string | null) => (s.at === 'setup' ? `setup_${s.kind}` : s.at === 'finish' && creating !== 'done' ? 'creating' : s.at)
 
 /**
@@ -23,9 +23,7 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
   const [carouselPos, setPos] = useState(0)
   const pos = carousel ? carouselPos : 0
   const [tracked, setTracked] = useState<GuideKind[]>([])
-  const [skipped, setSkipped] = useState<GuideKind[]>([])
   const [choices, setChoices] = useState<Choices>(NONE)
-  const [nothing, setNothing] = useState(false)
   const [confirming, setConfirming] = useState(false)
   /** The answer to the reader question: null until given. */
   const [reader, setReader] = useState<boolean | null>(null)
@@ -49,29 +47,19 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
     return from.at !== 'reader' && firstRun ? { at: 'reader' } : { at: 'finish' }
   }
 
+  /** Next is disabled on the choose screen until something is picked, so there is always somewhere to go. */
   function advance(list: GuideKind[]) {
-    if (step.at === 'choose' && !list.length) { setNothing(true); return }
+    if (step.at === 'choose' && !list.length) return
     setStep(after(step, list))
   }
 
   function toggle(kind: GuideKind) {
     setTracked((t) => (t.includes(kind) ? t.filter((k) => k !== kind) : inOrder([...t, kind])))
-    setSkipped((s) => s.filter((k) => k !== kind))
-  }
-
-  /** Track or Skip on the carousel's current card: the same position a swipe moves. */
-  function decide(kind: GuideKind, yes: boolean) {
-    const list = inOrder(yes ? [...tracked, kind] : tracked.filter((k) => k !== kind))
-    setTracked(list)
-    setSkipped(inOrder(yes ? skipped.filter((k) => k !== kind) : [...skipped, kind]))
-    if (pos < KINDS.length - 1) setPos(pos + 1)
-    else advance(list)
   }
 
   function goBack() {
     const lastSetup: GuideStep = tracked.length ? { at: 'setup', kind: tracked[tracked.length - 1] } : { at: 'choose' }
-    if (nothing) setNothing(false)
-    else if (step.at === 'choose') { if (pos > 0) setPos(pos - 1); else navigate(backTo) }
+    if (step.at === 'choose') { if (pos > 0) setPos(pos - 1); else navigate(backTo) }
     else if (step.at === 'setup') {
       const i = tracked.indexOf(step.kind)
       if (i > 0) setStep({ at: 'setup', kind: tracked[i - 1] })
@@ -89,13 +77,13 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
   const leave = () => (setUp ? setConfirming(true) : exit('left'))
 
   return {
-    firstRun, carousel, step, exitKey: firstRun ? 'guide.exit' : 'home.addOneMyself', finishKey: firstRun || backTo === '/' ? 'guide.finish.start' : 'guide.done', pos, reader, setReader, creating, setCreating, plan, existed, setPos, tracked, skipped, choices, nothing, confirming,
+    firstRun, carousel, step, exitKey: firstRun ? 'guide.exit' : 'home.addOneMyself', finishKey: firstRun || backTo === '/' ? 'guide.finish.start' : 'guide.done', pos, reader, setReader, creating, setCreating, plan, existed, setPos, tracked, choices, confirming,
     /** What the plan is built from: only the reports still tracked, so skipping one after its set up drops it (re-tracking brings its values back). */
     chosen: Object.fromEntries(KINDS.map((k) => [k, tracked.includes(k) ? choices[k] : null])) as unknown as Choices,
     /** The first card of a sign-up guide is the start: nowhere to go back to. */
-    canBack: !(firstRun && step.at === 'choose' && pos === 0 && !nothing) && creating === null,
+    canBack: !(firstRun && step.at === 'choose' && pos === 0) && creating === null,
     setChoice: <K extends GuideKind>(kind: K, value: Choices[K]) => setChoices((c) => ({ ...c, [kind]: value })),
-    toggle, decide,
+    toggle,
     next: () => advance(tracked),
     back: goBack,
     /**
@@ -104,14 +92,11 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
      */
     popBack: () => {
       if (confirming) setConfirming(false)
-      else if (step.at !== 'choose' || pos > 0 || nothing) goBack()
+      else if (step.at !== 'choose' || pos > 0) goBack()
       else if (setUp) setConfirming(true)
       else { if (firstRun) run.end('left'); return true }
       return false
     },
-    /** From the nothing-chosen screen: track just this one. */
-    pick: (kind: GuideKind) => { setTracked([kind]); setNothing(false); setStep(after({ at: 'choose' }, [kind])) },
-    lookAgain: () => { setNothing(false); setPos(0); setSkipped([]) },
     /** "Build my own list", at any step: asks first once a report has been set up. */
     leave,
     keepGoing: () => setConfirming(false),

@@ -3,9 +3,10 @@ import type { PanelsReport, ReportDataEntry, Stat } from '../../api/charts'
 import type { PracticeDataType, UserPractice } from '../../types/api'
 import { addDays, fromDateStr, toDateStr } from '../today/date'
 import { formatDuration } from '../today/values'
+import { gapEvents, gapFigures } from '../insights/panels/gapLogic'
 import { makeLookup, monthCounts, statResult, windowDays } from '../insights/panels/panelLogic'
-import { daysPanels, durationPanels, japaPanels, sleepPanels } from '../insights/panels/templates'
-import type { Choices, GuideKind } from './guideLogic'
+import { daysPanels, durationPanels, gapsPanels, goalsPanels, japaPanels, sleepPanels } from '../insights/panels/templates'
+import type { Choices, GuideGoal, GuideKind } from './guideLogic'
 
 /** Same numbers every run (mulberry32), so tests and screenshots agree. */
 function rng(seed: number) {
@@ -64,6 +65,33 @@ function durations(): ([number, number, number] | null)[] {
 
 /** Share of days done, a month-plus of each. */
 const DONE_RATES = [0.65, 0.45, 0.1]
+
+const GAP_DAYS = 90
+/** An event every 4 to 11 days, and what's counted dips that day and the next. */
+function gapDays(): { event: boolean[]; count: (number | null)[] } {
+  const R = rng(21)
+  const event = Array.from({ length: GAP_DAYS }, () => false)
+  for (let i = 2 + Math.floor(R() * 4); i < GAP_DAYS; i += 4 + Math.floor(R() * 8)) event[i] = true
+  const count = event.map((_, i) => (R() < 0.08 ? null : Math.round((event[i] || event[i - 1] ? 6 : 14) + R() * 8)))
+  return { event, count }
+}
+
+/** A year, so a monthly goal has its 12 squares too. */
+const GOAL_DAYS = 366
+const EXAMPLE_GOALS = (t: TFunction): GuideGoal[] => [
+  { name: t('guide.suggest.days5'), type: 'Bool', direction: 'AtLeast', amount: 4, period: 'Week', counts: 'Total' },
+  { name: t('guide.suggest.time1'), type: 'Duration', direction: 'AtLeast', amount: 180, period: 'Week', counts: 'Total' },
+]
+/** Believable values of a practice's type: most days logged, some not. */
+function goalValues(type: PracticeDataType, j: number): unknown[] {
+  const R = rng(60 + j)
+  return Array.from({ length: GOAL_DAYS }, () => {
+    if (R() > 0.62) return null
+    if (type === 'Bool') return { Bool: true }
+    if (type === 'Int') return { Int: Math.round(5 + R() * 20) }
+    return { Duration: Math.round(15 + R() * 45) }
+  })
+}
 
 const time = (h: number) => { const m = Math.round(h * 60); return { Time: { h: Math.floor(m / 60) % 24, m: m % 60 } } }
 
@@ -137,6 +165,32 @@ export function exampleReport(kind: GuideKind, todayCob: string, t: TFunction, a
       practices: ps,
     }
   }
+  if (kind === 'gaps') {
+    const a = applied as Choices['gaps']
+    const g = gapDays()
+    // ponytail: the preview takes the event's name; its rows stay the example's count, as their types aren't known here.
+    const event = P('event', named(a?.event, t('guide.suggest.gaps1')), 'Bool')
+    const row = !a || a.rows.length || a.sleep ? P('row', t('guide.suggest.count3'), 'Int') : null
+    return {
+      definition: gapsPanels({ event: event.id, rows: row ? [row.id] : [], sleep: null }),
+      entries: entriesOf(todayCob, GAP_DAYS, [
+        { practice: event, values: g.event.map((on) => (on ? { Bool: true } : null)) },
+        ...(row ? [{ practice: row, values: g.count.map((v) => (v === null ? null : { Int: v })) }] : []),
+      ]),
+      practices: row ? [event, row] : [event],
+    }
+  }
+  if (kind === 'goals') {
+    const a = applied as Choices['goals']
+    const mine = a?.goals.filter((g) => g.name.trim()) ?? []
+    const goals = mine.length ? mine : EXAMPLE_GOALS(t)
+    const ps = goals.map((g, j) => P(`goal${j + 1}`, g.name, g.type))
+    return {
+      definition: goalsPanels({ goals: goals.map((g, j) => ({ practice: ps[j].id, direction: g.direction, amount: g.amount ?? 1, period: g.period, counts: g.type === 'Duration' ? g.counts : 'Total' })) }),
+      entries: entriesOf(todayCob, GOAL_DAYS, ps.map((practice, j) => ({ practice, values: goalValues(practice.data_type, j) }))),
+      practices: ps,
+    }
+  }
   const a = applied as Choices['days']
   const names = unique(a?.names ?? [])
   const ps = (names.length ? names : [5, 4, 3].map((n) => t(`guide.suggest.days${n}`))).map((name, j) => P(`days${j + 1}`, name, 'Bool'))
@@ -165,6 +219,11 @@ export function exampleSummary(kind: GuideKind, todayCob: string, t: TFunction):
   const stat = (i: number) => statResult(stats[i].value, days, l, todayCob)
   const band = t('guide.example.band')
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
+  if (kind === 'gaps') {
+    const { typical } = gapFigures(gapEvents(practices[0].id, days, [], l))
+    return t('guide.example.summaryGaps', { band, name: practices[0].practice, typical: typical ?? 0 })
+  }
+  if (kind === 'goals') return t('guide.example.summaryGoals', { band, list: practices.map((p) => p.practice).join(', ') })
   if (kind === 'days') {
     const month = todayCob.slice(0, 7)
     const list = practices.map((p) => `${p.practice}: ${monthCounts(p.id, month, todayCob, l).thisMonth}`).join('; ')

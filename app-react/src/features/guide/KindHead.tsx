@@ -4,7 +4,7 @@ import { useReports } from '../insights/useReports'
 import { hasReport } from './guideLogic'
 import type { GuideKind } from './guideLogic'
 
-const GLYPH = { sleep: 'sleep', count: 'japa', time: 'duration', days: 'days' } as const
+const GLYPH = { sleep: 'sleep', count: 'japa', time: 'duration', days: 'days', gaps: 'gaps', goals: 'goals' } as const
 
 /** A card's head, as in the mockup: tile, name, one line on what it shows. */
 export function KindHead({ kind }: { kind: GuideKind }) {

@@ -7,8 +7,8 @@ import type { Choices, GuideApi, GuideKind, PlannedPractice } from './guideLogic
 
 const sleep = { bedtime: 'Bedtime', wake: 'Wake-up', nap: 'Nap', min: 360, max: 540 }
 const count = { count: 'Pages read', target: 20, early: 'Early' }
-const none: Choices = { sleep: null, count: null, time: null, days: null }
-const all: Choices = { sleep, count, time: { names: ['Reading', 'Study'], goal: 90 }, days: { names: ['Walk'] } }
+const none: Choices = { sleep: null, count: null, time: null, days: null, gaps: null, goals: null }
+const all: Choices = { sleep, count, time: { names: ['Reading', 'Study'], goal: 90 }, days: { names: ['Walk'] }, gaps: null, goals: null }
 const names = (s: string) => `${s} report`
 let n = 0
 const prac = (practice: string, data_type: UserPractice['data_type'], over: Partial<UserPractice> = {}): UserPractice =>
@@ -251,6 +251,33 @@ describe('runPlan', () => {
     await runPlan(plan(all, f.practices), f.api, (k, s) => { if (s === 'done') kinds.push(k) })
     expect(kinds).toEqual(['sleep', 'count', 'time', 'days'])
     expect(f.practices.filter((x) => x.practice === 'Reading')).toHaveLength(1)
+  })
+})
+
+describe('Days between and Goals', () => {
+  const goal = (name: string, type: UserPractice['data_type'], counts: 'Total' | 'Days' = 'Total') => ({ name, type, direction: 'AtLeast' as const, amount: 3, period: 'Week' as const, counts })
+  it('compare on practices planned earlier, with this guide’s Sleep; goals on those and on a new yes/no one', async () => {
+    const f = fakeApi()
+    const c: Choices = { ...none, sleep, count, gaps: { event: 'Travel', rows: ['Pages read'], sleep: true },
+      goals: { goals: [goal('Pages read', 'Int', 'Days'), goal('Nap', 'Duration', 'Days'), goal('Walk', 'Bool')] } }
+    const p = plan(c, f.practices)
+    expect(p.practices.filter((x) => ['Travel', 'Walk'].includes(x.name))).toEqual([{ name: 'Travel', data_type: 'Bool' }, { name: 'Walk', data_type: 'Bool' }])
+    await runPlan(p, f.api, () => {})
+    const id = (name: string) => f.practices.find((x) => x.practice === name)!.id
+    const tpl = (name: string) => (f.defs[name] as { Panels: { template: Record<string, unknown> } }).Panels.template
+    expect(tpl('gaps report')).toEqual({ Gaps: { event: id('Travel'), rows: [id('Pages read')], sleep: { bedtime: id('Bedtime'), wake: id('Wake-up'), nap: null } } })
+    // Only a Duration practice counts days.
+    expect(tpl('goals report')).toEqual({ Goals: { goals: [
+      { practice: id('Pages read'), direction: 'AtLeast', amount: 3, period: 'Week', counts: 'Total' },
+      { practice: id('Nap'), direction: 'AtLeast', amount: 3, period: 'Week', counts: 'Days' },
+      { practice: id('Walk'), direction: 'AtLeast', amount: 3, period: 'Week', counts: 'Total' },
+    ] } })
+  })
+
+  it('calculated Sleep without Sleep here or anything to work it out from is left out', async () => {
+    const f = fakeApi()
+    await runPlan(plan({ ...none, gaps: { event: 'Travel', rows: [], sleep: true } }, f.practices), f.api, () => {})
+    expect((f.defs['gaps report'] as { Panels: { template: { Gaps: { sleep: unknown } } } }).Panels.template.Gaps.sleep).toBeNull()
   })
 })
 

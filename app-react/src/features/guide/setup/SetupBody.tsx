@@ -2,6 +2,8 @@ import { useTranslation } from 'react-i18next'
 import { DAYS_SLOT, DURATION_SLOT, MAX_DAYS, MAX_PRACTICES } from '../../insights/panels/templates'
 import type { GuideKind } from '../guideLogic'
 import { SetupCount } from './SetupCount'
+import { SetupGaps } from './SetupGaps'
+import { SetupGoals } from './SetupGoals'
 import { SetupNames } from './SetupNames'
 import { SetupSleep } from './SetupSleep'
 import type { Setup } from './useSetup'
@@ -14,6 +16,8 @@ export function SetupBody({ kind, setup }: { kind: GuideKind; setup: Setup<Guide
   const { t } = useTranslation()
   if (kind === 'sleep') return <SetupSleep setup={setup as Setup<'sleep'>} />
   if (kind === 'count') return <SetupCount setup={setup as Setup<'count'>} />
+  if (kind === 'gaps') return <SetupGaps setup={setup as Setup<'gaps'>} />
+  if (kind === 'goals') return <SetupGoals setup={setup as Setup<'goals'>} />
   return kind === 'time'
     ? <SetupNames setup={setup as Setup<'time'>} slot={DURATION_SLOT} max={MAX_PRACTICES} suggestions={TIME.map((n) => t(`guide.suggest.time${n}`))} />
     : <SetupNames setup={setup as Setup<'days'>} slot={DAYS_SLOT} max={MAX_DAYS} suggestions={DAYS.map((n) => t(`guide.suggest.days${n}`))} />

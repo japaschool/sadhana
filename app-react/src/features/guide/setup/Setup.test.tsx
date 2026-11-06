@@ -23,7 +23,7 @@ import { guideApi } from '../../../api/guide'
 import { practicesApi } from '../../../api/practices'
 
 const mine = (practice: string, data_type: PracticeDataType, is_active = true): UserPractice => ({ id: `id-${practice}`, practice, data_type, is_active })
-const NAMES: Record<GuideKind, string> = { sleep: 'Sleep', count: 'Daily count', time: 'Time spent', days: 'Days I did it' }
+const NAMES: Record<GuideKind, string> = { sleep: 'Sleep', count: 'Daily count', time: 'Time spent', days: 'Days I did it', gaps: 'Days between', goals: 'Goals' }
 
 function setup(practices: UserPractice[] = []) {
   vi.mocked(practicesApi.getUserPractices).mockResolvedValue(practices)
@@ -39,7 +39,7 @@ async function start(kinds: GuideKind[], state?: unknown) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const r = createMemoryRouter([{ path: '/guide', element: <GuideScreen /> }, { path: '/', element: <p>Today</p> }], { initialEntries: [{ pathname: '/guide', state }] })
   render(<QueryClientProvider client={qc}><RouterProvider router={r} /></QueryClientProvider>)
-  for (const k of kinds) await user.click(screen.getByRole('switch', { name: NAMES[k] }))
+  for (const k of kinds) await user.click(screen.getByRole('checkbox', { name: NAMES[k] }))
   await user.click(next())
   await screen.findByText(/^Set up · /)
   await act(async () => {}) // the practices load
@@ -98,7 +98,7 @@ describe('with no connection and no practices cached', () => {
     const r = createMemoryRouter([{ path: '/guide', element: <GuideScreen /> }], { initialEntries: ['/guide'] })
     onlineManager.setOnline(false)
     render(<QueryClientProvider client={qc}><RouterProvider router={r} /></QueryClientProvider>)
-    await user.click(screen.getByRole('switch', { name: 'Sleep' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Sleep' }))
     await user.click(next())
     expect(await screen.findByText('Something went wrong')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument()
@@ -237,6 +237,48 @@ describe('Daily count', () => {
 })
 
 
+describe('Days between', () => {
+  it('needs an event; with nothing to compare it says so', async () => {
+    const user = await start(['gaps'])
+    expect(next()).toBeDisabled()
+    expect(screen.getByText('Choose an event to continue')).toBeInTheDocument()
+    expect(screen.getByText(/can be compared around the event/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Travel' }))
+    expect(next()).toBeEnabled()
+    expect(applied('gaps')).toEqual({ event: 'Travel', rows: [], sleep: false })
+  })
+
+  it('compares on a practice they have', async () => {
+    setup([mine('Pages read', 'Int')])
+    const user = await start(['gaps'])
+    await user.click(screen.getByRole('button', { name: 'Sick day' }))
+    await user.click(screen.getByRole('button', { name: 'Pages read' }))
+    expect(applied('gaps').rows).toEqual(['Pages read'])
+  })
+})
+
+describe('Goals', () => {
+  it('a goal needs an amount; a new name is a yes/no practice', async () => {
+    const user = await start(['goals'])
+    expect(next()).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Walk' }))
+    expect(screen.getByText('Give every goal an amount to continue')).toBeInTheDocument()
+    const amount = screen.getByLabelText('Amount')
+    await user.type(amount, '3')
+    fireEvent.blur(amount)
+    expect(next()).toBeEnabled()
+    expect(applied('goals').goals).toEqual([{ name: 'Walk', type: 'Bool', direction: 'AtLeast', amount: 3, period: 'Week', counts: 'Total' }])
+  })
+
+  it('a goal on a Duration practice of theirs can count days', async () => {
+    setup([mine('Reading', 'Duration')])
+    const user = await start(['goals'])
+    await user.click(screen.getByRole('button', { name: 'Use' }))
+    expect(applied('goals').goals[0]).toMatchObject({ name: 'Reading', type: 'Duration' })
+    expect(screen.getAllByRole('radiogroup', { name: 'Counts' }).length).toBeGreaterThan(0)
+  })
+})
+
 describe('Time spent and Days I did it', () => {
   it.each([['time', 'Reading'], ['days', 'Walk']] as const)('%s needs at least one practice', async (kind, chip) => {
     const user = await start([kind])
@@ -359,7 +401,7 @@ describe('names that are taken', () => {
     expect(screen.getByRole('alert')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Back' })) // count
     await user.click(screen.getByRole('button', { name: 'Back' })) // choose
-    await user.click(screen.getByRole('switch', { name: 'Daily count' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Daily count' }))
     await user.click(next())
     expect(screen.getByRole('button', { name: 'Rename Pages read' })).toBeInTheDocument()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
@@ -393,8 +435,8 @@ describe('layouts and leaving', () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const r = createMemoryRouter([{ path: '/guide', element: <GuideScreen /> }], { initialEntries: ['/guide'] })
     render(<QueryClientProvider client={qc}><RouterProvider router={r} /></QueryClientProvider>)
-    await user.click(screen.getByRole('button', { name: 'Track this' }))
-    for (let i = 0; i < 3; i++) await user.click(screen.getByRole('button', { name: 'Skip' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Sleep' }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
     expect(await screen.findByText('Set up · 1 of 1')).toBeInTheDocument()
     expect(screen.queryByTestId('mini-sleep')).not.toBeInTheDocument()
     await rename(user, 'Bedtime', 'Lights out')
