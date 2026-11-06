@@ -5,7 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import type { Report } from '../../../../api/charts'
 import { setViewportWidth } from '../../../../test/viewport'
 import { ChartEditorWide } from './ChartEditorWide'
-import { sleepPanels } from '../../panels/templates'
+import { goalsPanels, sleepPanels } from '../../panels/templates'
 
 vi.mock('../../../../api/charts', () => ({
   chartsApi: { getReports: vi.fn(), getReportData: vi.fn(), updateReport: vi.fn(), createReport: vi.fn(), deleteReport: vi.fn() },
@@ -130,5 +130,24 @@ describe('ChartEditorWide', () => {
       const slot = screen.getByRole('button', { name: 'Bedtime: Bed time' })
       expect(preview.compareDocumentPosition(slot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     })
+  })
+
+  it('a Goals report previews the last 12 periods, not 30 days', async () => {
+    setViewportWidth(1440)
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([{ id: 'walk', practice: 'Walk', data_type: 'Bool', is_active: true }])
+    charts.getReports.mockResolvedValue([{ id: 'g1', name: 'Goals', definition: { Panels: goalsPanels({ goals: [{ practice: 'walk', direction: 'AtLeast', amount: 3, period: 'Week', counts: 'Total' }] }) } }])
+    renderAt('/settings/charts/g1')
+    const panel = await screen.findByRole('complementary', { name: 'Preview' })
+    expect(within(panel).getByText('Last 12 periods')).toBeInTheDocument()
+    expect(within(panel).queryByText('Last 30 days')).not.toBeInTheDocument()
+  })
+
+  it('on a tablet too', async () => {
+    setViewportWidth(800)
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([{ id: 'walk', practice: 'Walk', data_type: 'Bool', is_active: true }])
+    charts.getReports.mockResolvedValue([{ id: 'g1', name: 'Goals', definition: { Panels: goalsPanels({ goals: [{ practice: 'walk', direction: 'AtLeast', amount: 3, period: 'Week', counts: 'Total' }] }) } }])
+    renderAt('/settings/charts/g1')
+    expect(await screen.findByText('Last 12 periods')).toBeInTheDocument()
+    expect(screen.queryByText('Last 30 days')).not.toBeInTheDocument()
   })
 })

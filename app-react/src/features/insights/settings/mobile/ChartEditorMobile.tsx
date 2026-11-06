@@ -19,7 +19,7 @@ import { BTN, CARD, HINT, LIST, SECTION_TITLE } from '../../../yatras/settings/m
 import { AutosaveText, ChoiceChips, ConfirmSheet } from '../../../yatras/settings/mobile/fields'
 import { TypeChip, TypeIcon } from '../../../yatras/settings/mobile/TypeChip'
 import { AXES } from '../../axes'
-import { nameTaken } from '../../useReports'
+import { hasPanel, nameTaken } from '../../useReports'
 import { cellText, formatDay } from '../../insightsLogic'
 import { InsightsChart } from '../../mobile/InsightsChart'
 import { PanelsReportView } from '../../panels/PanelsReportView'
@@ -225,7 +225,7 @@ export function Preview({ ed, header = true, height = 170, picking, focus }: { e
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-0.5">
             <h2 className="text-[17px] font-extrabold text-ui-ink">{t('chartSettings.preview')}</h2>
-            <p className="text-xs text-ui-muted">{t(graph || ed.panels ? 'chartSettings.last30' : 'chartSettings.last30Table')}</p>
+            <p className="text-xs text-ui-muted">{t(hasPanel(ed.report, 'Goals') ? 'chartSettings.last12Periods' : graph || ed.panels ? 'chartSettings.last30' : 'chartSettings.last30Table')}</p>
           </div>
           {hidden > 0 && <span className="text-xs font-bold text-ui-danger">{t('chartSettings.hidden', { count: hidden })}</span>}
         </div>

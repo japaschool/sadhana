@@ -847,6 +847,7 @@
     "tableColumns_other": "Таблица · {{count}} столбца",
     "preview": "Предпросмотр",
     "last30": "Последние 30 дней",
+    "last12Periods": "Последние 12 периодов",
     "last30Table": "Последние 30 дней · сначала новые",
     "hidden_one": "Скрыт {{count}} ряд",
     "hidden_few": "Скрыто {{count}} ряда",

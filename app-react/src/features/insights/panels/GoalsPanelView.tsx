@@ -147,8 +147,8 @@ export function GoalsPanelView({ goals, entries, lookup, todayCob, formLink, col
     [t('reportPanels.goalsKeyRunning'), 'part', 0.4, true],
   ]
   return (
-    <section className="flex flex-col rounded-[20px] border border-ui-hairline bg-ui-surface pt-1">
-      <div className="flex flex-col gap-px border-t border-ui-hairline bg-ui-hairline">
+    <section className="flex flex-col rounded-[20px] border border-ui-hairline bg-ui-surface">
+      <div className="flex flex-col gap-px bg-ui-hairline">
         {goals.map((g, i) => (
           <GoalRow key={i} goal={g} row={i} lookup={lookup} logged={logged} todayCob={todayCob} formLink={formLink}
             size={size} gap={gap} open={open} setOpen={setOpen} interactive={interactive} hover={hover} />

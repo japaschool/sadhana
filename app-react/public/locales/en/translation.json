@@ -784,6 +784,7 @@
     "tableColumns_other": "Table · {{count}} columns",
     "preview": "Preview",
     "last30": "Last 30 days",
+    "last12Periods": "Last 12 periods",
     "last30Table": "Last 30 days · newest first",
     "hidden_one": "{{count}} series hidden",
     "hidden_other": "{{count}} series hidden",

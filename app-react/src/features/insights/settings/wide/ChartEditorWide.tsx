@@ -12,6 +12,7 @@ import {
 } from '../mobile/ChartEditorMobile'
 import type { Sheet } from '../mobile/ChartEditorMobile'
 import { NewChartSheet } from '../mobile/NewChartSheet'
+import { hasPanel } from '../../useReports'
 import { ReportGlyph } from '../../ReportGlyph'
 import { PracticePickerSheet } from '../mobile/SeriesSheets'
 
@@ -114,7 +115,7 @@ export function ChartEditorWide() {
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="text-[11px] font-bold uppercase tracking-[.1em] text-ui-accent">{t('chartSettings.preview')}</span>
               <h2 className="text-xl font-extrabold break-words text-ui-ink">{ed.report.name}</h2>
-              <p className="text-xs text-ui-muted">{t(ed.graph || ed.panels ? 'chartSettings.last30' : 'chartSettings.last30Table')}</p>
+              <p className="text-xs text-ui-muted">{t(hasPanel(ed.report, 'Goals') ? 'chartSettings.last12Periods' : ed.graph || ed.panels ? 'chartSettings.last30' : 'chartSettings.last30Table')}</p>
             </div>
             {preview(false)}
             {ed.graph && <AxesCard ed={ed} />}
