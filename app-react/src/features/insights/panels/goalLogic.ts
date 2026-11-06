@@ -26,8 +26,12 @@ export function loggedDays(entries: ReportDataEntry[]): Set<string> {
   return days
 }
 
-/** The practice can be counted: Yes/no, Number or Duration, and active. */
+/**
+ * The practice can be counted: Yes/no, Number or Duration, and active. A days goal on a practice that isn't Duration
+ * any more was retyped, so it's gone too.
+ */
 export function goalAvailable(goal: Goal, l: Lookup): boolean {
+  if (goal.counts === 'Days' && l.type(goal.practice) !== 'Duration') return false
   return (['Bool', 'Int', 'Duration'] as const).some((t) => l.available(goal.practice, t))
 }
 

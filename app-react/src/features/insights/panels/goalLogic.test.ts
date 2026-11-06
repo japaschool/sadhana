@@ -58,6 +58,10 @@ describe('loggedDays and goalAvailable', () => {
     expect(['x', 'b', 'd'].map((p) => goalAvailable(goal(p), l))).toEqual([true, true, true])
     expect(['t', 'h', 'zz'].map((p) => goalAvailable(goal(p), l))).toEqual([false, false, false])
   })
+  it('a days goal on a practice that is no longer Duration was retyped, so it is gone', () => {
+    const l = makeLookup([], undefined, practices)
+    expect(['d', 'x', 'b'].map((p) => goalAvailable(goal(p, { counts: 'Days' }), l))).toEqual([true, false, false])
+  })
 })
 
 describe('goalSquares', () => {

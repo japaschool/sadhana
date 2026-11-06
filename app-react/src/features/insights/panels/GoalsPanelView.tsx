@@ -23,8 +23,11 @@ interface GoalsPanelProps {
   interactive?: boolean
 }
 
-/** A square (16m4): the met fill rises from the bottom over a track; over is the missed colour; running is dashed and open. */
-function Square({ state, fill, running, size }: { state: SquareState; fill: number; running: boolean; size: number }) {
+/**
+ * A square (16m4): the met fill rises from the bottom over a track; over is the missed colour; running is dashed and open.
+ * With no `size` it fills its box's width, so a row's squares can shrink on a narrow phone.
+ */
+function Square({ state, fill, running, size }: { state: SquareState; fill: number; running: boolean; size?: number }) {
   const line = running ? 'dashed' : 'solid'
   const bg = state === 'blank' ? 'transparent' : state === 'over' ? 'var(--ui-state-under-fill)'
     : running ? 'transparent' : 'var(--ui-control)'
@@ -34,7 +37,7 @@ function Square({ state, fill, running, size }: { state: SquareState; fill: numb
         : running ? '1.5px dashed var(--ui-faint2)' : 'none'
   const height = state === 'full' ? 100 : state === 'part' ? Math.round(fill * 100) : 0
   return (
-    <span aria-hidden data-state={state} className="relative block shrink-0 overflow-hidden rounded-[5px]" style={{ width: size, height: size, background: bg }}>
+    <span aria-hidden data-state={state} className="relative block shrink-0 overflow-hidden rounded-[5px]" style={{ width: size ?? '100%', height: size, aspectRatio: '1', background: bg }}>
       <span className="absolute inset-x-0 bottom-0 block" style={{ height: `${height}%`, background: 'var(--ui-state-ok-solid)' }} />
       <span className="absolute inset-0 block rounded-[5px]" style={{ border }} />
     </span>
@@ -77,11 +80,14 @@ function GoalRow({ goal, row, lookup, logged, todayCob, formLink, size, gap, ope
 
   return (
     <div className="flex flex-col gap-2.5 bg-ui-surface px-4 py-3.5">
-      <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-        {name && <span className={`text-[15px] leading-[1.4] font-extrabold ${ok ? 'text-ui-ink' : 'text-ui-muted'}`}>{name}</span>}
-        <span className="text-[13px] leading-[1.4] text-ui-muted">{words}</span>
-        {ok && <span className="ml-auto text-[13px] leading-[1.4] font-bold text-ui-ink2 tabular-nums">{progress}</span>}
-      </div>
+      {(ok || name) && (
+        <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+          {name && <span className={`text-[15px] leading-[1.4] font-extrabold ${ok ? 'text-ui-ink' : 'text-ui-muted'}`}>{name}</span>}
+          {/* A gone practice's type is unknown or new, so its amount can't be put in words. */}
+          {ok && <span className="text-[13px] leading-[1.4] text-ui-muted">{words}</span>}
+          {ok && <span className="ml-auto text-[13px] leading-[1.4] font-bold text-ui-ink2 tabular-nums">{progress}</span>}
+        </div>
+      )}
       {ok ? (
         <div className="flex justify-end">
           {squares.map((sq, i) => {
@@ -91,12 +97,13 @@ function GoalRow({ goal, row, lookup, logged, todayCob, formLink, size, gap, ope
             const on = open?.key === key
             return (
               <button key={sq.from} type="button" aria-label={`${dates} · ${value}`}
-                className="relative flex h-11 shrink-0 items-center justify-center" style={{ width: size + gap }}
+                // Up to size + gap wide, but the 12 shrink together to fit a narrow row (a 320px phone).
+                className="relative flex h-11 min-w-0 flex-1 items-center justify-center" style={{ maxWidth: size + gap, paddingInline: gap / 2 }}
                 onClick={interactive ? () => setOpen(on && !open.hover ? null : { key, hover: false }) : undefined}
                 onMouseEnter={hover ? () => setOpen({ key, hover: true }) : undefined}
                 onMouseLeave={hover ? () => setOpen(open?.hover ? null : open) : undefined}>
-                <span className={`rounded-[7px] ${on ? 'outline-2 outline-offset-2 outline-ui-ink' : ''}`}>
-                  <Square state={sq.state} fill={sq.fill} running={sq.running} size={size} />
+                <span className={`block w-full rounded-[7px] ${on ? 'outline-2 outline-offset-2 outline-ui-ink' : ''}`} style={{ maxWidth: size }}>
+                  <Square state={sq.state} fill={sq.fill} running={sq.running} />
                 </span>
                 {on && (
                   <span aria-hidden className={`pointer-events-none absolute bottom-[calc(100%-2px)] z-10 flex items-baseline gap-1.5 whitespace-nowrap rounded-xl border border-ui-hairline bg-ui-sheet px-3 py-2 shadow-lg ${i >= squares.length - 6 ? 'right-0' : 'left-0'}`}>

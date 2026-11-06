@@ -741,6 +741,25 @@ describe('a Goals report', () => {
     expect(screen.getByText('62 of 100 · 3 days left')).toBeInTheDocument()
     expect(screen.getByText('3 of 5 today')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /This report needs a practice/ })).toBeNull()
+    // With the practice gone its type is unknown, so 150 minutes would read as a count: no words on that row.
+    expect(screen.queryByText(/At least 150/)).toBeNull()
+    expect(screen.queryByText(/At least 3 (days )?a month/)).toBeNull()
+  })
+
+  it('the 12 squares shrink together on a narrow phone instead of spilling past the card', () => {
+    // jsdom has no layout: each tap area is a flex-1 min-w-0 box capped at size + gap (here the larger 28 + 6px),
+    // still 44px high, and the square fills its width up to size. On mobile (22 + 5px) 12 boxes need 324px; a 320px
+    // phone's row has 254, so each box is ~21px with a ~16px square.
+    setViewportWidth(320)
+    goalsView()
+    const box = screen.getByRole('button', { name: /^Oct 19\s–\s25 · 95 of 100$/ })
+    expect(box).toHaveClass('flex-1', 'min-w-0', 'h-11')
+    expect(box).not.toHaveClass('shrink-0')
+    expect(box.style.maxWidth).toBe('34px')
+    expect(box.parentElement).toHaveClass('justify-end')
+    const square = box.querySelector('[data-state]') as HTMLElement
+    expect(square.style.width).toBe('100%')
+    expect((square.parentElement as HTMLElement).style.maxWidth).toBe('28px')
   })
 
   it('in ru, days left takes its plural form', async () => {
