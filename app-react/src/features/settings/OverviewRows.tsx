@@ -8,6 +8,7 @@ import { useInsightPrefs } from '../insights/overview/prefs'
 import { overviewRows, type OverviewRow } from '../insights/overview/series'
 import { groupName } from '../practices/groups'
 import { SettingsRow } from './mobile/SettingsRow'
+import { InsightsColumn } from '../insights/settings/wide/ChartEditorWide'
 import { ROWS, SettingsSubpage } from './SettingsSubpage'
 
 /** /settings/overview-rows: which rows the Insights overview shows, per practice group. */
@@ -30,7 +31,7 @@ export function OverviewRows() {
   }
 
   return (
-    <SettingsSubpage title={t('insights.rows.title')} back={{ to: '/settings/charts', label: t('insights.title') }}>
+    <SettingsSubpage title={t('insights.rows.title')} back={{ to: '/settings/charts', label: t('insights.title') }} column={<InsightsColumn />}>
       <p className="px-1 text-sm leading-[1.45] text-ui-muted">{t('insights.rows.intro')}</p>
       {sections.map((rows) => (
         <section key={rows[0].group.id ?? ''} className="flex flex-col gap-2">

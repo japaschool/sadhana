@@ -69,7 +69,10 @@ describe('ChartEditorWide', () => {
     setViewportWidth(800)
     renderAt('/settings/charts/r1')
     const column = await screen.findByRole('navigation', { name: 'Insights' })
-    expect(within(column).getByRole('switch', { name: 'Show streaks' })).toBeInTheDocument()
+    // The toggles and sleep pair sit behind Overview, opened to the right like a chart.
+    expect(within(column).queryByRole('switch')).not.toBeInTheDocument()
+    expect(within(column).getByRole('link', { name: 'Overview' })).toHaveAttribute('href', '/settings/insights-prefs')
+    expect(within(column).getByRole('link', { name: 'Overview rows' })).toHaveAttribute('href', '/settings/overview-rows')
     const periods = within(column).getByRole('link', { name: /Marked periods/ })
     expect(periods).toHaveAttribute('href', '/settings/periods')
     expect(periods).toHaveTextContent('2')

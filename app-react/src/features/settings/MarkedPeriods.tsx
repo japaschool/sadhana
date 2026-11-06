@@ -10,6 +10,7 @@ import { useInsightPrefs } from '../insights/overview/prefs'
 import { openPeriodToAsk } from '../insights/overview/suggest'
 import { useOverviewActions } from '../insights/overview/useOverviewActions'
 import { toDateStr } from '../today/date'
+import { InsightsColumn } from '../insights/settings/wide/ChartEditorWide'
 import { AddPill, ROWS, SettingsSubpage } from './SettingsSubpage'
 
 /** /settings/periods: every marked period, to open, change or delete (16m9). */
@@ -28,7 +29,7 @@ export function MarkedPeriods() {
     : t('insights.periods.ongoing', { date: formatDay(p.start_date, locale) })
 
   return (
-    <SettingsSubpage title={t('insights.periods.title')} back={{ to: '/settings/charts', label: t('insights.title') }}>
+    <SettingsSubpage title={t('insights.periods.title')} back={{ to: '/settings/charts', label: t('insights.title') }} column={<InsightsColumn />}>
       <p className="px-1 text-sm leading-[1.45] text-ui-muted">{t('insights.periods.intro')}</p>
       {openPeriodProps && <OpenPeriodCard {...openPeriodProps} />}
       <div className="flex items-center justify-between gap-3 px-1">

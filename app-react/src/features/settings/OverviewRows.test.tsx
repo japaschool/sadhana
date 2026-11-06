@@ -8,6 +8,8 @@ import { practice } from '../insights/overview/fixtures'
 
 vi.mock('../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn(), getGroups: vi.fn() } }))
 vi.mock('../../api/insightPrefs', () => ({ insightPrefsApi: { get: vi.fn(), save: vi.fn() }, INSIGHT_PREFS_KEY: ['insight-prefs'] }))
+vi.mock('../../api/charts', () => ({ chartsApi: { getReports: vi.fn().mockResolvedValue([{ id: 'r1', name: 'Morning sadhana', definition: { Grid: { practices: [] } } }]) } }))
+vi.mock('../../api/markedPeriods', () => ({ useMarkedPeriods: () => ({ periods: [], isLoading: false }) }))
 import { practicesApi } from '../../api/practices'
 import { insightPrefsApi } from '../../api/insightPrefs'
 import { OverviewRows } from './OverviewRows'
@@ -52,6 +54,14 @@ describe('Overview rows', () => {
     fireEvent.click(await screen.findByRole('switch', { name: 'Reading' }))
     await waitFor(() => expect(insightPrefsApi.save).toHaveBeenLastCalledWith(expect.objectContaining({ visibility: { d1: true } })))
     await waitFor(() => expect(screen.getByRole('switch', { name: 'Reading' })).toHaveAttribute('aria-checked', 'true'))
+  })
+
+  it('tablet_opens_beside_the_insights_column', async () => {
+    setViewportWidth(800)
+    renderPage()
+    const column = await screen.findByRole('navigation', { name: 'Insights' })
+    expect(await within(column).findByRole('link', { name: /Morning sadhana/ })).toHaveAttribute('href', '/settings/charts/r1')
+    expect(await screen.findByRole('switch', { name: 'Reading' })).toBeInTheDocument()
   })
 
   it('back_goes_to_insights_settings', async () => {

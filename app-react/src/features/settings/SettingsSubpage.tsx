@@ -19,9 +19,11 @@ export function AddPill({ label, onClick }: { label: string; onClick: () => void
 }
 
 /** A list one level under Settings (Insights, Yatras), with a back link to Settings, in the current layout's shell. */
-export function SettingsSubpage({ title, action, back: backTo, wide, children }: {
+export function SettingsSubpage({ title, action, back: backTo, wide, column, children }: {
   title: string; action?: ReactNode; /** Where the back link goes; Settings by default. */ back?: { to: string; label: string }
-  /** Tablet and desktop: use the full width instead of a 640px column (grids like Year map). */ wide?: boolean; children: ReactNode
+  /** Tablet and desktop: use the full width instead of a 640px column (grids like Year map). */ wide?: boolean
+  /** Tablet and desktop: a menu column to sit beside (the Insights one), which also takes over the back link. */ column?: ReactNode
+  children: ReactNode
 }) {
   const { t } = useTranslation()
   const layout = useLayout()
@@ -49,7 +51,7 @@ export function SettingsSubpage({ title, action, back: backTo, wide, children }:
   const page = (
     <div className={`flex flex-col gap-6 px-9 ${layout === 'tablet' ? 'pt-[calc(36px+env(safe-area-inset-top))]' : 'pt-8'} pb-9`}>
       <div className="flex max-w-[640px] flex-col gap-1">
-        {back('-mb-1 min-h-9 self-start text-[15px]')}
+        {!column && back('-mb-1 min-h-9 self-start text-[15px]')}
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-[34px] leading-tight font-extrabold tracking-[-0.02em]">{title}</h1>
           {action}
@@ -58,5 +60,7 @@ export function SettingsSubpage({ title, action, back: backTo, wide, children }:
       <div className={`flex ${wide ? '' : 'max-w-[640px]'} flex-col gap-4`}>{children}</div>
     </div>
   )
-  return layout === 'tablet' ? <TabletShell>{page}</TabletShell> : <DesktopShell>{() => page}</DesktopShell>
+  // Beside a column the page takes the log panel's width, like the chart editor.
+  const framed = column ? <div className="flex min-h-dvh">{column}<main className="min-w-0 flex-1">{page}</main></div> : page
+  return layout === 'tablet' ? <TabletShell>{framed}</TabletShell> : <DesktopShell log={!column}>{() => framed}</DesktopShell>
 }

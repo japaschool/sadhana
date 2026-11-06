@@ -488,6 +488,9 @@
       "footnote": "Rows come from your number and duration practices.",
       "notYet": "Your rhythm shows up after 8 weeks of entries.",
       "cell": "{{row}}, {{day}}: {{value}}"
+    },
+    "prefs": {
+      "title": "Overview"
     }
   },
   "yatraSettings": {

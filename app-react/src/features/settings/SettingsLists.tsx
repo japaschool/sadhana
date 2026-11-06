@@ -15,12 +15,13 @@ import { UiLoading } from '../../layouts/ByLayout'
 import { useLayout } from '../../layouts/useLayout'
 import { NewChartSheet } from '../insights/settings/mobile/NewChartSheet'
 import { ChartRows, YatraRows } from './sections'
+import { InsightsColumn } from '../insights/settings/wide/ChartEditorWide'
 import { AddPill, ROWS, SettingsSubpage } from './SettingsSubpage'
 
 const EMPTY = 'rounded-[18px] border border-dashed border-ui-control px-6 py-8 text-center text-sm text-ui-muted'
 
-/** Streaks, period suggestions, the sleep pair and marked periods (16m13). */
-export function InsightsPrefsRows() {
+/** Streaks, period suggestions, the sleep pair and, unless `links` is off, overview rows and marked periods (16m13). */
+export function InsightsPrefsRows({ links = true }: { links?: boolean }) {
   const { t } = useTranslation()
   const [prefs, setPrefs] = useInsightPrefs()
   const [asking, setAsking] = useState(false)
@@ -37,8 +38,10 @@ export function InsightsPrefsRows() {
         control={<Toggle label={t('insights.periods.suggest')} checked={prefs.suggest} onChange={(suggest) => setPrefs({ suggest })} />} />
       <SettingsRow label={t('insights.periods.sleep')} onClick={() => setAsking(true)}
         value={sleep ? `${nameOf(sleep.bedtime)} · ${nameOf(sleep.wake)}` : t('settings.off')} />
-      <SettingsRow label={t('insights.rows.title')} to="/settings/overview-rows" />
-      <SettingsRow label={t('insights.periods.title')} to="/settings/periods" value={String(periods.length)} />
+      {links && <>
+        <SettingsRow label={t('insights.rows.title')} to="/settings/overview-rows" />
+        <SettingsRow label={t('insights.periods.title')} to="/settings/periods" value={String(periods.length)} />
+      </>}
       {asking && practices && (
         <SleepSetupSheet current={sleep} practices={practices.filter((p) => p.is_active && p.data_type === 'Time')} onClose={() => setAsking(false)}
           onSave={(rows) => { setPrefs({ sleep: rows }); setAsking(false) }}
@@ -55,7 +58,7 @@ export function ChartsSettings() {
   const [creating, setCreating] = useState(false)
   const q = useReports()
   if (q.isLoading) return <UiLoading />
-  if (layout !== 'mobile' && q.data?.length) return <Navigate to={`/settings/charts/${q.data[0].id}`} replace />
+  if (layout !== 'mobile' && q.data) return <Navigate to={q.data.length ? `/settings/charts/${q.data[0].id}` : '/settings/insights-prefs'} replace />
   return (
     <SettingsSubpage title={t('insights.title')} action={<AddPill label={t('chartSettings.newChart')} onClick={() => setCreating(true)} />}>
       <InsightsPrefsRows />
@@ -63,6 +66,16 @@ export function ChartsSettings() {
         : q.data?.length ? <div className={ROWS}><ChartRows /></div>
         : <p className={EMPTY}>{t('charts.empty')}</p>}
       {creating && <NewChartSheet onClose={() => setCreating(false)} />}
+    </SettingsSubpage>
+  )
+}
+
+/** /settings/insights-prefs: the overview's toggles and sleep pair, opened from the charts column on tablet and desktop. */
+export function InsightsPrefs() {
+  const { t } = useTranslation()
+  return (
+    <SettingsSubpage title={t('insights.prefs.title')} back={{ to: '/settings/charts', label: t('insights.title') }} column={<InsightsColumn />}>
+      <InsightsPrefsRows links={false} />
     </SettingsSubpage>
   )
 }

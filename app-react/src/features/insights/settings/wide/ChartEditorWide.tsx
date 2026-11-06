@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { DesktopShell } from '../../../../layouts/desktop/DesktopShell'
 import { TabletShell } from '../../../../layouts/tablet/TabletShell'
 import { useLayout } from '../../../../layouts/useLayout'
-import { InsightsPrefsRows } from '../../../settings/SettingsLists'
+import { useMarkedPeriods } from '../../../../api/markedPeriods'
 import { CARD } from '../../../yatras/settings/mobile/AdminPage'
 import { graphOf, useChartEditor } from '../useChartEditor'
 import {
@@ -12,7 +12,7 @@ import {
 } from '../mobile/ChartEditorMobile'
 import type { Sheet } from '../mobile/ChartEditorMobile'
 import { NewChartSheet } from '../mobile/NewChartSheet'
-import { hasPanel } from '../../useReports'
+import { hasPanel, useReports } from '../../useReports'
 import { ReportGlyph } from '../../ReportGlyph'
 import { PracticePickerSheet } from '../mobile/SeriesSheets'
 
@@ -20,10 +20,22 @@ type Editor = ReturnType<typeof useChartEditor>
 
 const ITEM = 'flex min-h-11 items-center gap-2.5 rounded-xl px-3 text-[15px]'
 
-/** Your charts beside the editor; picking one opens its settings. */
-export function ChartsColumn({ id, reports, newOn }: { id: string; reports: NonNullable<Editor['reports']>; newOn?: boolean }) {
+/** Insights settings beside the editor: the overview's settings, then your charts; picking one opens it to the right. */
+export function ChartsColumn({ id, reports, newOn }: { id?: string; reports: NonNullable<Editor['reports']>; newOn?: boolean }) {
   const { t } = useTranslation()
+  const { pathname } = useLocation()
+  const { periods } = useMarkedPeriods()
   const [creating, setCreating] = useState(false)
+  const item = (to: string, label: string, count?: number) => {
+    const active = pathname === to
+    return (
+      <Link to={to} aria-current={active ? 'page' : undefined}
+        className={`${ITEM} ${active ? 'bg-ui-accent-pill font-bold text-ui-ink' : 'font-semibold text-ui-ink2'}`}>
+        <span className="min-w-0 flex-1 truncate">{label}</span>
+        {count !== undefined && <span className="shrink-0 font-ui-mono text-xs font-semibold text-ui-muted">{count}</span>}
+      </Link>
+    )
+  }
   return (
     <nav aria-label={t('insights.title')}
       className="sticky top-0 flex h-dvh w-[232px] shrink-0 flex-col gap-1 overflow-y-auto border-r border-ui-control px-3 pt-[calc(32px+env(safe-area-inset-top))] pb-[calc(24px+env(safe-area-inset-bottom))]">
@@ -33,7 +45,11 @@ export function ChartsColumn({ id, reports, newOn }: { id: string; reports: NonN
         </Link>
         <p className="text-[22px] leading-tight font-extrabold tracking-[-0.01em] text-ui-ink">{t('insights.title')}</p>
       </div>
-      <div className="mb-3"><InsightsPrefsRows /></div>
+      <div className="mb-3 flex flex-col gap-1">
+        {item('/settings/insights-prefs', t('insights.prefs.title'))}
+        {item('/settings/overview-rows', t('insights.rows.title'))}
+        {item('/settings/periods', t('insights.periods.title'), periods.length)}
+      </div>
       <p className={`${GROUP} px-3 pb-1`}>{t('chartSettings.yourCharts')}</p>
       {reports.map((r) => {
         const active = r.id === id
@@ -55,6 +71,11 @@ export function ChartsColumn({ id, reports, newOn }: { id: string; reports: NonN
       {creating && <NewChartSheet onClose={() => setCreating(false)} />}
     </nav>
   )
+}
+
+/** The column for the Insights settings pages that aren't a chart (overview rows, marked periods, …). */
+export function InsightsColumn() {
+  return <ChartsColumn reports={useReports().data ?? []} />
 }
 
 /**

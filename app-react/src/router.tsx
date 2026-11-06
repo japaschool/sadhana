@@ -25,6 +25,7 @@ const NewTemplateScreen = lazy(() => import('./features/insights/panels/NewTempl
 const PracticesMobileScreen = lazy(() => import('./features/practices/mobile/PracticesMobile').then((m) => ({ default: m.PracticesMobileScreen })))
 const PracticesWide = lazy(() => import('./features/practices/wide/PracticesWide').then((m) => ({ default: m.PracticesWide })))
 const ChartsSettings = lazy(() => import('./features/settings/SettingsLists').then((m) => ({ default: m.ChartsSettings })))
+const InsightsPrefs = lazy(() => import('./features/settings/SettingsLists').then((m) => ({ default: m.InsightsPrefs })))
 const OverviewRows = lazy(() => import('./features/settings/OverviewRows').then((m) => ({ default: m.OverviewRows })))
 const MarkedPeriods = lazy(() => import('./features/settings/MarkedPeriods').then((m) => ({ default: m.MarkedPeriods })))
 const PeriodDetail = lazy(() => import('./features/insights/overview/PeriodDetail').then((m) => ({ default: m.PeriodDetail })))
@@ -128,6 +129,7 @@ export const router = createBrowserRouter([
       { path: '/user/practice/new', element: <Navigate to="/settings/practices/new" replace /> },
       { path: '/user/practice/:id/edit', element: <ToPracticeSettings /> },
       { path: '/settings/charts', element: ui(<ChartsSettings />) },
+      { path: '/settings/insights-prefs', element: ui(<InsightsPrefs />) },
       { path: '/settings/overview-rows', element: ui(<OverviewRows />) },
       { path: '/settings/periods', element: ui(<MarkedPeriods />) },
       { path: '/insights/period/:id', element: ui(<PeriodDetail />) },
