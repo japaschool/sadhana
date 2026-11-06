@@ -1,3 +1,4 @@
+import { TOOLTIP_TRIGGER } from '../../../ui/tooltipTrigger'
 import { Bar, CartesianGrid, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import type { MarkedPeriod } from '../../../api/markedPeriods'
@@ -139,7 +140,7 @@ export function GapsPanelView({ event, options, only, days, prevDays, lookup, he
               {keys.map((_, i) => (
                 <Bar key={i} dataKey={`o${i}`} stackId="gaps" barSize={8} shape={lollipop(i)} isAnimationActive={false} />
               ))}
-              {interactive && <Tooltip isAnimationActive={false} cursor={{ stroke: 'var(--ui-hairline)' }}
+              {interactive && <Tooltip trigger={TOOLTIP_TRIGGER} isAnimationActive={false} cursor={{ stroke: 'var(--ui-hairline)' }}
                 content={({ active, label }) => {
                   const x = active && typeof label === 'number' ? byCob.get(toDateStr(new Date(label))) : undefined
                   if (!x) return null

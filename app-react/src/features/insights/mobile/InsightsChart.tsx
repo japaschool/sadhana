@@ -1,3 +1,4 @@
+import { TOOLTIP_TRIGGER } from '../../../ui/tooltipTrigger'
 import type { ReactNode } from 'react'
 import { Bar, CartesianGrid, ComposedChart, DefaultZIndexes, Line, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, usePlotArea, useXAxisScale, XAxis, YAxis, ZIndexLayer } from 'recharts'
 import { useTranslation } from 'react-i18next'
@@ -199,7 +200,7 @@ export function InsightsChart({ rows, traces, barLayout, averages, height = 170,
               stroke={tr.color} strokeWidth={2} dot={{ r: 2.5, fill: tr.color, strokeWidth: 0 }} connectNulls isAnimationActive={false} />
           )
         })}
-        <Tooltip isAnimationActive={false} cursor={{ fill: 'var(--ui-hairline)', stroke: 'var(--ui-hairline)' }}
+        <Tooltip trigger={TOOLTIP_TRIGGER} isAnimationActive={false} cursor={{ fill: 'var(--ui-hairline)', stroke: 'var(--ui-hairline)' }}
           content={(p) => <PointTip {...p} traces={traces} units={{ h: t('today.unitH'), min: t('today.unitMin') }} locale={locale} />} />
         {averages.map((a, i) => (
           <ReferenceLine key={i} yAxisId={a.axis} y={a.value} stroke={a.color} strokeDasharray="4 4" strokeWidth={1.5} ifOverflow="extendDomain" />

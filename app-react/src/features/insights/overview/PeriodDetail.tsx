@@ -1,3 +1,4 @@
+import { TOOLTIP_TRIGGER } from '../../../ui/tooltipTrigger'
 import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -67,7 +68,7 @@ function RowChart({ series, periods, focus, todayCob, from, kind, label }: {
             <Area dataKey={(r: Point) => r.range} stroke="none" fill="var(--ui-div-0)" fillOpacity={1} isAnimationActive={false} activeDot={false} />
             <Line dataKey="median" stroke="var(--ui-faint2)" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} isAnimationActive={false} />
             <Line dataKey="avg" stroke="var(--ui-ink)" strokeWidth={2} dot={false} isAnimationActive={false} />
-            <Tooltip isAnimationActive={false} cursor={{ stroke: 'var(--ui-hairline)' }}
+            <Tooltip trigger={TOOLTIP_TRIGGER} isAnimationActive={false} cursor={{ stroke: 'var(--ui-hairline)' }}
               content={({ active, label: d }) => {
                 const p = active ? points.find((x) => x.d === d) : undefined
                 if (!p || typeof d !== 'string') return null

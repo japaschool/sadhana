@@ -1,3 +1,4 @@
+import { TOOLTIP_TRIGGER } from '../../ui/tooltipTrigger'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
@@ -44,7 +45,7 @@ function MetricCard({ weeks, metric, color }: { weeks: Week[]; metric: Metric; c
           <CartesianGrid vertical={false} stroke="var(--ui-hairline)" />
           <XAxis dataKey="week" minTickGap={28} tickFormatter={(w: string) => date(w, weeks.length > 14 ? { month: 'short', year: '2-digit' } : { day: 'numeric', month: 'short' })} {...AXIS} />
           <YAxis width={36} allowDecimals={false} {...AXIS} />
-          <Tooltip isAnimationActive={false} cursor={{ fill: 'var(--ui-hairline)' }}
+          <Tooltip trigger={TOOLTIP_TRIGGER} isAnimationActive={false} cursor={{ fill: 'var(--ui-hairline)' }}
             content={({ active, label, payload }) => active && typeof label === 'string' && payload?.length ? (
               <div className="flex flex-col gap-1 rounded-xl border border-ui-hairline bg-ui-surface px-3 py-2 shadow-lg">
                 <span className="font-ui-mono text-[11px] font-semibold text-ui-muted">

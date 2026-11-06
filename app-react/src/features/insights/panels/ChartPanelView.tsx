@@ -1,3 +1,4 @@
+import { TOOLTIP_TRIGGER } from '../../../ui/tooltipTrigger'
 import { useId, useState, type Key, type ReactNode } from 'react'
 import { Bar, CartesianGrid, Cell, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useTranslation } from 'react-i18next'
@@ -304,7 +305,7 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], range, look
                 </Bar>
               )
             })}
-            {interactive && <Tooltip isAnimationActive={false} cursor={{ fill: 'var(--ui-hairline)', stroke: 'var(--ui-hairline)' }}
+            {interactive && <Tooltip trigger={TOOLTIP_TRIGGER} isAnimationActive={false} cursor={{ fill: 'var(--ui-hairline)', stroke: 'var(--ui-hairline)' }}
               content={({ active, label }) => {
                 if (!active || typeof label !== 'string') return null
                 const lines = tipLines(panels, label, lookup, t, units)
