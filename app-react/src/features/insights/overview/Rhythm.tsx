@@ -74,5 +74,5 @@ export function Rhythm() {
       <p className="text-xs leading-[1.4] text-ui-muted">{t('insights.rhythm.footnote')}</p>
     </>
   )
-  return <SettingsSubpage title={t('insights.rhythm.title')} back={{ to: '/charts', label: t('insights.overview.overview') }}>{body}</SettingsSubpage>
+  return <SettingsSubpage wide title={t('insights.rhythm.title')} back={{ to: '/charts', label: t('insights.overview.overview') }}>{body}</SettingsSubpage>
 }

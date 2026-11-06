@@ -19,8 +19,9 @@ export function AddPill({ label, onClick }: { label: string; onClick: () => void
 }
 
 /** A list one level under Settings (Insights, Yatras), with a back link to Settings, in the current layout's shell. */
-export function SettingsSubpage({ title, action, back: backTo, children }: {
-  title: string; action?: ReactNode; /** Where the back link goes; Settings by default. */ back?: { to: string; label: string }; children: ReactNode
+export function SettingsSubpage({ title, action, back: backTo, wide, children }: {
+  title: string; action?: ReactNode; /** Where the back link goes; Settings by default. */ back?: { to: string; label: string }
+  /** Tablet and desktop: use the full width instead of a 640px column (grids like Year map). */ wide?: boolean; children: ReactNode
 }) {
   const { t } = useTranslation()
   const layout = useLayout()
@@ -54,7 +55,7 @@ export function SettingsSubpage({ title, action, back: backTo, children }: {
           {action}
         </div>
       </div>
-      <div className="flex max-w-[640px] flex-col gap-4">{children}</div>
+      <div className={`flex ${wide ? '' : 'max-w-[640px]'} flex-col gap-4`}>{children}</div>
     </div>
   )
   return layout === 'tablet' ? <TabletShell>{page}</TabletShell> : <DesktopShell>{() => page}</DesktopShell>

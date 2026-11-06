@@ -1,10 +1,10 @@
-import { Bar, CartesianGrid, ComposedChart, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, CartesianGrid, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import type { MarkedPeriod } from '../../../api/markedPeriods'
 import { fromDateStr, toDateStr } from '../../today/date'
 import { periodBands } from '../periodBands'
 import { formatDay, formatTick, spansYears } from '../insightsLogic'
-import { AXIS, PeriodKey, TICK, tipDate, TipRow, TipShell } from '../mobile/InsightsChart'
+import { AXIS, PeriodAreas, PeriodKey, tipDate, TipRow, TipShell } from '../mobile/InsightsChart'
 import { FigureGrid, type Figure } from './StatsPanelView'
 import { eventOptions, gapEvents, gapFigures, TYPICAL_MIN, type GapEvent } from './gapLogic'
 import type { Lookup } from './panelLogic'
@@ -100,10 +100,7 @@ export function GapsPanelView({ event, days, prevDays, lookup, height, cols, int
               <XAxis dataKey="t" type="number" scale="time" domain={[xTicks[0], xTicks[xTicks.length - 1]]} ticks={xTicks} interval={0}
                 tickFormatter={(v: number) => formatTick(toDateStr(new Date(v)), locale, y)} padding={{ left: 6, right: 6 }} {...AXIS} />
               <YAxis width={32} allowDecimals={false} tickCount={3} domain={[0, 'auto']} {...AXIS} />
-              {bands.map((b, i) => (
-                <ReferenceArea key={i} x1={at(b.x1)} x2={at(b.x2)} fill="var(--ui-chip)" fillOpacity={0.6} ifOverflow="hidden"
-                  label={{ value: b.name, position: 'insideTopLeft', fontSize: 10, fontFamily: TICK.fontFamily, fill: 'var(--ui-ink2)' }} />
-              ))}
+              <PeriodAreas bands={bands} at={at} />
               {/* One stack: an event has one option, so its marks never sit side by side. */}
               {keys.map((_, i) => (
                 <Bar key={i} dataKey={`o${i}`} stackId="gaps" barSize={8} shape={lollipop(i)} isAnimationActive={false} />

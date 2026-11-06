@@ -9,13 +9,13 @@ import { SheetHeader } from '../../yatras/settings/mobile/fields'
 const LABEL = 'text-xs font-bold text-ui-muted'
 
 /** Asks once which two Time practices are bedtime and wake-up, so Sleep can be worked out (16m15). */
-export function SleepSetupSheet({ practices, onSave, onSkip, onClose }: {
-  /** Active Time practices. Nothing is preselected: no guessed pair. */
-  practices: UserPractice[]; onSave: (rows: SleepRows) => void; onSkip: () => void; onClose: () => void
+export function SleepSetupSheet({ practices, current, onSave, onSkip, onClose }: {
+  /** Active Time practices. Only a saved pair is preselected: no guessed pair. */
+  practices: UserPractice[]; current?: SleepRows | null; onSave: (rows: SleepRows) => void; onSkip: () => void; onClose: () => void
 }) {
   const { t } = useTranslation()
-  const [bedtime, setBedtime] = useState('')
-  const [wake, setWake] = useState('')
+  const [bedtime, setBedtime] = useState(current?.bedtime ?? '')
+  const [wake, setWake] = useState(current?.wake ?? '')
   const title = t('insights.overview.sleepTitle')
   const picker = (id: string, label: string, value: string, set: (v: string) => void) => (
     <div className="flex flex-col gap-1.5">
@@ -36,7 +36,7 @@ export function SleepSetupSheet({ practices, onSave, onSkip, onClose }: {
       {picker('sleep-bedtime', t('insights.overview.bedtime'), bedtime, setBedtime)}
       {picker('sleep-wake', t('insights.overview.wake'), wake, setWake)}
       <div className="flex flex-col gap-1.5">
-        <button type="button" disabled={!bedtime || !wake || bedtime === wake} onClick={() => onSave({ bedtime, wake, nap: null })}
+        <button type="button" disabled={!bedtime || !wake || bedtime === wake} onClick={() => onSave({ bedtime, wake, nap: current?.nap ?? null })}
           className={`${BTN} bg-ui-accent-fill text-ui-ink disabled:opacity-50`}>{t('common.save')}</button>
         <button type="button" onClick={onSkip} className={`${BTN} text-ui-accent`}>{t('insights.overview.skip')}</button>
       </div>

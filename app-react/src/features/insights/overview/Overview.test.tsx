@@ -174,6 +174,13 @@ describe('Overview (mobile)', () => {
     expect(screen.getByText('Longest run this year').parentElement).toHaveTextContent('7')
   })
 
+  it('streaks_show_for_regular_users_too', () => {
+    overview(steady(), { prefs: { streaks: true } })
+    wrap(<OverviewMobile />)
+    expect(screen.getByRole('region', { name: 'Me vs my normal' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Streaks' })).toHaveTextContent('Current run')
+  })
+
   const SUGGESTION = { start: '2026-10-25', rows: ['wake', 'bed'] }
 
   it('not_now_dismisses', () => {
@@ -190,8 +197,8 @@ describe('Overview (mobile)', () => {
     wrap(<OverviewMobile />)
     fireEvent.click(screen.getByRole('button', { name: 'Mark this period' }))
     const sheet = screen.getByRole('dialog', { name: 'New period' })
-    expect(within(sheet).getByLabelText('Start')).toHaveValue('2026-10-25')
-    expect(within(sheet).getByLabelText('End')).toHaveValue('')
+    expect(within(sheet).getByRole('button', { name: 'Start' })).toHaveTextContent('Oct 25, 2026')
+    expect(within(sheet).getByRole('button', { name: 'End' })).toHaveTextContent('—')
     expect(within(sheet).getByText('Still going')).toBeInTheDocument()
     expect(within(sheet).getByRole('switch', { name: 'Leave out of my usual range' })).toHaveAttribute('aria-checked', 'true')
   })
@@ -223,9 +230,13 @@ describe('Overview (mobile)', () => {
     expect(saveBtn).toBeDisabled()
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: ' Retreat ' } })
     expect(saveBtn).toBeEnabled()
-    fireEvent.change(screen.getByLabelText('End'), { target: { value: '2026-10-20' } })
-    expect(saveBtn).toBeDisabled()
-    fireEvent.change(screen.getByLabelText('End'), { target: { value: '2026-10-30' } })
+    // The app's calendar: End can't go before Start, and a pick closes it.
+    fireEvent.click(screen.getByRole('button', { name: 'End' }))
+    const cal = screen.getByRole('dialog', { name: 'Calendar' })
+    expect(within(cal).getByRole('button', { name: /October 20$/ })).toBeDisabled()
+    fireEvent.click(within(cal).getByRole('button', { name: /October 30$/ }))
+    expect(screen.queryByRole('dialog', { name: 'Calendar' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'End' })).toHaveTextContent('Oct 30, 2026')
     fireEvent.click(saveBtn)
     expect(save).toHaveBeenCalledWith(
       { id: undefined, form: { name: 'Retreat', start_date: '2026-10-25', end_date: '2026-10-30', exclude_from_usual: true } },

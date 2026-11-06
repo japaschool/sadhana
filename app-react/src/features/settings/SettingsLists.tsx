@@ -39,7 +39,7 @@ export function InsightsPrefsRows() {
         value={sleep ? `${nameOf(sleep.bedtime)} · ${nameOf(sleep.wake)}` : t('settings.off')} />
       <SettingsRow label={t('insights.periods.title')} to="/settings/periods" value={String(periods.length)} />
       {asking && practices && (
-        <SleepSetupSheet practices={practices.filter((p) => p.is_active && p.data_type === 'Time')} onClose={() => setAsking(false)}
+        <SleepSetupSheet current={sleep} practices={practices.filter((p) => p.is_active && p.data_type === 'Time')} onClose={() => setAsking(false)}
           onSave={(rows) => { setPrefs({ sleep: rows }); setAsking(false) }}
           onSkip={() => { setPrefs({ sleep: 'skip' }); setAsking(false) }} />
       )}

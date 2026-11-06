@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
-import { Bar, CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, CartesianGrid, ComposedChart, DefaultZIndexes, Line, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, usePlotArea, useXAxisScale, XAxis, YAxis, ZIndexLayer } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import type { BarLayout } from '../../../api/charts'
 import type { MarkedPeriod } from '../../../api/markedPeriods'
-import { periodBands, type Band } from '../periodBands'
+import { labelSpots, periodBands, type Band } from '../periodBands'
 import { formatMinutesAsHHMM, type ChartDataRow, type Trace } from '../chartLogic'
 import { assignAxes, AXES, isLeft, type Axis } from '../axes'
 import { barPlacement, seriesRows, formatTick, spansYears, type AverageLine } from '../insightsLogic'
@@ -21,12 +21,54 @@ interface InsightsChartProps {
   periods?: MarkedPeriod[]
 }
 
-/** Bands behind the series: render these before them. */
-export function PeriodAreas({ bands, yAxisId, xAxisId }: { bands: Band[]; yAxisId?: string | number; xAxisId?: string | number }) {
-  return bands.map((b, i) => (
-    <ReferenceArea key={i} xAxisId={xAxisId} yAxisId={yAxisId} x1={b.x1} x2={b.x2} fill="var(--ui-chip)" fillOpacity={0.6} ifOverflow="hidden"
-      label={{ value: b.name, position: 'insideTopLeft', fontSize: 10, fontFamily: TICK.fontFamily, fill: 'var(--ui-ink2)' }} />
-  ))
+/** IBM Plex Mono at 10px: 6px a character. */
+const CHAR_W = 6
+const LANE_H = 13
+
+/** Every band's full name at the top of the plot, laid out by labelSpots. */
+function BandLabels({ bands, xAxisId, at, focus }: { bands: Band[]; xAxisId?: string | number; at?: (cob: string) => number; focus?: string }) {
+  const scale = useXAxisScale(xAxisId)
+  const plot = usePlotArea()
+  if (!scale || !plot) return null
+  const items = bands.map((b) => {
+    const x1 = scale(at ? at(b.x1) : b.x1, { position: 'start' }) ?? plot.x
+    const x2 = scale(at ? at(b.x2) : b.x2, { position: 'end' }) ?? plot.x + plot.width
+    return { x1: Math.max(x1, plot.x), x2: Math.min(x2, plot.x + plot.width), w: b.name.length * CHAR_W }
+  })
+  const spots = labelSpots(items, plot.x, plot.x + plot.width)
+  return (
+    // Above bands and series; a halo in the card's colour keeps names readable over bars.
+    <ZIndexLayer zIndex={DefaultZIndexes.label}>
+      <g aria-hidden>
+        {bands.map((b, i) => (
+          <text key={b.id} x={spots[i].x} y={plot.y + 11 + spots[i].lane * LANE_H} textAnchor={spots[i].anchor}
+            fontSize={10} fontFamily={TICK.fontFamily} fill={b.id === focus ? 'var(--ui-accent)' : 'var(--ui-ink2)'}
+            stroke="var(--ui-surface)" strokeWidth={3} strokeLinejoin="round" paintOrder="stroke">{b.name}</text>
+        ))}
+      </g>
+    </ZIndexLayer>
+  )
+}
+
+/** Bands behind the series: render these before them. Edges keep back-to-back periods apart; `focus` (a period id) stands out. */
+export function PeriodAreas({ bands, yAxisId, xAxisId, at, focus }: {
+  bands: Band[]; yAxisId?: string | number; xAxisId?: string | number
+  /** For a numeric x axis: a day to its x value. */ at?: (cob: string) => number
+  focus?: string
+}) {
+  return (
+    <>
+      {bands.map((b) => {
+        const strong = b.id === focus
+        return (
+          <ReferenceArea key={b.id} xAxisId={xAxisId} yAxisId={yAxisId} x1={at ? at(b.x1) : b.x1} x2={at ? at(b.x2) : b.x2} ifOverflow="hidden"
+            fill={strong ? 'var(--ui-accent-pill)' : 'var(--ui-chip)'} fillOpacity={strong ? 1 : 0.6}
+            stroke={strong ? 'var(--ui-accent)' : 'var(--ui-faint2)'} strokeOpacity={strong ? 0.6 : 0.35} strokeDasharray="3 3" />
+        )
+      })}
+      <BandLabels bands={bands} xAxisId={xAxisId} at={at} focus={focus} />
+    </>
+  )
 }
 
 /** The legend swatch for a band (16m11). */

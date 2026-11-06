@@ -65,10 +65,11 @@ describe('Marked periods', () => {
     await screen.findByRole('list', { name: 'Your periods' })
     fireEvent.click(screen.getByRole('button', { name: /New period/ }))
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Flu' } })
-    fireEvent.change(screen.getByLabelText('Start'), { target: { value: '2026-02-03' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }))
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Calendar' })).getByRole('button', { name: /November 3$/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Save period' }))
     await waitFor(() => expect(apiClient.post).toHaveBeenCalledWith('/marked-periods',
-      { name: 'Flu', start_date: '2026-02-03', end_date: null, exclude_from_usual: true }))
+      { name: 'Flu', start_date: '2026-11-03', end_date: null, exclude_from_usual: true }))
     await waitFor(() => expect(vi.mocked(apiClient.get).mock.calls.length).toBeGreaterThan(1))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })

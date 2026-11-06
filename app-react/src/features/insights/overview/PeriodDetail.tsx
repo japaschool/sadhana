@@ -38,8 +38,8 @@ function usePeriodData(period: MarkedPeriod | undefined, todayCob: string) {
 interface Point { d: string; avg: number | null; range: [number, number] | null; median: number | null }
 
 /** The row's 7-day average with the usual range as it stood on each day. */
-function RowChart({ series, periods, todayCob, from, kind, label }: {
-  series: Series; periods: MarkedPeriod[]; todayCob: string; from: string; kind: RowKind; label: string
+function RowChart({ series, periods, focus, todayCob, from, kind, label }: {
+  series: Series; periods: MarkedPeriod[]; /** The period on this page, drawn stronger. */ focus: string; todayCob: string; from: string; kind: RowKind; label: string
 }) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
@@ -63,7 +63,7 @@ function RowChart({ series, periods, todayCob, from, kind, label }: {
             <CartesianGrid vertical={false} stroke="var(--ui-hairline)" />
             <XAxis dataKey="d" minTickGap={36} tickFormatter={(d: string) => formatTick(d, locale, spansYears(points[0].d, points[points.length - 1].d))} {...AXIS} />
             <YAxis width={44} domain={['auto', 'auto']} tickFormatter={(v: number) => (clock ? clockText(Math.round(v)) : String(Math.round(v * 10) / 10))} {...AXIS} />
-            <PeriodAreas bands={bands} />
+            <PeriodAreas bands={bands} focus={focus} />
             <Area dataKey={(r: Point) => r.range} stroke="none" fill="var(--ui-div-0)" fillOpacity={1} isAnimationActive={false} activeDot={false} />
             <Line dataKey="median" stroke="var(--ui-faint2)" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} isAnimationActive={false} />
             <Line dataKey="avg" stroke="var(--ui-ink)" strokeWidth={2} dot={false} isAnimationActive={false} />
@@ -167,7 +167,7 @@ export function PeriodDetail() {
                 </button>
               ))}
             </div>
-            <RowChart series={data.series.get(row.key) ?? new Map()} periods={periods} todayCob={todayCob} from={from}
+            <RowChart series={data.series.get(row.key) ?? new Map()} periods={periods} focus={period.id} todayCob={todayCob} from={from}
               kind={row.kind} label={`${rowName(row, data.practices, t)}, ${formatDay(from, locale, true)} – ${formatDay(todayCob, locale, true)}`} />
           </>
         )}

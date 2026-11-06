@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { useDeletePeriod, useSavePeriod, type MarkedPeriod, type MarkedPeriodForm } from '../../../api/markedPeriods'
 import { BottomSheet } from '../../../ui/primitives/BottomSheet'
 import { Toggle } from '../../../ui/primitives/Toggle'
-import { toDateStr } from '../../today/date'
+import { CalendarSheet } from '../../today/mobile/CalendarSheet'
+import { fromDateStr, toDateStr } from '../../today/date'
+import { formatDay } from '../insightsLogic'
 import { BTN, FIELD, HINT } from '../../yatras/settings/mobile/AdminPage'
 import { ConfirmSheet, SheetHeader } from '../../yatras/settings/mobile/fields'
 
@@ -16,7 +18,8 @@ export function PeriodSheet({ period, prefill, focusEnd, onClose, onSaved }: {
   /** After a successful save, before closing. */
   onSaved?: (form: MarkedPeriodForm) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language || 'en'
   const save = useSavePeriod()
   const remove = useDeletePeriod()
   const init = { ...prefill, ...period }
@@ -26,7 +29,8 @@ export function PeriodSheet({ period, prefill, focusEnd, onClose, onSaved }: {
   const [exclude, setExclude] = useState(init.exclude_from_usual ?? true)
   const [failed, setFailed] = useState(false)
   const [confirming, setConfirming] = useState(false)
-  const endRef = useRef<HTMLInputElement>(null)
+  const [picking, setPicking] = useState<'start' | 'end' | null>(null)
+  const endRef = useRef<HTMLButtonElement>(null)
 
   // After BottomSheet focuses itself: a parent's effect runs after its children's.
   useEffect(() => { if (focusEnd) endRef.current?.focus() }, [focusEnd])
@@ -68,15 +72,25 @@ export function PeriodSheet({ period, prefill, focusEnd, onClose, onSaved }: {
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="period-start" className={LABEL}>{t('insights.overview.start')}</label>
-          <input id="period-start" type="date" value={start} onChange={(e) => setStart(e.target.value)} className={FIELD} />
+          <button id="period-start" type="button" onClick={() => setPicking('start')} className={`${FIELD} text-left`}>
+            {formatDay(start, locale, true)}
+          </button>
         </div>
         <div className="flex flex-col gap-1.5">
           <div className="flex items-baseline justify-between gap-2">
             <label htmlFor="period-end" className={LABEL}>{t('insights.overview.end')}</label>
             {!end && <span className="text-[13px] font-semibold text-ui-ink2">{t('insights.overview.stillGoingValue')}</span>}
           </div>
-          <input id="period-end" ref={endRef} type="date" value={end} min={start} onChange={(e) => setEnd(e.target.value)}
-            aria-invalid={!!end && end < start} aria-describedby="period-end-hint" className={FIELD} />
+          <div className="flex gap-2">
+            <button id="period-end" ref={endRef} type="button" onClick={() => setPicking('end')}
+              aria-invalid={!!end && end < start} aria-describedby="period-end-hint" className={`${FIELD} min-w-0 flex-1 text-left`}>
+              {end ? formatDay(end, locale, true) : <span className="text-ui-faint2">—</span>}
+            </button>
+            {end && (
+              <button type="button" aria-label={t('templateForm.clear', { label: t('insights.overview.end') })} onClick={() => setEnd('')}
+                className="min-h-12 w-12 shrink-0 rounded-xl border border-ui-control bg-ui-surface text-center text-base text-ui-ink outline-none focus:border-ui-accent">×</button>
+            )}
+          </div>
           <p id="period-end-hint" className={HINT}>{t('insights.overview.endHint')}</p>
         </div>
         <div className="flex items-center gap-3">
@@ -87,6 +101,11 @@ export function PeriodSheet({ period, prefill, focusEnd, onClose, onSaved }: {
           <Toggle checked={exclude} onChange={setExclude} label={t('insights.overview.leaveOut')} describedBy="period-exclude-hint" />
         </div>
       </BottomSheet>
+      {picking && (
+        <CalendarSheet date={fromDateStr(picking === 'start' ? start : end || start)} onClose={() => setPicking(null)}
+          disabled={picking === 'end' ? (d) => toDateStr(d) < start : () => false}
+          onSelect={(d) => (picking === 'start' ? setStart : setEnd)(toDateStr(d))} />
+      )}
       {period && confirming && (
         <ConfirmSheet title={t('insights.periods.deleteTitle', { name: period.name })} text={t('insights.periods.deleteText')}
           confirm={t('common.delete')} busy={remove.isPending} onClose={() => setConfirming(false)}

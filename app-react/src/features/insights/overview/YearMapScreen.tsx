@@ -66,9 +66,13 @@ export function YearMap() {
         <div role="group" aria-label={t('insights.yearMap.grid')} className="flex flex-col gap-3">
           {bars.length > 0 && (
             <div className="grid gap-y-1" style={cols}>
-              {bars.map(({ p, from, to }) => (
-                <span key={p.id} title={p.name} style={{ gridColumn: `${from} / ${to}` }}
-                  className="truncate rounded-full bg-ui-chip px-2 text-[11px] leading-[18px] font-bold text-ui-ink2">{p.name}</span>
+              {/* A bar spans its weeks; its name sits above and runs past a short bar toward the middle. One row each, so names never collide. */}
+              {bars.map(({ p, from, to }, i) => (
+                <span key={p.id} title={p.name} style={{ gridColumn: `${from} / ${to}`, gridRow: i + 1 }}
+                  className={`flex min-w-0 flex-col gap-0.5 ${from > n / 2 ? 'items-end' : 'items-start'}`}>
+                  <span className="text-[11px] leading-[14px] font-bold whitespace-nowrap text-ui-ink2">{p.name}</span>
+                  <span aria-hidden className="h-1.5 w-full rounded-full bg-ui-faint2" />
+                </span>
               ))}
             </div>
           )}
@@ -125,5 +129,5 @@ export function YearMap() {
       </>
     )
   }
-  return <SettingsSubpage title={t('insights.yearMap.title')} back={{ to: '/charts', label: t('insights.overview.overview') }}>{body}</SettingsSubpage>
+  return <SettingsSubpage wide title={t('insights.yearMap.title')} back={{ to: '/charts', label: t('insights.overview.overview') }}>{body}</SettingsSubpage>
 }

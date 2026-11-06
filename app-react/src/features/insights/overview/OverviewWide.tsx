@@ -1,5 +1,5 @@
 import { BdaCards } from './BdaCard'
-import { LessRegular } from './LessRegular'
+import { LessRegular, StreaksCard } from './LessRegular'
 import { MeVsNormal } from './MeVsNormal'
 import { OpenPeriodCard } from './OpenPeriodCard'
 import { OverviewLinks } from './OverviewLinks'
@@ -23,6 +23,7 @@ export function OverviewWide() {
         {suggestionProps && <SuggestionCard {...suggestionProps} />}
         {openPeriodProps && <OpenPeriodCard {...openPeriodProps} />}
         <WelcomeBack logged={ov.logged} todayCob={ov.todayCob} />
+        {ov.regular && ov.prefs.streaks && <StreaksCard logged={ov.logged} todayCob={ov.todayCob} />}
         {ov.regular && <BdaCards rows={ov.rows} series={ov.series} periods={ov.periods} practices={ov.practices} todayCob={ov.todayCob} />}
         {ov.regular ? <OverviewLinks /> : (
           <LessRegular logged={ov.logged} todayCob={ov.todayCob} streaks={ov.prefs.streaks} rows={ov.rows} series={ov.series} practices={ov.practices} periods={ov.periods} />

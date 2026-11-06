@@ -419,7 +419,9 @@
       "timePractice": "A time-of-day practice",
       "skip": "Skip for now",
       "skipHint": "If you skip, Sleep stays off. Change it any time in Settings › Insights.",
-      "choose": "Choose…"
+      "choose": "Choose…",
+      "streaks": "Streaks",
+      "usualTick": "Your usual (middle value)"
     },
     "periods": {
       "title": "Marked periods",
@@ -431,7 +433,7 @@
       "counted": "Counted in usual range",
       "footer": "Leaving a period out keeps an unusual stretch from moving what counts as your normal.",
       "showStreaks": "Show streaks",
-      "streaksHint": "Adds plain run lengths, like “3 days in a row”, under Days practised. Off by default.",
+      "streaksHint": "Adds plain run lengths, like “3 days in a row”, to Overview. Off by default.",
       "suggest": "Suggest periods to mark",
       "suggestHint": "A quiet prompt when several practices move in the same week.",
       "sleep": "Bedtime and wake-up",

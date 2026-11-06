@@ -11,19 +11,21 @@ const FIRST_YEAR = 2015
 const PILL = 'rounded-[10px] border border-ui-control bg-ui-surface px-2.5 py-1.5 text-xl font-extrabold'
 const SQUARE = 'flex h-10 w-10 items-center justify-center rounded-xl border border-ui-control bg-ui-surface font-bold'
 
-interface CalendarSheetProps { date: Date; onSelect: (d: Date) => void; onClose: () => void }
+/** Which days can't be picked; future days by default. */
+type Disabled = (d: Date) => boolean
+interface CalendarSheetProps { date: Date; onSelect: (d: Date) => void; onClose: () => void; disabled?: Disabled }
 
-export function CalendarSheet({ date, onSelect, onClose }: CalendarSheetProps) {
+export function CalendarSheet({ date, onSelect, onClose, disabled }: CalendarSheetProps) {
   const { t } = useTranslation()
   return (
     <BottomSheet label={t('today.calendar')} onClose={onClose}>
-      <CalendarMonth date={date} onPick={(d) => { onSelect(d); onClose() }} />
+      <CalendarMonth date={date} disabled={disabled} onPick={(d) => { onSelect(d); onClose() }} />
     </BottomSheet>
   )
 }
 
 /** The month grid with its pickers and footer; the bottom sheet and the desktop log popover both wrap it. */
-export function CalendarMonth({ date, onPick: pick }: { date: Date; onPick: (d: Date) => void }) {
+export function CalendarMonth({ date, onPick: pick, disabled }: { date: Date; onPick: (d: Date) => void; disabled?: Disabled }) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const [view, setView] = useState({ y: date.getFullYear(), m: date.getMonth() })
@@ -35,6 +37,7 @@ export function CalendarMonth({ date, onPick: pick }: { date: Date; onPick: (d: 
   const incomplete = new Set(data)
 
   const today = new Date()
+  const off = disabled ?? ((d: Date) => isFuture(d, today))
   const monthName = (m: number) => capitalize(new Intl.DateTimeFormat(locale, { month: 'long' }).format(new Date(2000, m, 1)), locale)
   const narrow = new Intl.DateTimeFormat(locale, { weekday: 'narrow' })
   const weekdays = Array.from({ length: 7 }, (_, i) => narrow.format(new Date(2024, 0, 1 + i))) // 1 Jan 2024 is a Monday
@@ -71,7 +74,7 @@ export function CalendarMonth({ date, onPick: pick }: { date: Date; onPick: (d: 
           if (!d) return <span key={`blank-${i}`} />
           const ds = toDateStr(d)
           const selected = isSameDay(d, date)
-          const future = isFuture(d, today)
+          const future = off(d)
           const missing = incomplete.has(ds)
           return (
             <button key={ds} type="button" disabled={future} onClick={() => pick(d)} aria-label={full.format(d)}
@@ -93,7 +96,7 @@ export function CalendarMonth({ date, onPick: pick }: { date: Date; onPick: (d: 
             {t('today.legendMissing')}
           </span>
         )}
-        <button type="button" onClick={() => pick(new Date())} className="ml-auto text-sm font-bold text-ui-accent">{t('today.goToday')}</button>
+        <button type="button" disabled={off(today)} onClick={() => pick(new Date())} className="ml-auto text-sm font-bold text-ui-accent disabled:opacity-40">{t('today.goToday')}</button>
       </div>
 
       {picker && (

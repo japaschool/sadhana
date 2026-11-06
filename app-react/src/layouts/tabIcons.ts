@@ -19,6 +19,7 @@ export const TABS = [
   { to: '/settings', key: 'today.tabSettings', icon: TAB_ICONS.adjust, activeIcon: TAB_ICONS.adjustSolid },
 ] as const
 
-/** Yatra settings (/yatra/:id/…) and Help (/help…) belong to the Settings tab. */
+/** Yatra settings (/yatra/:id/…) and Help (/help…) belong to the Settings tab; Overview subpages (/insights/…) to Insights. */
 export const tabActive = (to: string, isActive: boolean, pathname: string) =>
   isActive || (to === '/settings' && (pathname.startsWith('/yatra/') || pathname.startsWith('/help')))
+  || (to === '/charts' && pathname.startsWith('/insights/'))

@@ -35,6 +35,22 @@ function RunFigure({ label, run, locale }: { label: string; run: Run | null; loc
   )
 }
 
+/** Current and longest run on their own, for regular users who turned streaks on. */
+export function StreaksCard({ logged, todayCob }: { logged: string[]; todayCob: string }) {
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language || 'en'
+  const run = runs(logged, todayCob)
+  return (
+    <section aria-labelledby="streaks" className={`${OV_CARD} gap-3`}>
+      <h2 id="streaks" className={TITLE}>{t('insights.overview.streaks')}</h2>
+      <div className="grid grid-cols-2 gap-3">
+        <RunFigure label={t('insights.overview.currentRun')} run={run.current} locale={locale} />
+        <RunFigure label={t('insights.overview.longestRun')} run={run.longest} locale={locale} />
+      </div>
+    </section>
+  )
+}
+
 /** For a new or less regular user: days practised this month, optional streaks, and plain averages (16m12, 16m14). */
 export function LessRegular({ logged, todayCob, streaks, rows, series, practices, periods }: {
   periods: MarkedPeriod[]; logged: string[]; todayCob: string; streaks: boolean; rows: InsightRow[]; series: Map<string, Series>; practices: UserPractice[]

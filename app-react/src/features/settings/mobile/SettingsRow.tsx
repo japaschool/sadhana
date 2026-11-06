@@ -26,8 +26,8 @@ export function SettingsRow({ label, leading, hint, value, to, href, onClick, co
         {hint && <span className="text-xs font-medium leading-[1.4] text-ui-muted">{hint}</span>}
       </span>
       {control ?? (
-        <span className="flex shrink-0 items-center gap-1.5">
-          {value && <span className="text-[15px] font-medium text-ui-muted">{value}</span>}
+        <span className="flex max-w-[50%] min-w-0 items-center gap-1.5">
+          {value && <span title={value} className="truncate text-[15px] font-medium text-ui-muted">{value}</span>}
           {/* ↗: opens outside the app, in the browser. */}
           <span aria-hidden className={href ? 'text-[15px] leading-none text-ui-faint2' : 'text-lg leading-none text-ui-faint2'}>{href ? '↗' : '›'}</span>
         </span>

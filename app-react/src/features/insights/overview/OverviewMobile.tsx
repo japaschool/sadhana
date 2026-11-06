@@ -1,5 +1,5 @@
 import { BdaCards } from './BdaCard'
-import { LessRegular } from './LessRegular'
+import { LessRegular, StreaksCard } from './LessRegular'
 import { MeVsNormal } from './MeVsNormal'
 import { OpenPeriodCard } from './OpenPeriodCard'
 import { OverviewLinks } from './OverviewLinks'
@@ -24,6 +24,7 @@ export function OverviewMobile() {
       {ov.regular ? (
         <>
           <MeVsNormal normal={ov.normal} practices={ov.practices} variant="stacked" />
+          {ov.prefs.streaks && <StreaksCard logged={ov.logged} todayCob={ov.todayCob} />}
           <BdaCards rows={ov.rows} series={ov.series} periods={ov.periods} practices={ov.practices} todayCob={ov.todayCob} />
           <OverviewLinks />
         </>
