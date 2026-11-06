@@ -112,7 +112,7 @@ One row per goal, in form order:
 
 ## Deleted or changed practices
 
-A goal whose practice was deleted, hidden or retyped shows its own message in that row, with Choose a practice and Remove goal, and the other rows are unaffected. So goal practices don't go in the report's `required` list, which would replace nothing but adds a report-wide card.
+A goal whose practice was deleted, hidden or retyped shows its own message in that row, and the other rows are unaffected. The message links to the report's form, where that goal's card shows the practice as missing, with Choose a practice and Remove goal. *(my call: the report view doesn't save, so both actions stay in the form)* So goal practices don't go in the report's `required` list, which would replace nothing but adds a report-wide card.
 
 Changing an amount or direction recalculates all 12 squares against the new goal. *(my call: there's no goal history)*
 
@@ -128,21 +128,19 @@ The format lives in `server/src/app/report/panels.rs`, as for the other template
 - `direction` is `AtLeast` or `AtMost`. `period` is `Day`, `Week` or `Month`. `counts` is `Total` or `Days`.
 - `version` stays 1, as the new variants are additive.
 - **Validation (422):** practices must be the user's, using the same check as other reports; at most 12 goals; at least 1 goal; amount within the direction's limits.
-- **Older clients:** builds sending `panels=true` can't draw the new panel kind, and today's client crashes on an unknown kind. `panels` becomes a minimum level: `false` is 0 and `true` is 1, so existing clients are unchanged, and a report is returned only if its level is at or below the requested one. Goals is level 2. Each later panel kind takes the next number, so Days between events becomes level 3. *(my call)*
-- **Shared:** exclude Goals reports from `get_shared_reports`.
+- **Older clients:** `panels` is already a minimum level (`false` is 0, `true` is 1, Days between events is 3), and a report is returned only if its level is at or below the requested one. Today's clients send `panels=3` and crash on an unknown panel kind, so Goals is **level 4**. Level 2 is never used: a client asking for 3 would get it.
+- **Shared:** already covered. `Report::get_all` leaves out every report at level 3 or above when `shared` is set.
 - No migration: the report lives in the existing `definition` column.
 
 ## Release order
 
-Stable and preview share one database, and `Report::get_all` fails on the first definition it can't read. A Goals report saved on preview would therefore break that user's whole `GET /reports` on stable, and their shared page, and a rollback would do the same.
-
-1. **First release, to stable:** `get_all` skips a panels definition it can't read and logs it, rather than failing the list. It needs its own test. *(my call)*
-2. **Second release:** Goals, through preview as usual.
+One release, through preview as usual. `Report::get_all` already skips a panels definition it can't read and logs it (added with Days between events), so a Goals report saved on preview doesn't break the same user's list on stable, and a rollback doesn't either.
 
 ## Client
 
-- `api/charts.ts`: mirror the new types, and send `panels=2` on `getReports`. `getSharedReports` keeps `panels=true`.
-- Fetch `Year` report data for a Goals report, whatever range is selected. It always covers 12 calendar months, including the running one.
+- `api/charts.ts`: mirror the new types, and send `panels=4` on `getReports`. `getSharedReports` keeps `panels=true`.
+- The reports query key moves to `['reports', 'panels', 4]`. Older builds share the persisted IndexedDB cache and would read a Goals report from the level 3 key.
+- Fetch `Year` report data ending today for a Goals report, whatever range, end date or desktop log day is selected, with no previous window. It always covers 12 calendar months, including the running one. The New report preview and the chart editor's preview fetch the same.
 - Pure logic goes in `features/insights/panels`, tested like `panelLogic.ts`: period boundaries, period values, blank detection, first square, square state and progress text.
 - Reuse `makeLookup`, which already maps practice ids to the names in report data and treats retyped practices as missing.
 - Add a `GoalsPanelView`, drawn from `PanelsReportView`. `missingRequired` stays as it is, because goals don't use `required`.
@@ -153,4 +151,4 @@ Stable and preview share one database, and `Report::get_all` fails on the first 
 
 - **Pure logic (Vitest):** every row of the square rule, including 95 of 100 capped, an amount of 0, running states and a limit already passed. Blank days on logged and unlogged days. A week crossing a month, months of different lengths, Sunday (Monday-based weeks) and the first square for short histories.
 - **Components:** form validation, Counts appearing only for Duration, tap to show and close, a missing-practice row beside healthy rows, and no range control.
-- **Server (`make test`):** create, update and delete, each validation, `GET /reports` returning Goals only at level 2 or above, with `true` and no parameter unchanged, an unreadable definition skipped without failing the list, and `/share/{id}/reports` never returning it, even with `panels=2`.
+- **Server (`make test`):** create, update and delete, each validation, `GET /reports` returning Goals only at level 4, not at 3, with `true` and no parameter unchanged, and `/share/{id}/reports` never returning it, even with `panels=4`.
