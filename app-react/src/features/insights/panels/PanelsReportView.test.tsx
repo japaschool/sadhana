@@ -16,7 +16,7 @@ import { InsightsTabletScreen } from '../tablet/InsightsTablet'
 import { SharedDesktop, SharedMobile, SharedTablet } from '../../shared/SharedReports'
 import { PanelsReportView } from './PanelsReportView'
 import { labelText } from './panelLogic'
-import { durationPanels, japaPanels, sleepPanels } from './templates'
+import { durationPanels, goalsPanels, japaPanels, sleepPanels } from './templates'
 
 // Recharts measures its container, which jsdom can't: give it a fixed size.
 vi.mock('recharts', async (importOriginal) => ({
@@ -662,5 +662,92 @@ describe('a Days between events report', () => {
   it('no events: says so', () => {
     gapsView(EV, () => null)
     expect(screen.getByText('No events in this range')).toBeInTheDocument()
+  })
+})
+
+describe('a Goals report', () => {
+  afterEach(async () => { cleanup(); await i18n.changeLanguage('en') })
+  const GTODAY = '2026-11-06' // a Friday: Friday to Sunday is 3 days left
+  const READ = P('44444444-dddd', 'Reading', 'Int')
+  const CIG = P('55555555-eeee', 'Cigarettes', 'Int')
+  const YOGA = P('66666666-ffff', 'Yoga', 'Duration')
+  const def = goalsPanels({ goals: [
+    { practice: READ.id, direction: 'AtLeast', amount: 100, period: 'Week', counts: 'Total' },
+    { practice: CIG.id, direction: 'AtMost', amount: 5, period: 'Day', counts: 'Total' },
+    { practice: YOGA.id, direction: 'AtLeast', amount: 3, period: 'Month', counts: 'Days' },
+    { practice: YOGA.id, direction: 'AtLeast', amount: 150, period: 'Week', counts: 'Total' },
+  ] })
+  // Reading: 95 in the week of 19 Oct, nothing logged the week of 26 Oct, 62 so far this week.
+  const entries = [
+    e('2026-10-20', READ.practice, { Int: 95 }),
+    e('2026-11-02', READ.practice, { Int: 20 }), e('2026-11-03', READ.practice, { Int: 22 }), e('2026-11-05', READ.practice, { Int: 20 }),
+    e('2026-11-06', CIG.practice, { Int: 3 }),
+    e('2026-11-04', YOGA.practice, { Duration: 75 }),
+  ]
+  function goalsView(practices: UserPractice[] = [READ, CIG, YOGA], formLink: string | null = '/settings/charts/r1') {
+    return render(
+      <MemoryRouter>
+        <PanelsReportView report={report(def)} definition={def} entries={entries} previous={[]}
+          practices={practices} todayCob={GTODAY} chartHeight={300} formLink={formLink} />
+      </MemoryRouter>,
+    )
+  }
+
+  it('a row per goal: the name, the goal in words and the running period', () => {
+    goalsView()
+    expect(screen.getByText('Reading')).toBeInTheDocument()
+    expect(screen.getByText('At least 100 a week')).toBeInTheDocument()
+    expect(screen.getByText('62 of 100 · 3 days left')).toBeInTheDocument()
+    expect(screen.getByText('No more than 5 a day')).toBeInTheDocument()
+    expect(screen.getByText('3 of 5 today')).toBeInTheDocument()
+    expect(screen.getByText('At least 3 days a month')).toBeInTheDocument()
+    expect(screen.getByText('1 of 3 · 25 days left')).toBeInTheDocument()
+    expect(screen.getByText('At least 2h 30m a week')).toBeInTheDocument()
+    expect(screen.getByText('1h 15m of 2h 30m · 3 days left')).toBeInTheDocument()
+    for (const label of ['Met', 'Part way / room left', 'At the limit', 'Over the limit', 'Nothing logged', 'Running']) {
+      expect(within(screen.getByRole('list', { name: 'Key' })).getByText(label)).toBeInTheDocument()
+    }
+  })
+
+  it('a square is named by its dates and value; a tap shows that and a second tap hides it', () => {
+    setViewportWidth(390)
+    goalsView()
+    const past = screen.getByRole('button', { name: /^Oct 19\s–\s25 · 95 of 100$/ })
+    expect(screen.getByRole('button', { name: /^Oct 26\s–\sNov 1 · Nothing logged$/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Nov 2\s–\s8 · 62 of 100$/ })).toBeInTheDocument()
+    expect(screen.queryByText('95 of 100')).toBeNull()
+    fireEvent.click(past)
+    expect(screen.getByText('95 of 100')).toBeInTheDocument()
+    fireEvent.click(past)
+    expect(screen.queryByText('95 of 100')).toBeNull()
+  })
+
+  it('on desktop, hover shows the same text, and leaving hides it', () => {
+    setViewportWidth(1440)
+    goalsView()
+    const past = screen.getByRole('button', { name: /95 of 100/ })
+    fireEvent.mouseEnter(past)
+    expect(screen.getByText('95 of 100')).toBeInTheDocument()
+    fireEvent.mouseLeave(past)
+    expect(screen.queryByText('95 of 100')).toBeNull()
+  })
+
+  it('a goal whose practice is gone says so in its row; the other rows still draw, with no report-wide card', () => {
+    goalsView([READ, CIG])
+    expect(screen.getAllByText(/This goal’s practice is gone/)).toHaveLength(2)
+    const links = screen.getAllByRole('link', { name: 'Choose a practice' })
+    expect(links).toHaveLength(2)
+    for (const a of links) expect(a).toHaveAttribute('href', '/settings/charts/r1')
+    expect(screen.getByText('62 of 100 · 3 days left')).toBeInTheDocument()
+    expect(screen.getByText('3 of 5 today')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /This report needs a practice/ })).toBeNull()
+  })
+
+  it('in ru, days left takes its plural form', async () => {
+    i18n.addResourceBundle('ru', 'translation', ru, true, true)
+    await i18n.changeLanguage('ru')
+    goalsView()
+    expect(screen.getByText('62 из 100 · осталось 3 дня')).toBeInTheDocument()
+    expect(screen.getByText('1 из 3 · осталось 25 дней')).toBeInTheDocument()
   })
 })

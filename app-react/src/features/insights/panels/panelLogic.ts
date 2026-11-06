@@ -208,7 +208,11 @@ export function visiblePanels(def: PanelsReport, l: Lookup): Panel[] {
       if (eventOk(panel.event, l) && rows.length) out.push({ ...panel, rows })
       continue
     }
-    if (panel.kind === 'Goals') continue // ponytail: drawn in Task 4
+    if (panel.kind === 'Goals') {
+      // A gone practice is shown in its own row, so the panel stays whole.
+      out.push(panel)
+      continue
+    }
     if (panel.kind === 'Month') {
       if (l.available(panel.practice, 'Bool')) out.push(panel)
       continue
