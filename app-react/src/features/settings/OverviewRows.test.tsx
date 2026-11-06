@@ -54,6 +54,11 @@ describe('Overview rows', () => {
     await waitFor(() => expect(screen.getByRole('switch', { name: 'Reading' })).toHaveAttribute('aria-checked', 'true'))
   })
 
+  it('back_goes_to_insights_settings', async () => {
+    renderPage()
+    expect((await screen.findAllByRole('link', { name: /Insights/ }))[0]).toHaveAttribute('href', '/settings/charts')
+  })
+
   it('inactive_practices_are_not_listed', async () => {
     renderPage()
     await screen.findByRole('heading', { name: 'Morning' })

@@ -30,7 +30,7 @@ export function OverviewRows() {
   }
 
   return (
-    <SettingsSubpage title={t('insights.rows.title')}>
+    <SettingsSubpage title={t('insights.rows.title')} back={{ to: '/settings/charts', label: t('insights.title') }}>
       <p className="px-1 text-sm leading-[1.45] text-ui-muted">{t('insights.rows.intro')}</p>
       {sections.map((rows) => (
         <section key={rows[0].group.id ?? ''} className="flex flex-col gap-2">

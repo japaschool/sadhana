@@ -28,7 +28,7 @@ export function MarkedPeriods() {
     : t('insights.periods.ongoing', { date: formatDay(p.start_date, locale) })
 
   return (
-    <SettingsSubpage title={t('insights.periods.title')}>
+    <SettingsSubpage title={t('insights.periods.title')} back={{ to: '/settings/charts', label: t('insights.title') }}>
       <p className="px-1 text-sm leading-[1.45] text-ui-muted">{t('insights.periods.intro')}</p>
       {openPeriodProps && <OpenPeriodCard {...openPeriodProps} />}
       <div className="flex items-center justify-between gap-3 px-1">

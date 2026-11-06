@@ -38,6 +38,11 @@ beforeEach(() => {
 afterEach(() => { vi.useRealTimers(); localStorage.clear() })
 
 describe('Marked periods', () => {
+  it('back_goes_to_insights_settings', async () => {
+    renderPage()
+    expect((await screen.findAllByRole('link', { name: /Insights/ }))[0]).toHaveAttribute('href', '/settings/charts')
+  })
+
   it('detail_link_only_for_periods_of_3_days_or_more', async () => {
     const single: MarkedPeriod = { id: 'p4', name: 'One day', start_date: '2026-10-20', end_date: '2026-10-20', exclude_from_usual: true }
     vi.mocked(apiClient.get).mockResolvedValue({ data: { periods: [retreat, single] } })
