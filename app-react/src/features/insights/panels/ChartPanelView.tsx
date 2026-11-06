@@ -1,4 +1,4 @@
-import { TOOLTIP_TRIGGER } from '../../../ui/tooltipTrigger'
+import { useChartTooltip } from '../../../ui/tooltipTrigger'
 import { useId, useState, type Key, type ReactNode } from 'react'
 import { Bar, CartesianGrid, Cell, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useTranslation } from 'react-i18next'
@@ -192,6 +192,7 @@ const LINE_LABEL = { fontSize: 10, fontFamily: TICK.fontFamily, fill: 'var(--ui-
 
 export function ChartPanelView({ panel, panels, days, prevDays = [], range, lookup, todayCob, height, first, compact, interactive = true, periods = [] }: ChartPanelProps) {
   const { t, i18n } = useTranslation()
+  const tip = useChartTooltip()
   const locale = i18n.language || 'en'
   const stripes = `stripes-${useId().replace(/[^a-zA-Z0-9]/g, '')}`
   const [hidden, setHidden] = useState<Set<number>>(new Set())
@@ -258,7 +259,7 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], range, look
         : panel.title && <h2 className="text-base leading-[1.3] font-extrabold text-ui-ink">{labelText(panel.title, t)}</h2>}
       <div className="relative">
         <ResponsiveContainer width="100%" height={height}>
-          <ComposedChart data={rows} barCategoryGap={thin ? '10%' : BAR_GAP} barGap={1} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
+          <ComposedChart {...tip.chart} data={rows} barCategoryGap={thin ? '10%' : BAR_GAP} barGap={1} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
             <defs>
               <pattern id={stripes} width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                 <rect width="4" height="4" fill="var(--ui-state-over)" />
@@ -305,7 +306,7 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], range, look
                 </Bar>
               )
             })}
-            {interactive && <Tooltip trigger={TOOLTIP_TRIGGER} isAnimationActive={false} cursor={{ fill: 'var(--ui-hairline)', stroke: 'var(--ui-hairline)' }}
+            {interactive && <Tooltip {...tip.tooltip} isAnimationActive={false} cursor={{ fill: 'var(--ui-hairline)', stroke: 'var(--ui-hairline)' }}
               content={({ active, label }) => {
                 if (!active || typeof label !== 'string') return null
                 const lines = tipLines(panels, label, lookup, t, units)

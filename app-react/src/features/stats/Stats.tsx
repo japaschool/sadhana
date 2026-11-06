@@ -1,4 +1,4 @@
-import { TOOLTIP_TRIGGER } from '../../ui/tooltipTrigger'
+import { useChartTooltip } from '../../ui/tooltipTrigger'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
@@ -21,6 +21,7 @@ const AXIS = { tick: TICK, tickLine: false, axisLine: false } as const
 /** One metric: last complete week, its change on the week before, and every week as bars (the current one faded). */
 function MetricCard({ weeks, metric, color }: { weeks: Week[]; metric: Metric; color: string }) {
   const { t, i18n } = useTranslation()
+  const tip = useChartTooltip()
   const date = (w: string, o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(i18n.language, o).format(fromDateStr(w))
   // The last row is the week in progress.
   const last = weeks.at(-2)?.[metric] ?? 0
@@ -41,11 +42,11 @@ function MetricCard({ weeks, metric, color }: { weeks: Week[]; metric: Metric; c
         </span>
       </div>
       <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={rows} margin={{ top: 4, right: 16, bottom: 0, left: 0 }} barCategoryGap={weeks.length > 30 ? 1 : '20%'}>
+        <BarChart {...tip.chart} data={rows} margin={{ top: 4, right: 16, bottom: 0, left: 0 }} barCategoryGap={weeks.length > 30 ? 1 : '20%'}>
           <CartesianGrid vertical={false} stroke="var(--ui-hairline)" />
           <XAxis dataKey="week" minTickGap={28} tickFormatter={(w: string) => date(w, weeks.length > 14 ? { month: 'short', year: '2-digit' } : { day: 'numeric', month: 'short' })} {...AXIS} />
           <YAxis width={36} allowDecimals={false} {...AXIS} />
-          <Tooltip trigger={TOOLTIP_TRIGGER} isAnimationActive={false} cursor={{ fill: 'var(--ui-hairline)' }}
+          <Tooltip {...tip.tooltip} isAnimationActive={false} cursor={{ fill: 'var(--ui-hairline)' }}
             content={({ active, label, payload }) => active && typeof label === 'string' && payload?.length ? (
               <div className="flex flex-col gap-1 rounded-xl border border-ui-hairline bg-ui-surface px-3 py-2 shadow-lg">
                 <span className="font-ui-mono text-[11px] font-semibold text-ui-muted">

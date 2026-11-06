@@ -1,4 +1,4 @@
-import { TOOLTIP_TRIGGER } from '../../../ui/tooltipTrigger'
+import { useChartTooltip } from '../../../ui/tooltipTrigger'
 import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -43,6 +43,7 @@ function RowChart({ series, periods, focus, todayCob, from, kind, label }: {
   series: Series; periods: MarkedPeriod[]; /** The period on this page, drawn stronger. */ focus: string; todayCob: string; from: string; kind: RowKind; label: string
 }) {
   const { t, i18n } = useTranslation()
+  const tip = useChartTooltip()
   const locale = i18n.language || 'en'
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const clock = kind === 'Clock'
@@ -60,7 +61,7 @@ function RowChart({ series, periods, focus, todayCob, from, kind, label }: {
     <div className="flex flex-col gap-2.5">
       <div role="img" aria-label={label} className="h-[220px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+          <ComposedChart {...tip.chart} data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid vertical={false} stroke="var(--ui-hairline)" />
             <XAxis dataKey="d" minTickGap={36} tickFormatter={(d: string) => formatTick(d, locale, spansYears(points[0].d, points[points.length - 1].d))} {...AXIS} />
             <YAxis width={44} domain={['auto', 'auto']} tickFormatter={(v: number) => (clock ? clockText(Math.round(v)) : String(Math.round(v * 10) / 10))} {...AXIS} />
@@ -68,7 +69,7 @@ function RowChart({ series, periods, focus, todayCob, from, kind, label }: {
             <Area dataKey={(r: Point) => r.range} stroke="none" fill="var(--ui-div-0)" fillOpacity={1} isAnimationActive={false} activeDot={false} />
             <Line dataKey="median" stroke="var(--ui-faint2)" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} isAnimationActive={false} />
             <Line dataKey="avg" stroke="var(--ui-ink)" strokeWidth={2} dot={false} isAnimationActive={false} />
-            <Tooltip trigger={TOOLTIP_TRIGGER} isAnimationActive={false} cursor={{ stroke: 'var(--ui-hairline)' }}
+            <Tooltip {...tip.tooltip} isAnimationActive={false} cursor={{ stroke: 'var(--ui-hairline)' }}
               content={({ active, label: d }) => {
                 const p = active ? points.find((x) => x.d === d) : undefined
                 if (!p || typeof d !== 'string') return null

@@ -1,4 +1,4 @@
-import { TOOLTIP_TRIGGER } from '../../../ui/tooltipTrigger'
+import { useChartTooltip } from '../../../ui/tooltipTrigger'
 import { Bar, CartesianGrid, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import type { MarkedPeriod } from '../../../api/markedPeriods'
@@ -91,6 +91,7 @@ export function OptionFilter({ options, only, onChange }: { options: string[]; o
 /** The gap figures, then a lollipop per event (16m16): a stem to the days since the one before, the option's marker on top, over calendar time. */
 export function GapsPanelView({ event, options, only, days, prevDays, lookup, height, cols, interactive = true, periods = [] }: GapsPanelProps) {
   const { t, i18n } = useTranslation()
+  const tip = useChartTooltip()
   const locale = i18n.language || 'en'
   const events = gapEvents(event, days, prevDays, lookup, only)
   const { typical, longest, latest } = gapFigures(events)
@@ -130,7 +131,7 @@ export function GapsPanelView({ event, options, only, days, prevDays, lookup, he
           <p className="py-6 text-center text-sm font-extrabold text-ui-ink">{t('reportPanels.noEvents')}</p>
         ) : (
           <ResponsiveContainer width="100%" height={height}>
-            <ComposedChart data={rows} margin={{ top: 10, right: 16, bottom: 0, left: 0 }}>
+            <ComposedChart {...tip.chart} data={rows} margin={{ top: 10, right: 16, bottom: 0, left: 0 }}>
               <CartesianGrid vertical={false} stroke="var(--ui-hairline)" />
               <XAxis dataKey="t" type="number" scale="time" domain={[xTicks[0], xTicks[xTicks.length - 1]]} ticks={xTicks} interval={0}
                 tickFormatter={(v: number) => formatTick(toDateStr(new Date(v)), locale, y)} padding={{ left: 6, right: 6 }} {...AXIS} />
@@ -140,7 +141,7 @@ export function GapsPanelView({ event, options, only, days, prevDays, lookup, he
               {keys.map((_, i) => (
                 <Bar key={i} dataKey={`o${i}`} stackId="gaps" barSize={8} shape={lollipop(i)} isAnimationActive={false} />
               ))}
-              {interactive && <Tooltip trigger={TOOLTIP_TRIGGER} isAnimationActive={false} cursor={{ stroke: 'var(--ui-hairline)' }}
+              {interactive && <Tooltip {...tip.tooltip} isAnimationActive={false} cursor={{ stroke: 'var(--ui-hairline)' }}
                 content={({ active, label }) => {
                   const x = active && typeof label === 'number' ? byCob.get(toDateStr(new Date(label))) : undefined
                   if (!x) return null

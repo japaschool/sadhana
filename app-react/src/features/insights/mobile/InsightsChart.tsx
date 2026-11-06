@@ -1,4 +1,4 @@
-import { TOOLTIP_TRIGGER } from '../../../ui/tooltipTrigger'
+import { useChartTooltip } from '../../../ui/tooltipTrigger'
 import type { ReactNode } from 'react'
 import { Bar, CartesianGrid, ComposedChart, DefaultZIndexes, Line, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, usePlotArea, useXAxisScale, XAxis, YAxis, ZIndexLayer } from 'recharts'
 import { useTranslation } from 'react-i18next'
@@ -134,6 +134,7 @@ function PointTip({ active, label, payload, traces, units, locale }: TipProps & 
 // resolve them with getComputedStyle on the .ui-root ancestor instead.
 export function InsightsChart({ rows, traces, barLayout, averages, height = 170, hidden = NONE, periods = NO_PERIODS }: InsightsChartProps) {
   const { t, i18n } = useTranslation()
+  const tip = useChartTooltip()
   const locale = i18n.language || 'en'
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const axes = assignAxes(traces)
@@ -165,7 +166,7 @@ export function InsightsChart({ rows, traces, barLayout, averages, height = 170,
     <>
     <ResponsiveContainer width="100%" height={height}>
       {/* Without a Y axis on a side, leave room for the end date ticks there. */}
-      <ComposedChart data={data} barGap={1} margin={{ top: 6, right: hasRight ? 0 : 16, bottom: 0, left: hasLeft ? 0 : 16 }}>
+      <ComposedChart {...tip.chart} data={data} barGap={1} margin={{ top: 6, right: hasRight ? 0 : 16, bottom: 0, left: hasLeft ? 0 : 16 }}>
         <CartesianGrid vertical={false} stroke="var(--ui-hairline)" />
         <XAxis dataKey="cob" ticks={xTicks} interval={0} tickFormatter={(c: string) => formatTick(c, locale, multiYear)} {...AXIS} />
         {overlayAxes.map((id) => <XAxis key={id} xAxisId={id} dataKey="cob" hide />)}
@@ -200,7 +201,7 @@ export function InsightsChart({ rows, traces, barLayout, averages, height = 170,
               stroke={tr.color} strokeWidth={2} dot={{ r: 2.5, fill: tr.color, strokeWidth: 0 }} connectNulls isAnimationActive={false} />
           )
         })}
-        <Tooltip trigger={TOOLTIP_TRIGGER} isAnimationActive={false} cursor={{ fill: 'var(--ui-hairline)', stroke: 'var(--ui-hairline)' }}
+        <Tooltip {...tip.tooltip} isAnimationActive={false} cursor={{ fill: 'var(--ui-hairline)', stroke: 'var(--ui-hairline)' }}
           content={(p) => <PointTip {...p} traces={traces} units={{ h: t('today.unitH'), min: t('today.unitMin') }} locale={locale} />} />
         {averages.map((a, i) => (
           <ReferenceLine key={i} yAxisId={a.axis} y={a.value} stroke={a.color} strokeDasharray="4 4" strokeWidth={1.5} ifOverflow="extendDomain" />
