@@ -639,6 +639,16 @@ describe('the Goals template', () => {
     expect(draft().goals[0].amount).toBe(90)
   })
 
+  it.each([['30:00', 1800, '30:00'], ['3000', 1800, '30:00'], ['10', 600, '10:00'], ['100:45', 6045, '100:45']])(
+    'a time amount has no 24h cap: %s saves %i minutes', (typed, minutes, shownAfter) => {
+      render(<GoalsForm start={goals({ practice: 'read', amount: null })} />)
+      const amount = screen.getByLabelText('Amount')
+      fireEvent.change(amount, { target: { value: typed } })
+      fireEvent.blur(amount)
+      expect(draft().goals[0].amount).toBe(minutes)
+      expect(amount).toHaveValue(shownAfter)
+    })
+
   it('moving from a Duration practice to another type counts the total again', () => {
     render(<GoalsForm start={goals({ practice: 'read', counts: 'Days', amount: 3 })} />)
     pick('Goal 1', /Japa rounds/)

@@ -113,6 +113,17 @@ function parseHours(text: string): number | null {
   const hm = parseTime(text)
   return hm ? hm.h * 60 + hm.m : null
 }
+/** Hours with no 24h cap, for an amount of time: `30:00`, `30` (30h) or `3000` (the last two digits minutes). */
+function parseLongHours(text: string): number | null {
+  if (!text) return null
+  const [h, m] = text.includes(':') ? text.split(':') : text.length > 2 ? [text.slice(0, -2), text.slice(-2)] : [text, '']
+  return (parseInt(h, 10) || 0) * 60 + Math.min(59, parseInt(m, 10) || 0)
+}
+/** Digits and one colon: up to 999 hours and two minute digits. */
+const typeLongHours = (next: string) => {
+  const [h, ...m] = next.replace(/[^\d:]/g, '').split(':')
+  return m.length ? `${h.slice(0, 3)}:${m.join('').slice(0, 2)}` : h.slice(0, 5)
+}
 const hoursText = (v: number | null) => (v === null ? '' : `${String(Math.floor(v / 60)).padStart(2, '0')}:${String(v % 60).padStart(2, '0')}`)
 
 const GROUP = 'px-1 text-[11px] font-bold uppercase tracking-[.1em] text-ui-muted'
@@ -124,15 +135,16 @@ const typeRounds = (next: string) => next.replace(/\D/g, '').slice(0, 4)
 
 /**
  * A number typed as text. Time limits (hh:mm) by default; with `duration`, minutes typed like Today's Duration row and
- * shown as 2h 20m; with `suffix` or `count`, a required whole number that has no clear button.
+ * shown as 2h 20m; with `suffix` or `count`, a required whole number that has no clear button; with `hours`, h:mm with
+ * no 23:59 cap, for an amount of time rather than a time of day.
  */
-export function LimitField({ id, label, placeholder, value, onChange, suffix, duration, count }: {
-  id: string; label: string; placeholder: string; value: number | null; onChange: (v: number | null) => void; suffix?: string; duration?: boolean; count?: boolean
+export function LimitField({ id, label, placeholder, value, onChange, suffix, duration, count, hours }: {
+  id: string; label: string; placeholder: string; value: number | null; onChange: (v: number | null) => void; suffix?: string; duration?: boolean; count?: boolean; hours?: boolean
 }) {
   const { t } = useTranslation()
   const required = !!suffix || !!count
   const digits = required || duration
-  const [parseLimit, limitText] = digits ? [parseRounds, roundsText] : [parseHours, hoursText]
+  const [parseLimit, limitText] = digits ? [parseRounds, roundsText] : hours ? [parseLongHours, hoursText] : [parseHours, hoursText]
   const [text, setText] = useState(limitText(value))
   const [focused, setFocused] = useState(false)
   const [seen, setSeen] = useState(value)
@@ -155,7 +167,7 @@ export function LimitField({ id, label, placeholder, value, onChange, suffix, du
           className={`${FIELD} ${required ? '' : 'pr-11'} font-ui-mono placeholder:font-[Manrope] placeholder:text-[15px] placeholder:font-semibold`}
           onFocus={() => setFocused(true)}
           onBlur={() => { setFocused(false); flush() }}
-          onChange={(e) => { setText(digits ? typeRounds(e.target.value) : typeTime(e.target.value, text)); schedule() }} />
+          onChange={(e) => { setText(digits ? typeRounds(e.target.value) : hours ? typeLongHours(e.target.value) : typeTime(e.target.value, text)); schedule() }} />
         {suffix && <span className="absolute inset-y-0 right-3.5 my-auto flex items-center text-sm font-semibold text-ui-muted">{suffix}</span>}
         {duration && focused && text && (
           <span className="pointer-events-none absolute inset-y-0 right-12 my-auto flex items-center text-sm font-semibold text-ui-muted">{units.min}</span>
@@ -352,7 +364,7 @@ function GoalCard({ goal, n, practices, onChange, onRemove, onPick, flagMissing 
         <div className="flex min-w-0 flex-[1_1_120px] flex-col">
           {mode ? (
             <LimitField key={mode} id={`goal-${n}-amount`} label={amountLabel} placeholder={mode === 'time' ? t('templateForm.hmm') : ''} value={goal.amount}
-              count={mode !== 'time'} suffix={mode === 'days' ? t('templateForm.unitDays') : undefined} onChange={(amount) => onChange({ ...goal, amount })} />
+              count={mode !== 'time'} hours={mode === 'time'} suffix={mode === 'days' ? t('templateForm.unitDays') : undefined} onChange={(amount) => onChange({ ...goal, amount })} />
           ) : (
             <div className="flex flex-col gap-1.5">
               <span className={label}>{amountLabel}</span>
