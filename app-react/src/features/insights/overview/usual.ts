@@ -101,9 +101,9 @@ export interface NormalRow {
   recentDays: number
 }
 
-/** The period to show hollow: the ongoing left-out one when the week is eaten, else the latest that ended within 30 days (an ongoing one never). */
-function hollowPeriod(periods: MarkedPeriod[], now: number | null, todayCob: string): MarkedPeriod | null {
-  if (now === null) {
+/** The card's one hollow period: the ongoing left-out one when it ate the week (under 3 kept days), else the latest that ended within 30 days (an ongoing one never). */
+function hollowPeriod(periods: MarkedPeriod[], week: string[], leftOut: Set<string>, todayCob: string): MarkedPeriod | null {
+  if (week.filter((d) => !leftOut.has(d)).length < 3) {
     const ongoing = periods.find((p) => p.exclude_from_usual && p.start_date <= todayCob && (p.end_date ?? todayCob) >= todayCob)
     if (ongoing) return ongoing
   }
@@ -119,11 +119,11 @@ export function meVsNormal(
 ): NormalRow[] {
   const leftOut = leftOutDays(periods, todayCob)
   const week = eachDay(shift(todayCob, -6), todayCob)
+  const period = hollowPeriod(periods, week, leftOut, todayCob)
   return rows.map((row) => {
     const s = series.get(row.key) ?? new Map<string, number>()
     const now = nowValue(s, todayCob, leftOut)
     const usual = usualAt(s, todayCob, leftOut)
-    const period = hollowPeriod(periods, now, todayCob)
     const value = period ? periodValue(s, period, todayCob) : null
     return {
       row, now, usual,

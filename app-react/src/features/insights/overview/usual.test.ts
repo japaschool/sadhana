@@ -169,4 +169,15 @@ describe('hollow dot', () => {
     const s = fill(0, 60, () => 5)
     expect(hollowFor([period(50, 40, false), period(12, 5, false)], s)?.period.end_date).toBe(day(-5))
   })
+
+  it('every_row_gets_the_same_period', () => {
+    const eaten = fill(0, 60, () => 5)
+    const logged = fill(0, 60, () => 5)
+    for (let i = 0; i <= 6; i++) eaten.delete(day(-i))
+    const ongoing = { ...period(3, null), id: 'ongoing' }
+    const ended = { ...period(12, 5, false), id: 'ended' }
+    const rows = [{ ...row(), key: 'a' }, { ...row(), key: 'b' }]
+    const out = meVsNormal(rows, new Map([['a', eaten], ['b', logged]]), [ongoing, ended], TODAY)
+    expect(out.map((n) => n.hollow?.period.id)).toEqual(['ended', 'ended'])
+  })
 })
