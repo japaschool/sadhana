@@ -621,7 +621,7 @@ describe('the Goals template', () => {
     pick('Goal 1', /Reading/)
     const counts = screen.getByRole('radiogroup', { name: 'Counts' })
     expect(within(counts).getByRole('radio', { name: 'Time' })).toBeChecked()
-    expect(screen.getByLabelText('Amount')).toHaveAttribute('placeholder', 'h:mm')
+    expect(screen.getByLabelText('Amount')).toHaveAttribute('placeholder', '')
     expect(screen.queryByText('days')).not.toBeInTheDocument()
     fireEvent.click(within(counts).getByRole('radio', { name: 'Days' }))
     expect(draft().goals[0].counts).toBe('Days')
@@ -633,16 +633,16 @@ describe('the Goals template', () => {
     expect(screen.queryByRole('button', { name: /^Clear/ })).not.toBeInTheDocument()
   })
 
-  it('a time amount is typed as h:mm and saves minutes', () => {
+  it('a time amount is typed as minutes and saves them', () => {
     render(<GoalsForm start={goals({ practice: 'read', amount: null })} />)
     const amount = screen.getByLabelText('Amount')
-    fireEvent.change(amount, { target: { value: '0130' } })
+    fireEvent.change(amount, { target: { value: '130' } })
     fireEvent.blur(amount)
-    expect(draft().goals[0].amount).toBe(90)
+    expect(draft().goals[0].amount).toBe(130)
   })
 
-  it.each([['30:00', 1800, '30:00'], ['3000', 1800, '30:00'], ['10', 600, '10:00'], ['100:45', 6045, '100:45']])(
-    'a time amount has no 24h cap: %s saves %i minutes', (typed, minutes, shownAfter) => {
+  it.each([['1800', 1800, '30h'], ['320', 320, '5h 20m'], ['45', 45, '45m']])(
+    'a time amount is a duration: %s saves %i minutes', (typed, minutes, shownAfter) => {
       render(<GoalsForm start={goals({ practice: 'read', amount: null })} />)
       const amount = screen.getByLabelText('Amount')
       fireEvent.change(amount, { target: { value: typed } })
