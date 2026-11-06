@@ -40,6 +40,13 @@ describe('gapEvents', () => {
     expect(gapEvents('dd', [day(1), day(2), day(3)], [], l).map((x) => [x.cob, x.option])).toEqual([[day(3), 'Fast']])
   })
 
+  it('filtered to options: each gap runs from the previous event of a kept option', () => {
+    const l = lk([e(day(1), 'Kind', { Text: 'Fast' }), e(day(4), 'Kind', { Text: 'Feast' }), e(day(9), 'Kind', { Text: 'Fast' })])
+    const d = Array.from({ length: 9 }, (_, i) => day(i + 1))
+    expect(gapEvents('dd', d, [], l, ['Fast']).map((x) => [x.cob, x.gap])).toEqual([[day(1), null], [day(9), 8]])
+    expect(gapEvents('dd', d, [], l, ['Fast', 'Feast']).map((x) => x.gap)).toEqual([null, 3, 5])
+  })
+
   it('lists current options first, then retired ones as seen', () => {
     const l = lk([e(day(1), 'Kind', { Text: 'Feast' }), e(day(2), 'Kind', { Text: 'Old' }), e(day(3), 'Kind', { Text: 'Fast' })])
     const events = gapEvents('dd', [day(1), day(2), day(3)], [], l)

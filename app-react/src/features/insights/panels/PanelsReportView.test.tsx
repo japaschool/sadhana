@@ -609,9 +609,23 @@ describe('a Days between events report', () => {
     expect(container.querySelectorAll('[data-mark="gap"]')).toHaveLength(14)
   })
 
-  it('a dropdown event with one option in the window still names it in the legend', () => {
+  it('a dropdown event with one option still names it, as a key rather than a filter', () => {
     gapsView(KIND, (i) => (i % 5 === 2 ? { Text: 'Fast' } : null))
-    expect(within(screen.getByRole('list', { name: 'Key' })).getByText('Fast')).toBeInTheDocument()
+    expect(within(screen.getByRole('group', { name: 'Option' })).getByText('Fast')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Fast' })).toBeNull()
+  })
+
+  it('filtering to an option recounts the figures and chart from that option alone', () => {
+    // Fast on days 2, 12, 22…; Feast on 4, 24, 44: 9 events with gaps of 2 to 8 days.
+    const { container } = gapsView(KIND, (i) => (i % 10 === 2 ? { Text: 'Fast' } : i % 20 === 4 ? { Text: 'Feast' } : null))
+    expect(screen.getByText('9 events')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Feast' }))
+    expect(screen.getByText('3 events')).toBeInTheDocument()
+    expect(container.querySelectorAll('[data-mark="gap"]')).toHaveLength(2)
+    expect(screen.getAllByText('20 days').length).toBeGreaterThan(0) // longest and latest: Feast to Feast
+    fireEvent.click(screen.getByRole('button', { name: 'Fast' })) // both picked is All
+    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('9 events')).toBeInTheDocument()
   })
 
   it('6 events: says how many more the table needs', () => {
@@ -629,29 +643,19 @@ describe('a Days between events report', () => {
     expect(screen.getByText('2 events')).toBeInTheDocument() // the Gaps chart still covers only the window
   })
 
-  it('a dropdown event: a switch picks the option the table shows', () => {
+  it('a dropdown event: the chips pick the option the table shows', () => {
     // Fast on 12 days, Feast on 3.
     gapsView(KIND, (i) => (i % 5 === 2 ? { Text: 'Fast' } : i % 20 === 4 ? { Text: 'Feast' } : null))
-    expect(screen.getByRole('radio', { name: 'All' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('table')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('radio', { name: 'Feast' }))
-    expect(screen.getByText('7 more events needed for this table')).toBeInTheDocument()
-  })
-
-  it('a dropdown event whose switch is too wide: a menu picks the option instead', () => {
-    const wide = vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockReturnValue(500)
-    gapsView(KIND, (i) => (i % 5 === 2 ? { Text: 'Fast' } : i % 20 === 4 ? { Text: 'Feast' } : null))
-    wide.mockRestore()
-    expect(screen.queryByRole('radio', { name: 'Feast' })).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Option: All' }))
-    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Feast' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Feast' }))
     expect(screen.getByText('7 more events needed for this table')).toBeInTheDocument()
   })
 
   it('All, the default, counts every option: 6 Fast and 4 Feast make the table', () => {
     gapsView(KIND, (i) => (i % 10 === 2 ? { Text: 'Fast' } : i % 15 === 4 ? { Text: 'Feast' } : null))
     expect(screen.getByRole('table')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('radio', { name: 'Fast' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Fast' }))
     expect(screen.getByText('4 more events needed for this table')).toBeInTheDocument()
   })
 

@@ -1,3 +1,4 @@
+import { Fragment, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { MarkedPeriod } from '../../../api/markedPeriods'
@@ -5,7 +6,8 @@ import type { PanelsReport, Report, ReportDataEntry } from '../../../api/charts'
 import type { UserPractice } from '../../../types/api'
 import { ChartPanelView } from './ChartPanelView'
 import { AroundPanelView } from './AroundPanelView'
-import { GapsPanelView } from './GapsPanelView'
+import { GapsPanelView, OptionFilter } from './GapsPanelView'
+import { eventOptions, gapEvents } from './gapLogic'
 import { MonthPanelView } from './MonthPanelView'
 import { StatsPanelView } from './StatsPanelView'
 import type { Range } from '../useInsights'
@@ -90,26 +92,44 @@ export function PanelsReportView({ report, definition, entries, previous, practi
   const firstChart = panels.findIndex((p) => p.kind === 'Chart')
   const labels = [...new Set(missing.map((r) => labelText(r.label, t)))].join(', ')
   const year = yearEntries ? { lookup: makeLookup(yearEntries, undefined, practices), days: windowDays(yearEntries) } : { lookup, days }
-  const legend =panels.some((p) => p.kind === 'Month') && <MonthLegend />
+  const legend = panels.some((p) => p.kind === 'Month') && <MonthLegend />
+  // One option filter per event, shared by its Gaps and Around panels: picked options, empty for All.
+  const [only, setOnly] = useState<Record<string, string[]>>({})
+  const optionsOf = (event: string) => eventOptions(event,
+    [...gapEvents(event, days, prevDays, lookup), ...gapEvents(event, year.days, [], year.lookup)], lookup)
 
   return (
     <div aria-label={report.name} role="group" className="flex flex-col gap-3">
       {missing.length > 0 && <MissingCard labels={labels} formLink={formLink} />}
       {!legendLast && legend}
-      {panels.map((p, i) => (p.kind === 'Gaps' ? (
-        <GapsPanelView key={i} event={p.event} days={days} prevDays={prevDays} lookup={lookup} todayCob={todayCob}
-          height={chartHeight} cols={cols} interactive={interactive} periods={periods} />
-      ) : p.kind === 'Around' ? (
-        <AroundPanelView key={i} event={p.event} rows={p.rows} days={year.days} prevDays={[]} lookup={year.lookup} todayCob={todayCob} />
-      ) : p.kind === 'Month' ? (
-        <MonthPanelView key={i} practice={p.practice} month={month} end={monthEnd(month, todayCob)} todayCob={todayCob} lookup={lookup} figures={monthFigures} />
-      ) : p.kind === 'Stats' ? (
-        <StatsPanelView key={i} stats={p.stats} days={days} lookup={lookup} todayCob={todayCob} cols={cols} />
-      ) : (
-        // The first chart leads; the rest are shorter (15m6, 15m12).
-        <ChartPanelView key={i} panel={p} panels={panels} days={days} prevDays={prevDays} range={range} lookup={lookup} todayCob={todayCob}
-          height={i === firstChart ? chartHeight : Math.round(chartHeight * 0.72)} first={i === firstChart} compact={cols === 2} interactive={interactive} periods={periods} />
-      )))}
+      {panels.map((p, i) => {
+        const event = p.kind === 'Gaps' || p.kind === 'Around' ? p.event : null
+        const options = event ? optionsOf(event) : []
+        const picked = event ? (only[event] ?? []).filter((o) => options.includes(o)) : []
+        // The chips go over the first of the event's panels.
+        const filter = event !== null && options.length > 0
+          && panels.findIndex((q) => (q.kind === 'Gaps' || q.kind === 'Around') && q.event === event) === i
+          && <OptionFilter options={options} only={picked} onChange={interactive ? (o) => setOnly({ ...only, [event]: o }) : undefined} />
+        return (
+          <Fragment key={i}>
+            {filter}
+            {p.kind === 'Gaps' ? (
+              <GapsPanelView event={p.event} options={options} only={picked} days={days} prevDays={prevDays} lookup={lookup} todayCob={todayCob}
+                height={chartHeight} cols={cols} interactive={interactive} periods={periods} />
+            ) : p.kind === 'Around' ? (
+              <AroundPanelView event={p.event} only={picked} rows={p.rows} days={year.days} prevDays={[]} lookup={year.lookup} todayCob={todayCob} />
+            ) : p.kind === 'Month' ? (
+              <MonthPanelView practice={p.practice} month={month} end={monthEnd(month, todayCob)} todayCob={todayCob} lookup={lookup} figures={monthFigures} />
+            ) : p.kind === 'Stats' ? (
+              <StatsPanelView stats={p.stats} days={days} lookup={lookup} todayCob={todayCob} cols={cols} />
+            ) : (
+              // The first chart leads; the rest are shorter (15m6, 15m12).
+              <ChartPanelView panel={p} panels={panels} days={days} prevDays={prevDays} range={range} lookup={lookup} todayCob={todayCob}
+                height={i === firstChart ? chartHeight : Math.round(chartHeight * 0.72)} first={i === firstChart} compact={cols === 2} interactive={interactive} periods={periods} />
+            )}
+          </Fragment>
+        )
+      })}
       {legendLast && legend}
     </div>
   )

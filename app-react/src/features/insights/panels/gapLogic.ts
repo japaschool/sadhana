@@ -19,14 +19,18 @@ function isEvent(event: string, cob: string, l: Lookup): boolean {
   return l.text(event, cob) !== null
 }
 
-/** Events within `days`, oldest first; `prevDays` is only looked back through for the first gap. */
-export function gapEvents(event: string, days: string[], prevDays: string[], l: Lookup): GapEvent[] {
+/**
+ * Events within `days`, oldest first; `prevDays` is only looked back through for the first gap.
+ * A non-empty `only` keeps those options' events, so each gap runs from the previous kept one.
+ */
+export function gapEvents(event: string, days: string[], prevDays: string[], l: Lookup, only: string[] = []): GapEvent[] {
   const inWindow = new Set(days)
   const dropdown = l.options(event).length > 0
   const out: GapEvent[] = []
   let prev: string | null = null
   for (const cob of [...new Set([...prevDays, ...days])].sort()) {
     if (!isEvent(event, cob, l)) continue
+    if (only.length && !only.includes(l.text(event, cob) ?? '')) continue
     if (inWindow.has(cob)) {
       out.push({ cob, option: dropdown ? l.text(event, cob) : null, prev, gap: prev === null ? null : daysBetween(prev, cob) })
     }
