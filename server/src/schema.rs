@@ -71,6 +71,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    insight_prefs (user_id) {
+        user_id -> Uuid,
+        prefs -> Jsonb,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     marked_periods (id) {
         id -> Uuid,
         user_id -> Uuid,
@@ -207,6 +216,7 @@ diesel::table! {
 diesel::joinable!(diary -> user_practices (practice_id));
 diesel::joinable!(diary -> users (user_id));
 diesel::joinable!(guide_runs -> users (user_id));
+diesel::joinable!(insight_prefs -> users (user_id));
 diesel::joinable!(marked_periods -> users (user_id));
 diesel::joinable!(practice_groups -> users (user_id));
 diesel::joinable!(report_traces -> reports (report_id));
@@ -225,6 +235,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     default_user_practices,
     diary,
     guide_runs,
+    insight_prefs,
     marked_periods,
     practice_groups,
     report_traces,

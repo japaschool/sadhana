@@ -135,6 +135,11 @@ fn api_scope() -> impl HttpServiceFactory {
                         .route("", web::get().to(app::user_practices::get_user_practices)),
                 )
                 .service(
+                    web::scope("/insight-prefs")
+                        .route("", web::get().to(app::insight_prefs::get_prefs))
+                        .route("", web::put().to(app::insight_prefs::save_prefs)),
+                )
+                .service(
                     web::scope("/practice-groups")
                         .route("", web::get().to(app::practice_groups::list_groups))
                         .route("", web::post().to(app::practice_groups::create_group)),
