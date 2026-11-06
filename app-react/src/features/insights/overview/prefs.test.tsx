@@ -99,6 +99,16 @@ describe('useInsightPrefs', () => {
     expect(showToast).toHaveBeenCalledWith(expect.objectContaining({ variant: 'error' }))
   })
 
+  it('set_prefs_before_ready_does_not_overwrite_server', async () => {
+    get.mockReturnValue(new Promise(() => {}))
+    const [{ result }] = setup()()
+    act(() => result.current[1]({ streaks: true }))
+    await act(async () => {})
+    expect(save).not.toHaveBeenCalled()
+    expect(result.current[0].streaks).toBe(false)
+    expect(showToast).toHaveBeenCalledWith(expect.objectContaining({ variant: 'error' }))
+  })
+
   it('shares_state_between_hooks', async () => {
     get.mockResolvedValue({})
     const [a, b] = setup()(2)

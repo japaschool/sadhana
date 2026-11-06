@@ -77,10 +77,9 @@ export function useInsightPrefs(): [InsightPrefs, (patch: Partial<InsightPrefs>)
   const prefs = useMemo(() => q.data ?? readLocal() ?? DEFAULT_PREFS, [q.data])
 
   const save = useMutation({
-    mutationFn: ({ next }: { next: InsightPrefs; prev: InsightPrefs | undefined }) => insightPrefsApi.save(next),
+    mutationFn: ({ next }: { next: InsightPrefs; prev: InsightPrefs }) => insightPrefsApi.save(next),
     onError: (_e, { prev }) => {
-      if (prev) qc.setQueryData(INSIGHT_PREFS_KEY, prev)
-      else void qc.resetQueries({ queryKey: INSIGHT_PREFS_KEY })
+      qc.setQueryData(INSIGHT_PREFS_KEY, prev)
       showToast({ message: t('common.error'), variant: 'error' })
     },
   })
@@ -88,7 +87,12 @@ export function useInsightPrefs(): [InsightPrefs, (patch: Partial<InsightPrefs>)
   // Optimistic, written before the mutation starts so every reader sees it in the same render.
   const setPrefs = (patch: Partial<InsightPrefs>) => {
     const prev = qc.getQueryData<InsightPrefs>(INSIGHT_PREFS_KEY)
-    const next = { ...(prev ?? readLocal() ?? DEFAULT_PREFS), ...patch }
+    // Not loaded yet: saving local or default prefs would overwrite what the server has (or race the migration).
+    if (!prev) {
+      showToast({ message: t('common.error'), variant: 'error' })
+      return
+    }
+    const next = { ...prev, ...patch }
     void qc.cancelQueries({ queryKey: INSIGHT_PREFS_KEY })
     qc.setQueryData(INSIGHT_PREFS_KEY, next)
     save.mutate({ next, prev })
