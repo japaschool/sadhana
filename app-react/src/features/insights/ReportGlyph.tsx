@@ -5,15 +5,22 @@ const BOX = 'inline-flex shrink-0'
 
 /**
  * Bars for a graph, cells for a table, staggered bars for sleep, bars under a target line for japa (shown as Daily count),
- * stacked bars for duration, a lit month for days, dots at different heights on a baseline for gaps. Colour comes from `className`.
+ * stacked bars for duration, a lit month for days, dots at different heights on a baseline for gaps, squares with the last one
+ * open for goals. Colour comes from `className`.
  */
-// ponytail: 'goals' has no glyph yet and falls through to the table cells.
 export function KindGlyph({ kind, className = 'text-ui-faint' }: { kind: 'graph' | 'table' | 'sleep' | 'japa' | 'duration' | 'days' | 'gaps' | 'goals'; className?: string }) {
   if (kind === 'gaps') {
     return (
       <span aria-hidden data-glyph={kind} className={`${BOX} ${className} relative h-3 w-3.5 items-end justify-between`}>
         {[4, 9, 6].map((b, i) => <span key={i} className="h-[3px] w-[3px] rounded-full bg-current" style={{ marginBottom: b }} />)}
         <span className="absolute inset-x-0 bottom-0 h-[1.4px] bg-current" />
+      </span>
+    )
+  }
+  if (kind === 'goals') {
+    return (
+      <span aria-hidden data-glyph={kind} className={`inline-grid shrink-0 ${className} h-[9px] w-3.5 grid-cols-3 gap-px`}>
+        {Array.from({ length: 6 }, (_, i) => <span key={i} className={`rounded-[1px] ${i === 5 ? 'border border-current' : 'bg-current'}`} />)}
       </span>
     )
   }

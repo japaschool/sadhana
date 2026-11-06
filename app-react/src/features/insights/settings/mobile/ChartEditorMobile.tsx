@@ -261,8 +261,10 @@ export function Preview({ ed, header = true, height = 170, picking, focus }: { e
 
 /** The server accepts a practice no longer yours only while the report still stores it, so a save that drops one can't be sent back. */
 function canUndo(base: PanelsReport, draft: TemplateDraft, practices: UserPractice[]) {
-  const was = Object.values(Object.values(base.template ?? {})[0] ?? {}).flat()
-  const kept = Object.values(draft).flat()
+  // A goal stores its practice inside it.
+  const ids = (o: object) => Object.values(o).flat().map((v: unknown) => (v && typeof v === 'object' && 'practice' in v ? v.practice : v))
+  const was = ids(Object.values(base.template ?? {})[0] ?? {})
+  const kept = ids(draft)
   return was.every((id) => typeof id !== 'string' || kept.includes(id) || practices.some((p) => p.id === id))
 }
 

@@ -51,9 +51,11 @@ function NewReport({ slug }: { slug: Slug }) {
   const practicesQ = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices })
   const todayCob = toDateStr(new Date())
   // The same query as Insights and the chart editor's preview: 30 days, or half a year for month grids (Last 90 days needs it).
-  // A year for gaps: the days-around table needs 10 events.
-  const duration = slug === 'days' ? 'HalfYear' : slug === 'gaps' ? 'Year' : 'Month'
-  const dataQ = useQuery({ queryKey: ['report-data', todayCob, duration], queryFn: () => chartsApi.getReportData(todayCob, duration), enabled: wide })
+  // A year for gaps: the days-around table needs 10 events. A year for goals too: 12 months, as Insights reads them.
+  const duration = slug === 'days' ? 'HalfYear' : slug === 'gaps' || slug === 'goals' ? 'Year' : 'Month'
+  // Only Goals has a preview on mobile, below the form.
+  const mobilePreview = slug === 'goals'
+  const dataQ = useQuery({ queryKey: ['report-data', todayCob, duration], queryFn: () => chartsApi.getReportData(todayCob, duration), enabled: wide || mobilePreview })
 
   const defaultName = t(`templateForm.${slug}Name`)
   const [name, setName] = useState(defaultName)
@@ -94,21 +96,6 @@ function NewReport({ slug }: { slug: Slug }) {
     </div>
   )
 
-  if (!wide) return (
-    <MobileShell tabBar={false}>
-      <header className="flex min-h-11 items-center px-2.5 pt-[calc(6px+env(safe-area-inset-top))]">
-        <Link to="/settings/charts" className="flex min-h-11 items-center px-2.5 text-[15px] font-bold text-ui-accent">{t('common.cancel')}</Link>
-      </header>
-      <div className="px-[22px] pt-0.5 pb-4">{heading('text-[28px]')}</div>
-      <div className="flex flex-col gap-4 px-4 pb-[180px]">{form}</div>
-      <div className="fixed inset-x-0 bottom-0 z-40 flex flex-col gap-2 border-t border-ui-control bg-ui-tabbar px-4 pt-3 pb-[calc(16px+env(safe-area-inset-bottom))]">
-        {draftProblem(draft) === 'required' && <p className="text-center text-xs leading-snug text-ui-muted">{t(`templateForm.needs${draft.kind}`)}</p>}
-        <button type="button" disabled={!ready || create.isPending} onClick={() => create.mutate()}
-          className={`${BTN} bg-ui-accent-fill text-ui-ink disabled:opacity-50`}>{createLabel}</button>
-      </div>
-    </MobileShell>
-  )
-
   const preview: ReactNode = !definition
     ? <p className={`${HINT} rounded-xl border border-dashed border-ui-control px-4 py-10 text-center`}>{t('templateForm.previewEmpty')}</p>
     : dataQ.isLoading || !practices ? <Busy />
@@ -117,6 +104,32 @@ function NewReport({ slug }: { slug: Slug }) {
       <PanelsReportView report={{ id: 'new', name: name.trim() || defaultName, definition }} definition={definition.Panels}
         entries={dataQ.data ?? []} previous={undefined} practices={practices} todayCob={todayCob} chartHeight={desktop ? 220 : 180} formLink={null} cols={2} legendLast />
     )
+  const previewSub = t(mobilePreview ? 'templateForm.previewSubGoals' : 'templateForm.previewSub')
+  const previewCard = (
+    <section className={`${CARD} flex flex-col gap-3 bg-ui-bg p-4`}>
+      <div className="flex flex-col gap-px">
+        <h2 className="text-[15px] font-extrabold text-ui-ink">{t('chartSettings.preview')}</h2>
+        <p className="text-xs text-ui-muted">{previewSub}</p>
+      </div>
+      {preview}
+    </section>
+  )
+
+  if (!wide) return (
+    <MobileShell tabBar={false}>
+      <header className="flex min-h-11 items-center px-2.5 pt-[calc(6px+env(safe-area-inset-top))]">
+        <Link to="/settings/charts" className="flex min-h-11 items-center px-2.5 text-[15px] font-bold text-ui-accent">{t('common.cancel')}</Link>
+      </header>
+      <div className="px-[22px] pt-0.5 pb-4">{heading('text-[28px]')}</div>
+      <div className="flex flex-col gap-4 px-4 pb-[180px]">{form}{mobilePreview && practices && previewCard}</div>
+      <div className="fixed inset-x-0 bottom-0 z-40 flex flex-col gap-2 border-t border-ui-control bg-ui-tabbar px-4 pt-3 pb-[calc(16px+env(safe-area-inset-bottom))]">
+        {draftProblem(draft) === 'required' && <p className="text-center text-xs leading-snug text-ui-muted">{t(`templateForm.needs${draft.kind}`)}</p>}
+        <button type="button" disabled={!ready || create.isPending} onClick={() => create.mutate()}
+          className={`${BTN} bg-ui-accent-fill text-ui-ink disabled:opacity-50`}>{createLabel}</button>
+      </div>
+    </MobileShell>
+  )
+
   const buttons = (
     <div className="flex items-center justify-end gap-2">
       <Link to="/settings/charts" className={`${SMALL_BTN} border border-ui-control bg-ui-surface text-ui-ink`}>{t('common.cancel')}</Link>
@@ -129,15 +142,7 @@ function NewReport({ slug }: { slug: Slug }) {
       <ChartsColumn id="" reports={reportsQ.data ?? []} newOn />
       <main className={`flex min-w-0 flex-col gap-4 px-8 pt-[calc(36px+env(safe-area-inset-top))] pb-10 ${desktop ? 'w-[440px] shrink-0 px-8' : 'flex-1'}`}>
         {heading('text-[28px]')}
-        {!desktop && (
-          <section className={`${CARD} flex flex-col gap-3 bg-ui-bg p-4`}>
-            <div className="flex flex-col gap-px">
-              <h2 className="text-[15px] font-extrabold text-ui-ink">{t('chartSettings.preview')}</h2>
-              <p className="text-xs text-ui-muted">{t('templateForm.previewSub')}</p>
-            </div>
-            {preview}
-          </section>
-        )}
+        {!desktop && previewCard}
         {form}
         {buttons}
       </main>
@@ -147,7 +152,7 @@ function NewReport({ slug }: { slug: Slug }) {
           <div className="flex min-w-0 flex-col gap-0.5">
             <span className="text-[11px] font-bold uppercase tracking-[.1em] text-ui-accent">{t('chartSettings.preview')}</span>
             <h2 className="text-xl font-extrabold break-words text-ui-ink">{name.trim() || defaultName}</h2>
-            <p className="text-xs text-ui-muted">{t('templateForm.previewSub')}</p>
+            <p className="text-xs text-ui-muted">{previewSub}</p>
           </div>
           {preview}
         </aside>

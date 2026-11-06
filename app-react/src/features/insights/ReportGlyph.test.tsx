@@ -10,4 +10,12 @@ describe('ReportGlyph', () => {
     expect(g).toHaveClass('inline-grid', 'shrink-0')
     expect(g).not.toHaveClass('inline-flex')
   })
+
+  it('a Goals report is the goals glyph', () => {
+    const definition = { Panels: { version: 1, template: { Goals: { goals: [] } }, required: [], panels: [] } }
+    const { container } = render(<ReportGlyph report={{ id: 'g', name: 'G', definition }} />)
+    expect(container.firstElementChild).toHaveAttribute('data-glyph', 'goals')
+    expect(container.querySelectorAll('[data-glyph] > span')).toHaveLength(6)
+    expect(container.querySelectorAll('[data-glyph] > span.border')).toHaveLength(1)
+  })
 })

@@ -2,12 +2,12 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import type { PanelsReport, Report } from '../../../../api/charts'
+import type { Goal, PanelsReport, Report } from '../../../../api/charts'
 import { useToastStore } from '../../../../hooks/useToast'
 import { setViewportWidth } from '../../../../test/viewport'
 import { ChartEditorMobileScreen } from './ChartEditorMobile'
 import { NewChartSheet } from './NewChartSheet'
-import { daysPanels, sleepPanels } from '../../panels/templates'
+import { daysPanels, goalsPanels, sleepPanels } from '../../panels/templates'
 
 vi.mock('../../../../api/charts', () => ({
   chartsApi: { getReports: vi.fn(), getReportData: vi.fn(), updateReport: vi.fn(), createReport: vi.fn(), deleteReport: vi.fn() },
@@ -217,7 +217,7 @@ describe('ChartEditorMobile', () => {
   })
 })
 
-const practice = (id: string, name: string, data_type: 'Time' | 'Duration') => ({ id, practice: name, data_type, is_active: true })
+const practice = (id: string, name: string, data_type: 'Time' | 'Duration' | 'Bool') => ({ id, practice: name, data_type, is_active: true })
 const BED = practice('bed', 'Bed time', 'Time')
 const WAKE = practice('wake', 'Wake-up time', 'Time')
 const OTHER = practice('late', 'Evening time', 'Time')
@@ -237,11 +237,12 @@ it('the new chart sheet offers Daily count and Time spent', () => {
   expect(screen.getByRole('link', { name: /Time spent/ })).toHaveAttribute('href', '/settings/charts/new/duration')
 })
 
-it('the new chart sheet lists Days I did it, then Days between events last', () => {
+it('the new chart sheet lists Days I did it, Days between events, then Goals last', () => {
   render(<QueryClientProvider client={new QueryClient()}><MemoryRouter><NewChartSheet onClose={() => {}} /></MemoryRouter></QueryClientProvider>)
   const links = screen.getAllByRole('link').map((a) => a.getAttribute('href'))
   expect(links).toEqual([
     '/settings/charts/new/sleep', '/settings/charts/new/japa', '/settings/charts/new/duration', '/settings/charts/new/days', '/settings/charts/new/gaps',
+    '/settings/charts/new/goals',
   ])
   expect(screen.getByRole('link', { name: /Days between events/ })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: /Days I did it/ })).toBeInTheDocument()
@@ -418,5 +419,53 @@ describe('ChartEditorMobile, a template report', () => {
     await waitFor(() => expect(charts.updateReport).toHaveBeenCalledTimes(1))
     fireEvent.click(await screen.findByRole('button', { name: 'Undo' }))
     await waitFor(() => expect(screen.getByLabelText('Maximum sleep')).toHaveValue('09:00'))
+  })
+})
+
+describe('ChartEditorMobile, a Goals report', () => {
+  const WALK = practice('walk', 'Walk', 'Bool')
+  const goal = (practice: string, amount: number): Goal => ({ practice, direction: 'AtLeast', amount, period: 'Week', counts: 'Total' })
+  const goalsReport = (goals: Goal[]): Report => ({ id: 'g1', name: 'Goals', definition: { Panels: goalsPanels({ goals }) } })
+  const saved = async () => {
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalled())
+    expect(await screen.findByText('Saved')).toBeInTheDocument()
+  }
+  beforeEach(() => {
+    vi.clearAllMocks()
+    useToastStore.setState({ toasts: [] })
+    setViewportWidth(390)
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([WALK, NAP])
+    vi.mocked(practicesApi.getGroups).mockResolvedValue([{ id: null, name: '', is_default: true }])
+    charts.getReports.mockResolvedValue([goalsReport([goal('walk', 3)])])
+    charts.getReportData.mockResolvedValue([])
+    charts.updateReport.mockResolvedValue()
+  })
+
+  it('edits through the goals form, reading a year and saving as you go', async () => {
+    renderAt('/settings/charts/g1')
+    const amount = await screen.findByLabelText('Amount')
+    expect(amount).toHaveValue('3')
+    await waitFor(() => expect(charts.getReportData.mock.calls.at(-1)![1]).toBe('Year'))
+    fireEvent.change(amount, { target: { value: '4' } })
+    fireEvent.blur(amount)
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledTimes(1))
+    expect(sentPanels()).toEqual(goalsPanels({ goals: [goal('walk', 4)] }))
+  })
+
+  it('removing the goal of a deleted practice saves, with no Undo: the server would refuse its id', async () => {
+    charts.getReports.mockResolvedValue([goalsReport([goal('gone', 2), goal('walk', 3)])])
+    renderAt('/settings/charts/g1')
+    expect(await screen.findByText(/deleted or hidden/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Remove goal: Goal 1' }))
+    await saved()
+    expect(sentPanels()).toEqual(goalsPanels({ goals: [goal('walk', 3)] }))
+    expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument()
+  })
+
+  it('a change that keeps every goal’s practice keeps Undo', async () => {
+    renderAt('/settings/charts/g1')
+    fireEvent.click(await screen.findByRole('radio', { name: 'Month' }))
+    await saved()
+    expect(await screen.findByRole('button', { name: 'Undo' })).toBeInTheDocument()
   })
 })

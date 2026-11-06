@@ -14,7 +14,7 @@ import { writeStored } from '../../useInsights'
 
 type Kind = 'Graph' | 'Grid'
 
-const TEMPLATES = ['sleep', 'japa', 'duration', 'days', 'gaps'] as const
+const TEMPLATES = ['sleep', 'japa', 'duration', 'days', 'gaps', 'goals'] as const
 
 const GROUP = 'px-1 text-[11px] font-bold uppercase tracking-[.1em] text-ui-muted'
 

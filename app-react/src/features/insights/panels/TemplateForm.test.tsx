@@ -8,8 +8,8 @@ import type { UserPractice } from '../../../types/api'
 import { setViewportWidth } from '../../../test/viewport'
 import { REPORTS_KEY } from '../useReports'
 import { NewTemplateScreen } from './NewTemplateScreen'
-import { draftOf, draftProblem, draftToDefinition, TemplateForm, type TemplateDraft } from './TemplateForm'
-import { daysPanels, durationPanels, gapsPanels, japaPanels, sleepPanels } from './templates'
+import { draftOf, draftProblem, draftToDefinition, NEW_DRAFTS, TemplateForm, type GoalDraft, type TemplateDraft } from './TemplateForm'
+import { daysPanels, durationPanels, gapsPanels, goalsPanels, japaPanels, sleepPanels } from './templates'
 
 vi.mock('../../../api/charts', () => ({
   chartsApi: { getReports: vi.fn(), getReportData: vi.fn(), updateReport: vi.fn(), createReport: vi.fn(), deleteReport: vi.fn() },
@@ -553,5 +553,174 @@ describe('the Days between events template', () => {
     renderNew('/settings/charts/new/gaps')
     expect(await screen.findByText('Choose an event practice to create the report.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Create report' })).toBeDisabled()
+  })
+})
+
+describe('the Goals template', () => {
+  const ALL = [...PRACTICES, p('walk', 'Walk', 'Bool'), p('read', 'Reading', 'Duration')]
+  const GOAL: GoalDraft = { practice: 'japa', direction: 'AtLeast', amount: 16, period: 'Week', counts: 'Total' }
+  const goals = (...g: Partial<GoalDraft>[]): TemplateDraft => ({ kind: 'Goals', goals: g.map((x) => ({ ...GOAL, ...x })) })
+  function GoalsForm({ start, flagMissing }: { start: TemplateDraft; flagMissing?: boolean }) {
+    const [v, setV] = useState(start)
+    return (
+      <MemoryRouter>
+        <TemplateForm value={v} onChange={setV} practices={ALL} flagMissing={flagMissing} />
+        <output data-testid="draft">{JSON.stringify(v)}</output>
+      </MemoryRouter>
+    )
+  }
+  const draft = () => JSON.parse(screen.getByTestId('draft').textContent!) as Extract<TemplateDraft, { kind: 'Goals' }>
+  const pick = (card: string, name: RegExp) => {
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${card} practice:`) }))
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Practice' })).getByRole('radio', { name }))
+  }
+
+  it('a new report starts with one goal: at least, a week, no practice or amount', () => {
+    expect(NEW_DRAFTS.goals()).toEqual({ kind: 'Goals', goals: [{ practice: null, direction: 'AtLeast', amount: null, period: 'Week', counts: 'Total' }] })
+  })
+
+  it('needs a practice and an amount on every goal, at least 1 for At least, and no more than 12 goals', () => {
+    expect(draftProblem(goals({}))).toBeNull()
+    expect(draftProblem({ kind: 'Goals', goals: [] })).toBe('required')
+    expect(draftProblem(goals({}, { practice: null }))).toBe('required')
+    expect(draftProblem(goals({ amount: null }))).toBe('required')
+    expect(draftProblem(goals({ amount: 0 }))).toBe('required')
+    expect(draftProblem(goals({ direction: 'AtMost', amount: 0 }))).toBeNull()
+    expect(draftProblem(goals(...Array.from({ length: 13 }, () => ({}))))).toBe('tooMany')
+    expect(draftProblem(goals(...Array.from({ length: 12 }, () => ({}))))).toBeNull()
+  })
+
+  it('builds the report', () => {
+    const g = { practice: 'read', direction: 'AtMost', amount: 2, period: 'Month', counts: 'Days' } as const
+    expect(draftToDefinition({ kind: 'Goals', goals: [g] })).toEqual({ Panels: goalsPanels({ goals: [g] }) })
+    expect(draftToDefinition(goals({ amount: null }))).toBeNull()
+  })
+
+  it('reads back, a deleted practice as missing and a practice retyped from Duration counting its total', () => {
+    const def = goalsPanels({ goals: [
+      { practice: 'gone', direction: 'AtLeast', amount: 3, period: 'Month', counts: 'Total' },
+      { practice: 'read', direction: 'AtLeast', amount: 4, period: 'Week', counts: 'Days' },
+      { practice: 'walk', direction: 'AtMost', amount: 2, period: 'Day', counts: 'Total' },
+    ] })
+    expect(draftOf(def, ALL)).toEqual({ kind: 'Goals', goals: [
+      { practice: null, direction: 'AtLeast', amount: 3, period: 'Month', counts: 'Total' },
+      { practice: 'read', direction: 'AtLeast', amount: 4, period: 'Week', counts: 'Days' },
+      { practice: 'walk', direction: 'AtMost', amount: 2, period: 'Day', counts: 'Total' },
+    ] })
+    const retyped = ALL.map((x) => (x.id === 'read' ? { ...x, data_type: 'Int' as const } : x))
+    expect(draftOf(def, retyped)).toMatchObject({ goals: [{ practice: null }, { practice: 'read', counts: 'Total' }, { practice: 'walk' }] })
+  })
+
+  it('offers Counts only for a Duration practice, and Days counts days', () => {
+    render(<GoalsForm start={NEW_DRAFTS.goals()} />)
+    expect(screen.queryByRole('radiogroup', { name: 'Counts' })).not.toBeInTheDocument()
+    pick('Goal 1', /Walk/)
+    expect(screen.queryByRole('radiogroup', { name: 'Counts' })).not.toBeInTheDocument()
+    pick('Goal 1', /Reading/)
+    const counts = screen.getByRole('radiogroup', { name: 'Counts' })
+    expect(within(counts).getByRole('radio', { name: 'Time' })).toBeChecked()
+    expect(screen.getByLabelText('Amount')).toHaveAttribute('placeholder', 'h:mm')
+    expect(screen.queryByText('days')).not.toBeInTheDocument()
+    fireEvent.click(within(counts).getByRole('radio', { name: 'Days' }))
+    expect(draft().goals[0].counts).toBe('Days')
+    expect(screen.getByText('days')).toBeInTheDocument()
+    const amount = screen.getByLabelText('Amount')
+    fireEvent.change(amount, { target: { value: '3x' } })
+    fireEvent.blur(amount)
+    expect(draft().goals[0].amount).toBe(3)
+    expect(screen.queryByRole('button', { name: /^Clear/ })).not.toBeInTheDocument()
+  })
+
+  it('a time amount is typed as h:mm and saves minutes', () => {
+    render(<GoalsForm start={goals({ practice: 'read', amount: null })} />)
+    const amount = screen.getByLabelText('Amount')
+    fireEvent.change(amount, { target: { value: '0130' } })
+    fireEvent.blur(amount)
+    expect(draft().goals[0].amount).toBe(90)
+  })
+
+  it('moving from a Duration practice to another type counts the total again', () => {
+    render(<GoalsForm start={goals({ practice: 'read', counts: 'Days', amount: 3 })} />)
+    pick('Goal 1', /Japa rounds/)
+    expect(draft().goals[0]).toMatchObject({ practice: 'japa', counts: 'Total' })
+    expect(screen.queryByRole('radiogroup', { name: 'Counts' })).not.toBeInTheDocument()
+  })
+
+  it('direction and period are saved', () => {
+    render(<GoalsForm start={goals({})} />)
+    fireEvent.click(screen.getByRole('radio', { name: 'No more than' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Month' }))
+    expect(draft().goals[0]).toMatchObject({ direction: 'AtMost', period: 'Month' })
+  })
+
+  it('Add goal adds a card, Remove goal removes one, and Add goal is gone at 12', () => {
+    render(<GoalsForm start={goals({ practice: 'walk' }, { practice: 'japa' })} />)
+    fireEvent.click(screen.getByRole('button', { name: /Add goal/ }))
+    expect(draft().goals).toHaveLength(3)
+    expect(draft().goals[2]).toEqual((NEW_DRAFTS.goals() as Extract<TemplateDraft, { kind: 'Goals' }>).goals[0])
+    fireEvent.click(screen.getByRole('button', { name: 'Remove goal: Goal 1' }))
+    expect(draft().goals.map((g) => g.practice)).toEqual(['japa', null])
+    cleanupForm()
+    render(<GoalsForm start={goals(...Array.from({ length: 11 }, () => ({})))} />)
+    fireEvent.click(screen.getByRole('button', { name: /Add goal/ }))
+    expect(draft().goals).toHaveLength(12)
+    expect(screen.queryByRole('button', { name: /Add goal/ })).not.toBeInTheDocument()
+  })
+
+  it('a lone goal has no Remove', () => {
+    render(<GoalsForm start={goals({})} />)
+    expect(screen.queryByRole('button', { name: /^Remove goal/ })).not.toBeInTheDocument()
+  })
+
+  it('says once that the report stays off the shared page', () => {
+    render(<GoalsForm start={goals({}, {})} />)
+    expect(screen.getAllByText('Goals reports are never shown on your shared page.')).toHaveLength(1)
+  })
+
+  it('says At least needs 1 or more', () => {
+    render(<GoalsForm start={goals({ amount: 0 })} />)
+    expect(screen.getByRole('alert')).toHaveTextContent('1 or more')
+  })
+
+  it('flags a goal whose practice is gone on a saved report, in its own card', () => {
+    render(<GoalsForm start={goals({ practice: null }, {})} flagMissing />)
+    expect(screen.getAllByText(/deleted or hidden/)).toHaveLength(1)
+    expect(screen.getByRole('button', { name: 'Remove goal: Goal 1' })).toBeInTheDocument()
+  })
+
+  it.each([[390], [1200]])('%i: the new report reads a year, and shows a preview', async (width) => {
+    setViewportWidth(width)
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue(ALL)
+    charts.getReports.mockResolvedValue([])
+    charts.getReportData.mockReset().mockResolvedValue([])
+    renderNew('/settings/charts/new/goals')
+    expect(await screen.findByRole('heading', { name: 'New goals report' })).toBeInTheDocument()
+    expect(await screen.findByLabelText('Name')).toHaveValue('Goals')
+    await waitFor(() => expect(charts.getReportData).toHaveBeenCalled())
+    expect(charts.getReportData.mock.calls[0][1]).toBe('Year')
+    if (width === 390) expect(screen.getByText('Choose a practice and an amount for each goal to create the report.')).toBeInTheDocument()
+    expect(screen.getAllByText('Preview').length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: 'Create report' })).toBeDisabled()
+  })
+
+  it('on mobile, the preview follows the form, and Create posts the goals', async () => {
+    setViewportWidth(390)
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue(ALL)
+    charts.getReports.mockResolvedValue([])
+    charts.getReportData.mockReset().mockResolvedValue([])
+    charts.createReport.mockReset().mockResolvedValue('g1')
+    renderNew('/settings/charts/new/goals')
+    fireEvent.click(await screen.findByRole('button', { name: /^Goal 1 practice:/ }))
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Practice' })).getByRole('radio', { name: /Walk/ }))
+    const amount = screen.getByLabelText('Amount')
+    fireEvent.change(amount, { target: { value: '3' } })
+    fireEvent.blur(amount)
+    const preview = await screen.findByRole('heading', { name: 'Preview' })
+    expect(amount.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Create report' }))
+    expect(await screen.findByText('Insights page')).toBeInTheDocument()
+    expect(charts.createReport).toHaveBeenCalledWith('Goals', {
+      Panels: goalsPanels({ goals: [{ practice: 'walk', direction: 'AtLeast', amount: 3, period: 'Week', counts: 'Total' }] }),
+    })
   })
 })

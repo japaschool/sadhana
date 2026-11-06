@@ -2,8 +2,9 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import type { PanelsReport, SleepRows } from '../../../api/charts'
-import type { UserPractice } from '../../../types/api'
+import type { Counts, Direction, GoalPeriod, PanelsReport, SleepRows } from '../../../api/charts'
+import type { PracticeDataType, UserPractice } from '../../../types/api'
+import { SegmentedControl } from '../../../ui/primitives/SegmentedControl'
 import { CARD, FIELD, HINT } from '../../yatras/settings/mobile/AdminPage'
 import { TypeIcon, typeLabelKey } from '../../yatras/settings/mobile/TypeChip'
 import { useDebouncedCommit } from '../../yatras/settings/useDebouncedCommit'
@@ -12,9 +13,12 @@ import { formatDuration, typeTime } from '../../today/values'
 import { useReports } from '../useReports'
 import { SlotPickerSheet } from './SlotPickerSheet'
 import {
-  DAYS_SLOT, daysPanels, DURATION_SLOT, durationPanels, fits, GAPS_EVENT_SLOT, GAPS_ROWS_SLOT, gapsPanels, JAPA_SLOTS, japaPanels, MAX_DAYS, MAX_PRACTICES, MAX_ROWS,
+  DAYS_SLOT, daysPanels, DURATION_SLOT, durationPanels, fits, GAPS_EVENT_SLOT, GAPS_ROWS_SLOT, gapsPanels, GOAL_SLOT, goalsPanels, JAPA_SLOTS, japaPanels, MAX_DAYS,
+  MAX_GOALS, MAX_PRACTICES, MAX_ROWS,
   SLEEP_DEFAULTS, SLEEP_SLOTS, sleepPanels, sleepRowsFor, suggestFor, type Slot,
 } from './templates'
+
+export type GoalDraft = { practice: string | null; direction: Direction; amount: number | null; period: GoalPeriod; counts: Counts }
 
 export type TemplateDraft =
   | { kind: 'Sleep'; bedtime: string | null; wake: string | null; nap: string | null; min: number | null; max: number | null }
@@ -22,6 +26,9 @@ export type TemplateDraft =
   | { kind: 'Duration'; practices: string[]; goal: number | null }
   | { kind: 'Days'; practices: string[] }
   | { kind: 'Gaps'; event: string | null; rows: string[]; sleep: SleepRows | null }
+  | { kind: 'Goals'; goals: GoalDraft[] }
+
+const newGoal = (): GoalDraft => ({ practice: null, direction: 'AtLeast', amount: null, period: 'Week', counts: 'Total' })
 
 export const NEW_DRAFTS = {
   sleep: (): TemplateDraft => ({ kind: 'Sleep', bedtime: null, wake: null, nap: null, ...SLEEP_DEFAULTS }),
@@ -29,6 +36,7 @@ export const NEW_DRAFTS = {
   duration: (): TemplateDraft => ({ kind: 'Duration', practices: [], goal: null }),
   days: (): TemplateDraft => ({ kind: 'Days', practices: [] }),
   gaps: (): TemplateDraft => ({ kind: 'Gaps', event: null, rows: [], sleep: null }),
+  goals: (): TemplateDraft => ({ kind: 'Goals', goals: [newGoal()] }),
 }
 
 const slotsOf = (d: TemplateDraft) => (d.kind === 'Sleep' ? SLEEP_SLOTS : d.kind === 'Japa' ? JAPA_SLOTS : d.kind === 'Gaps' ? [GAPS_EVENT_SLOT] : [])
@@ -38,6 +46,11 @@ const slotValue = (d: TemplateDraft, slot: Slot) => (d as unknown as Record<stri
 export function draftProblem(d: TemplateDraft): 'required' | 'minMax' | 'tooMany' | null {
   if (d.kind === 'Duration' || d.kind === 'Days') return d.practices.length === 0 ? 'required' : d.practices.length > MAX[d.kind] ? 'tooMany' : null
   if (d.kind === 'Japa') return !d.total || d.target === null ? 'required' : null
+  if (d.kind === 'Goals') {
+    if (d.goals.length > MAX_GOALS) return 'tooMany'
+    const unset = (g: GoalDraft) => !g.practice || g.amount === null || (g.direction === 'AtLeast' && g.amount < 1)
+    return d.goals.length === 0 || d.goals.some(unset) ? 'required' : null
+  }
   if (d.kind === 'Gaps') return !d.event ? 'required' : d.rows.length + (d.sleep ? 1 : 0) > MAX_ROWS ? 'tooMany' : null
   if (!d.bedtime || !d.wake) return 'required'
   return d.min !== null && d.max !== null && d.min > d.max ? 'minMax' : null
@@ -47,6 +60,7 @@ export function draftToDefinition(d: TemplateDraft): { Panels: PanelsReport } | 
   if (draftProblem(d)) return null
   if (d.kind === 'Duration') return { Panels: durationPanels({ practices: d.practices, goal: d.goal }) }
   if (d.kind === 'Days') return { Panels: daysPanels({ practices: d.practices }) }
+  if (d.kind === 'Goals') return { Panels: goalsPanels({ goals: d.goals.map((g) => ({ ...g, practice: g.practice!, amount: g.amount! })) }) }
   if (d.kind === 'Gaps') return { Panels: gapsPanels({ event: d.event!, rows: d.rows, sleep: d.sleep }) }
   if (d.kind === 'Japa') {
     // Quality and done markers are no longer drawn, so a saved report drops its old ones.
@@ -70,7 +84,13 @@ export function draftOf(def: PanelsReport, practices: UserPractice[]): TemplateD
   if ('Days' in template) {
     return { kind: 'Days', practices: template.Days.practices.filter((id) => practices.some((p) => p.id === id && fits(DAYS_SLOT, p))) }
   }
-  if ('Goals' in template) return null // ponytail: the Goals form is a later task
+  if ('Goals' in template) {
+    // Each goal keeps its place, so a gone practice shows as missing in its own card.
+    return { kind: 'Goals', goals: template.Goals.goals.map((g) => {
+      const p = practices.find((x) => x.id === g.practice && fits(GOAL_SLOT, x))
+      return { ...g, practice: p ? g.practice : null, counts: p?.data_type === 'Duration' ? g.counts : 'Total' }
+    }) }
+  }
   if ('Gaps' in template) {
     const { event, rows, sleep } = template.Gaps
     const ok = (slot: Slot, id: string) => practices.some((p) => p.id === id && fits(slot, p))
@@ -104,13 +124,14 @@ const typeRounds = (next: string) => next.replace(/\D/g, '').slice(0, 4)
 
 /**
  * A number typed as text. Time limits (hh:mm) by default; with `duration`, minutes typed like Today's Duration row and
- * shown as 2h 20m; with `suffix`, a required whole number that has no clear button.
+ * shown as 2h 20m; with `suffix` or `count`, a required whole number that has no clear button.
  */
-export function LimitField({ id, label, placeholder, value, onChange, suffix, duration }: {
-  id: string; label: string; placeholder: string; value: number | null; onChange: (v: number | null) => void; suffix?: string; duration?: boolean
+export function LimitField({ id, label, placeholder, value, onChange, suffix, duration, count }: {
+  id: string; label: string; placeholder: string; value: number | null; onChange: (v: number | null) => void; suffix?: string; duration?: boolean; count?: boolean
 }) {
   const { t } = useTranslation()
-  const digits = suffix || duration
+  const required = !!suffix || !!count
+  const digits = required || duration
   const [parseLimit, limitText] = digits ? [parseRounds, roundsText] : [parseHours, hoursText]
   const [text, setText] = useState(limitText(value))
   const [focused, setFocused] = useState(false)
@@ -131,7 +152,7 @@ export function LimitField({ id, label, placeholder, value, onChange, suffix, du
       {label && <label htmlFor={id} className="text-xs leading-snug font-bold text-ui-muted">{label}</label>}
       <div className="relative">
         <input id={id} value={shown} placeholder={placeholder} inputMode="numeric" autoComplete="off"
-          className={`${FIELD} ${suffix ? '' : 'pr-11'} font-ui-mono placeholder:font-[Manrope] placeholder:text-[15px] placeholder:font-semibold`}
+          className={`${FIELD} ${required ? '' : 'pr-11'} font-ui-mono placeholder:font-[Manrope] placeholder:text-[15px] placeholder:font-semibold`}
           onFocus={() => setFocused(true)}
           onBlur={() => { setFocused(false); flush() }}
           onChange={(e) => { setText(digits ? typeRounds(e.target.value) : typeTime(e.target.value, text)); schedule() }} />
@@ -139,7 +160,7 @@ export function LimitField({ id, label, placeholder, value, onChange, suffix, du
         {duration && focused && text && (
           <span className="pointer-events-none absolute inset-y-0 right-12 my-auto flex items-center text-sm font-semibold text-ui-muted">{units.min}</span>
         )}
-        {text && !suffix && (
+        {text && !required && (
           <button type="button" aria-label={t('templateForm.clear', { label })} onClick={() => { setText(''); onChange(null) }}
             className="absolute inset-y-0 right-0.5 my-auto flex h-11 w-11 items-center justify-center">
             <span aria-hidden className="flex h-6 w-6 items-center justify-center rounded-full bg-ui-chip text-[15px] leading-none text-ui-ink2">×</span>
@@ -282,6 +303,116 @@ function SlotRow({ slot, chosen, suggestion, none, missing, onOpen, onUse }: {
   )
 }
 
+const amountMode = (type: PracticeDataType | undefined, counts: Counts) =>
+  !type ? null : type !== 'Duration' ? 'count' : counts === 'Days' ? 'days' : 'time'
+
+/** One goal (16m3): its practice, direction, Counts for a Duration practice, amount and period. */
+function GoalCard({ goal, n, practices, onChange, onRemove, onPick, flagMissing }: {
+  goal: GoalDraft; n: number; practices: UserPractice[]; onChange: (g: GoalDraft) => void; onRemove: (() => void) | null; onPick: () => void; flagMissing?: boolean
+}) {
+  const { t } = useTranslation()
+  const chosen = practices.find((p) => p.id === goal.practice && fits(GOAL_SLOT, p))
+  const mode = amountMode(chosen?.data_type, goal.counts)
+  const title = t('templateForm.goalN', { n })
+  const label = 'text-xs leading-snug font-bold text-ui-muted'
+  const hint = mode === 'time' ? 'goalHintTime' : mode === 'days' ? 'goalHintDays' : !chosen ? 'goalPickFirst' : chosen.data_type === 'Bool' ? 'goalHintBool' : 'goalHintInt'
+  const amountLabel = t('templateForm.amount')
+  return (
+    <section aria-label={title} className={`${CARD} flex flex-col gap-3.5 px-4 pt-3 pb-4`}>
+      <div className="flex min-h-11 items-center justify-between gap-2">
+        <h3 className="text-[15px] font-extrabold text-ui-ink">{title}</h3>
+        {onRemove && (
+          <button type="button" onClick={onRemove} aria-label={`${t('templateForm.removeGoal')}: ${title}`} className="-mr-2.5 flex h-11 w-11 shrink-0 items-center justify-center">
+            <span aria-hidden className="flex h-7 w-7 items-center justify-center rounded-full bg-ui-chip text-base leading-none text-ui-ink2">×</span>
+          </button>
+        )}
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <span className={label}>{t('templateForm.goalPractice')}</span>
+        <button type="button" onClick={onPick} aria-label={`${t('templateForm.goalPracticeN', { n })}: ${chosen?.practice ?? t('templateForm.choose')}`}
+          className={`${SLOT_BOX} min-h-[52px] w-full py-1.5 pr-3 pl-3.5 text-left text-[15px] font-bold ${chosen ? 'border border-ui-control bg-ui-surface text-ui-ink' : 'border-[1.5px] border-dashed border-ui-control text-ui-ink2'}`}>
+          {chosen && <span className="text-ui-ink2"><TypeIcon type={chosen.data_type} /></span>}
+          <span className="min-w-0 flex-1 truncate">{chosen?.practice ?? t('templateForm.choose')}</span>
+          {chosen && <span className="shrink-0 text-xs font-normal text-ui-faint">{t(typeLabelKey(chosen.data_type))}</span>}
+          <span aria-hidden className="text-ui-muted">⌄</span>
+        </button>
+        {flagMissing && !chosen && <p className="text-[13px] leading-snug font-bold text-ui-danger">{t('templateForm.missing')}</p>}
+      </div>
+      <SegmentedControl fill label={t('templateForm.goalDirection')} value={goal.direction} onChange={(direction) => onChange({ ...goal, direction })}
+        options={[{ value: 'AtLeast', label: t('templateForm.atLeast') }, { value: 'AtMost', label: t('templateForm.atMost') }]} />
+      {chosen?.data_type === 'Duration' && (
+        <div className="flex flex-col gap-1.5">
+          <span className={label}>{t('templateForm.counts')}</span>
+          {/* Minutes and days don't convert, so the amount starts over. */}
+          <SegmentedControl fill label={t('templateForm.counts')} value={goal.counts} onChange={(counts) => onChange({ ...goal, counts, amount: null })}
+            options={[{ value: 'Total', label: t('templateForm.countsTime') }, { value: 'Days', label: t('templateForm.countsDays') }]} />
+        </div>
+      )}
+      <div className="flex flex-wrap gap-3">
+        <div className="flex min-w-0 flex-[1_1_120px] flex-col">
+          {mode ? (
+            <LimitField key={mode} id={`goal-${n}-amount`} label={amountLabel} placeholder={mode === 'time' ? t('templateForm.hmm') : ''} value={goal.amount}
+              count={mode !== 'time'} suffix={mode === 'days' ? t('templateForm.unitDays') : undefined} onChange={(amount) => onChange({ ...goal, amount })} />
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              <span className={label}>{amountLabel}</span>
+              <span aria-hidden className="flex min-h-12 items-center rounded-xl border border-ui-hairline bg-ui-chip px-3.5 font-ui-mono text-[17px] text-ui-faint">—</span>
+            </div>
+          )}
+        </div>
+        <div className="flex min-w-0 flex-[2_1_220px] flex-col gap-1.5">
+          <span className={label}>{t('templateForm.period')}</span>
+          <SegmentedControl fill label={t('templateForm.period')} value={goal.period} onChange={(period) => onChange({ ...goal, period })}
+            options={(['Day', 'Week', 'Month'] as const).map((value) => ({ value, label: t(`templateForm.period${value}`) }))} />
+        </div>
+      </div>
+      {goal.direction === 'AtLeast' && goal.amount === 0 && <p role="alert" className="text-[13px] font-semibold text-ui-danger">{t('templateForm.atLeastOne')}</p>}
+      {flagMissing && chosen && goal.amount === null && <p role="alert" className="text-[13px] font-semibold text-ui-danger">{t('templateForm.amountMissing')}</p>}
+      <p className={HINT}>{t(`templateForm.${hint}`)}</p>
+    </section>
+  )
+}
+
+/** The goal cards, Add goal up to the limit, and the note that the report stays private. */
+function GoalsSection({ value, onChange, practices, flagMissing }: {
+  value: Extract<TemplateDraft, { kind: 'Goals' }>; onChange: (d: TemplateDraft) => void; practices: UserPractice[]; flagMissing?: boolean
+}) {
+  const { t } = useTranslation()
+  const [picking, setPicking] = useState<number | null>(null)
+  const set = (goals: GoalDraft[]) => onChange({ ...value, goals })
+  const setGoal = (i: number, g: GoalDraft) => set(value.goals.map((x, j) => (j === i ? g : x)))
+  const pick = (i: number, id: string) => {
+    const g = value.goals[i]
+    const was = practices.find((p) => p.id === g.practice && fits(GOAL_SLOT, p))?.data_type
+    const type = practices.find((p) => p.id === id)?.data_type
+    const counts = type === 'Duration' ? g.counts : 'Total'
+    // An amount in another unit (minutes, days, a count) would mean something else, so it starts over.
+    const same = amountMode(was, g.counts) === amountMode(type, counts)
+    setGoal(i, { ...g, practice: id, counts, amount: same ? g.amount : null })
+  }
+  return (
+    <>
+      <h2 className={GROUP}>{t('templateForm.goalsHeading', { n: value.goals.length })}</h2>
+      {value.goals.map((g, i) => (
+        // ponytail: index keys; a card's fields follow its value, so removing one above is fine.
+        <GoalCard key={i} goal={g} n={i + 1} practices={practices} flagMissing={flagMissing} onPick={() => setPicking(i)}
+          onChange={(next) => setGoal(i, next)} onRemove={value.goals.length > 1 ? () => set(value.goals.filter((_, j) => j !== i)) : null} />
+      ))}
+      {value.goals.length < MAX_GOALS && (
+        <button type="button" onClick={() => set([...value.goals, newGoal()])}
+          className="flex min-h-[52px] items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-dashed border-ui-control text-[15px] font-extrabold text-ui-accent">
+          <span aria-hidden className="text-lg leading-none">+</span>{t('templateForm.addGoal')}
+        </button>
+      )}
+      <p className={`${HINT} px-1`}>{t('templateForm.goalsPrivate')}</p>
+      {picking !== null && (
+        <SlotPickerSheet slot={GOAL_SLOT} value={value.goals[picking]?.practice ?? null} suggested={null} practices={practices} onClose={() => setPicking(null)}
+          onPick={(id) => { if (id) pick(picking, id); setPicking(null) }} />
+      )}
+    </>
+  )
+}
+
 /**
  * A template's settings (15m2–15m5, 15d13); the parent keeps the draft and decides what to do with it. `name` is the
  * name field, which goes under the no-practices banner. `flagMissing` is for a saved report, whose empty required
@@ -397,6 +528,7 @@ export function TemplateForm({ value, onChange, practices, name, flagMissing }: 
           <GapsRows value={value} onChange={onChange} practices={practices} />
         </>
       )}
+      {value.kind === 'Goals' && <GoalsSection value={value} onChange={onChange} practices={practices} flagMissing={flagMissing} />}
       {picking && (
         <SlotPickerSheet slot={picking} value={slotValue(value, picking)} suggested={suggestions.get(picking.key) ?? null} practices={practices} onClose={() => setPicking(null)}
           onPick={(id) => { onChange({ ...value, [picking.key]: id }); setPicking(null) }} />
