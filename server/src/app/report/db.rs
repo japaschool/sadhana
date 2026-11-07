@@ -295,7 +295,7 @@ impl NewReportTrace {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::super::panels::PanelsReport;
     use super::super::{GraphReport, GridReport, PracticeTrace, Report as ApiReport, TraceType};
     use super::*;
@@ -341,7 +341,7 @@ mod tests {
     }
 
     fn only_grid(conn: &mut PgConnection, user_id: &Uuid) -> (Vec<Uuid>, Option<bool>) {
-        match ApiReport::get_all(conn, user_id, 0, false, false)
+        match ApiReport::get_all(conn, user_id, 0, false)
             .unwrap()
             .remove(0)
             .definition
@@ -387,10 +387,7 @@ mod tests {
                 traces: vec![trace(c), trace(a)],
             });
             Report::create(conn, &u, "r", &def)?;
-            match ApiReport::get_all(conn, &u, 0, false, false)?
-                .remove(0)
-                .definition
-            {
+            match ApiReport::get_all(conn, &u, 0, false)?.remove(0).definition {
                 ReportDefinition::Graph(g) => {
                     let order: Vec<_> = g.traces.iter().map(|t| t.practice).collect();
                     assert_eq!(order, vec![c, a]);
@@ -482,7 +479,7 @@ mod tests {
         });
     }
 
-    fn sleep_report(bedtime: Uuid, wake: Uuid) -> PanelsReport {
+    pub(crate) fn sleep_report(bedtime: Uuid, wake: Uuid) -> PanelsReport {
         use super::super::panels::*;
         PanelsReport {
             version: 1,
@@ -532,10 +529,7 @@ mod tests {
             let sent = sleep_report(a, b);
             let id = Report::create(conn, &u, "r", &ReportDefinition::Panels(sent.clone()))?;
 
-            match ApiReport::get_all(conn, &u, 1, true, false)?
-                .remove(0)
-                .definition
-            {
+            match ApiReport::get_all(conn, &u, 1, true)?.remove(0).definition {
                 ReportDefinition::Panels(got) => assert_eq!(got, sent),
                 _ => panic!("not panels"),
             }
@@ -554,10 +548,10 @@ mod tests {
             Report::create(conn, &u, "g", &grid(vec![a], Some(true)))?;
             Report::create(conn, &u, "p", &ReportDefinition::Panels(sleep_report(a, b)))?;
 
-            let hidden = ApiReport::get_all(conn, &u, 0, false, false)?;
+            let hidden = ApiReport::get_all(conn, &u, 0, false)?;
             assert_eq!(hidden.len(), 1);
             assert!(matches!(hidden[0].definition, ReportDefinition::Grid(_)));
-            assert_eq!(ApiReport::get_all(conn, &u, 1, true, false)?.len(), 2);
+            assert_eq!(ApiReport::get_all(conn, &u, 1, true)?.len(), 2);
             Ok(())
         });
     }
@@ -585,10 +579,10 @@ mod tests {
             )?;
 
             // What a cached build with panels=true gets: the Sleep report only.
-            let old = ApiReport::get_all(conn, &u, 1, false, false)?;
+            let old = ApiReport::get_all(conn, &u, 1, false)?;
             assert_eq!(old.len(), 1);
             assert_eq!(old[0].name, "s");
-            assert_eq!(ApiReport::get_all(conn, &u, 1, true, false)?.len(), 2);
+            assert_eq!(ApiReport::get_all(conn, &u, 1, true)?.len(), 2);
             Ok(())
         });
     }
@@ -626,7 +620,7 @@ mod tests {
         });
     }
 
-    fn gaps_report(event: Uuid, rows: Vec<Uuid>) -> PanelsReport {
+    pub(crate) fn gaps_report(event: Uuid, rows: Vec<Uuid>) -> PanelsReport {
         use super::super::panels::*;
         PanelsReport {
             version: 1,
@@ -662,22 +656,23 @@ mod tests {
             let (u, [a, b, _, _]) = user_with_practices(conn);
             Report::create(conn, &u, "s", &panels(sleep_report(a, b)))?;
             Report::create(conn, &u, "g", &panels(gaps_report(a, vec![b])))?;
-            assert_eq!(names(ApiReport::get_all(conn, &u, 1, true, false)?), ["s"]);
-            assert_eq!(
-                names(ApiReport::get_all(conn, &u, 3, true, false)?),
-                ["g", "s"]
-            );
+            assert_eq!(names(ApiReport::get_all(conn, &u, 1, true)?), ["s"]);
+            assert_eq!(names(ApiReport::get_all(conn, &u, 3, true)?), ["g", "s"]);
             Ok(())
         });
     }
 
     #[test]
-    fn shared_never_gets_gaps() {
+    fn shared_gets_gaps_at_level_3() {
         run(|conn| {
             let (u, [a, b, _, _]) = user_with_practices(conn);
             Report::create(conn, &u, "s", &panels(sleep_report(a, b)))?;
             Report::create(conn, &u, "g", &panels(gaps_report(a, vec![b])))?;
-            assert_eq!(names(ApiReport::get_all(conn, &u, 3, true, true)?), ["s"]);
+            let share = crate::app::share_links::service::Share::Legacy { user_id: u };
+            assert_eq!(
+                names(crate::app::shared::shared_reports(conn, &share, 3, true)?),
+                ["g", "s"]
+            );
             Ok(())
         });
     }
@@ -698,10 +693,7 @@ mod tests {
                 }),
             }));
             Report::create(conn, &u, "g", &panels(sent.clone()))?;
-            match ApiReport::get_all(conn, &u, 3, true, false)?
-                .remove(0)
-                .definition
-            {
+            match ApiReport::get_all(conn, &u, 3, true)?.remove(0).definition {
                 ReportDefinition::Panels(got) => assert_eq!(got, sent),
                 _ => panic!("not panels"),
             }
@@ -742,7 +734,7 @@ mod tests {
         });
     }
 
-    fn goals_report(goals: Vec<super::super::panels::Goal>) -> PanelsReport {
+    pub(crate) fn goals_report(goals: Vec<super::super::panels::Goal>) -> PanelsReport {
         use super::super::panels::*;
         PanelsReport {
             version: 1,
@@ -754,7 +746,7 @@ mod tests {
         }
     }
 
-    fn goal(
+    pub(crate) fn goal(
         practice: Uuid,
         direction: super::super::panels::Direction,
         amount: i32,
@@ -781,18 +773,15 @@ mod tests {
                 "o",
                 &panels(goals_report(vec![goal(a, AtLeast, 3)])),
             )?;
-            assert_eq!(names(ApiReport::get_all(conn, &u, 1, true, false)?), ["s"]);
-            assert_eq!(names(ApiReport::get_all(conn, &u, 3, true, false)?), ["s"]);
-            assert_eq!(
-                names(ApiReport::get_all(conn, &u, 4, true, false)?),
-                ["o", "s"]
-            );
+            assert_eq!(names(ApiReport::get_all(conn, &u, 1, true)?), ["s"]);
+            assert_eq!(names(ApiReport::get_all(conn, &u, 3, true)?), ["s"]);
+            assert_eq!(names(ApiReport::get_all(conn, &u, 4, true)?), ["o", "s"]);
             Ok(())
         });
     }
 
     #[test]
-    fn shared_never_gets_goals() {
+    fn shared_gets_goals_at_level_4() {
         run(|conn| {
             use super::super::panels::Direction::AtLeast;
             let (u, [a, b, _, _]) = user_with_practices(conn);
@@ -803,7 +792,11 @@ mod tests {
                 "o",
                 &panels(goals_report(vec![goal(a, AtLeast, 3)])),
             )?;
-            assert_eq!(names(ApiReport::get_all(conn, &u, 4, true, true)?), ["s"]);
+            let share = crate::app::share_links::service::Share::Legacy { user_id: u };
+            assert_eq!(
+                names(crate::app::shared::shared_reports(conn, &share, 4, true)?),
+                ["o", "s"]
+            );
             Ok(())
         });
     }
@@ -818,7 +811,7 @@ mod tests {
             month.counts = Counts::Days;
             let sent = goals_report(vec![goal(a, AtLeast, 3), month]);
             let id = Report::create(conn, &u, "o", &panels(sent.clone()))?;
-            let read = |conn: &mut PgConnection| match ApiReport::get_all(conn, &u, 4, true, false)
+            let read = |conn: &mut PgConnection| match ApiReport::get_all(conn, &u, 4, true)
                 .unwrap()
                 .remove(0)
                 .definition
@@ -873,7 +866,7 @@ mod tests {
         assert!(serde_json::from_value::<PanelsReport>(value).is_err());
     }
 
-    fn panels(r: PanelsReport) -> ReportDefinition {
+    pub(crate) fn panels(r: PanelsReport) -> ReportDefinition {
         ReportDefinition::Panels(r)
     }
 
@@ -1121,10 +1114,7 @@ mod tests {
             let (u, [a, _, _, _]) = user_with_practices(conn);
             let sent = japa_report(a, 16);
             Report::create(conn, &u, "r", &panels(sent.clone()))?;
-            match ApiReport::get_all(conn, &u, 1, true, false)?
-                .remove(0)
-                .definition
-            {
+            match ApiReport::get_all(conn, &u, 1, true)?.remove(0).definition {
                 ReportDefinition::Panels(got) => assert_eq!(got, sent),
                 _ => panic!("not panels"),
             }
@@ -1168,10 +1158,7 @@ mod tests {
             let (u, [a, b, _, _]) = user_with_practices(conn);
             let sent = duration_report(vec![a, b], Some(120));
             Report::create(conn, &u, "r", &panels(sent.clone()))?;
-            match ApiReport::get_all(conn, &u, 1, true, false)?
-                .remove(0)
-                .definition
-            {
+            match ApiReport::get_all(conn, &u, 1, true)?.remove(0).definition {
                 ReportDefinition::Panels(got) => assert_eq!(got, sent),
                 _ => panic!("not panels"),
             }

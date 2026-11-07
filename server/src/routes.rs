@@ -169,7 +169,7 @@ fn api_scope() -> impl HttpServiceFactory {
         )
         .service(
             web::scope("/share/{user_id}")
-                .route("/user", web::get().to(app::user::api::user_info))
+                .route("/user", web::get().to(app::shared::get_shared_user))
                 .route(
                     "/practices",
                     web::get().to(app::shared::get_shared_report_practices),

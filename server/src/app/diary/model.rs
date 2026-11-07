@@ -135,11 +135,11 @@ pub struct DiaryEntryUpdate<'a> {
 #[derive(Serialize, Debug, QueryableByName)]
 pub struct ReportEntry {
     #[diesel(sql_type = Date)]
-    cob_date: NaiveDate,
+    pub cob_date: NaiveDate,
     #[diesel(sql_type = Text)]
-    practice: String,
+    pub practice: String,
     #[diesel(sql_type = Nullable<Jsonb>)]
-    value: Option<JsonValue>,
+    pub value: Option<JsonValue>,
 }
 
 impl ReportEntry {

@@ -146,18 +146,6 @@ pub async fn me(req: HttpRequest) -> Result<HttpResponse, AppError> {
     Ok(HttpResponse::Ok().json(res))
 }
 
-pub async fn user_info(
-    state: web::Data<AppState>,
-    path: web::Path<UuidSlug>,
-) -> Result<HttpResponse, AppError> {
-    let mut conn = state.get_conn()?;
-    let user_id = path.into_inner();
-
-    let user = web::block(move || User::find(&mut conn, &user_id)).await??;
-    let res = UserResponse::from((user, "".into()));
-    Ok(HttpResponse::Ok().json(res))
-}
-
 pub async fn update_user(
     state: web::Data<AppState>,
     req: HttpRequest,

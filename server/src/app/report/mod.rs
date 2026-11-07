@@ -31,7 +31,6 @@ impl Report {
         user_id: &Uuid,
         level: u8,
         months: bool,
-        shared: bool,
     ) -> Result<Vec<Self>, AppError> {
         let data = DBReport::get_all(conn, user_id, level > 0)?;
 
@@ -62,8 +61,7 @@ impl Report {
             };
 
             if let ReportDefinition::Panels(p) = &definition {
-                // Level 3+ reports stay private: they're for the owner's own reflection.
-                if (!months && p.has_month()) || p.level() > level || (shared && p.level() >= 3) {
+                if (!months && p.has_month()) || p.level() > level {
                     continue;
                 }
             }
@@ -237,9 +235,8 @@ pub async fn get_reports(
     let mut conn = state.get_conn()?;
     let user_id = auth::get_current_user(&req)?.id;
 
-    let res =
-        web::block(move || Report::get_all(&mut conn, &user_id, query.panels, query.months, false))
-            .await??;
+    let res = web::block(move || Report::get_all(&mut conn, &user_id, query.panels, query.months))
+        .await??;
 
     Ok(HttpResponse::Ok().json(GetAllReportsResponse { reports: res }))
 }

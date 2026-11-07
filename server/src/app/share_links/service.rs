@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use chrono::NaiveDate;
 use common::error::AppError;
 use diesel::prelude::*;
 use uuid::Uuid;
@@ -12,7 +13,7 @@ use crate::schema::{reports, share_link_reports, share_links, users};
 type LinkRow = (
     Uuid,
     String,
-    Option<chrono::NaiveDate>,
+    Option<NaiveDate>,
     Option<chrono::DateTime<chrono::Utc>>,
 );
 
@@ -93,7 +94,7 @@ pub fn list(conn: &mut PgConnection, user_id: &Uuid) -> Result<dto::ShareLinksRe
         .order((share_links::created_at.desc(), share_links::id))
         .load(conn)?;
 
-    let all_reports = Report::get_all(conn, user_id, 4, true, false)?;
+    let all_reports = Report::get_all(conn, user_id, 4, true)?;
 
     // Report order = name order (`get_all` sorts by name).
     let position: HashMap<Uuid, usize> = all_reports
@@ -227,19 +228,78 @@ pub fn set_legacy(conn: &mut PgConnection, user_id: &Uuid, enabled: bool) -> Res
     Ok(())
 }
 
+/// What a public `/share/{id}` id opens.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Share {
+    /// A share link: only its reports and the practices they draw.
+    Link {
+        id: Uuid,
+        user_id: Uuid,
+        start_date: Option<NaiveDate>,
+        report_ids: Vec<Uuid>,
+    },
+    /// The old whole-diary link (the user's own id), while the owner keeps it on.
+    Legacy { user_id: Uuid },
+}
+
+impl Share {
+    pub fn user_id(&self) -> Uuid {
+        match self {
+            Share::Link { user_id, .. } | Share::Legacy { user_id } => *user_id,
+        }
+    }
+}
+
+/// A link id, else the id of a user with legacy sharing on. Anything else is the same `NotFound`.
+pub fn resolve(conn: &mut PgConnection, id: &Uuid) -> Result<Share, AppError> {
+    let link: Option<(Uuid, Option<NaiveDate>)> = share_links::table
+        .select((share_links::user_id, share_links::start_date))
+        .filter(share_links::id.eq(id))
+        .first(conn)
+        .optional()?;
+    if let Some((user_id, start_date)) = link {
+        let report_ids = share_link_reports::table
+            .select(share_link_reports::report_id)
+            .filter(share_link_reports::share_link_id.eq(id))
+            .load(conn)?;
+        return Ok(Share::Link {
+            id: *id,
+            user_id,
+            start_date,
+            report_ids,
+        });
+    }
+    let legacy: Option<bool> = users::table
+        .select(users::legacy_share_enabled)
+        .filter(users::id.eq(id))
+        .first(conn)
+        .optional()?;
+    match legacy {
+        Some(true) => Ok(Share::Legacy { user_id: *id }),
+        _ => Err(AppError::NotFound),
+    }
+}
+
+/// Records that a link was opened.
+pub fn touch(conn: &mut PgConnection, link_id: &Uuid) -> Result<(), AppError> {
+    diesel::update(share_links::table.filter(share_links::id.eq(link_id)))
+        .set(share_links::last_opened_at.eq(diesel::dsl::now))
+        .execute(conn)?;
+    Ok(())
+}
+
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::app::report::{
         db::Report as DbReport, GraphReport, GridReport, PracticeTrace, TraceType,
     };
     use crate::db_types::BarLayout;
     use crate::utils::db;
-    use chrono::NaiveDate;
     use diesel::sql_query;
     use diesel::sql_types::{Text, Uuid as DieselUuid};
 
-    fn new_user(conn: &mut PgConnection) -> Uuid {
+    pub(crate) fn new_user(conn: &mut PgConnection) -> Uuid {
         let user_id = Uuid::new_v4();
         sql_query("insert into users (id, email, hash, name) values ($1, $2, '', 'x')")
             .bind::<DieselUuid, _>(user_id)
@@ -249,7 +309,12 @@ mod tests {
         user_id
     }
 
-    fn new_practice(conn: &mut PgConnection, user_id: Uuid, name: &str, order: i32) -> Uuid {
+    pub(crate) fn new_practice(
+        conn: &mut PgConnection,
+        user_id: Uuid,
+        name: &str,
+        order: i32,
+    ) -> Uuid {
         let id = Uuid::new_v4();
         sql_query(
             "insert into user_practices (id, user_id, practice, data_type, is_active, order_key) \
@@ -264,7 +329,7 @@ mod tests {
         id
     }
 
-    fn grid(conn: &mut PgConnection, user_id: &Uuid, name: &str) -> Uuid {
+    pub(crate) fn grid(conn: &mut PgConnection, user_id: &Uuid, name: &str) -> Uuid {
         let p = new_practice(conn, *user_id, name, 0);
         let def = ReportDefinition::Grid(GridReport {
             practices: vec![p],
@@ -273,7 +338,33 @@ mod tests {
         DbReport::create(conn, user_id, name, &def).unwrap()
     }
 
-    fn form(name: &str, start: Option<&str>, report_ids: Vec<Uuid>) -> dto::ShareLinkForm {
+    pub(crate) fn graph(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        name: &str,
+        practices: &[Uuid],
+    ) -> Uuid {
+        let def = ReportDefinition::Graph(GraphReport {
+            bar_layout: BarLayout::Grouped,
+            traces: practices
+                .iter()
+                .map(|p| PracticeTrace {
+                    label: None,
+                    type_: TraceType::Bar,
+                    practice: *p,
+                    y_axis: None,
+                    show_average: false,
+                })
+                .collect(),
+        });
+        DbReport::create(conn, user_id, name, &def).unwrap()
+    }
+
+    pub(crate) fn form(
+        name: &str,
+        start: Option<&str>,
+        report_ids: Vec<Uuid>,
+    ) -> dto::ShareLinkForm {
         dto::ShareLinkForm {
             name: name.into(),
             start_date: start.map(|s| s.parse::<NaiveDate>().unwrap()),
@@ -281,7 +372,7 @@ mod tests {
         }
     }
 
-    fn run(f: impl FnOnce(&mut PgConnection) -> Result<(), AppError>) {
+    pub(crate) fn run(f: impl FnOnce(&mut PgConnection) -> Result<(), AppError>) {
         let mut conn = db::establish_connection().get().unwrap();
         conn.test_transaction::<_, AppError, _>(|c| f(c));
     }
@@ -290,7 +381,7 @@ mod tests {
         assert!(matches!(r, Err(AppError::UnprocessableEntity(_))), "{r:?}");
     }
 
-    fn not_found<T: std::fmt::Debug>(r: Result<T, AppError>) {
+    pub(crate) fn not_found<T: std::fmt::Debug>(r: Result<T, AppError>) {
         assert!(matches!(r, Err(AppError::NotFound)), "{r:?}");
     }
 
@@ -448,6 +539,47 @@ mod tests {
             assert!(list(conn, &u)?.legacy_enabled);
             set_legacy(conn, &u, false)?;
             assert!(!list(conn, &u)?.legacy_enabled);
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn resolve_link_and_legacy() {
+        run(|conn| {
+            let u = new_user(conn);
+            let r = grid(conn, &u, "A");
+            let id = create(conn, &u, &form("x", Some("2026-02-01"), vec![r]))?;
+            assert_eq!(
+                resolve(conn, &id)?,
+                Share::Link {
+                    id,
+                    user_id: u,
+                    start_date: Some("2026-02-01".parse().unwrap()),
+                    report_ids: vec![r],
+                }
+            );
+
+            set_legacy(conn, &u, true)?;
+            assert_eq!(resolve(conn, &u)?, Share::Legacy { user_id: u });
+            set_legacy(conn, &u, false)?;
+            not_found(resolve(conn, &u));
+
+            not_found(resolve(conn, &Uuid::new_v4()));
+
+            delete(conn, &u, &id)?;
+            not_found(resolve(conn, &id));
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn touch_sets_last_opened() {
+        run(|conn| {
+            let u = new_user(conn);
+            let id = create(conn, &u, &form("x", None, vec![]))?;
+            assert_eq!(list(conn, &u)?.links[0].last_opened_at, None);
+            touch(conn, &id)?;
+            assert!(list(conn, &u)?.links[0].last_opened_at.is_some());
             Ok(())
         });
     }
