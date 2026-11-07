@@ -120,9 +120,11 @@ export interface Report {
   definition: ReportDefinition
 }
 
+export interface SharedUser { id: string; name: string; kind: 'link' | 'legacy'; start_date: string | null }
+
 export const chartsApi = {
   async getReports(): Promise<Report[]> {
-    // panels is a level: 3 includes Gaps and Around, 4 Goals. The shared list stays at 1; it never gets those.
+    // panels is a level: 3 includes Gaps and Around, 4 Goals. The shared list asks for 4 as well; the server limits what a link may see.
     const res = await apiClient.get<{ reports: Report[] }>('/reports', { params: { panels: 4, months: true } })
     return res.data.reports
   },
@@ -137,13 +139,14 @@ export const chartsApi = {
     await apiClient.delete(`/report/${id}`)
   },
   async getSharedReports(userId: string): Promise<Report[]> {
-    const res = await apiClient.get<{ reports: Report[] }>(`/share/${userId}/reports`, { params: { panels: true, months: true } })
+    const res = await apiClient.get<{ reports: Report[] }>(`/share/${userId}/reports`, { params: { panels: 4, months: true } })
     return res.data.reports
   },
   /** The owner's name for a shared reports link; fails for an unknown user. */
-  async getSharedUser(userId: string): Promise<{ id: string; name: string }> {
-    const res = await apiClient.get<{ user: { id: string; name: string } }>(`/share/${userId}/user`)
-    return res.data.user
+  async getSharedUser(userId: string): Promise<SharedUser> {
+    const res = await apiClient.get<{ user: { id: string; name: string }; kind?: 'link' | 'legacy'; start_date?: string | null }>(`/share/${userId}/user`)
+    // An old server sends neither kind nor start_date.
+    return { id: res.data.user.id, name: res.data.user.name, kind: res.data.kind ?? 'legacy', start_date: res.data.start_date ?? null }
   },
   async getSharedPractices(userId: string): Promise<UserPractice[]> {
     const res = await apiClient.get<{ user_practices: UserPractice[] }>(`/share/${userId}/practices`)

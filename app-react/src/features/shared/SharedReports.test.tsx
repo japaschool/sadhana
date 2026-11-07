@@ -36,7 +36,7 @@ describe('shared reports', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     useAuthStore.setState({ user: null, token: null, isLoading: false })
-    api.getSharedUser.mockResolvedValue({ id: 'u1', name: 'Alex das' })
+    api.getSharedUser.mockResolvedValue({ id: 'u1', name: 'Alex das', kind: 'legacy', start_date: null })
     api.getSharedReports.mockResolvedValue([GRAPH, GRID])
     api.getSharedPractices.mockResolvedValue([
       { id: 'read', practice: 'Reading', data_type: 'Duration', is_active: true },

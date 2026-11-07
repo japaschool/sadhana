@@ -432,7 +432,7 @@ describe('panels reports on each screen', () => {
     practices.getIncompleteDays.mockResolvedValue([])
     charts.getReports.mockResolvedValue([PANELS])
     charts.getReportData.mockImplementation(data)
-    charts.getSharedUser.mockResolvedValue({ id: 'u1', name: 'Alex das' })
+    charts.getSharedUser.mockResolvedValue({ id: 'u1', name: 'Alex das', kind: 'legacy', start_date: null })
     charts.getSharedReports.mockResolvedValue([PANELS])
     charts.getSharedPractices.mockResolvedValue(PRACTICES)
     charts.getSharedReportData.mockImplementation(async (_u, cob) => data(cob))

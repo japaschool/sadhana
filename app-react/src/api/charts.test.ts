@@ -10,6 +10,6 @@ describe('chartsApi', () => {
     await chartsApi.getReports()
     await chartsApi.getSharedReports('u1')
     expect(get).toHaveBeenNthCalledWith(1, '/reports', { params: { panels: 4, months: true } })
-    expect(get).toHaveBeenNthCalledWith(2, '/share/u1/reports', { params: { panels: true, months: true } })
+    expect(get).toHaveBeenNthCalledWith(2, '/share/u1/reports', { params: { panels: 4, months: true } })
   })
 })
