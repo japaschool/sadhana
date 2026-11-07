@@ -188,6 +188,17 @@ fn api_scope() -> impl HttpServiceFactory {
                 .route("", web::delete().to(app::marked_periods::delete_period)),
         )
         .service(
+            web::scope("/share-links")
+                .route("/legacy", web::put().to(app::share_links::set_legacy))
+                .route("", web::get().to(app::share_links::list_links))
+                .route("", web::post().to(app::share_links::create_link)),
+        )
+        .service(
+            web::scope("/share-link/{id}")
+                .route("", web::put().to(app::share_links::update_link))
+                .route("", web::delete().to(app::share_links::delete_link)),
+        )
+        .service(
             web::scope("/yatras")
                 .route("", web::post().to(app::yatras::create_yatra))
                 .route("", web::get().to(app::yatras::user_yatras)),

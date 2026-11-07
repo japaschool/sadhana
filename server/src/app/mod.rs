@@ -5,6 +5,7 @@ pub mod marked_periods;
 pub mod oauth;
 pub mod practice_groups;
 pub mod report;
+pub mod share_links;
 pub mod shared;
 pub mod stats;
 pub mod support;
