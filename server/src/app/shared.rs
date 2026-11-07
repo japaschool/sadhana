@@ -122,7 +122,10 @@ pub async fn get_shared_user(
     let res = web::block(move || {
         let share = links::resolve(&mut conn, &id)?;
         if let Share::Link { id, .. } = &share {
-            links::touch(&mut conn, id)?;
+            // Best-effort: a failed last-opened stamp must not break the page.
+            if let Err(e) = links::touch(&mut conn, id) {
+                log::warn!("Failed to record share link open: {e}");
+            }
         }
         shared_user(&mut conn, &share)
     })

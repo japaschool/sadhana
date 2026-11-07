@@ -200,4 +200,28 @@ describe('shared reports', () => {
     expect(container.querySelector('.recharts-reference-area')).toBeNull()
     expect(screen.queryByText('Marked period')).toBeNull()
   })
+
+  it('an Around report reads the year, so events outside the shown window count', async () => {
+    setViewportWidth(1440)
+    api.getSharedUser.mockResolvedValue({ id: 'u1', name: 'Alex das', kind: 'link', start_date: null })
+    api.getSharedReports.mockResolvedValue([
+      { id: 'a', name: 'Fasts', definition: { Panels: { version: 1, template: null, required: [], panels: [
+        { kind: 'Around', event: 'fast', rows: [{ label: null, source: { Practice: { practice: 'rounds' } } }] },
+      ] } } },
+    ])
+    api.getSharedPractices.mockResolvedValue([
+      { id: 'fast', practice: 'Fasting', data_type: 'Bool', is_active: true },
+      { id: 'rounds', practice: 'Rounds', data_type: 'Int', is_active: true },
+    ])
+    const day = (i: number) => toDateStr(new Date(Date.now() - i * 86400000))
+    // The shown window holds one event; the other eleven are months back, only in the year read.
+    api.getSharedReportData.mockImplementation((_id, _end, duration) => Promise.resolve(
+      Array.from({ length: duration === 'Year' ? 12 : 1 }, (_, i) => i * 15 + 1).flatMap((n) => [
+        { cob_date: day(n), practice: 'Fasting', value: { Bool: true } },
+        { cob_date: day(n), practice: 'Rounds', value: { Int: 10 } },
+      ]),
+    ))
+    renderAt(<SharedDesktop />)
+    expect(await screen.findByRole('columnheader', { name: 'Day before' })).toBeInTheDocument()
+  })
 })

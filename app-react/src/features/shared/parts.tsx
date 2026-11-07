@@ -29,6 +29,8 @@ export function useShared(userId: string) {
   const [opened, setOpened] = useState(false)
   const ins = useInsights(undefined, true, userId, !opened && !user.isError)
   const start = user.data?.start_date
+  // Set during render, not in an effect, so the first fetch already uses the link's date instead of fetching today's window first.
+  // setMonth is harmless for a report that isn't a month one: select() resets it.
   if (!opened && user.data) {
     setOpened(true)
     if (start && start !== ins.todayCob) {

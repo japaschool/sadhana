@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
+import { useShareLinks } from '../../api/shareLinks'
 import { practicesApi } from '../../api/practices'
 import { DesktopShell } from '../../layouts/desktop/DesktopShell'
 import { MobileShell } from '../../layouts/mobile/MobileShell'
@@ -28,6 +29,7 @@ function SettingsColumn() {
   const practices = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices }).data
   const charts = useMyCharts().length
   const yatras = useMyYatras().length
+  const shares = useShareLinks().data?.links.length
   const lang = LANGS.find((l) => l.code === i18n.resolvedLanguage?.slice(0, 2)) ?? LANGS[0]
   const count = (n?: number) => (n ? String(n) : undefined)
 
@@ -61,6 +63,7 @@ function SettingsColumn() {
       {item('/settings', t('settings.previewChannel'), t(isPreview() ? 'settings.on' : 'settings.off'), false)}
       <p className={GROUP}>{t('settings.yourSadhana')}</p>
       {item('/settings/charts', t('insights.title'), count(charts))}
+      {item('/settings/sharing', t('sharing.title'), count(shares))}
       {item('/settings/yatras', t('settings.yatras'), count(yatras))}
       {item('/settings/practices', t('practices.title'), count(practices?.length))}
       <p className={GROUP}>{t('settings.accountData')}</p>

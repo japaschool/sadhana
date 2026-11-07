@@ -67,7 +67,7 @@ function ChartBody({ s, height, children }: { s: Shared; height: number; childre
 function Panels({ s, height, cols }: { s: Shared; height: number; cols?: 2 }) {
   return (
     <PanelsReportView key={s.selectedId} report={s.report!} definition={s.panels!} entries={s.entries} previous={s.previousEntries}
-      practices={s.practices} todayCob={s.todayCob} chartHeight={height} formLink={null} cols={cols} month={s.month ?? undefined} range={s.range} />
+      practices={s.practices} todayCob={s.todayCob} chartHeight={height} formLink={null} cols={cols} month={s.month ?? undefined} range={s.range} yearEntries={s.yearEntries} />
   )
 }
 
