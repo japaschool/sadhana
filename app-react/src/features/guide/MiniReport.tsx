@@ -14,9 +14,9 @@ import type { GuideKind } from './guideLogic'
  * month grid, so it sits beside the others; with the person's own practices each one is shown.
  * Drawn as the template draws it now, then without the template, so the renderer doesn't rebuild the figures back in.
  */
-function fit(kind: GuideKind, definition: PanelsReport, compact: boolean, own: boolean): PanelsReport {
+function fit(kind: GuideKind, definition: PanelsReport, own: boolean): PanelsReport {
   const panels = current(definition).panels.flatMap((p): Panel[] => (p.kind === 'Stats' ? [] : p.kind === 'Chart' ? [{ ...p, headline: false }] : [p]))
-  return { ...definition, template: null, panels: compact && kind === 'days' && !own ? panels.slice(0, 1) : panels }
+  return { ...definition, template: null, panels: kind === 'days' && !own ? panels.slice(0, 1) : panels }
 }
 
 // ponytail: CSS only. The report's panel list wraps as columns at the card's height, each panel full width, and the
@@ -34,7 +34,7 @@ export function MiniReport({ kind, compact = false, clip = false, head, footer, 
   // i18n.language: the example's names and text are rebuilt when the language changes.
   const choices = JSON.stringify(applied)
   const example = useMemo(() => exampleReport(kind, today, t, applied), [kind, today, t, i18n.language, choices]) // eslint-disable-line react-hooks/exhaustive-deps
-  const definition = fit(kind, example.definition, compact, !!applied)
+  const definition = fit(kind, example.definition, !!applied)
   return (
     <div className={`flex h-full flex-col overflow-hidden rounded-[20px] border bg-ui-surface ${on ? 'border-[1.5px] border-ui-accent-pill bg-ui-accent-soft' : 'border-ui-hairline'}`}>
       <div className="flex border-b border-ui-hairline bg-ui-chip px-3 py-[7px]">

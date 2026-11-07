@@ -63,9 +63,9 @@ describe('MiniReport', () => {
     expect(cells).toBeLessThanOrEqual(31) // one practice in a card, so it sits beside the other cards
   })
 
-  it('wide, and with the person’s own practices, days shows each one', () => {
+  it('the example days card is one month at any size; with the person’s own practices it shows each one', () => {
     const { unmount } = render(<MiniReport kind="days" />)
-    expect(document.querySelectorAll('[data-cob]').length).toBeGreaterThan(60)
+    expect(document.querySelectorAll('[data-cob]').length).toBeLessThanOrEqual(31)
     unmount()
     render(<MiniReport kind="days" compact applied={{ names: ['Walk', 'Read'] }} />)
     expect(document.querySelectorAll('[data-cob]').length).toBeGreaterThan(40)
