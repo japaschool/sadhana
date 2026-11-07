@@ -113,10 +113,9 @@ how Settings does it elsewhere.
 - Insights "…" menu: "Copy share link" becomes **Sharing**, which simply opens Settings → Sharing. There the
   user edits an existing link, creates a new one by picking charts, or copies an existing link to send to
   someone new. No prefilled editor, no picker (user's decision).
-- Guide finish step (`FinishStep.tsx`, `guide.reader`): instead of copying the legacy link, it creates a link
-  holding the reports the guide just made, with a default translated name (e.g. "Shared charts"; `guide.reader`
-  is only a yes/no), and copies that (my call).
-- `shareUrl()` / `copyShareLink()` in `today/actions.ts` go away or take a link id.
+- Guide finish step (`FinishStep.tsx`): the share-link block (shown when `guide.reader`) is **removed**
+  altogether (user's decision). Drop its strings and tests too.
+- `shareUrl()` / `copyShareLink()` in `today/actions.ts` go away.
 
 ## Viewer page
 
