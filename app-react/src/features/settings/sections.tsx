@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { ReportGlyph } from '../insights/ReportGlyph'
 import { useReports } from '../insights/useReports'
 import { practicesApi } from '../../api/practices'
+import { useShareLinks } from '../../api/shareLinks'
 import { yatrasApi } from '../../api/yatras'
 import { useServiceWorkerUpdate } from '../../hooks/useServiceWorkerUpdate'
 import { useAuthStore } from '../../store/authStore'
@@ -81,7 +82,7 @@ export function SupportRows() {
   )
 }
 
-/** Insights, Yatras and Practices, each to its own list, with how many there are. */
+/** Insights, Sharing, Yatras and Practices, each to its own list, with how many there are. */
 export function SadhanaRows() {
   const { t } = useTranslation()
   const practices = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices }).data
@@ -89,6 +90,7 @@ export function SadhanaRows() {
   return (
     <>
       <SettingsRow label={t('insights.title')} value={count(useMyCharts().length)} to="/settings/charts" />
+      <SettingsRow label={t('sharing.title')} value={count(useShareLinks().data?.links.length)} to="/settings/sharing" />
       <SettingsRow label={t('settings.yatras')} value={count(useMyYatras().length)} to="/settings/yatras" />
       <SettingsRow label={t('practices.title')} value={count(practices?.length)} to="/settings/practices" />
     </>

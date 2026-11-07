@@ -1495,5 +1495,43 @@
       "linkNote": "Anyone with this link can see your reports. It updates as you log.",
       "start": "Start logging"
     }
+  },
+  "sharing": {
+    "title": "Sharing",
+    "intro": "Give each person their own link with just the charts they need. You can withdraw any link at any time.",
+    "yours": "Your links",
+    "newLink": "New link",
+    "none": "No links yet.",
+    "copy": "Copy",
+    "copyOf": "Copy link for {{name}}",
+    "copied": "Link copied",
+    "charts_one": "{{count}} chart",
+    "charts_other": "{{count}} charts",
+    "noCharts": "No charts",
+    "opensToday": "opens today",
+    "opensOn": "opens on {{date}}",
+    "lastOpened": "last opened {{date}}",
+    "legacy": "Old public link",
+    "legacyHint": "Shows all your charts and data to anyone with the old link.",
+    "whoFor": "Who is it for?",
+    "whoForHint": "Only you see this name.",
+    "charts": "Charts",
+    "kind": {
+      "Graph": "Graph",
+      "Grid": "Table",
+      "Panels": "Template"
+    },
+    "noReports": "You have no charts to share yet.",
+    "opensOnLabel": "Opens on",
+    "today": "Today",
+    "date": "Date",
+    "opensOnDate": "Opening date",
+    "opensOnHint": "The page starts on this day. Whoever opens it can still move to other dates.",
+    "save": "Save",
+    "share": "Share link…",
+    "withdraw": "Withdraw",
+    "withdrawAccess": "Withdraw access",
+    "withdrawTitle": "Withdraw access for {{name}}?",
+    "withdrawMsg": "The link will stop working for good. To share again, make a new link."
   }
 }

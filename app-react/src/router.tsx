@@ -28,6 +28,8 @@ const ChartsSettings = lazy(() => import('./features/settings/SettingsLists').th
 const InsightsPrefs = lazy(() => import('./features/settings/SettingsLists').then((m) => ({ default: m.InsightsPrefs })))
 const OverviewRows = lazy(() => import('./features/settings/OverviewRows').then((m) => ({ default: m.OverviewRows })))
 const MarkedPeriods = lazy(() => import('./features/settings/MarkedPeriods').then((m) => ({ default: m.MarkedPeriods })))
+const Sharing = lazy(() => import('./features/settings/Sharing').then((m) => ({ default: m.Sharing })))
+const ShareLinkEditor = lazy(() => import('./features/settings/Sharing').then((m) => ({ default: m.ShareLinkEditor })))
 const PeriodDetail = lazy(() => import('./features/insights/overview/PeriodDetail').then((m) => ({ default: m.PeriodDetail })))
 const YearMap = lazy(() => import('./features/insights/overview/YearMapScreen').then((m) => ({ default: m.YearMap })))
 const Rhythm = lazy(() => import('./features/insights/overview/Rhythm').then((m) => ({ default: m.Rhythm })))
@@ -132,6 +134,9 @@ export const router = createBrowserRouter([
       { path: '/settings/insights-prefs', element: ui(<InsightsPrefs />) },
       { path: '/settings/overview-rows', element: ui(<OverviewRows />) },
       { path: '/settings/periods', element: ui(<MarkedPeriods />) },
+      { path: '/settings/sharing', element: ui(<Sharing />) },
+      { path: '/settings/sharing/new', element: ui(<ShareLinkEditor />) },
+      { path: '/settings/sharing/:id', element: ui(<ShareLinkEditor />) },
       { path: '/insights/period/:id', element: ui(<PeriodDetail />) },
       { path: '/insights/year', element: ui(<YearMap />) },
       { path: '/insights/rhythm', element: ui(<Rhythm />) },
