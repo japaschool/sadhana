@@ -1,4 +1,4 @@
-use std::{fmt::Display, str::FromStr};
+use std::{collections::HashSet, fmt::Display, str::FromStr};
 
 use actix_web::{web, HttpRequest, HttpResponse};
 use common::error::AppError;
@@ -87,6 +87,15 @@ pub enum ReportDefinition {
 }
 
 impl ReportDefinition {
+    /// Every practice the report draws: the practices a share link may expose for it.
+    pub fn practice_ids(&self) -> HashSet<Uuid> {
+        match self {
+            ReportDefinition::Grid(grid) => grid.practices.iter().copied().collect(),
+            ReportDefinition::Graph(graph) => graph.traces.iter().map(|t| t.practice).collect(),
+            ReportDefinition::Panels(panels) => panels.practice_ids(),
+        }
+    }
+
     fn report_type(&self) -> ReportType {
         match self {
             ReportDefinition::Grid(_) => ReportType::Grid,
@@ -440,5 +449,116 @@ mod tests {
         assert_eq!(q("").panels, 0);
         assert_eq!(q("panels=false").panels, 0);
         assert!(web::Query::<ReportsQuery>::from_query("panels=yes").is_err());
+    }
+
+    fn id(n: u128) -> Uuid {
+        Uuid::from_u128(n)
+    }
+
+    fn panels(v: serde_json::Value) -> ReportDefinition {
+        ReportDefinition::Panels(serde_json::from_value(v).unwrap())
+    }
+
+    fn src(n: u128) -> serde_json::Value {
+        serde_json::json!({"Practice": {"practice": id(n)}})
+    }
+
+    fn stat(value: serde_json::Value, under: serde_json::Value) -> serde_json::Value {
+        serde_json::json!({"label": {"Key": "k"}, "value": value, "under": under})
+    }
+
+    fn ids(range: std::ops::RangeInclusive<u128>) -> HashSet<Uuid> {
+        range.map(id).collect()
+    }
+
+    #[test]
+    fn practice_ids_cover_every_report_kind() {
+        let graph = ReportDefinition::Graph(GraphReport {
+            bar_layout: BarLayout::Grouped,
+            traces: [1, 2]
+                .map(|n| PracticeTrace {
+                    label: None,
+                    type_: TraceType::Bar,
+                    practice: id(n),
+                    y_axis: None,
+                    show_average: false,
+                })
+                .into(),
+        });
+        assert_eq!(graph.practice_ids(), ids(1..=2));
+
+        let grid = ReportDefinition::Grid(GridReport {
+            practices: vec![id(3), id(1)],
+            group_columns: None,
+        });
+        assert_eq!(grid.practice_ids(), HashSet::from([id(1), id(3)]));
+
+        // Every place a practice id can sit in the panels types, each with its own id.
+        let scope = serde_json::json!({"today": true, "missing_zero": false});
+        let goal = |n: u128| {
+            serde_json::json!({"practice": id(n), "direction": "AtLeast", "amount": 1,
+                "period": "Day", "counts": "Total"})
+        };
+        let series = |source: serde_json::Value| {
+            serde_json::json!({"label": null, "mark": "Bar", "source": source,
+                "axis": "Left", "only_with": null})
+        };
+        let calc = serde_json::json!({"Calc": {"terms": [
+            {"sign": 1, "practice": id(2), "day_offset": 0, "optional": false},
+            {"sign": -1, "practice": id(3), "day_offset": 0, "optional": true}]}});
+        let range = serde_json::json!({"Range": {
+            "from": {"practice": id(4), "day_offset": 0},
+            "to": {"practice": id(5), "day_offset": 0}}});
+        let full = panels(serde_json::json!({
+            "version": 1,
+            "template": null,
+            "required": [{"practice": id(20), "label": {"Key": "k"}}],
+            "panels": [
+                {"kind": "Chart", "title": null, "bar_layout": "Grouped", "format": "Count",
+                 "reversed": false, "headline": false,
+                 "series": [series(src(1)), series(calc), series(range)],
+                 "target": {"min": 1, "max": null, "of": src(6), "lines": false,
+                            "colour": false, "label": null},
+                 "lines": [{"of": src(7), "pick": null, "dashed": false, "label": null}]},
+                {"kind": "Stats", "stats": [
+                    stat(serde_json::json!({"Average": {"of": src(8), "pick": null,
+                        "format": "Count", "scope": scope}}),
+                        stat(serde_json::json!({"Logged": {"of": src(9), "scope": scope}}),
+                            stat(serde_json::json!({"CountTrue": {"of": src(10), "scope": scope}}),
+                                serde_json::Value::Null))),
+                    stat(serde_json::json!({"OnTarget": {"of": src(11), "min": null,
+                        "max": null, "scope": scope}}), serde_json::Value::Null)]},
+                {"kind": "Month", "practice": id(12)},
+                {"kind": "Gaps", "event": id(13)},
+                {"kind": "Around", "event": id(14),
+                 "rows": [{"label": null, "source": src(15)}]},
+                {"kind": "Goals", "goals": [goal(16)]}
+            ]
+        }));
+        // 1..=7 charts, 8..=11 stats (nested `under` too), 12..=16 other panels, 20 required.
+        let mut want = ids(1..=16);
+        want.insert(id(20));
+        assert_eq!(full.practice_ids(), want);
+
+        // Each template keeps its own practices.
+        let template = |t: serde_json::Value| {
+            panels(serde_json::json!({"version": 1, "template": t, "required": [], "panels": []}))
+        };
+        let t = template(serde_json::json!({"Sleep":
+            {"bedtime": id(1), "wake": id(2), "nap": id(3), "min": null, "max": null}}));
+        assert_eq!(t.practice_ids(), ids(1..=3));
+        let t = template(serde_json::json!({"Japa":
+            {"total": id(1), "target": 16, "morning": id(2), "quality": id(3), "attunement": id(4)}}));
+        assert_eq!(t.practice_ids(), ids(1..=4));
+        let t =
+            template(serde_json::json!({"Duration": {"practices": [id(1), id(2)], "goal": null}}));
+        assert_eq!(t.practice_ids(), ids(1..=2));
+        let t = template(serde_json::json!({"Days": {"practices": [id(1), id(2)]}}));
+        assert_eq!(t.practice_ids(), ids(1..=2));
+        let t = template(serde_json::json!({"Gaps": {"event": id(1), "rows": [id(2)],
+            "sleep": {"bedtime": id(3), "wake": id(4), "nap": id(5)}}}));
+        assert_eq!(t.practice_ids(), ids(1..=5));
+        let t = template(serde_json::json!({"Goals": {"goals": [goal(1), goal(2)]}}));
+        assert_eq!(t.practice_ids(), ids(1..=2));
     }
 }
