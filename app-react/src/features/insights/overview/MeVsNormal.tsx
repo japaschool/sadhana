@@ -1,3 +1,5 @@
+import { useLayoutEffect, useRef, useState } from 'react'
+import type { RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { MarkedPeriod } from '../../../api/markedPeriods'
 import type { UserPractice } from '../../../types/api'
@@ -88,9 +90,7 @@ function StackedRow({ n, practices }: { n: NormalRow; practices: UserPractice[] 
   )
 }
 
-const COLS = 'grid grid-cols-[minmax(0,1fr)_64px_104px_minmax(120px,178px)_116px] items-center gap-3 @max-[40rem]:grid-cols-[minmax(0,1fr)_64px_104px_116px]'
-// Narrow card (small tablet): the strip and the note drop to a second line under now / usual / word.
-const NARROW_LINE2 = '@max-[40rem]:col-span-3 @max-[40rem]:col-start-2 @max-[40rem]:row-start-2'
+const COLS = 'grid grid-cols-[minmax(0,1fr)_64px_104px_minmax(120px,178px)_116px] items-center gap-3'
 
 function ColumnsRow({ n, practices }: { n: NormalRow; practices: UserPractice[] }) {
   const { t } = useTranslation()
@@ -105,9 +105,9 @@ function ColumnsRow({ n, practices }: { n: NormalRow; practices: UserPractice[] 
           <span className="text-[11px] text-ui-faint2">{fmt(n.usual.p25)}–{fmt(n.usual.p75)}</span>
         </span>
       ) : <span />}
-      {note ? <span className={`col-span-2 ${NARROW_LINE2} text-[13px] leading-[1.4] font-semibold text-ui-muted`}>{note}</span> : (
+      {note ? <span className={"col-span-2 text-[13px] leading-[1.4] font-semibold text-ui-muted"}>{note}</span> : (
         <>
-          <div className={NARROW_LINE2}><Strip n={n} /></div>
+          <Strip n={n} />
           {n.word ? <WordChip word={n.word} /> : <span />}
         </>
       )}
@@ -115,14 +115,30 @@ function ColumnsRow({ n, practices }: { n: NormalRow; practices: UserPractice[] 
   )
 }
 
+/** The columns need about 680px of card (a name, then ~510px of fixed columns); a small tablet gets the phone's stacked rows. */
+function useNarrow(ref: RefObject<HTMLElement | null>) {
+  const [narrow, setNarrow] = useState(false)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() => setNarrow(el.clientWidth < 680))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [ref])
+  return narrow
+}
+
 /** Each row's last 7 days against its usual range (16m1, 16m3; tablet and desktop: 16t1). */
 export function MeVsNormal({ normal, practices, variant }: { normal: NormalRow[]; practices: UserPractice[]; variant: 'stacked' | 'columns' }) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const periods = [...new Map(normal.flatMap((n) => (n.hollow ? [[n.hollow.period.id, n.hollow.period] as const] : []))).values()]
-  const Row = variant === 'stacked' ? StackedRow : ColumnsRow
+  const ref = useRef<HTMLElement>(null)
+  const narrow = useNarrow(ref)
+  const cols = variant === 'columns' && !narrow
+  const Row = cols ? ColumnsRow : StackedRow
   return (
-    <section aria-labelledby="me-vs-normal" className={OV_CARD}>
+    <section ref={ref} aria-labelledby="me-vs-normal" className={OV_CARD}>
       <div className="flex flex-col gap-1">
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <h2 id="me-vs-normal" className="text-lg font-extrabold tracking-[-0.01em] text-ui-ink">{t('insights.overview.meVsNormal')}</h2>
@@ -130,8 +146,8 @@ export function MeVsNormal({ normal, practices, variant }: { normal: NormalRow[]
         </div>
         <p className="text-[13px] leading-[1.45] text-ui-muted">{t('insights.overview.usualExplain')}</p>
       </div>
-      <div className="@container flex flex-col">
-        {variant === 'columns' && (
+      <div className="flex flex-col">
+        {cols && (
           <div aria-hidden className={`${COLS} pt-1 text-[11px] font-bold tracking-[.08em] text-ui-faint2 uppercase`}>
             <span /><span className="text-right">{t('insights.overview.now')}</span><span>{t('insights.overview.usual')}</span>
           </div>
