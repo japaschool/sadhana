@@ -15,7 +15,7 @@ use diesel::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Identifiable, Queryable, Serialize, Deserialize, Debug, Clone)]
+#[derive(Identifiable, Queryable, Selectable, Serialize, Deserialize, Debug, Clone)]
 #[diesel(table_name = users)]
 pub struct User {
     pub id: Uuid,
@@ -48,7 +48,8 @@ impl User {
 
         let user = diesel::insert_into(users::table)
             .values(&record)
-            .get_result::<User>(conn)?;
+            .returning(User::as_select())
+            .get_result(conn)?;
 
         let token = user.generate_token()?;
 
@@ -82,9 +83,10 @@ impl User {
         naive_password: &str,
     ) -> Result<(User, Token), AppError> {
         let user = users::table
+            .select(User::as_select())
             .filter(users::email.eq(email))
             .limit(1)
-            .first::<User>(conn)?;
+            .first(conn)?;
         let password_matches = hasher::verify(naive_password, &user.hash)?;
 
         if !password_matches {
@@ -109,18 +111,24 @@ impl User {
         skip_defaults: bool,
     ) -> Result<(User, Token, bool), AppError> {
         if let Ok(user) = users::table
+            .select(User::as_select())
             .filter(users::email.eq(email))
-            .first::<User>(conn)
+            .first(conn)
         {
             let token = user.generate_token()?;
             return Ok((user, token, false));
         }
 
         let hashed = hasher::hash_password(&uuid::Uuid::new_v4().to_string())?;
-        let record = SignupUser { email, hash: &hashed, name };
+        let record = SignupUser {
+            email,
+            hash: &hashed,
+            name,
+        };
         let user = diesel::insert_into(users::table)
             .values(&record)
-            .get_result::<User>(conn)?;
+            .returning(User::as_select())
+            .get_result(conn)?;
 
         if !skip_defaults {
             sql_query(
@@ -138,7 +146,10 @@ impl User {
     }
 
     pub fn find(conn: &mut PgConnection, id: &Uuid) -> Result<Self, AppError> {
-        let user = users::table.find(id).first(conn)?;
+        let user = users::table
+            .find(id)
+            .select(User::as_select())
+            .first(conn)?;
         Ok(user)
     }
 
@@ -157,7 +168,10 @@ impl User {
         current_password: &str,
         new_password: &str,
     ) -> Result<(), AppError> {
-        let user = users::table.filter(users::id.eq(&id)).first::<User>(conn)?;
+        let user = users::table
+            .select(User::as_select())
+            .filter(users::id.eq(&id))
+            .first(conn)?;
 
         let password_matches = hasher::verify(current_password, &user.hash)?;
 
@@ -230,8 +244,9 @@ impl Confirmation {
     ) -> Result<Self, AppError> {
         if fail_if_user_exists
             && users::table
+                .select(User::as_select())
                 .filter(users::email.eq(email))
-                .first::<User>(conn)
+                .first(conn)
                 .is_ok()
         {
             return Err(AppError::UnprocessableEntity(vec![format!(
@@ -268,7 +283,11 @@ impl Confirmation {
 mod tests {
     use super::User;
     use crate::{app::user::request::SignupUser, schema::users, utils::db};
-    use diesel::{prelude::*, sql_query, sql_types::{BigInt, Text}};
+    use diesel::{
+        prelude::*,
+        sql_query,
+        sql_types::{BigInt, Text},
+    };
 
     #[derive(QueryableByName)]
     struct Count {
@@ -287,10 +306,12 @@ mod tests {
     }
 
     fn delete_user(conn: &mut PgConnection, email: &str) {
-        sql_query("delete from user_practices where user_id in (select id from users where email = $1)")
-            .bind::<Text, _>(email)
-            .execute(conn)
-            .unwrap();
+        sql_query(
+            "delete from user_practices where user_id in (select id from users where email = $1)",
+        )
+        .bind::<Text, _>(email)
+        .execute(conn)
+        .unwrap();
         diesel::delete(users::table.filter(users::email.eq(email)))
             .execute(conn)
             .unwrap();
@@ -305,7 +326,15 @@ mod tests {
         let mut conn = db::establish_connection().get().unwrap();
         let email = "skip_absent@test.co";
         delete_user(&mut conn, email);
-        User::signup(&mut conn, email, "Skip", "abcdef", "en", parsed.skip_defaults).unwrap();
+        User::signup(
+            &mut conn,
+            email,
+            "Skip",
+            "abcdef",
+            "en",
+            parsed.skip_defaults,
+        )
+        .unwrap();
         assert!(practices(&mut conn, email) > 0);
         delete_user(&mut conn, email);
     }

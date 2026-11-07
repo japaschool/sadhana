@@ -142,6 +142,26 @@ diesel::table! {
 }
 
 diesel::table! {
+    share_link_reports (share_link_id, report_id) {
+        share_link_id -> Uuid,
+        report_id -> Uuid,
+    }
+}
+
+diesel::table! {
+    share_links (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        #[max_length = 100]
+        name -> Varchar,
+        start_date -> Nullable<Date>,
+        last_opened_at -> Nullable<Timestamptz>,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::PracticeDataTypeEnum;
 
@@ -169,6 +189,7 @@ diesel::table! {
         name -> Text,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+        legacy_share_enabled -> Bool,
     }
 }
 
@@ -222,6 +243,9 @@ diesel::joinable!(practice_groups -> users (user_id));
 diesel::joinable!(report_traces -> reports (report_id));
 diesel::joinable!(report_traces -> user_practices (practice_id));
 diesel::joinable!(reports -> users (user_id));
+diesel::joinable!(share_link_reports -> reports (report_id));
+diesel::joinable!(share_link_reports -> share_links (share_link_id));
+diesel::joinable!(share_links -> users (user_id));
 diesel::joinable!(user_practices -> practice_groups (group_id));
 diesel::joinable!(user_practices -> users (user_id));
 diesel::joinable!(yatra_practices -> yatras (yatra_id));
@@ -240,6 +264,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     practice_groups,
     report_traces,
     reports,
+    share_link_reports,
+    share_links,
     user_practices,
     users,
     yatra_practices,
