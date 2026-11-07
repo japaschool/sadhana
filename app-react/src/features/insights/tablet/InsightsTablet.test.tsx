@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { InsightsTabletScreen } from './InsightsTablet'
 import { setViewportWidth } from '../../../test/viewport'
 
@@ -66,7 +66,25 @@ describe('InsightsTablet', () => {
     await waitFor(() => expect(charts.getReportData).toHaveBeenCalledWith('2026-09-30', 'Month'))
     fireEvent.click(screen.getByRole('button', { name: 'More' }))
     expect(within(screen.getByRole('menu', { name: 'More' })).getAllByRole('menuitem').map((i) => i.textContent))
-      .toEqual(['New chart', 'Edit “Morning”', 'Share reports link', 'Download data (CSV)', 'Delete report', 'Report a problem'])
+      .toEqual(['New chart', 'Edit “Morning”', 'Sharing', 'Download data (CSV)', 'Delete report', 'Report a problem'])
+  })
+
+  it('Sharing opens Settings → Sharing', async () => {
+    function Probe() { const l = useLocation(); return <p data-testid="location">{l.pathname}</p> }
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={['/charts']}>
+          <Routes>
+            <Route path="/charts" element={<InsightsTabletScreen />} />
+            <Route path="/settings/sharing" element={<Probe />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+    fireEvent.click(await screen.findByRole('button', { name: 'More' }))
+    fireEvent.click(within(screen.getByRole('menu', { name: 'More' })).getByRole('menuitem', { name: 'Sharing' }))
+    expect(screen.getByTestId('location')).toHaveTextContent('/settings/sharing')
   })
 
   it('hides report actions on Overview even with a report selected', async () => {
@@ -76,7 +94,7 @@ describe('InsightsTablet', () => {
     await waitFor(() => expect(charts.getReports).toHaveBeenCalled())
     fireEvent.click(await screen.findByRole('button', { name: 'More' }))
     expect(within(screen.getByRole('menu', { name: 'More' })).getAllByRole('menuitem').map((i) => i.textContent))
-      .toEqual(['New chart', 'Share reports link', 'Download data (CSV)', 'Report a problem'])
+      .toEqual(['New chart', 'Sharing', 'Download data (CSV)', 'Report a problem'])
   })
 
   it('shows a Grid report as a table; a row opens the day as a sheet', async () => {

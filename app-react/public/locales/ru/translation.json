@@ -95,9 +95,7 @@
   },
   "charts": {
     "empty": "Отчётов пока нет",
-    "copied": "Скопировано!",
     "downloadCsv": "Скачать данные (CSV)",
-    "shareLink": "Поделиться ссылкой на отчёты",
     "deleteTitle": "Удалить отчёт?",
     "deleteMsg": "Удалить «{{name}}»? Это нельзя отменить.",
     "practiceCount_few": "{{count}} практики",

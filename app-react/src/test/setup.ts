@@ -247,7 +247,6 @@ if (!i18n.isInitialized) {
             newReport: 'New report',
             addReport: 'Add new report',
             downloadCsv: 'Download data (CSV)',
-            shareLink: 'Share reports link',
             reportName: 'Report name',
             reportNamePlaceholder: 'Report name',
             reportType: 'Report type',

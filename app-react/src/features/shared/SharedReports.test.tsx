@@ -123,4 +123,81 @@ describe('shared reports', () => {
       await waitFor(() => expect(api.getSharedReportData).toHaveBeenCalledWith('u1', last, 'HalfYear'))
     },
   )
+
+  it.each([['mobile', 390, SharedMobile], ['tablet', 834, SharedTablet], ['desktop', 1440, SharedDesktop]] as const)(
+    '%s: a link page has no CSV button', async (_n, width, Page) => {
+      setViewportWidth(width)
+      api.getSharedUser.mockResolvedValue({ id: 'u1', name: 'Alex das', kind: 'link', start_date: null })
+      renderAt(<Page />)
+      await userEvent.click(await screen.findByRole('radio', { name: /Hearing & study/ }))
+      await screen.findAllByText('Reading')
+      expect(screen.queryByRole('button', { name: 'Download CSV' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'More' })).toBeNull()
+    },
+  )
+
+  it.each([['mobile', 390, SharedMobile], ['tablet', 834, SharedTablet], ['desktop', 1440, SharedDesktop]] as const)(
+    '%s: a legacy page keeps CSV', async (_n, width, Page) => {
+      setViewportWidth(width)
+      renderAt(<Page />)
+      await userEvent.click(await screen.findByRole('radio', { name: /Hearing & study/ }))
+      await screen.findAllByText('Reading')
+      if (width === 390) {
+        await userEvent.click(screen.getByRole('button', { name: 'More' }))
+        expect(screen.getByRole('menuitem', { name: 'Download CSV' })).toBeInTheDocument()
+      } else expect(screen.getByRole('button', { name: 'Download CSV' })).toBeInTheDocument()
+    },
+  )
+
+  it('opens on the link\'s date, and the viewer can still move it', async () => {
+    setViewportWidth(834)
+    api.getSharedUser.mockResolvedValue({ id: 'u1', name: 'Alex das', kind: 'link', start_date: '2026-10-31' })
+    api.getSharedReports.mockResolvedValue([GRAPH])
+    renderAt(<SharedTablet />)
+    await waitFor(() => expect(api.getSharedReportData).toHaveBeenCalled())
+    expect(api.getSharedReportData.mock.calls[0]).toEqual(['u1', '2026-10-31', 'Month'])
+    await userEvent.click(await screen.findByRole('button', { name: /Ending/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Friday, October 30' }))
+    await waitFor(() => expect(api.getSharedReportData).toHaveBeenCalledWith('u1', '2026-10-30', 'Month'))
+    expect(api.getSharedReportData).not.toHaveBeenCalledWith('u1', toDateStr(new Date()), 'Month')
+  })
+
+  it('a month report opens on the link\'s month', async () => {
+    api.getSharedUser.mockResolvedValue({ id: 'u1', name: 'Alex das', kind: 'link', start_date: '2026-10-31' })
+    api.getSharedReports.mockResolvedValue([
+      { id: 'm', name: 'Days I did it', definition: { Panels: { version: 1, template: null, required: [], panels: [{ kind: 'Month', practice: 'walk' }] } } },
+    ])
+    api.getSharedPractices.mockResolvedValue([{ id: 'walk', practice: 'Walk', data_type: 'Bool', is_active: true }])
+    renderAt(<SharedMobile />)
+    await waitFor(() => expect(api.getSharedReportData).toHaveBeenCalledWith('u1', '2026-10-31', 'HalfYear'))
+    expect((await screen.findAllByText('October 2026')).length).toBeGreaterThan(0)
+  })
+
+  it('a goals report ignores the link\'s date: it reads to today', async () => {
+    api.getSharedUser.mockResolvedValue({ id: 'u1', name: 'Alex das', kind: 'link', start_date: '2026-10-31' })
+    api.getSharedReports.mockResolvedValue([
+      { id: 'q', name: 'Goals', definition: { Panels: { version: 1, template: null, required: [], panels: [{ kind: 'Goals', goals: [] }] } } },
+    ])
+    renderAt(<SharedMobile />)
+    await waitFor(() => expect(api.getSharedReportData).toHaveBeenCalledWith('u1', toDateStr(new Date()), 'Year'))
+    expect(api.getSharedReportData).not.toHaveBeenCalledWith('u1', '2026-10-31', expect.anything())
+  })
+
+  it('shows a Gaps report on a shared link, with no marked-period bands', async () => {
+    setViewportWidth(1440)
+    api.getSharedUser.mockResolvedValue({ id: 'u1', name: 'Alex das', kind: 'link', start_date: null })
+    api.getSharedReports.mockResolvedValue([
+      { id: 'x', name: 'Fasts', definition: { Panels: { version: 1, template: null, required: [], panels: [{ kind: 'Gaps', event: 'fast' }] } } },
+    ])
+    api.getSharedPractices.mockResolvedValue([{ id: 'fast', practice: 'Fasting', data_type: 'Bool', is_active: true }])
+    api.getSharedReportData.mockResolvedValue([
+      { cob_date: toDateStr(new Date(Date.now() - 10 * 86400000)), practice: 'Fasting', value: { Bool: true } },
+      { cob_date: yesterday, practice: 'Fasting', value: { Bool: true } },
+    ])
+    const { container } = renderAt(<SharedDesktop />)
+    expect(await screen.findByText('Days since the one before')).toBeInTheDocument()
+    expect(api.getSharedReports).toHaveBeenCalledWith('u1')
+    expect(container.querySelector('.recharts-reference-area')).toBeNull()
+    expect(screen.queryByText('Marked period')).toBeNull()
+  })
 })

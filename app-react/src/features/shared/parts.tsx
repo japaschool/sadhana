@@ -23,12 +23,25 @@ export const CARD = 'rounded-[20px] border border-ui-hairline bg-ui-surface'
 
 /** Everything a shared reports screen needs: the owner, their reports and the selected one's data. */
 export function useShared(userId: string) {
-  const ins = useInsights(undefined, true, userId)
   const user = useQuery({ queryKey: ['shared', userId, 'user'], queryFn: () => chartsApi.getSharedUser(userId), retry: false })
+  // The page opens once on the link's date (a month report on its month; goals still read to today), then the viewer moves freely.
+  // Data waits for it, so the first read is already the right window.
+  const [opened, setOpened] = useState(false)
+  const ins = useInsights(undefined, true, userId, !opened && !user.isError)
+  const start = user.data?.start_date
+  if (!opened && user.data) {
+    setOpened(true)
+    if (start && start !== ins.todayCob) {
+      ins.setEnd(fromDateStr(start))
+      ins.setMonth(start.slice(0, 7))
+    }
+  }
   const { isAuthenticated } = useAuth()
   return {
     ...ins,
     name: user.data?.name ?? '',
+    /** Until the user loads it reads as a link, so a link page never flashes its legacy-only CSV button. */
+    kind: user.data?.kind ?? 'link',
     grid: isTable(ins.report),
     /** A panels report with its data: it draws its own cards. */
     panelsReady: !!ins.panels && !ins.isLoading && !ins.isError,

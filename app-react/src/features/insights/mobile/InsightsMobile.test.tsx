@@ -149,7 +149,7 @@ describe('InsightsMobile', () => {
     await openMore()
     const menu = screen.getByRole('menu', { name: 'More' })
     expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
-      'New chart', 'Share reports link', 'Download data (CSV)', 'Report a problem',
+      'New chart', 'Sharing', 'Download data (CSV)', 'Report a problem',
     ])
   })
 
@@ -160,8 +160,27 @@ describe('InsightsMobile', () => {
     await openMore()
     const menu = screen.getByRole('menu', { name: 'More' })
     expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
-      'New chart', 'Share reports link', 'Download data (CSV)', 'Report a problem',
+      'New chart', 'Sharing', 'Download data (CSV)', 'Report a problem',
     ])
+  })
+
+  it('Sharing opens Settings → Sharing', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={['/charts']}>
+          <Routes>
+            <Route path="/charts" element={<InsightsMobileScreen />} />
+            <Route path="/settings/sharing" element={<LocationProbe />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+    toCharts()
+    await screen.findByRole('button', { name: LONG })
+    await openMore()
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Sharing' }))
+    expect(screen.getByTestId('location')).toHaveTextContent('/settings/sharing')
   })
 
   it('offers Edit and Delete for a report; Edit opens its chart settings', async () => {

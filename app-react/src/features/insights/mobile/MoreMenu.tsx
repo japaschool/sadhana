@@ -8,7 +8,7 @@ import { REPORTS_KEY } from '../useReports'
 import { useToast } from '../../../hooks/useToast'
 import type { AppBarAction } from '../../../layouts/mobile/AppBar'
 import { BottomSheet } from '../../../ui/primitives/BottomSheet'
-import { copyShareLink, downloadCsv } from '../../today/actions'
+import { downloadCsv } from '../../today/actions'
 import { NewChartSheet } from '../settings/mobile/NewChartSheet'
 import type { Report } from '../../../api/charts'
 
@@ -33,7 +33,7 @@ export function useMoreMenu(report: Report | null): { actions: AppBarAction[]; s
         onSelect: () => navigate(`/settings/charts/${report.id}`),
       }]
       : []),
-    { label: t('charts.shareLink'), onSelect: () => { void copyShareLink().then((ok) => { if (ok) showToast({ message: t('charts.copied'), variant: 'success' }) }) } },
+    { label: t('sharing.title'), onSelect: () => navigate('/settings/sharing') },
     { label: t('charts.downloadCsv'), onSelect: () => { downloadCsv().catch(() => showToast({ message: t('common.error'), variant: 'error' })) } },
     ...(report ? [{ label: t('insights.deleteReport'), onSelect: () => setConfirming(true) }] : []),
     { label: t('common.reportProblem'), onSelect: () => navigate('/help/support-form') },

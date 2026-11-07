@@ -91,9 +91,7 @@
   },
   "charts": {
     "empty": "No reports yet",
-    "copied": "Copied!",
     "downloadCsv": "Download data (CSV)",
-    "shareLink": "Share reports link",
     "deleteTitle": "Delete report?",
     "deleteMsg": "Delete \"{{name}}\"? This cannot be undone."
   },

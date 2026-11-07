@@ -16,7 +16,7 @@ import {
   SHARED_RANGES, SignUpLink, Spinner, useCsv, useKind, useShared, type Shared,
 } from './parts'
 
-/** /shared/:userId — Insights, read-only (Turn 13). The only action is Download CSV. */
+/** /shared/:userId — Insights, read-only (Turn 13). The only action is Download CSV, and only on the legacy all-reports link. */
 
 function Root({ children, className = '' }: { children: ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -150,7 +150,7 @@ export function SharedMobile() {
           <section className={`${CARD} flex flex-col gap-3.5 p-4`}>
             <div className="flex items-start justify-between gap-3">
               {!s.isLoading && !s.isError ? <Headline s={s} size={30} /> : <span />}
-              {!s.panels && (
+              {!s.panels && s.kind === 'legacy' && (
                 <button type="button" aria-label={t('today.more')} aria-haspopup="menu" onClick={(e) => setMenu(e.currentTarget)}
                   className="-mt-2.5 -mr-2.5 flex h-11 w-11 shrink-0 items-center justify-center gap-[3px]">
                   {[0, 1, 2].map((i) => <span key={i} className="h-1 w-1 rounded-full bg-ui-ink" />)}
@@ -236,7 +236,7 @@ export function SharedTablet() {
               <div className="flex items-center gap-2.5">
                 <RangeControl s={s} size="md" />
                 <span className="flex-1" />
-                {!s.panels && <CsvButton onClick={csv} />}
+                {!s.panels && s.kind === 'legacy' && <CsvButton onClick={csv} />}
               </div>
               {s.panelsReady ? <Panels s={s} height={300} cols={2} /> : (
                 <section className={`${CARD} flex flex-col gap-3.5 p-5`}>
@@ -312,7 +312,7 @@ export function SharedDesktop() {
               </div>
               <div className="flex shrink-0 items-center gap-3">
                 <RangeControl s={s} size="lg" />
-                {!s.panels && <CsvButton onClick={csv} />}
+                {!s.panels && s.kind === 'legacy' && <CsvButton onClick={csv} />}
               </div>
             </div>
             {s.panelsReady ? <Panels s={s} height={300} /> : (
