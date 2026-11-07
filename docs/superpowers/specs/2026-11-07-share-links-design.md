@@ -115,6 +115,11 @@ how Settings does it elsewhere.
   someone new. No prefilled editor, no picker (user's decision).
 - Guide finish step (`FinishStep.tsx`): the share-link block (shown when `guide.reader`) is **removed**
   altogether (user's decision). Drop its strings and tests too.
+- The guide's **reader step** ("Does anyone else read this chart?", `ReaderStep.tsx`, `step.at === 'reader'`,
+  first run only) is **removed** too (user's decision): Setup goes straight to Finish. Its answer was also sent
+  as `has_reader` on guide runs; the client stops sending it, but the server keeps accepting the field and
+  keeps the column, since old cached builds still send it. Update `last_step` docs/values and the frame's
+  step indicator (`GuideFrame.tsx`) to match.
 - `shareUrl()` / `copyShareLink()` in `today/actions.ts` go away.
 
 ## Viewer page
