@@ -92,8 +92,8 @@ export function useSetup<K extends GuideKind>(guide: Guide, kind: K) {
     position: t('guide.setup.label', { a: at + 1, b: guide.tracked.length }),
     /** What the person is told under the title: from Add practice, with practices of theirs to use, say so. */
     lead: t(!guide.firstRun && hasMine && kind !== 'sleep' ? 'guide.setup.lead.mine' : `guide.setup.lead.${kind}`),
-    /** From Add practice there is no sharing step, so the last button is the one that creates. */
-    nextLabel: !after && !guide.firstRun ? t('templateForm.create') : t('guide.setup.next', { what: after ? t(`guide.kinds.${after}.name`) : t(guide.firstRun ? 'guide.steps.sharing' : 'guide.steps.finish') }),
+    /** The last setup goes straight to the step that creates, so its button is the one that creates. */
+    nextLabel: !after ? t('templateForm.create') : t('guide.setup.next', { what: t(`guide.kinds.${after}.name`) }),
     /** Callers pass names already trimmed, so a name made of spaces is the empty one. */
     set: (patch: Partial<Value<K>>) => guide.setChoice(kind, { ...value, ...patch } as Choices[K]),
     /** Next also records an untouched screen, so its defaults are what gets built. */

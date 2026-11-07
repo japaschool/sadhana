@@ -18,9 +18,8 @@ export function GuideFrame({ guide, footer, fill = false, children }: { guide: G
   const mobile = useLayout() === 'mobile'
   const root = useRef<HTMLDivElement>(null)
   useShellBackground(root)
-  const steps = guide.firstRun ? ['choose', 'setup', 'sharing', 'finish'] : ['choose', 'setup', 'finish']
-  const at = { choose: 'choose', setup: 'setup', reader: 'sharing', finish: 'finish' }[guide.step.at]
-  const cur = steps.indexOf(at)
+  const steps = ['choose', 'setup', 'finish']
+  const cur = steps.indexOf(guide.step.at)
   const exit = guide.creating ? <span className="w-11" /> : <button type="button" onClick={guide.leave} className={EXIT}>{t(guide.exitKey)}</button>
   const back = guide.canBack && (
     <button type="button" onClick={guide.back} className="flex min-h-11 items-center gap-1.5 px-2 text-[15px] font-bold text-ui-accent">

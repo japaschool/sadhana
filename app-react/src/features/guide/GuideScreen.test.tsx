@@ -33,19 +33,21 @@ describe('the system Back button', () => {
   const opened = (state?: unknown, from = '/settings/practices') =>
     createMemoryRouter([...routes, { path: from, element: <p>Where it came from</p> }], { initialEntries: [from, { pathname: '/guide', state }], initialIndex: 1 })
   const back = (r: ReturnType<typeof opened>) => act(async () => { await r.navigate(-1) })
-  const toReader = async (user: ReturnType<typeof userEvent.setup>) => {
+  /** To the last setup, with two reports tracked: the next step would create them. */
+  const toSetup = async (user: ReturnType<typeof userEvent.setup>) => {
     await user.click(screen.getByRole('checkbox', { name: 'Sleep' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Days I did it' }))
     await user.click(screen.getByRole('button', { name: 'Next' }))
     await screen.findByRole('heading', { name: 'Sleep' })
     await user.click(await screen.findByRole('button', { name: /^Next/ }))
-    await screen.findByRole('radio', { name: /^Yes/ })
+    await screen.findByRole('heading', { name: 'Days I did it' })
   }
 
   it('steps back inside the guide, staying there and marking nothing', async () => {
     const user = userEvent.setup()
     const r = opened({ firstRun: true })
     render(<Providers><RouterProvider router={r} /></Providers>)
-    await toReader(user)
+    await toSetup(user)
     await back(r)
     expect(screen.getByRole('heading', { name: 'Sleep' })).toBeInTheDocument()
     expect(r.state.location.pathname).toBe('/guide')
@@ -59,7 +61,7 @@ describe('the system Back button', () => {
     const user = userEvent.setup()
     const r = opened({ firstRun: true })
     render(<Providers><RouterProvider router={r} /></Providers>)
-    await toReader(user)
+    await toSetup(user)
     await back(r)
     await back(r)
     await back(r)
@@ -92,7 +94,7 @@ describe('the system Back button', () => {
     const user = userEvent.setup()
     const r = opened({ firstRun: true })
     render(<Providers><RouterProvider router={r} /></Providers>)
-    await toReader(user)
+    await toSetup(user)
     await back(r)
     await back(r)
     await back(r)

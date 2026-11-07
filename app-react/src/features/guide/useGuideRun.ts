@@ -12,6 +12,6 @@ export function useGuideRun(from: GuideStart) {
   }, [id])
   return useMemo(() => ({
     mark: (last_step: string) => send({ last_step }),
-    end: (outcome: GuideOutcome, hasReader?: boolean) => send({ outcome, ...(hasReader !== undefined && { has_reader: hasReader }) }),
+    end: (outcome: GuideOutcome) => send({ outcome }),
   }), [send])
 }

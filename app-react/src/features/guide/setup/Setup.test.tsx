@@ -110,7 +110,7 @@ describe('with no connection and no practices cached', () => {
 
 describe('Sleep', () => {
   it('renames a practice in place, and it reaches the choices (trimmed)', async () => {
-    const user = await start(['sleep'], { firstRun: true })
+    const user = await start(['sleep', 'days'], { firstRun: true })
     await rename(user, 'Bedtime', '  Lights out  ')
     await user.click(screen.getByRole('button', { name: 'Done' }))
     expect(screen.getByText('Lights out')).toBeInTheDocument()
@@ -444,14 +444,14 @@ describe('layouts and leaving', () => {
   })
 
   it('the leave sheet appears once a set up is done, and Keep setting up stays', async () => {
-    const user = await start(['sleep'], { firstRun: true })
+    const user = await start(['sleep', 'days'], { firstRun: true })
     await user.click(next())
-    expect(screen.getByRole('heading', { name: 'Does anyone else read this chart?' })).toBeInTheDocument()
+    expect(screen.getAllByText(/^Set up · /).length).toBeGreaterThan(0)
     await user.click(screen.getAllByRole('button', { name: 'Build my own list' })[0])
     expect(screen.getByRole('heading', { name: 'Leave setup?' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Keep setting up' }))
     expect(screen.queryByRole('heading', { name: 'Leave setup?' })).not.toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Does anyone else read this chart?' })).toBeInTheDocument()
+    expect(screen.getAllByText(/^Set up · /).length).toBeGreaterThan(0)
   })
 })
 
@@ -576,12 +576,12 @@ describe('your practices that fit', () => {
 })
 
 describe('from Add practice', () => {
-  it('the last button creates the report; on first run it goes on to sharing', async () => {
+  it('the last button creates the report, on first run too', async () => {
     await start(['time'])
     expect(screen.getByRole('button', { name: 'Create report' })).toBeInTheDocument()
     cleanup()
     await start(['time'], { firstRun: true })
-    expect(next()).toHaveTextContent('Next: Sharing')
+    expect(screen.getByRole('button', { name: 'Create report' })).toBeInTheDocument()
   })
 
   it('says to use what you log, and tags the list with the type', async () => {

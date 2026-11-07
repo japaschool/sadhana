@@ -36,7 +36,7 @@ describe('useGuide', () => {
     expect(result.current.guide.tracked).toEqual(['sleep'])
   })
 
-  it('sets up each tracked report in order, then asks about a reader on first run only', () => {
+  it('first run goes from the last setup straight to finish', () => {
     const first = setup(true).result
     act(() => { first.current.guide.toggle('days'); first.current.guide.toggle('sleep') })
     act(() => first.current.guide.next())
@@ -44,9 +44,9 @@ describe('useGuide', () => {
     act(() => first.current.guide.next())
     expect(first.current.guide.step).toEqual({ at: 'setup', kind: 'days' })
     act(() => first.current.guide.next())
-    expect(first.current.guide.step).toEqual({ at: 'reader' })
-    act(() => first.current.guide.next())
     expect(first.current.guide.step).toEqual({ at: 'finish' })
+    act(() => first.current.guide.back())
+    expect(first.current.guide.step).toEqual({ at: 'setup', kind: 'days' }) // Back from finish returns to the last setup on first run too
 
     const later = setup(false).result
     act(() => later.current.guide.toggle('count'))
@@ -90,13 +90,13 @@ describe('useGuide', () => {
     expect(result.current.path).toBe('/')
   })
 
-  it('marks finished with whether there is a reader, and leaving afterwards only navigates', async () => {
+  it('finished sends { outcome: \'finished\' } with no has_reader, and leaving afterwards only navigates', async () => {
     const { result } = setup(true)
-    act(() => result.current.guide.finished(true))
+    act(() => result.current.guide.finished())
     expect(result.current.path).toBe('/guide')
     act(() => result.current.guide.finish())
     expect(result.current.path).toBe('/')
-    await vi.waitFor(() => expect(api.update).toHaveBeenCalledWith('run-1', { outcome: 'finished', has_reader: true }))
+    await vi.waitFor(() => expect(api.update).toHaveBeenCalledWith('run-1', { outcome: 'finished' }))
     expect(api.update.mock.calls.filter(([, b]) => b.outcome)).toHaveLength(1)
   })
 

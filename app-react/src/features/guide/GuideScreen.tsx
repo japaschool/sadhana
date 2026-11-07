@@ -8,12 +8,11 @@ import { PrimaryButton, SecondaryButton } from '../auth/kit'
 import { FinishStep } from './FinishStep'
 import { ChooseMobile } from './mobile/ChooseMobile'
 import { SetupMobile } from './mobile/SetupMobile'
-import { ReaderStep } from './ReaderStep'
 import { useGuide } from './useGuide'
 import { ChooseWide } from './wide/ChooseWide'
 import { SetupWide } from './wide/SetupWide'
 
-/** /guide. Opened by sign-up (state.firstRun) or from the app (no state): the latter has no reader question. */
+/** /guide. Opened by sign-up (state.firstRun) or from the app (no state): the latter goes back to where it was opened. */
 export function GuideScreen() {
   const { t } = useTranslation()
   const state = useLocation().state as { firstRun?: boolean; back?: string } | null
@@ -35,7 +34,6 @@ export function GuideScreen() {
     <>
       {step.at === 'choose' && <ByLayout mobile={<ChooseMobile guide={guide} />} tablet={<ChooseWide guide={guide} />} desktop={<ChooseWide guide={guide} />} />}
       {step.at === 'setup' && <ByLayout key={step.kind} mobile={<SetupMobile guide={guide} kind={step.kind} />} tablet={<SetupWide guide={guide} kind={step.kind} />} desktop={<SetupWide guide={guide} kind={step.kind} />} />}
-      {step.at === 'reader' && <ReaderStep guide={guide} />}
       {step.at === 'finish' && <FinishStep guide={guide} />}
       {guide.confirming && (
         <BottomSheet label={t('guide.leave.title')} onClose={guide.keepGoing}>

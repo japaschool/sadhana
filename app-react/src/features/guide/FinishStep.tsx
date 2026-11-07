@@ -6,7 +6,6 @@ import { chartsApi } from '../../api/charts'
 import { practicesApi } from '../../api/practices'
 import { PrimaryButton, SecondaryButton } from '../auth/kit'
 import { REPORTS_KEY } from '../insights/useReports'
-import { copyShareLink, shareUrl } from '../today/actions'
 import { formatDuration } from '../today/values'
 import { GuideFrame } from './GuideFrame'
 import { buildPlan, itemsOf, KINDS, runPlan } from './guideLogic'
@@ -35,7 +34,6 @@ export function FinishStep({ guide }: { guide: Guide }) {
   const kinds = KINDS.filter((k) => chosen[k])
   const [rows, setRows] = useState<Partial<Record<GuideKind, Row>>>({})
   const [failure, setFailure] = useState<'connection' | 'names' | null>(null)
-  const [copied, setCopied] = useState(false)
   const started = useRef(false)
 
   /** Back at Finish with a kept plan: the choices may have changed, so the plan is owed a rebuild. Only a successful one clears it, so Retry after a rebuild failed offline still rebuilds. */
@@ -57,7 +55,7 @@ export function FinishStep({ guide }: { guide: Guide }) {
       }
       await runPlan(plan.current, api, (kind, state) => setRows((r) => ({ ...r, [kind]: state })))
       // Nothing observes these here, so without refetchType 'all' the next screen would start from the old lists.
-      guide.finished(guide.reader ?? undefined)
+      guide.finished()
       await Promise.race([
         Promise.all([
           qc.invalidateQueries({ queryKey: ['practices'], refetchType: 'all' }),
@@ -86,7 +84,6 @@ export function FinishStep({ guide }: { guide: Guide }) {
   const wide = !guide.carousel
   const names = (k: GuideKind) => itemsOf(k, chosen[k]!).map((it) => it.name)
   const practices = new Set(kinds.flatMap(names)).size
-  const link = guide.reader ? shareUrl() : null
   const detail = (k: GuideKind) => {
     const { count, time } = chosen
     if (k === 'count' && count?.target != null) return `${count.target} ${t('templateForm.targetSuffix')}`
@@ -125,19 +122,6 @@ export function FinishStep({ guide }: { guide: Guide }) {
         <h1 className="text-[26px] leading-[1.15] font-extrabold tracking-[-0.02em]">{t('guide.finish.title')}</h1>
         <p className="text-sm leading-normal text-ui-muted">{t('guide.finish.summary', { reports: kinds.length, practices })}</p>
         {list}
-        {link && (
-          <div className="flex flex-col gap-2.5 rounded-[18px] border border-ui-card-border bg-ui-card p-[18px]">
-            <span className="text-base font-extrabold">{t('guide.finish.linkTitle')}</span>
-            <div className="flex min-h-12 items-center justify-between gap-2 rounded-xl border border-ui-control bg-ui-surface py-1 pr-1.5 pl-3.5">
-              <span className="min-w-0 font-ui-mono text-sm [overflow-wrap:anywhere]">{link}</span>
-              <button type="button" className="min-h-10 shrink-0 rounded-[10px] bg-ui-tint px-3.5 text-[13px] font-extrabold text-ui-accent"
-                onClick={() => { void copyShareLink().then(setCopied) }}>
-                {t(copied ? 'guide.finish.copied' : 'guide.finish.copy')}
-              </button>
-            </div>
-            <span className="text-xs leading-snug text-ui-muted">{t('guide.finish.linkNote')}</span>
-          </div>
-        )}
         <PrimaryButton type="button" onClick={guide.finish}>{t(guide.finishKey)}</PrimaryButton>
       </>
     )

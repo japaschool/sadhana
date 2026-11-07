@@ -5,15 +5,15 @@ import { KINDS } from './guideLogic'
 import type { Choices, GuideKind, GuidePlan } from './guideLogic'
 import { useGuideRun } from './useGuideRun'
 
-export type GuideStep = { at: 'choose' } | { at: 'setup'; kind: GuideKind } | { at: 'reader' } | { at: 'finish' }
+export type GuideStep = { at: 'choose' } | { at: 'setup'; kind: GuideKind } | { at: 'finish' }
 export type Guide = ReturnType<typeof useGuide>
 
 const NONE: Choices = { sleep: null, count: null, time: null, days: null, gaps: null, goals: null }
-/** `last_step` as the server records it: choose, setup_sleep, setup_count, setup_time, setup_days, setup_gaps, setup_goals, reader, creating, finish. */
+/** `last_step` as the server records it: choose, setup_sleep, setup_count, setup_time, setup_days, setup_gaps, setup_goals, creating, finish. */
 const stepName = (s: GuideStep, creating: string | null) => (s.at === 'setup' ? `setup_${s.kind}` : s.at === 'finish' && creating !== 'done' ? 'creating' : s.at)
 
 /**
- * The guide's state. `firstRun` (new account) adds the reader question; `back` is where Back from the first
+ * The guide's state. `firstRun` is a new account; `back` is where Back from the first
  * card goes when the guide wasn't opened by sign-up. `carousel` is false on the wide grid, where `pos` means nothing.
  */
 export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun: boolean; back: string; carousel?: boolean }) {
@@ -25,8 +25,6 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
   const [tracked, setTracked] = useState<GuideKind[]>([])
   const [choices, setChoices] = useState<Choices>(NONE)
   const [confirming, setConfirming] = useState(false)
-  /** The answer to the reader question: null until given. */
-  const [reader, setReader] = useState<boolean | null>(null)
   /** Creating the practices and reports: running or done. Back is gone then, because what was chosen is being saved. */
   const [creating, setCreating] = useState<'running' | 'done' | null>(null)
   /** Built at the first Finish and kept for every retry, so a retry never renames. */
@@ -44,7 +42,7 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
   function after(from: GuideStep, list: GuideKind[]): GuideStep {
     const rest = from.at === 'choose' ? list : from.at === 'setup' ? list.slice(list.indexOf(from.kind) + 1) : []
     if (rest.length) return { at: 'setup', kind: rest[0] }
-    return from.at !== 'reader' && firstRun ? { at: 'reader' } : { at: 'finish' }
+    return { at: 'finish' }
   }
 
   /** Next is disabled on the choose screen until something is picked, so there is always somewhere to go. */
@@ -64,7 +62,7 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
       const i = tracked.indexOf(step.kind)
       if (i > 0) setStep({ at: 'setup', kind: tracked[i - 1] })
       else { setStep({ at: 'choose' }); setPos(KINDS.indexOf(step.kind)) }
-    } else setStep(step.at === 'finish' && firstRun ? { at: 'reader' } : lastSetup)
+    } else setStep(lastSetup)
   }
 
   const exit = useCallback((outcome: 'left') => {
@@ -77,7 +75,7 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
   const leave = () => (setUp ? setConfirming(true) : exit('left'))
 
   return {
-    firstRun, carousel, step, exitKey: firstRun ? 'guide.exit' : 'home.addOneMyself', finishKey: firstRun || backTo === '/' ? 'guide.finish.start' : 'guide.done', pos, reader, setReader, creating, setCreating, plan, existed, setPos, tracked, choices, confirming,
+    firstRun, carousel, step, exitKey: firstRun ? 'guide.exit' : 'home.addOneMyself', finishKey: firstRun || backTo === '/' ? 'guide.finish.start' : 'guide.done', pos, creating, setCreating, plan, existed, setPos, tracked, choices, confirming,
     /** What the plan is built from: only the reports still tracked, so skipping one after its set up drops it (re-tracking brings its values back). */
     chosen: Object.fromEntries(KINDS.map((k) => [k, tracked.includes(k) ? choices[k] : null])) as unknown as Choices,
     /** The first card of a sign-up guide is the start: nowhere to go back to. */
@@ -102,7 +100,7 @@ export function useGuide({ firstRun, back: backTo, carousel = true }: { firstRun
     keepGoing: () => setConfirming(false),
     confirmLeave: () => exit('left'),
     /** Recorded once, when everything is created, so closing the app on the closing screen still counts. */
-    finished: (hasReader?: boolean) => run.end('finished', hasReader),
+    finished: () => run.end('finished'),
     /** Leaves the closing screen: navigation only. Sign-up ends on Today; from Add practice it goes back to where it was opened. */
     finish,
     /** Some of it may already exist, so leaving can't promise nothing is saved. */
