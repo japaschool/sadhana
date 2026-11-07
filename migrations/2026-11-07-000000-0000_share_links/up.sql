@@ -1,5 +1,6 @@
-ALTER TABLE users ADD COLUMN legacy_share_enabled bool NOT NULL DEFAULT false;
-UPDATE users SET legacy_share_enabled = true;
+-- Every account, new ones too, keeps the old public link for now (preview only). Flip the default
+-- to false in a later migration once new accounts should start with it off.
+ALTER TABLE users ADD COLUMN legacy_share_enabled bool NOT NULL DEFAULT true;
 
 CREATE TABLE share_links (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
