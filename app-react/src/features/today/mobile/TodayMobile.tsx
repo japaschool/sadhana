@@ -28,6 +28,7 @@ export function TodayMobile() {
   const actions: AppBarAction[] = [
     { label: t('home.addPractice'), onSelect: () => setChoosing(true) },
     { label: t('home.editPractices'), onSelect: () => navigate('/settings/practices') },
+    { label: t('common.reportProblem'), onSelect: () => navigate('/help/support-form') },
   ]
 
   return (

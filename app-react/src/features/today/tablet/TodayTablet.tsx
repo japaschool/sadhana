@@ -36,6 +36,7 @@ export function TodayTablet() {
     { label: t('home.helpChoose'), onSelect: () => navigate('/guide', { state: { back: '/' } }) },
     { label: t('home.addOneMyself'), onSelect: () => navigate('/settings/practices/new') },
     { label: t('home.editPractices'), onSelect: () => navigate('/settings/practices') },
+    { label: t('common.reportProblem'), onSelect: () => navigate('/help/support-form') },
   ]
 
   const half = Math.ceil(today.practices.length / 2)

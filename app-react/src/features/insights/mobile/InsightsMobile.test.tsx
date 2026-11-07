@@ -149,7 +149,7 @@ describe('InsightsMobile', () => {
     await openMore()
     const menu = screen.getByRole('menu', { name: 'More' })
     expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
-      'New chart', 'Share reports link', 'Download data (CSV)',
+      'New chart', 'Share reports link', 'Download data (CSV)', 'Report a problem',
     ])
   })
 
@@ -160,7 +160,7 @@ describe('InsightsMobile', () => {
     await openMore()
     const menu = screen.getByRole('menu', { name: 'More' })
     expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
-      'New chart', 'Share reports link', 'Download data (CSV)',
+      'New chart', 'Share reports link', 'Download data (CSV)', 'Report a problem',
     ])
   })
 

@@ -66,7 +66,7 @@ describe('InsightsTablet', () => {
     await waitFor(() => expect(charts.getReportData).toHaveBeenCalledWith('2026-09-30', 'Month'))
     fireEvent.click(screen.getByRole('button', { name: 'More' }))
     expect(within(screen.getByRole('menu', { name: 'More' })).getAllByRole('menuitem').map((i) => i.textContent))
-      .toEqual(['New chart', 'Edit “Morning”', 'Share reports link', 'Download data (CSV)', 'Delete report'])
+      .toEqual(['New chart', 'Edit “Morning”', 'Share reports link', 'Download data (CSV)', 'Delete report', 'Report a problem'])
   })
 
   it('hides report actions on Overview even with a report selected', async () => {
@@ -76,7 +76,7 @@ describe('InsightsTablet', () => {
     await waitFor(() => expect(charts.getReports).toHaveBeenCalled())
     fireEvent.click(await screen.findByRole('button', { name: 'More' }))
     expect(within(screen.getByRole('menu', { name: 'More' })).getAllByRole('menuitem').map((i) => i.textContent))
-      .toEqual(['New chart', 'Share reports link', 'Download data (CSV)'])
+      .toEqual(['New chart', 'Share reports link', 'Download data (CSV)', 'Report a problem'])
   })
 
   it('shows a Grid report as a table; a row opens the day as a sheet', async () => {

@@ -44,6 +44,7 @@ export function LogPanel({ date, onDate }: { date: Date; onDate: (d: Date) => vo
     { label: t('home.helpChoose'), onSelect: () => navigate('/guide', { state: { back: pathname } }) },
     { label: t('home.addOneMyself'), onSelect: () => navigate('/settings/practices/new') },
     { label: t('home.editPractices'), onSelect: () => navigate('/settings/practices') },
+    { label: t('common.reportProblem'), onSelect: () => navigate('/help/support-form') },
   ]
 
   return (

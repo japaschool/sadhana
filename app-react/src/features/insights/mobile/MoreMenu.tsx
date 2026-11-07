@@ -36,6 +36,7 @@ export function useMoreMenu(report: Report | null): { actions: AppBarAction[]; s
     { label: t('charts.shareLink'), onSelect: () => { void copyShareLink().then((ok) => { if (ok) showToast({ message: t('charts.copied'), variant: 'success' }) }) } },
     { label: t('charts.downloadCsv'), onSelect: () => { downloadCsv().catch(() => showToast({ message: t('common.error'), variant: 'error' })) } },
     ...(report ? [{ label: t('insights.deleteReport'), onSelect: () => setConfirming(true) }] : []),
+    { label: t('common.reportProblem'), onSelect: () => navigate('/help/support-form') },
   ]
 
   const sheet = confirming && report ? (

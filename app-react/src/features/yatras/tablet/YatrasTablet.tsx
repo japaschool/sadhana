@@ -33,6 +33,7 @@ export function YatrasTablet({ fixedDate = false }: { fixedDate?: boolean }) {
   const actions = [
     ...(y.yatra ? [{ label: t('yatras.settings'), onSelect: () => navigate(`/yatra/${y.yatra!.id}/settings`) }] : []),
     { label: t('yatras.createNewYatra'), onSelect: () => setCreating(true) },
+    { label: t('common.reportProblem'), onSelect: () => navigate('/help/support-form') },
   ]
 
   return (
