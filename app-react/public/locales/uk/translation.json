@@ -1100,12 +1100,11 @@
     "note": "Учасники бачать практики, якими ви ділитеся з ятрами. Оберіть їх у налаштуваннях кожної практики."
   },
   "shared": {
-    "readOnly": "Лише перегляд",
     "eyebrow": "Спільна практика",
-    "summary_one": "{{count}} звіт · лише перегляд",
-    "summary_few": "{{count}} звіти · лише перегляд",
-    "summary_many": "{{count}} звітів · лише перегляд",
-    "summary_other": "{{count}} звіту · лише перегляд",
+    "summary_one": "{{count}} звіт",
+    "summary_few": "{{count}} звіти",
+    "summary_many": "{{count}} звітів",
+    "summary_other": "{{count}} звіту",
     "graph_one": "Графік · {{count}} практика",
     "graph_few": "Графік · {{count}} практики",
     "graph_many": "Графік · {{count}} практик",

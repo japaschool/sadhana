@@ -1019,10 +1019,9 @@
     "note": "Members see the practices you share with yatras. Choose which in each practice’s settings."
   },
   "shared": {
-    "readOnly": "Read-only",
     "eyebrow": "Shared practice",
-    "summary_one": "{{count}} report · read-only",
-    "summary_other": "{{count}} reports · read-only",
+    "summary_one": "{{count}} report",
+    "summary_other": "{{count}} reports",
     "graph_one": "Graph · {{count}} practice",
     "graph_other": "Graph · {{count}} practices",
     "grid_one": "Grid · {{count}} practice",

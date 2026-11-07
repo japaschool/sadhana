@@ -48,12 +48,22 @@ describe('shared reports', () => {
     ])
   })
 
-  it('mobile: the owner, report chips (A–Z, the first selected) and a Sign up strip for visitors', async () => {
+  // Mobile picks from the report dropdown; tablet/desktop from the list.
+  async function pick(width: number, name: RegExp) {
+    if (width !== 390) return userEvent.click(await screen.findByRole('radio', { name }))
+    await userEvent.click(await screen.findByRole('button', { name: /Full sadhana/ }))
+    await userEvent.click(screen.getByRole('menuitemradio', { name }))
+  }
+
+  it('mobile: the owner, a report dropdown (A–Z, the first selected), no brand mark, and a Sign up strip for visitors', async () => {
     setViewportWidth(390)
     renderAt(<SharedMobile />)
     expect(await screen.findByRole('heading', { name: 'Alex das' })).toBeInTheDocument()
-    const chips = screen.getByRole('radiogroup', { name: 'Reports' })
-    expect(within(chips).getByRole('radio', { name: 'Full sadhana' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.queryByRole('img', { name: 'Sadhana Pro' })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: /Full sadhana/ }))
+    const menu = screen.getByRole('menu', { name: 'Reports' })
+    expect(within(menu).getAllByRole('menuitemradio').map((m) => m.textContent?.replace('✓', ''))).toEqual(['Full sadhana', 'Hearing & study'])
+    expect(within(menu).getByRole('menuitemradio', { name: 'Full sadhana' })).toHaveAttribute('aria-checked', 'true')
     expect(screen.getByRole('link', { name: /sign up/i })).toHaveAttribute('href', '/register')
     expect(api.getSharedReportData).toHaveBeenCalledWith('u1', expect.any(String), 'Month')
   })
@@ -61,7 +71,6 @@ describe('shared reports', () => {
   it('mobile grid: a calendar of days shaded by practices done', async () => {
     setViewportWidth(390)
     renderAt(<SharedMobile />)
-    await userEvent.click(await screen.findByRole('radio', { name: 'Full sadhana' }))
     expect(await screen.findByRole('img', { name: /2 of 2/ })).toBeInTheDocument()
   })
 
@@ -100,7 +109,7 @@ describe('shared reports', () => {
     renderAt(<SharedDesktop />)
     await userEvent.click(await screen.findByRole('radio', { name: /Full sadhana/ }))
     expect(await screen.findByRole('button', { name: /Reading: 40m/ })).toBeInTheDocument()
-    expect(screen.getByText('2 reports · read-only')).toBeInTheDocument()
+    expect(screen.getByText('2 reports')).toBeInTheDocument()
   })
 
   it.each([['mobile', 390, SharedMobile], ['tablet', 834, SharedTablet], ['desktop', 1440, SharedDesktop]] as const)(
@@ -129,7 +138,7 @@ describe('shared reports', () => {
       setViewportWidth(width)
       api.getSharedUser.mockResolvedValue({ id: 'u1', name: 'Alex das', kind: 'link', start_date: null })
       renderAt(<Page />)
-      await userEvent.click(await screen.findByRole('radio', { name: /Hearing & study/ }))
+      await pick(width, /Hearing & study/)
       await screen.findAllByText('Reading')
       expect(screen.queryByRole('button', { name: 'Download CSV' })).toBeNull()
       expect(screen.queryByRole('button', { name: 'More' })).toBeNull()
@@ -140,7 +149,7 @@ describe('shared reports', () => {
     '%s: a legacy page keeps CSV', async (_n, width, Page) => {
       setViewportWidth(width)
       renderAt(<Page />)
-      await userEvent.click(await screen.findByRole('radio', { name: /Hearing & study/ }))
+      await pick(width, /Hearing & study/)
       await screen.findAllByText('Reading')
       if (width === 390) {
         await userEvent.click(screen.getByRole('button', { name: 'More' }))

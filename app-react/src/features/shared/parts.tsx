@@ -80,13 +80,9 @@ export function Eyebrow({ children }: { children: ReactNode }) {
   return <span className="text-[11px] font-bold tracking-[.1em] text-ui-muted uppercase">{children}</span>
 }
 
-export function Mark({ size = 'md' }: { size?: 'sm' | 'md' }) {
-  return (
-    <span className="flex items-center gap-2.5">
-      <span aria-hidden className={`shrink-0 rounded-full bg-ui-accent-fill ${size === 'sm' ? 'h-5 w-5' : 'h-6 w-6'}`} />
-      <span className={`font-extrabold tracking-[-0.01em] whitespace-nowrap ${size === 'sm' ? 'text-[15px]' : 'text-lg'}`}>Sadhana Pro</span>
-    </span>
-  )
+/** The nav panel's logo; mobile shows none. */
+export function Mark() {
+  return <span role="img" aria-label="Sadhana Pro" className="h-10 w-10 shrink-0 bg-ui-accent [mask:url(/logo.png)_center/contain_no-repeat] xl:h-12 xl:w-12" />
 }
 
 export function Medallion({ danger }: { danger?: boolean }) {

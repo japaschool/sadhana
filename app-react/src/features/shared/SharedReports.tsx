@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import type { ReactNode, TouchEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -8,6 +8,7 @@ import { SegmentedControl } from '../../ui/primitives/SegmentedControl'
 import { UiToastContainer } from '../../ui/primitives/Toast'
 import { EndDateControl } from '../insights/mobile/EndDateControl'
 import { MonthNav } from '../insights/mobile/MonthNav'
+import { ReportMenu } from '../insights/mobile/ReportMenu'
 import { InsightsChart } from '../insights/mobile/InsightsChart'
 import { PanelsReportView } from '../insights/panels/PanelsReportView'
 import type { Range } from '../insights/useInsights'
@@ -102,14 +103,9 @@ export function SharedMobile() {
   const s = useShared(id)
   const csv = useCsv(id, s)
   const [menu, setMenu] = useState<HTMLElement | null>(null)
-  const chips = useRef<HTMLDivElement>(null)
+  const [reportMenu, setReportMenu] = useState<HTMLElement | null>(null)
   const touch = useRef<{ x: number; y: number } | null>(null)
   const index = s.reports.findIndex((r) => r.id === s.report?.id)
-
-  // Chips scroll with the swipe, so the selected one stays in view.
-  useEffect(() => {
-    chips.current?.querySelector('[aria-checked="true"]')?.scrollIntoView?.({ inline: 'center', block: 'nearest', behavior: 'smooth' })
-  }, [s.report?.id])
 
   const onTouchStart = (e: TouchEvent) => { touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY } }
   const onTouchEnd = (e: TouchEvent) => {
@@ -124,23 +120,18 @@ export function SharedMobile() {
 
   const content = s.loadingPage ? <Skeleton /> : s.notFound || !s.reports.length ? (
     <>
-      {!s.notFound && <div className="px-[22px] pt-3.5"><Name s={s} size={28} /></div>}
+      {!s.notFound && <div className="px-[22px] pt-5"><Name s={s} size={28} /></div>}
       <div className="flex flex-1 flex-col justify-center px-7 pb-[120px]"><EmptyState s={s} /></div>
     </>
   ) : (
     <>
-      <div className="px-[22px] pt-3.5"><Name s={s} size={28} /></div>
-      <div ref={chips} role="radiogroup" aria-label={t('shared.reports')}
-        className="flex shrink-0 gap-2 overflow-x-auto px-4 pt-3.5 [scrollbar-width:none]">
-        {s.reports.map((r) => {
-          const on = r.id === s.report?.id
-          return (
-            <button key={r.id} type="button" role="radio" aria-checked={on} onClick={() => s.select(r.id)}
-              className={`flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm font-bold whitespace-nowrap ${on ? 'bg-ui-selected text-ui-on-selected' : 'border border-ui-control text-ui-ink2'}`}>
-              {r.name}
-            </button>
-          )
-        })}
+      <div className="px-[22px] pt-5"><Name s={s} size={28} /></div>
+      <div className="px-[22px] pt-2.5">
+        <button type="button" aria-haspopup="menu" onClick={(e) => setReportMenu(e.currentTarget)}
+          className="flex min-h-9 max-w-full items-center gap-1 text-[17px] font-bold text-ui-accent">
+          <span className="truncate">{s.report?.name}</span>
+          <span aria-hidden className="shrink-0">▾</span>
+        </button>
       </div>
       <div className="flex items-center justify-between gap-2 px-4 pt-3">
         <RangeControl s={s} size="sm" />
@@ -180,20 +171,16 @@ export function SharedMobile() {
 
   return (
     <Root className={`flex flex-col pt-[env(safe-area-inset-top)] ${s.visitor ? 'pb-[calc(96px+env(safe-area-inset-bottom))]' : 'pb-8'}`}>
-      <header className="flex min-h-11 shrink-0 items-center justify-between pt-3 pr-4 pl-[22px]">
-        <Mark size="sm" />
-        {!s.loadingPage && (
-          <span className="rounded-full border border-ui-hairline px-[9px] py-[5px] font-ui-mono text-[11px] font-semibold tracking-[.06em] text-ui-muted uppercase">
-            {t('shared.readOnly')}
-          </span>
-        )}
-      </header>
       {content}
       {s.visitor && !s.loadingPage && (
         <aside className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-ui-control bg-ui-tabbar px-[22px] pt-3 pb-[calc(28px+env(safe-area-inset-bottom))]">
           <span className="text-sm font-semibold text-ui-ink2">{t('shared.trackOwn')}</span>
           <SignUpLink />
         </aside>
+      )}
+      {reportMenu && (
+        <ReportMenu anchor={reportMenu} reports={s.reports} selectedId={s.report?.id ?? ''}
+          onSelect={(id) => { s.select(id); setReportMenu(null) }} onClose={() => setReportMenu(null)} />
       )}
       {menu && (
         <AnchoredMenu anchor={menu} label={t('today.more')} onClose={() => setMenu(null)}>

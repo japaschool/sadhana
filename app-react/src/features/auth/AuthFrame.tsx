@@ -7,13 +7,9 @@ import { AnchoredMenu, MenuItem } from '../../ui/primitives/AnchoredMenu'
 import { UiToastContainer } from '../../ui/primitives/Toast'
 import { LANGS } from '../settings/sections'
 
-function Mark({ size }: { size: 'sm' | 'lg' }) {
-  return (
-    <span className="flex items-center gap-2.5">
-      <span aria-hidden className={`shrink-0 rounded-full bg-ui-accent-fill ${size === 'sm' ? 'h-[22px] w-[22px]' : 'h-[26px] w-[26px]'}`} />
-      <span className={`font-extrabold tracking-[-0.01em] whitespace-nowrap ${size === 'sm' ? 'text-base' : 'text-xl'}`}>Sadhana Pro</span>
-    </span>
-  )
+/** The nav panel's logo; mobile shows none. */
+function Mark() {
+  return <span role="img" aria-label="Sadhana Pro" className="h-10 w-10 shrink-0 bg-ui-accent [mask:url(/logo.png)_center/contain_no-repeat] xl:h-12 xl:w-12" />
 }
 
 export function LanguageSwitch() {
@@ -48,7 +44,7 @@ function PracticePanel() {
   const { t } = useTranslation()
   return (
     <aside aria-hidden className="flex w-[600px] shrink-0 flex-col bg-ui-panel px-12 py-11 max-xl:w-[42%]">
-      <Mark size="lg" />
+      <Mark />
       <div className="flex flex-1 flex-col items-center justify-center gap-12">
         <div className="grid grid-cols-[repeat(7,44px)] gap-2.5">
           {DAYS.map((d, i) => (
@@ -86,8 +82,7 @@ export function AuthFrame({ children, footer, lang = true, actions }: AuthFrameP
 
   if (layout === 'mobile') return (
     <div ref={ref} className={`${root} flex flex-col pt-[env(safe-area-inset-top)]`}>
-      <header className="flex shrink-0 items-center justify-between pt-3.5 pr-3.5 pl-6">
-        <span className="flex min-h-11 items-center"><Mark size="sm" /></span>
+      <header className="flex min-h-[58px] shrink-0 items-center justify-end pt-3.5 pr-3.5 pl-6">
         {lang && <LanguageSwitch />}
       </header>
       <main className="flex flex-1 flex-col px-6 pt-7">{children}</main>
@@ -98,7 +93,7 @@ export function AuthFrame({ children, footer, lang = true, actions }: AuthFrameP
 
   if (layout === 'tablet') return (
     <div ref={ref} className={`${root} flex flex-col`}>
-      <header className="flex justify-center pt-[calc(56px+env(safe-area-inset-top))]"><Mark size="lg" /></header>
+      <header className="flex justify-center pt-[calc(56px+env(safe-area-inset-top))]"><Mark /></header>
       <main className="flex flex-1 flex-col items-center justify-center gap-6 px-12 py-8">
         <div className="w-full max-w-[480px] rounded-[28px] border border-ui-hairline bg-ui-surface p-10 shadow-[0_24px_48px_-32px_rgba(60,40,10,.35)]">
           {children}
