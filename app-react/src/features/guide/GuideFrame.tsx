@@ -39,9 +39,7 @@ export function GuideFrame({ guide, footer, fill = false, children }: { guide: G
   return (
     <div ref={root} className="ui-root flex min-h-dvh flex-col bg-ui-bg text-ui-ink">
       <header className="flex items-center justify-between gap-4 border-b border-ui-hairline px-8 py-5 lg:px-16">
-        <span className="flex items-center gap-2.5 text-[17px] font-extrabold">
-          <span aria-hidden className="h-6 w-6 rounded-full bg-ui-accent-fill" />Sadhana Pro
-        </span>
+        <span role="img" aria-label="Sadhana Pro" className="h-10 w-10 shrink-0 bg-ui-accent [mask:url(/logo.png)_center/contain_no-repeat] xl:h-12 xl:w-12" />
         <ol className="flex items-center gap-2" aria-label={t('guide.steps.label')}>
           {steps.map((s, i) => (
             <li key={s} aria-current={i === cur ? 'step' : undefined}
