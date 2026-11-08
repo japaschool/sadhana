@@ -135,7 +135,7 @@ describe('Overview (mobile)', () => {
     expect(within(avg).getByRole('group', { name: 'Кругов за день' })).toHaveTextContent('8')
     expect(within(avg).getByRole('group', { name: /Sleep/ })).toHaveTextContent('7h 30m')
     expect(within(avg).getByText('Plain averages of the 8 days you logged')).toBeInTheDocument()
-    expect(screen.getByText('Me vs my normal shows up once you’ve logged 14 days. 8 so far.')).toBeInTheDocument()
+    expect(screen.getByText('Me vs my normal shows up once you have 14 logged days older than a week. 8 so far.')).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Me vs my normal' })).toBeNull()
   })
 
@@ -160,7 +160,7 @@ describe('Overview (mobile)', () => {
     expect(screen.getByText('Good to see you back. You’ve logged 8 days this month, 3 more than last month.')).toBeInTheDocument()
     // Today is left out of the averages and of the usual window.
     expect(screen.getByText('Plain averages of the 12 days you logged')).toBeInTheDocument()
-    expect(screen.getByText('Me vs my normal shows up once you’ve logged 14 days. 12 so far.')).toBeInTheDocument()
+    expect(screen.getByText('Me vs my normal shows up once you have 14 logged days older than a week. 12 so far.')).toBeInTheDocument()
   })
 
   it('streaks_hidden_by_default_shown_when_on', () => {

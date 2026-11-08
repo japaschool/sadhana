@@ -534,12 +534,12 @@ pub(crate) mod tests {
     fn legacy_flag_round_trips() {
         run(|conn| {
             let u = new_user(conn);
-            // New accounts start with the old public link on, for now.
-            assert!(list(conn, &u)?.legacy_enabled);
-            set_legacy(conn, &u, false)?;
+            // New accounts start with the old public link off.
             assert!(!list(conn, &u)?.legacy_enabled);
             set_legacy(conn, &u, true)?;
             assert!(list(conn, &u)?.legacy_enabled);
+            set_legacy(conn, &u, false)?;
+            assert!(!list(conn, &u)?.legacy_enabled);
             Ok(())
         });
     }
