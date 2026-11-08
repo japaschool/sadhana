@@ -1,13 +1,14 @@
 import { motion } from 'framer-motion'
-import { FaSeedling, FaChartBar, FaWifi, FaMobileAlt, FaShareAlt, FaUsers, FaFileCsv } from 'react-icons/fa'
+import { FaSlidersH, FaChartBar, FaSeedling, FaWifi, FaMobileAlt, FaShareAlt, FaUsers, FaFileCsv } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
 
 export default function FeaturesGrid() {
   const { t } = useTranslation()
 
   const features = [
-    { icon: <FaSeedling />, title: t('keyFeatures.customisableTitle'), desc: t('keyFeatures.customisableDescription'), color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', glow: 'shadow-emerald-100' },
-    { icon: <FaChartBar />, title: t('keyFeatures.reportsTitle'), desc: t('keyFeatures.reportsDescription'), color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-100', glow: 'shadow-blue-100' },
+    { icon: <FaSlidersH />, title: t('keyFeatures.customisableTitle'), desc: t('keyFeatures.customisableDescription'), color: 'text-orange-500', bg: 'bg-orange-50', border: 'border-orange-100', glow: 'shadow-orange-100' },
+    { icon: <FaChartBar />, title: t('keyFeatures.insightsTitle'), desc: t('keyFeatures.insightsDescription'), color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-100', glow: 'shadow-blue-100' },
+    { icon: <FaSeedling />, title: t('keyFeatures.growthTitle'), desc: t('keyFeatures.growthDescription'), color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', glow: 'shadow-emerald-100' },
     { icon: <FaWifi />, title: t('keyFeatures.offlineTitle'), desc: t('keyFeatures.offlineDescription'), color: 'text-amber-500', bg: 'bg-amber-50', border: 'border-amber-100', glow: 'shadow-amber-100' },
     { icon: <FaMobileAlt />, title: t('keyFeatures.installTitle'), desc: t('keyFeatures.installDescription'), color: 'text-pink-500', bg: 'bg-pink-50', border: 'border-pink-100', glow: 'shadow-pink-100' },
     { icon: <FaShareAlt />, title: t('keyFeatures.shareTitle'), desc: t('keyFeatures.shareDescription'), color: 'text-violet-500', bg: 'bg-violet-50', border: 'border-violet-100', glow: 'shadow-violet-100' },

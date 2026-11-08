@@ -6,25 +6,15 @@ import FeaturesGrid from './components/FeaturesGrid'
 import PracticeCategories from './components/PracticeCategories'
 import TrackBanner from './components/TrackBanner'
 import Footer from './components/Footer'
-
-import shotHome from './assets/shot-home.jpg'
-import shotOffline from './assets/shot-offline.jpg'
-import shotAddPractice from './assets/shot-add-practice.jpg'
-import shotCharts from './assets/shot-charts.jpg'
-import shotGroup from './assets/shot-group.jpg'
-import shotFaq from './assets/shot-faq.jpg'
+import DevicesSection from './components/DevicesSection'
+import { shot } from './shots'
 
 export default function App() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage || i18n.language || 'en'
 
-  const slides = [
-    { src: shotHome,        caption: t('preview.slide1') },
-    { src: shotOffline,     caption: t('preview.slide2') },
-    { src: shotAddPractice, caption: t('preview.slide3') },
-    { src: shotCharts,      caption: t('preview.slide4') },
-    { src: shotGroup,       caption: t('preview.slide5') },
-    { src: shotFaq,         caption: t('preview.slide6') },
-  ]
+  const slides = ['today', 'overview', 'sleep', 'japa', 'table', 'year', 'group', 'practices']
+    .map((name) => ({ src: shot(name, lang), caption: t(`preview.${name}`) }))
 
   return (
     <div data-theme="sadhana" className="font-sans">
@@ -39,6 +29,7 @@ export default function App() {
         description={t('preview.carouselDescription')}
         accent="#3A7D5C"
       />
+      <DevicesSection />
       <FeaturesGrid />
       <PracticeCategories />
       <TrackBanner />

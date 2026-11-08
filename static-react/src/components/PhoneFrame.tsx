@@ -47,16 +47,18 @@ export default function PhoneFrame({ src, alt, accentColor = '#3A7D5C', size = '
         zIndex: 10,
       }} />
 
-      {/* Screen */}
+      {/* Screen: a status-bar strip in the app's background sits under the island, the screenshot below it.
+          The phone shots are captured 390×792 to fit what's left (scripts/capture-shots.mjs). */}
       <div style={{
         width: '100%',
         height: '100%',
         borderRadius: radius - pad,
         overflow: 'hidden',
-        background: '#111',
+        background: '#F7F4EE',
+        paddingTop: Math.round(h * 0.07),
       }}>
         <img src={src} alt={alt}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
           draggable={false}
           loading="lazy"
         />
