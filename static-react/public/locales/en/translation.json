@@ -66,7 +66,6 @@
     "practices": "Practices",
     "community": "Community",
     "joinGroup": "Join Group",
-    "videoGuides": "Video Guides",
     "support": "Support"
   },
   "meta": {
@@ -76,5 +75,119 @@
   },
   "cta": {
     "openNow": "Open Now"
+  },
+  "help": {
+    "title": "Guides",
+    "intro": "Short how-tos for Sadhana Pro: installing it on your phone, setting up practices, reading your reports, practising with a group and sharing your progress.",
+    "more": "More guides",
+    "question": "Still have a question?",
+    "questionText": "Ask in our Telegram channel, or write to us from the app: Settings › Help and support.",
+    "telegram": "Ask in Telegram",
+    "install": {
+      "title": "Install Sadhana Pro on your phone",
+      "summary": "Add Sadhana Pro to your Home Screen so it opens like an app, full screen, and keeps working offline. No app store needed.",
+      "steps": {
+        "ios": {
+          "title": "iPhone and iPad",
+          "text": "Open Sadhana Pro in Safari and sign in.\nTap Share. If you don't see it, look in the ⋯ menu.\nChoose “Add to Home Screen”, then Add. Sadhana Pro now opens from its icon, without the browser bars."
+        },
+        "android": {
+          "title": "Android",
+          "text": "Open Sadhana Pro in Chrome and sign in.\nTap the ⋮ menu, then “Add to Home screen” or “Install app”, and confirm. The icon appears with your other apps."
+        },
+        "computer": {
+          "title": "Computer",
+          "text": "In Chrome or Edge, click the install icon at the right end of the address bar, or find Install in the browser menu. Sadhana Pro then opens in its own window.\nA bookmark works too: everything works in an ordinary tab."
+        },
+        "offline": {
+          "title": "Working offline",
+          "text": "Once you've opened Sadhana Pro on a device, it keeps working without a connection. What you log offline is kept on the device and sent as soon as you're back online. Until then, Today shows how many changes are waiting."
+        }
+      }
+    },
+    "practices": {
+      "title": "Set up your practices",
+      "summary": "A practice is one row you fill in each day on Today, like japa rounds, wake-up time or reading. How to add them and choose the right type.",
+      "steps": {
+        "add": {
+          "title": "Add a practice",
+          "text": "Go to Settings › Practices and tap Add. Give the practice a name and choose its type.\nChoose the type carefully: it can't be changed later."
+        },
+        "types": {
+          "title": "Which type to choose",
+          "text": "Number: a count, like rounds or pages.\nTime of day: a clock time, like when you woke up or went to bed.\nDuration: time spent, like minutes of reading or meditation.\nTick: done or not.\nText: a word or a short note.\nNumber and Text practices can also use “Pick from a list”: on Today you choose one of your own values instead of typing it."
+        },
+        "today": {
+          "title": "Arrange Today",
+          "text": "Practices appear on Today in the order of the list. Drag them by the dots to reorder. Groups split Today into sections, such as Morning and Evening.\nMark a practice Required and any past day where it's missing gets a red dot in the calendar.\nIf you stop doing a practice, hide it from Today rather than deleting it. Hiding keeps all its data; deleting removes it for good."
+        },
+        "helpChoose": {
+          "title": "Not sure where to start?",
+          "text": "When you add a practice, choose “Help me choose”. You'll see what each report looks like after a few weeks of logging, pick the ones you'd like, and Sadhana Pro sets up their practices for you."
+        }
+      }
+    },
+    "reports": {
+      "title": "See your progress in Insights",
+      "summary": "Insights turns what you log into charts and tables. Use a ready-made report, or build your own graph or table.",
+      "steps": {
+        "find": {
+          "title": "Overview and your reports",
+          "text": "Open the Insights tab. Overview compares your recent days with your usual range and counts the days you practised. Choose 7 days, 30 days, 90 days or a year.\nYour own reports sit next to Overview: pick one to open it."
+        },
+        "readyMade": {
+          "title": "Ready-made reports",
+          "text": "Tap New chart in Insights (in the ⋯ menu on a phone) or in Settings › Insights. A ready-made report needs only a short form: pick your practices and targets, and the report is built for you.\nSleep: bedtime, wake-up and hours slept. Daily count: a number each day against a target, such as rounds. Time spent: time across practices, with a goal. Days I did it: done days month by month. Days between events: how long between one event and the next. Goals: how much a day, week or month."
+        },
+        "graph": {
+          "title": "Build a graph",
+          "text": "Choose Build your own › Graph. Each series plots one practice as bars, a line or dots. Series of the same kind share an axis; a different kind gets its own axis on the other side.\nTurn on Show average for a dashed line at your average. With two or more bar series, choose whether the bars sit grouped, stacked or overlaid."
+        },
+        "table": {
+          "title": "Build a table",
+          "text": "Choose Build your own › Table and tick the practices to show. Days are rows and practices are columns; turn on Group columns to follow your practice groups.\nYou can also download a report's data as a CSV file."
+        }
+      }
+    },
+    "yatras": {
+      "title": "Practise together in a yatra",
+      "summary": "A yatra is a group that practises together. Everyone sees one table with each member's day, so you can keep each other going.",
+      "steps": {
+        "what": {
+          "title": "What a yatra is",
+          "text": "A yatra has its own list of practices, set by its admins. The Yatra tab shows a table with a row for each member and a column for each practice, coloured by how the day went.\nOnly the practices you link to the yatra show up there. The rest of your diary stays private."
+        },
+        "join": {
+          "title": "Join a yatra",
+          "text": "Ask the yatra's admin for an invite link and open it while signed in. You'll see the yatra and its members; tap Join Yatra."
+        },
+        "link": {
+          "title": "Link your practices",
+          "text": "After joining, link your practices to the yatra's. Each yatra practice is filled from one practice of yours of the same type, and suggested matches are offered first.\nNo practices yet? Create all and link adds them to Today under the yatra's names and links them in one go.\nUntil a practice is linked, your cell in its column stays empty, even if you log it on Today. You can change links any time in Settings › Yatras."
+        },
+        "create": {
+          "title": "Create your own",
+          "text": "In Settings › Yatras, create a new yatra. You become its admin: add practices, then send the invite link to those who will practise with you.\nAdmins can colour cells by value, add a daily score with done and bonus thresholds, add statistics above the table, and make other members admins."
+        }
+      }
+    },
+    "sharing": {
+      "title": "Share your progress",
+      "summary": "Send a mentor or friend a link to just the charts you choose. You can withdraw any link at any time.",
+      "steps": {
+        "link": {
+          "title": "Make a link",
+          "text": "Go to Settings › Sharing and tap New link. Write who it's for (only you see this name), tick the charts to include, and choose the day it opens on: today, or a set date.\nSave, then copy the link or share it straight from your phone."
+        },
+        "open": {
+          "title": "What they see",
+          "text": "The link opens in any browser, no account needed. It shows only the charts you picked, and can be moved to other dates. Your list of links shows when each was last opened."
+        },
+        "withdraw": {
+          "title": "Withdraw access",
+          "text": "Open the link in Settings › Sharing and tap Withdraw. It stops working for good; to share again, make a new link.\nThe old public link, which shows all your charts, can be turned off on the same screen."
+        }
+      }
+    }
   }
 }

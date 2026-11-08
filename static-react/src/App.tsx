@@ -8,10 +8,20 @@ import TrackBanner from './components/TrackBanner'
 import Footer from './components/Footer'
 import DevicesSection from './components/DevicesSection'
 import { shot } from './shots'
+import { GuidePage, HelpIndex } from './components/HelpPages'
+import { type Lang, type Page } from './pages'
 
-export default function App() {
+export default function App({ page = 'home' }: { page?: Page }) {
   const { t, i18n } = useTranslation()
   const lang = i18n.resolvedLanguage || i18n.language || 'en'
+
+  if (page !== 'home') return (
+    <div data-theme="sadhana" className="min-h-screen font-sans" style={{ background: '#EDE8E3' }}>
+      <div className="fixed top-0 left-0 right-0 z-50"><Navbar page={page} /></div>
+      {page === 'help' ? <HelpIndex lang={lang as Lang} /> : <GuidePage lang={lang as Lang} guide={page} />}
+      <Footer />
+    </div>
+  )
 
   const slides = ['today', 'overview', 'sleep', 'japa', 'table', 'year', 'group', 'practices']
     .map((name) => ({ src: shot(name, lang), caption: t(`preview.${name}`) }))
@@ -19,7 +29,7 @@ export default function App() {
   return (
     <div data-theme="sadhana" className="font-sans">
       <div className="fixed top-0 left-0 right-0 z-50">
-        <Navbar />
+        <Navbar page="home" />
       </div>
       <Hero />
       <PhoneCarousel

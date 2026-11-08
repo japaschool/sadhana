@@ -31,6 +31,18 @@ const newPractice = async (page, _ids, lang) => {
   await page.getByRole('radio').nth(2).click() // Duration
 }
 
+const NEW_CHART = { en: 'New chart', ru: 'Новый график', uk: 'Новий графік' }
+const newChart = async (page, _ids, lang) => {
+  await page.goto(`${BASE}/settings/charts`)
+  await page.getByRole('button', { name: NEW_CHART[lang] }).click()
+}
+const FOR = { en: 'My mentor', ru: 'Наставник', uk: 'Наставник' }
+const newShareLink = async (page, _ids, lang) => {
+  await page.goto(`${BASE}/settings/sharing/new`)
+  await page.getByRole('textbox').first().fill(FOR[lang])
+  await page.getByRole('checkbox').first().check()
+}
+
 const SHOTS = [
   ['today', 'phone', go('/')],
   ['overview', 'phone', go('/charts')],
@@ -42,6 +54,11 @@ const SHOTS = [
   ['practices', 'phone', newPractice],
   ['overview-tablet', 'tablet', go('/charts')],
   ['overview-desktop', 'desktop', go('/charts')],
+  // Guides on the site's help pages (src/pages.ts)
+  ['help-practices', 'phone', go('/settings/practices')],
+  ['help-reports', 'phone', newChart],
+  ['help-yatra-links', 'phone', (page, ids) => page.goto(`${BASE}/yatra/${ids.yatra}/links`)],
+  ['help-sharing', 'phone', newShareLink],
 ]
 
 async function api(path, body, token) {
@@ -61,6 +78,7 @@ try {
     const { user } = await api('/users/login', { user: { email: `demo-${lang}@demo.sadhana.pro`, password: 'demo-password' } })
     const { reports } = await api('/reports?panels=4', null, user.token)
     const ids = Object.fromEntries(Object.entries(REPORTS).map(([k, names]) => [k, reports.find((r) => names.includes(r.name)).id]))
+    ids.yatra = (await api('/yatras', null, user.token)).yatras[0].id
     for (const [name, device, open] of SHOTS) {
       if (process.env.ONLY && !process.env.ONLY.split(',').includes(name)) continue
       const ctx = await browser.newContext({ ...DEVICES[device], serviceWorkers: 'block', colorScheme: 'light', locale: lang })

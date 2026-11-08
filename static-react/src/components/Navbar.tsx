@@ -1,15 +1,17 @@
 
 import { useState, useEffect } from 'react'
-import { FaTelegramPlane, FaYoutube } from 'react-icons/fa'
+import { FaTelegramPlane } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
 import logo from '../assets/logo.png'
+import { type Lang, type Page, appUrl, pagePath } from '../pages'
 
-export default function Navbar() {
+export default function Navbar({ page }: { page: Page }) {
   const { i18n, t } = useTranslation()
-  const lang = (i18n.resolvedLanguage || i18n.language || 'en').slice(0, 2)
+  const lang = (i18n.resolvedLanguage || i18n.language || 'en').slice(0, 2) as Lang
   const current = lang.toUpperCase()
-  const href = lang === 'uk' ? 'https://mapp.sadhana.pro/' : 'https://app.sadhana.pro/'
-  const [scrolled, setScrolled] = useState(false)
+  const href = appUrl(lang)
+  const [scrolledDown, setScrolled] = useState(false)
+  const scrolled = scrolledDown || page !== 'home' // no hero behind it elsewhere
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60)
@@ -17,7 +19,9 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  function changeLang(l: 'en' | 'ru' | 'uk') {
+  function changeLang(l: Lang) {
+    // Other pages are prerendered per language: load the real one
+    if (page !== 'home') return void (window.location.href = pagePath(l, page))
     void i18n.changeLanguage(l)
     window.history.pushState({}, '', l === 'en' ? '/' : `/${l}/`)
     // GA4 sees pushState itself; Metrika needs the hit (counter in index.html)
@@ -41,7 +45,7 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-6 sm:px-[10%] h-16 flex items-center justify-between">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2.5 flex-shrink-0">
+        <a href={pagePath(lang, 'home')} className="flex items-center gap-2.5 flex-shrink-0">
           <img
             src={logo}
             alt="Sadhana Pro"
@@ -58,16 +62,16 @@ export default function Navbar() {
         </a>
 
         <div className="flex items-center gap-0">
-          {/* Desktop only: Telegram + YouTube + language dropdown */}
+          {/* Desktop only: Guides + Telegram + language dropdown */}
+          <a href={pagePath(lang, 'help')}
+            className="hidden sm:flex btn btn-ghost btn-sm px-3 font-medium text-sm transition-colors duration-300"
+            style={{ color: textColor }}>
+            {t('help.title')}
+          </a>
           <a href="https://t.me/sadhanapro" target="_blank" rel="noreferrer" title="Telegram"
             className="hidden sm:flex btn btn-ghost btn-circle btn-sm transition-colors duration-300"
             style={{ color: textColor }}>
             <FaTelegramPlane className="w-4 h-4" />
-          </a>
-          <a href="https://www.youtube.com/@SadhanaPro" target="_blank" rel="noreferrer" title="YouTube"
-            className="hidden sm:flex btn btn-ghost btn-circle btn-sm transition-colors duration-300"
-            style={{ color: textColor }}>
-            <FaYoutube className="w-4 h-4" />
           </a>
           <div className="dropdown dropdown-end hidden sm:block">
             <button tabIndex={0}
@@ -117,17 +121,17 @@ export default function Navbar() {
               className="dropdown-content menu rounded-xl shadow-xl w-48 p-2 z-[60]"
               style={{ background: menuBg, border: '1px solid rgba(0,0,0,0.08)' }}>
               <li>
+                <a href={pagePath(lang, 'help')}
+                  className="text-sm py-2 rounded-lg hover:bg-black/5"
+                  style={{ color: menuText }}>
+                  {t('help.title')}
+                </a>
+              </li>
+              <li>
                 <a href="https://t.me/sadhanapro" target="_blank" rel="noreferrer"
                   className="flex items-center gap-2.5 text-sm py-2 rounded-lg hover:bg-black/5"
                   style={{ color: menuText }}>
                   <FaTelegramPlane className="w-4 h-4" /> Telegram
-                </a>
-              </li>
-              <li>
-                <a href="https://www.youtube.com/@SadhanaPro" target="_blank" rel="noreferrer"
-                  className="flex items-center gap-2.5 text-sm py-2 rounded-lg hover:bg-black/5"
-                  style={{ color: menuText }}>
-                  <FaYoutube className="w-4 h-4" /> YouTube
                 </a>
               </li>
               <li><div className="divider my-0.5" /></li>

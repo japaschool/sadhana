@@ -1,24 +1,26 @@
 import { useTranslation } from 'react-i18next'
+import { type Lang, pagePath } from '../pages'
 
 export default function Footer() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = (i18n.resolvedLanguage || i18n.language || 'en').slice(0, 2) as Lang
 
   const columns = [
     {
       title: t('footer.practices'),
       links: [
-        { label: t('practices.meditation'), href: '#track' },
-        { label: t('practices.yoga'),       href: '#track' },
-        { label: t('practices.breathwork'), href: '#track' },
-        { label: t('practices.journaling'), href: '#track' },
-        { label: t('practices.chanting'),   href: '#track' },
+        { label: t('practices.meditation'), href: `${pagePath(lang, 'home')}#track` },
+        { label: t('practices.yoga'),       href: `${pagePath(lang, 'home')}#track` },
+        { label: t('practices.breathwork'), href: `${pagePath(lang, 'home')}#track` },
+        { label: t('practices.journaling'), href: `${pagePath(lang, 'home')}#track` },
+        { label: t('practices.chanting'),   href: `${pagePath(lang, 'home')}#track` },
       ],
     },
     {
       title: t('footer.community'),
       links: [
         { label: t('footer.joinGroup'),   href: 'https://t.me/sadhanapro' },
-        { label: t('footer.videoGuides'), href: 'https://www.youtube.com/@SadhanaPro' },
+        { label: t('help.title'),         href: pagePath(lang, 'help') },
         { label: t('footer.support'),     href: 'https://t.me/sadhanapro' },
       ],
     },

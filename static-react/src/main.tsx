@@ -5,6 +5,9 @@ import './index.css'
 import './i18n'
 import i18n from './i18n'
 import Lenis from '@studio-freight/lenis'
+import { parsePath } from './pages'
+
+const { page } = parsePath(window.location.pathname)
 
 const lenis = new Lenis({
   smoothWheel: true,
@@ -22,7 +25,7 @@ requestAnimationFrame(raf)
 function mount() {
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-      <App />
+      <App page={page} />
     </React.StrictMode>
   )
 }
@@ -59,10 +62,9 @@ function updateMeta() {
   if (metaOgUrl) metaOgUrl.setAttribute('content', href)
 }
 
-// Run initially and on language change / loaded events
-updateMeta()
-
-if (i18n && typeof i18n.on === 'function') {
+// Home only: it switches language in place. Other pages keep the head prerender wrote for their URL.
+if (page === 'home') {
+  updateMeta()
   i18n.on('languageChanged', () => updateMeta())
   i18n.on('loaded', () => updateMeta())
 }

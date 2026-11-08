@@ -1,18 +1,24 @@
-// Writes dist/index.html, dist/ru/index.html, dist/uk/index.html with the page
-// pre-rendered and per-language head tags. Runs after the client + SSR builds.
+// Writes dist/<lang path><page path>index.html for every page (home, /help/, each guide) in every
+// language, pre-rendered with its own head tags, and dist/sitemap.xml. Runs after the client + SSR builds.
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
-import { render } from '../dist-ssr/entry-server.js'
+import { render, LANGS, PAGES, pagePath, parsePath } from '../dist-ssr/entry-server.js'
 
 const SITE = 'https://sadhana.pro'
-const LANGS = { en: '/', ru: '/ru/', uk: '/uk/' }
 const OG_LOCALE = { en: 'en_US', ru: 'ru_RU', uk: 'uk_UA' }
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
 const template = readFileSync('dist/index.html', 'utf8')
 
-for (const [lng, path] of Object.entries(LANGS)) {
+const alternates = (page) => [...LANGS.map((l) => [l, l]), ['x-default', 'en']]
+  .map(([hreflang, l]) => `<link rel="alternate" hreflang="${hreflang}" href="${SITE}${pagePath(l, page)}" />`)
+const sitemap = []
+
+for (const page of PAGES) for (const lng of LANGS) {
+  const path = pagePath(lng, page)
+  const back = parsePath(path) // the client picks its page and language from the URL this way
+  if (back.lang !== lng || back.page !== page) throw new Error(`${path} parses as ${JSON.stringify(back)}`)
   const translation = JSON.parse(readFileSync(`public/locales/${lng}/translation.json`, 'utf8'))
-  const { html, title, description, keywords } = await render(lng, translation)
+  const { html, title, description, keywords } = await render(lng, translation, page)
   const url = SITE + path
   const ogImage = `${SITE}/og-image-${lng}.jpg`
   const jsonLd = JSON.stringify({
@@ -39,18 +45,25 @@ for (const [lng, path] of Object.entries(LANGS)) {
     `<meta property="og:image" content="${ogImage}" />`,
     `<meta property="og:image:width" content="1200" />`,
     `<meta property="og:image:height" content="630" />`,
-    `<script type="application/ld+json">${jsonLd}</script>`,
+    ...alternates(page),
+    ...(page === 'home' ? [`<script type="application/ld+json">${jsonLd}</script>`] : []),
   ].join('\n  ')
+  sitemap.push(`  <url>\n    <loc>${url}</loc>\n    ${alternates(page).map((l) => l.replace('<link', '<xhtml:link')).join('\n    ')}\n  </url>`)
 
-  const page = template
+  const out = template
     .replace('<html lang="en">', () => `<html lang="${lng}">`)
     .replace('<!--app-head-->', () => head)
     .replace('<div id="root"></div>', () => `<div id="root">${html}</div>`)
-  if (page === template || !page.includes(url)) throw new Error(`prerender markers missing for ${lng}`)
+  if (out === template || !out.includes(url)) throw new Error(`prerender markers missing for ${lng}`)
 
   mkdirSync(`dist${path}`, { recursive: true })
-  writeFileSync(`dist${path}index.html`, page)
+  writeFileSync(`dist${path}index.html`, out)
   console.log(`prerendered ${url}`)
 }
 
+writeFileSync('dist/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+${sitemap.join('\n')}
+</urlset>
+`)
 rmSync('dist-ssr', { recursive: true, force: true })

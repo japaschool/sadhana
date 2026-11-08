@@ -151,36 +151,14 @@
   },
   "help": {
     "short": "Help",
-    "videos": "How-to videos",
     "guides": "Guides",
+    "guidesLink": "Guides and FAQ",
+    "opensSite": "Opens sadhana.pro",
     "contact": "Contact us",
     "replyByEmail": "We reply by email",
     "telegram": "Follow us on Telegram",
     "opensTelegram": "Opens Telegram",
-    "build": "Build {{sha}}",
-    "video": {
-      "registration": "Create an account",
-      "iosWebApp": "Install on iPhone as a web app",
-      "addPractice": "Add a practice",
-      "renamePractice": "Rename a practice",
-      "addGraph": "Add a chart report",
-      "graphAverage": "Show the average on a chart",
-      "graphSeveral": "Add several practices to one chart",
-      "barLayouts": "Bar chart layouts",
-      "addTable": "Add a table report"
-    },
-    "yatraMatching": {
-      "title": "How to match my practices with a yatra",
-      "intro": "A yatra table has one column per yatra practice. Your cell in each column fills from the practice of yours that's linked to it. Until you link one, the cell stays empty, even if you log the practice on Today.",
-      "unmatched": "Before matching",
-      "matched": "After matching",
-      "unmatchedAlt": "Yatra settings before any practices are matched",
-      "matchedAlt": "Yatra settings with every practice matched",
-      "empty": "Your cells in the yatra table stay empty.",
-      "emptyFix": "Open Yatra › Your links and link your practice to the yatra practice.",
-      "missing": "Your practice isn't offered in the list.",
-      "missingFix": "Its type differs from the yatra practice. Pick or add a practice of the same type."
-    }
+    "build": "Build {{sha}}"
   },
   "support": {
     "title": "Send us a message",
