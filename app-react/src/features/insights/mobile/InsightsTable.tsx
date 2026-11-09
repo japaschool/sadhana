@@ -1,7 +1,9 @@
 import { useLayoutEffect, useRef, useState } from 'react'
+import type { MouseEvent, ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import type { ReportDataEntry } from '../../../api/charts'
+import type { UserPractice } from '../../../types/api'
 import { practicesApi } from '../../../api/practices'
 import type { TraceInput } from '../chartLogic'
 import { fromDateStr } from '../../today/date'
@@ -12,7 +14,11 @@ import { cellText, formatDay, tableColumns, traceAverageLabel } from '../insight
 interface InsightsTableProps {
   /** Group columns: a header cell per group, columns sorted by group. */
   grouped: boolean
-  traces: TraceInput[]; entries: ReportDataEntry[]; todayCob: string; onOpenDay: (cob: string) => void
+  traces: TraceInput[]; entries: ReportDataEntry[]; todayCob: string
+  /** Opens a day to edit it; without it the table is read-only (a shared link). */
+  onOpenDay?: (cob: string) => void
+  /** A shared link passes the owner's practices instead of the viewer's. */
+  practices?: UserPractice[]
   /** Space kept below the table. Mobile: the 61px tab bar plus 12px. */
   bottomGap?: number
 }
@@ -20,15 +26,16 @@ interface InsightsTableProps {
 const DATE_COL = 'sticky left-0 z-10 w-[72px] min-w-[72px] border-r border-ui-hairline px-3'
 
 // ponytail: every day is rendered; virtualise if the All range on years of data gets slow.
-export function InsightsTable({ grouped, traces, entries, todayCob, onOpenDay, bottomGap = 73 }: InsightsTableProps) {
+export function InsightsTable({ grouped, traces, entries, todayCob, onOpenDay, practices: ownerPractices, bottomGap = 73 }: InsightsTableProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const ref = useRef<HTMLDivElement>(null)
   const [top, setTop] = useState(0)
   useLayoutEffect(() => setTop(ref.current!.getBoundingClientRect().top + window.scrollY), [])
-  const { data: practices = [] } = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices })
-  const { data: groups = [] } = useQuery({ queryKey: ['practice-groups'], queryFn: practicesApi.getGroups })
+  const { data: ownPractices = [] } = useQuery({ queryKey: ['practices'], queryFn: practicesApi.getUserPractices, enabled: !ownerPractices })
+  const practices = ownerPractices ?? ownPractices
+  const { data: groups = [] } = useQuery({ queryKey: ['practice-groups'], queryFn: practicesApi.getGroups, enabled: grouped })
   const byName = new Map(practices.map((p) => [p.practice, p]))
   const values = new Map(entries.map((e) => [`${e.cob_date}|${e.practice}`, e.value]))
   const days = [...new Set(entries.map((e) => e.cob_date))].sort().reverse()
@@ -85,16 +92,15 @@ export function InsightsTable({ grouped, traces, entries, todayCob, onOpenDay, b
             const warn = cols.some((c, i) => c.required && !cells[i])
             const d = fromDateStr(cob)
             return (
-              <tr key={cob} onClick={() => onOpenDay(cob)} className="cursor-pointer">
+              <tr key={cob} onClick={onOpenDay && (() => onOpenDay(cob))} className={onOpenDay ? 'cursor-pointer' : ''}>
                 <td className={`${DATE_COL} border-b bg-ui-surface py-2`}>
-                  <button type="button" aria-label={fullDate.format(d)} onClick={(e) => { e.stopPropagation(); onOpenDay(cob) }}
-                    className="flex flex-col gap-px text-left">
+                  <DateCell label={fullDate.format(d)} onClick={onOpenDay && ((e) => { e.stopPropagation(); onOpenDay(cob) })}>
                     <span className="flex items-center gap-1.5 font-ui-mono text-[10px] font-medium tracking-[.04em] text-ui-faint uppercase">
                       {weekday.format(d)}
                       {warn && <span data-testid="required-missing" className="h-1.5 w-1.5 rounded-full bg-ui-danger" />}
                     </span>
                     <span className="text-[13px] font-bold whitespace-nowrap text-ui-ink">{formatDay(cob, locale)}</span>
-                  </button>
+                  </DateCell>
                 </td>
                 {cols.map((c, i) => {
                   const v = cells[i]
@@ -128,4 +134,12 @@ export function InsightsTable({ grouped, traces, entries, todayCob, onOpenDay, b
       </table>
     </div>
   )
+}
+
+/** The day's date: a button when the day can be opened, plain text on a read-only table. */
+function DateCell({ label, onClick, children }: { label: string; onClick?: (e: MouseEvent) => void; children: ReactNode }) {
+  const cls = 'flex flex-col gap-px text-left'
+  return onClick
+    ? <button type="button" aria-label={label} onClick={onClick} className={cls}>{children}</button>
+    : <div className={cls}>{children}</div>
 }

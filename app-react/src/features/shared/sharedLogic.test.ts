@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dayLevels, doneAverage, practiceCells } from './sharedLogic'
+import { dayLevels, doneAverage } from './sharedLogic'
 
 const e = (cob_date: string, practice: string, value: unknown) => ({ cob_date, practice, value })
 const rows = [
@@ -10,11 +10,6 @@ const rows = [
 const traces = [{ name: 'Japa', dataType: 'Int' as const }, { name: 'Wake', dataType: 'Bool' as const }]
 
 describe('shared report grid', () => {
-  it('shades numbers by their share of the best day; yes/no is done or not', () => {
-    expect(practiceCells(traces[0], rows).map((c) => c.level)).toEqual([3, 1, 0])
-    expect(practiceCells(traces[1], rows).map((c) => c.level)).toEqual([3, 0, 0])
-  })
-
   it('counts practices done per day', () => {
     expect(dayLevels(traces, rows).map((d) => [d.count, d.level])).toEqual([[2, 3], [1, 2], [0, 0]])
   })

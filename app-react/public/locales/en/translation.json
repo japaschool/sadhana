@@ -1015,14 +1015,11 @@
     "notFoundHint": "This link may be mistyped, or it’s no longer shared.",
     "donePerDay": "Practices done per day · {{range}}",
     "doneOf": "{{done}} of {{total}}",
-    "less": "Less",
-    "more": "More",
     "chart": "Chart",
     "table": "Table",
     "date": "Date",
     "total": "Total",
-    "downloadCsv": "Download CSV",
-    "hoverHint": "Hover a day to see the diary value behind it. Tap on touch screens."
+    "downloadCsv": "Download CSV"
   },
   "stats": {
     "title": "Stats",

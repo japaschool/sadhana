@@ -11,9 +11,10 @@ import { MonthNav } from '../insights/mobile/MonthNav'
 import { ReportMenu } from '../insights/mobile/ReportMenu'
 import { InsightsChart } from '../insights/mobile/InsightsChart'
 import { PanelsReportView } from '../insights/panels/PanelsReportView'
+import { InsightsTable } from '../insights/mobile/InsightsTable'
 import type { Range } from '../insights/useInsights'
 import {
-  CARD, DayCalendar, DayTable, DeltaText, EmptyState, Eyebrow, HeatKey, Headline, Legend, Mark, PracticeHeatmap, ReportList,
+  CARD, DayTable, DeltaText, EmptyState, Eyebrow, Headline, Legend, Mark, ReportList,
   SHARED_RANGES, SignUpLink, Spinner, useCsv, useKind, useShared, type Shared,
 } from './parts'
 
@@ -63,6 +64,11 @@ function ChartBody({ s, height, children }: { s: Shared; height: number; childre
   if (s.isError) return <p role="alert" className="py-10 text-center text-sm text-ui-danger-text">{t('insights.loadFailed')}</p>
   if (s.grid ? !s.entries.length : !s.hasData) return <p className="py-10 text-center text-sm text-ui-muted">{t('insights.noData')}</p>
   return <>{children}</>
+}
+
+/** A table report: the owner's Insights table, read-only and ungrouped (a link can't read the owner's groups). */
+function Table({ s, bottomGap }: { s: Shared; bottomGap: number }) {
+  return <InsightsTable grouped={false} traces={s.traces} entries={s.entries} todayCob={s.todayCob} practices={s.practices} bottomGap={bottomGap} />
 }
 
 function Panels({ s, height, cols }: { s: Shared; height: number; cols?: 2 }) {
@@ -137,7 +143,7 @@ export function SharedMobile() {
         <RangeControl s={s} size="sm" />
       </div>
       <div className="px-4 pt-2.5" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-        {s.panelsReady ? <Panels s={s} height={230} cols={2} /> : (
+        {s.panelsReady ? <Panels s={s} height={230} cols={2} /> : s.table ? <Table s={s} bottomGap={s.visitor ? 108 : 32} /> : (
           <section className={`${CARD} flex flex-col gap-3.5 p-4`}>
             <div className="flex items-start justify-between gap-3">
               {!s.isLoading && !s.isError ? <Headline s={s} size={30} /> : <span />}
@@ -149,9 +155,7 @@ export function SharedMobile() {
               )}
             </div>
             <ChartBody s={s} height={170}>
-              {s.grid ? (
-                <><DayCalendar s={s} /><HeatKey /></>
-              ) : (
+              {!s.grid && (
                 <>
                   <InsightsChart key={s.selectedId} rows={s.rows} traces={s.traces} barLayout={s.barLayout} averages={s.averages} />
                   <Legend s={s} cols={2} />
@@ -225,14 +229,14 @@ export function SharedTablet() {
                 <span className="flex-1" />
                 {!s.panels && s.kind === 'legacy' && <CsvButton onClick={csv} />}
               </div>
-              {s.panelsReady ? <Panels s={s} height={300} cols={2} /> : (
+              {s.panelsReady ? <Panels s={s} height={300} cols={2} /> : s.table ? <Table s={s} bottomGap={36} /> : (
                 <section className={`${CARD} flex flex-col gap-3.5 p-5`}>
                   <div className="flex items-start justify-between gap-3">
                     {!s.isLoading && !s.isError && <Headline s={s} size={34} delta={false} />}
-                    {s.grid ? <HeatKey /> : <DeltaText s={s} className="pt-0.5 text-right" />}
+                    {!s.grid && <DeltaText s={s} className="pt-0.5 text-right" />}
                   </div>
                   <ChartBody s={s} height={220}>
-                    {s.grid ? <PracticeHeatmap s={s} /> : (
+                    {!s.grid && (
                       <>
                         <InsightsChart key={s.selectedId} rows={s.rows} traces={s.traces} barLayout={s.barLayout} averages={s.averages} height={220} />
                         <Legend s={s} cols={4} />
@@ -247,7 +251,6 @@ export function SharedTablet() {
                   <DayTable s={s} />
                 </section>
               )}
-              {s.grid && <p className="text-[13px] text-ui-muted">{t('shared.hoverHint')}</p>}
             </main>
           </div>
         </>
@@ -302,11 +305,11 @@ export function SharedDesktop() {
                 {!s.panels && s.kind === 'legacy' && <CsvButton onClick={csv} />}
               </div>
             </div>
-            {s.panelsReady ? <Panels s={s} height={300} /> : (
+            {s.panelsReady ? <Panels s={s} height={300} /> : s.table ? <Table s={s} bottomGap={36} /> : (
               <section className={`${CARD} flex flex-col gap-[18px] rounded-[24px] p-6`}>
                 <div className="flex items-start justify-between gap-3">
                   {!s.isLoading && !s.isError && <Headline s={s} size={40} delta={false} />}
-                  {s.panels ? null : s.grid ? <HeatKey /> : (
+                  {s.panels || s.grid ? null : (
                     <div className="flex items-center gap-4">
                       <DeltaText s={s} />
                       <SegmentedControl label={t('shared.table')} value={view} onChange={setView}
@@ -315,7 +318,7 @@ export function SharedDesktop() {
                   )}
                 </div>
                 <ChartBody s={s} height={400}>
-                  {s.grid ? <PracticeHeatmap s={s} /> : view === 'table' ? <DayTable s={s} /> : (
+                  {s.grid ? null : view === 'table' ? <DayTable s={s} /> : (
                     <>
                       <InsightsChart key={s.selectedId} rows={s.rows} traces={s.traces} barLayout={s.barLayout} averages={s.averages} height={400} />
                       <Legend s={s} cols={4} />
@@ -324,7 +327,6 @@ export function SharedDesktop() {
                 </ChartBody>
               </section>
             )}
-            {s.grid && <p className="text-[13px] text-ui-muted">{t('shared.hoverHint')}</p>}
           </>
         )}
       </main>

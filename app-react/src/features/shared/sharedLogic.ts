@@ -8,21 +8,6 @@ export const days = (entries: ReportDataEntry[]) => [...new Set(entries.map((e) 
 
 const done = (raw: unknown, dt: TraceInput['dataType']) => (valueToNumber(raw, dt) ?? 0) > 0
 
-/** One practice's cells, oldest first. Yes/no and text are done or not; numbers shade by their share of the window's best day. */
-export function practiceCells(trace: TraceInput, entries: ReportDataEntry[]): { cob: string; level: Level; raw: unknown }[] {
-  const byDay = new Map(entries.filter((e) => e.practice === trace.name).map((e) => [e.cob_date, e.value]))
-  const scaled = trace.dataType === 'Int' || trace.dataType === 'Duration'
-  const nums = [...byDay.values()].map((v) => valueToNumber(v, trace.dataType) ?? 0)
-  const max = Math.max(0, ...nums)
-  return days(entries).map((cob) => {
-    const raw = byDay.get(cob) ?? null
-    if (!done(raw, trace.dataType)) return { cob, level: 0, raw }
-    if (!scaled || !max) return { cob, level: 3, raw }
-    const share = valueToNumber(raw, trace.dataType)! / max
-    return { cob, level: share > 2 / 3 ? 3 : share > 1 / 3 ? 2 : 1, raw }
-  })
-}
-
 /** Per day, how many of the report's practices were done, and that as a level (all of them = 3). */
 export function dayLevels(traces: TraceInput[], entries: ReportDataEntry[]): { cob: string; count: number; level: Level }[] {
   const types = new Map(traces.map((t) => [t.name, t.dataType]))

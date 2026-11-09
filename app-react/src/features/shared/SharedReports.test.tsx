@@ -12,8 +12,11 @@ import { SharedDesktop, SharedMobile, SharedTablet } from './SharedReports'
 vi.mock('../../api/charts', () => ({
   chartsApi: { getSharedUser: vi.fn(), getSharedReports: vi.fn(), getSharedPractices: vi.fn(), getSharedReportData: vi.fn() },
 }))
+vi.mock('../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn(), getGroups: vi.fn() } }))
 import { chartsApi } from '../../api/charts'
+import { practicesApi } from '../../api/practices'
 const api = vi.mocked(chartsApi)
+const practices = vi.mocked(practicesApi)
 
 const GRAPH: Report = { id: 'g', name: 'Hearing & study', definition: { Graph: { bar_layout: 'Stacked', traces: [
   { label: null, type_: 'Bar', practice: 'read', y_axis: null, show_average: false },
@@ -68,11 +71,6 @@ describe('shared reports', () => {
     expect(api.getSharedReportData).toHaveBeenCalledWith('u1', expect.any(String), 'Month')
   })
 
-  it('mobile grid: a calendar of days shaded by practices done', async () => {
-    setViewportWidth(390)
-    renderAt(<SharedMobile />)
-    expect(await screen.findByRole('img', { name: /2 of 2/ })).toBeInTheDocument()
-  })
 
   it('signed in: no Sign up', async () => {
     useAuthStore.setState({ token: 't' })
@@ -104,13 +102,20 @@ describe('shared reports', () => {
     expect(await screen.findByRole('heading', { name: 'Table' })).toBeInTheDocument()
   })
 
-  it('desktop grid: a day per cell, with the diary value in its label', async () => {
-    setViewportWidth(1440)
-    renderAt(<SharedDesktop />)
-    await userEvent.click(await screen.findByRole('radio', { name: /Full sadhana/ }))
-    expect(await screen.findByRole('button', { name: /Reading: 40m/ })).toBeInTheDocument()
-    expect(screen.getByText('2 reports')).toBeInTheDocument()
-  })
+  it.each([['mobile', 390, SharedMobile], ['tablet', 834, SharedTablet], ['desktop', 1440, SharedDesktop]] as const)(
+    '%s: a table report is a read-only table of the owner\'s practices', async (_n, width, Page) => {
+      setViewportWidth(width)
+      renderAt(<Page />)
+      await pick(width, /Full sadhana/)
+      const table = await screen.findByRole('table')
+      expect(within(table).getByRole('columnheader', { name: 'Reading' })).toBeInTheDocument()
+      expect(within(table).getByRole('columnheader', { name: 'Wake up' })).toBeInTheDocument()
+      expect(within(table).getAllByText('40m').length).toBeGreaterThan(0)
+      expect(within(table).queryByRole('button')).toBeNull()
+      expect(practices.getUserPractices).not.toHaveBeenCalled()
+      expect(practices.getGroups).not.toHaveBeenCalled()
+    },
+  )
 
   it.each([['mobile', 390, SharedMobile], ['tablet', 834, SharedTablet], ['desktop', 1440, SharedDesktop]] as const)(
     '%s: a month report shows month navigation instead of the range control', async (_n, width, Page) => {
