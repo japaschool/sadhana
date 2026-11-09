@@ -42,7 +42,7 @@ function RangeControl({ s, size }: { s: Shared; size: 'sm' | 'md' | 'lg' }) {
         <SegmentedControl<Range> label={t('insights.range')} value={s.range} onChange={s.setRange}
           options={SHARED_RANGES.map((r) => ({ value: r, label: t(`insights.range${r}`) }))} />
       </div>
-      <EndDateControl end={s.end} onChange={s.setEnd} />
+      <EndDateControl end={s.end} onChange={s.setEnd} own={false} />
     </>
   )
 }

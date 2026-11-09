@@ -4,9 +4,9 @@ import { CalendarSheet } from '../../today/mobile/CalendarSheet'
 import { toDateStr } from '../../today/date'
 import { formatDay } from '../insightsLogic'
 
-interface EndDateControlProps { end: Date | null; onChange: (d: Date | null) => void }
+interface EndDateControlProps { end: Date | null; onChange: (d: Date | null) => void; own?: boolean }
 
-export function EndDateControl({ end, onChange }: EndDateControlProps) {
+export function EndDateControl({ end, onChange, own }: EndDateControlProps) {
   const { t, i18n } = useTranslation()
   const [open, setOpen] = useState(false)
   return (
@@ -25,7 +25,7 @@ export function EndDateControl({ end, onChange }: EndDateControlProps) {
           {t('insights.endingToday')} <span aria-hidden>⌄</span>
         </button>
       )}
-      {open && <CalendarSheet date={end ?? new Date()} onSelect={onChange} onClose={() => setOpen(false)} />}
+      {open && <CalendarSheet date={end ?? new Date()} onSelect={onChange} onClose={() => setOpen(false)} own={own} />}
     </>
   )
 }

@@ -9,13 +9,13 @@ vi.mock('../../../api/practices', () => ({
 }))
 import { practicesApi } from '../../../api/practices'
 
-function setup() {
+function setup(own?: boolean) {
   const onSelect = vi.fn()
   const onClose = vi.fn()
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={qc}>
-      <CalendarSheet date={new Date(2026, 9, 6)} onSelect={onSelect} onClose={onClose} />
+      <CalendarSheet date={new Date(2026, 9, 6)} onSelect={onSelect} onClose={onClose} own={own} />
     </QueryClientProvider>,
   )
   return { onSelect, onClose }
@@ -36,6 +36,12 @@ describe('CalendarSheet', () => {
     await waitFor(() => expect(screen.getAllByTestId('incomplete-dot')).toHaveLength(2))
     expect(practicesApi.getIncompleteDays).toHaveBeenCalledWith('2026-10-01', '2026-10-31')
     expect(screen.getByRole('button', { name: /October 7/ })).toBeDisabled()
+  })
+
+  it("doesn't fetch the viewer's incomplete days on someone else's report (a visitor would 401 to /login)", () => {
+    vi.mocked(practicesApi.getIncompleteDays).mockClear()
+    setup(false)
+    expect(practicesApi.getIncompleteDays).not.toHaveBeenCalled()
   })
 
   it('navigates months', async () => {

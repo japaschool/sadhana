@@ -13,19 +13,20 @@ const SQUARE = 'flex h-10 w-10 items-center justify-center rounded-xl border bor
 
 /** Which days can't be picked; future days by default. */
 type Disabled = (d: Date) => boolean
-interface CalendarSheetProps { date: Date; onSelect: (d: Date) => void; onClose: () => void; disabled?: Disabled }
+/** `own: false` — not the viewer's diary (a shared report), so no incomplete-day dots and no authed fetch. */
+interface CalendarSheetProps { date: Date; onSelect: (d: Date) => void; onClose: () => void; disabled?: Disabled; own?: boolean }
 
-export function CalendarSheet({ date, onSelect, onClose, disabled }: CalendarSheetProps) {
+export function CalendarSheet({ date, onSelect, onClose, disabled, own }: CalendarSheetProps) {
   const { t } = useTranslation()
   return (
     <BottomSheet label={t('today.calendar')} onClose={onClose}>
-      <CalendarMonth date={date} disabled={disabled} onPick={(d) => { onSelect(d); onClose() }} />
+      <CalendarMonth date={date} disabled={disabled} own={own} onPick={(d) => { onSelect(d); onClose() }} />
     </BottomSheet>
   )
 }
 
 /** The month grid with its pickers and footer; the bottom sheet and the desktop log popover both wrap it. */
-export function CalendarMonth({ date, onPick: pick, disabled }: { date: Date; onPick: (d: Date) => void; disabled?: Disabled }) {
+export function CalendarMonth({ date, onPick: pick, disabled, own = true }: { date: Date; onPick: (d: Date) => void; disabled?: Disabled; own?: boolean }) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
   const [view, setView] = useState({ y: date.getFullYear(), m: date.getMonth() })
@@ -33,7 +34,7 @@ export function CalendarMonth({ date, onPick: pick, disabled }: { date: Date; on
 
   const from = toDateStr(new Date(view.y, view.m, 1))
   const to = toDateStr(new Date(view.y, view.m + 1, 0))
-  const { data = [] } = useQuery({ queryKey: ['incomplete-days', from, to], queryFn: () => practicesApi.getIncompleteDays(from, to) })
+  const { data = [] } = useQuery({ queryKey: ['incomplete-days', from, to], queryFn: () => practicesApi.getIncompleteDays(from, to), enabled: own })
   const incomplete = new Set(data)
 
   const today = new Date()
