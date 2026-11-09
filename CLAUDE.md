@@ -13,7 +13,7 @@ The Rust/Yew UI (`frontend/`) has been removed and is no longer deployed. `main`
 
 The compiled frontend lands in `dist/`, which the server serves directly (see `server/src/routes.rs`).
 
-The landing site (sadhana.pro) is `static-react/`, deployed by `build_static_site.yml`. Its app screenshots (`src/assets/shots/<shot>.<lang>.webp`) are regenerated against a local server: `npx tsx scripts/seed-demo.ts` (recreates the `@demo.sadhana.pro` users) then `node scripts/capture-shots.mjs`.
+The landing site (sadhana.pro) is `static-react/`, deployed by `build_static_site.yml`. Its app screenshots (`src/assets/shots/<shot>.<lang>.webp`) are regenerated against a local server: `npx tsx scripts/seed-demo.ts` (recreates the `@demo.sadhana.pro` users) then `node scripts/capture-shots.mjs`. The phone walk-through videos (`src/assets/demo/walkthrough.<lang>.webm`) come from `node scripts/capture-video.mjs` against the same seed.
 
 ## Commands
 

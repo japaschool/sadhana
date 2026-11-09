@@ -7,7 +7,7 @@ import PracticeCategories from './components/PracticeCategories'
 import TrackBanner from './components/TrackBanner'
 import Footer from './components/Footer'
 import DevicesSection from './components/DevicesSection'
-import { shot } from './shots'
+import { shot, walkthrough } from './shots'
 import { GuidePage, HelpIndex } from './components/HelpPages'
 import { type Lang, type Page } from './pages'
 
@@ -23,8 +23,11 @@ export default function App({ page = 'home' }: { page?: Page }) {
     </div>
   )
 
-  const slides = ['today', 'overview', 'sleep', 'japa', 'table', 'year', 'group', 'practices']
-    .map((name) => ({ src: shot(name, lang), caption: t(`preview.${name}`) }))
+  const slides = [
+    { src: shot('today', lang), video: walkthrough(lang), caption: t('preview.walkthrough') },
+    ...['today', 'overview', 'sleep', 'japa', 'table', 'year', 'group', 'practices']
+      .map((name) => ({ src: shot(name, lang), caption: t(`preview.${name}`) })),
+  ]
 
   return (
     <div data-theme="sadhana" className="font-sans">

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import heroBg from '../assets/hero.webp'
-import { shot } from '../shots'
+import { shot, walkthrough } from '../shots'
 import PhoneFrame from './PhoneFrame'
 
 export default function Hero() {
@@ -67,7 +67,7 @@ export default function Hero() {
           }}
         >
           <div className="hidden md:flex flex-shrink-0">
-            <PhoneFrame src={shot('today', lang)} alt="App preview" accentColor="#3E8D6B" size="sm" />
+            <PhoneFrame src={shot('today', lang)} video={walkthrough(lang)} alt={t('preview.walkthrough')} accentColor="#3E8D6B" size="sm" />
           </div>
 
           {/* Text */}

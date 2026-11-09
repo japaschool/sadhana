@@ -1,6 +1,7 @@
 interface PhoneFrameProps {
   src: string
   alt: string
+  video?: string
   accentColor?: string
   size?: 'sm' | 'md' | 'lg'
 }
@@ -11,7 +12,7 @@ const sizes = {
   lg: { w: 340, h: 714 },
 }
 
-export default function PhoneFrame({ src, alt, accentColor = '#3A7D5C', size = 'md' }: PhoneFrameProps) {
+export default function PhoneFrame({ src, alt, video, accentColor = '#3A7D5C', size = 'md' }: PhoneFrameProps) {
   const { w, h } = sizes[size]
   const radius = Math.round(w * 0.175)
   const pad = Math.round(w * 0.035)
@@ -57,11 +58,19 @@ export default function PhoneFrame({ src, alt, accentColor = '#3A7D5C', size = '
         background: '#F7F4EE',
         paddingTop: Math.round(h * 0.07),
       }}>
-        <img src={src} alt={alt}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
-          draggable={false}
-          loading="lazy"
-        />
+        {video ? (
+          // React doesn't put `muted` in server-rendered HTML, so mute and start it here; reduced motion keeps the poster.
+          <video src={video} poster={src} aria-label={alt} loop muted playsInline preload="metadata"
+            ref={(v) => { if (v && !matchMedia('(prefers-reduced-motion: reduce)').matches) { v.muted = true; v.play().catch(() => {}) } }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
+          />
+        ) : (
+          <img src={src} alt={alt}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
+            draggable={false}
+            loading="lazy"
+          />
+        )}
       </div>
 
       {/* Side buttons */}

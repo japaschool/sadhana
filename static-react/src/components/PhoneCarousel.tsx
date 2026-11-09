@@ -4,6 +4,7 @@ import PhoneFrame from './PhoneFrame'
 
 interface Slide {
   src: string
+  video?: string
   caption: string
 }
 
@@ -94,7 +95,7 @@ export default function PhoneCarousel({
               onClick={leftSlide ? prev : undefined}
             >
               {leftSlide && (
-                <PhoneFrame src={leftSlide.src} alt={leftSlide.caption} accentColor={accent} size="sm" />
+                <PhoneFrame src={leftSlide.src} video={leftSlide.video} alt={leftSlide.caption} accentColor={accent} size="sm" />
               )}
             </motion.div>
           </div>
@@ -109,7 +110,7 @@ export default function PhoneCarousel({
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <PhoneFrame src={centerSlide.src} alt={centerSlide.caption} accentColor={accent} size="sm" />
+                <PhoneFrame src={centerSlide.src} video={centerSlide.video} alt={centerSlide.caption} accentColor={accent} size="sm" />
               </motion.div>
             </AnimatePresence>
             <AnimatePresence mode="wait">
@@ -136,7 +137,7 @@ export default function PhoneCarousel({
               onClick={rightSlide ? next : undefined}
             >
               {rightSlide && (
-                <PhoneFrame src={rightSlide.src} alt={rightSlide.caption} accentColor={accent} size="sm" />
+                <PhoneFrame src={rightSlide.src} video={rightSlide.video} alt={rightSlide.caption} accentColor={accent} size="sm" />
               )}
             </motion.div>
           </div>
