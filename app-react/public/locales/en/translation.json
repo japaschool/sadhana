@@ -876,7 +876,11 @@
     "gapsSubtitle": "Days between events report · saved as you edit",
     "goals": "Goals",
     "goalsDesc": "A row per goal, by day, week or month",
-    "goalsSubtitle": "Goals report · saved as you edit"
+    "goalsSubtitle": "Goals report · saved as you edit",
+    "notInTable": "Not in the table",
+    "archivedColumn": "Hidden practice · not in the table",
+    "deletedColumn": "Practice deleted · not in the table",
+    "removeColumn": "Remove {{name}} from the table"
   },
   "practices": {
     "add": "Add",
@@ -933,9 +937,9 @@
     "requiredHint": "If “{{name}}” hasn't been filled in for a past date, a red dot will appear next to that date in the calendar.",
     "hideOrDelete": "Hide or delete",
     "hideTitle": "Hide from Today",
-    "hideText": "Keeps all its data. Show it again any time from the list.",
+    "hideText": "Keeps all its data. It also leaves every chart and table it’s in. Show it again any time from the list.",
     "showTitle": "Show on Today",
-    "showText": "Hidden now. All its data is kept.",
+    "showText": "Hidden now, from Today and from your charts and tables. All its data is kept.",
     "deleteTitle": "Delete practice",
     "deleteText": "Any logged data associated with this practice will be lost. This can't be undone.",
     "deleteEllipsis": "Delete…",
@@ -943,7 +947,7 @@
     "saveChanges": "Save changes",
     "addButton": "Add practice",
     "saving": "Saving…",
-    "hideOnSave": "Hidden from Today when you save.",
+    "hideOnSave": "Hidden from Today and from your charts and tables when you save.",
     "showOnSave": "Back on Today when you save.",
     "group": "Group",
     "addGroupHint": "Add a group to split Today into sections.",

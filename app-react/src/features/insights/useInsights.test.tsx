@@ -45,6 +45,23 @@ describe('useInsights', () => {
     expect(result.current.noReports).toBe(false)
   })
 
+  it('leaves archived and deleted practices out of a table and a graph', async () => {
+    const table = { ...GRID, definition: { Grid: { practices: ['p1', 'p2', 'gone'] } } }
+    const graph = { ...GRAPH, definition: { Graph: { ...GRAPH.definition.Graph, traces: ['p1', 'p2', 'gone'].map((practice) => ({ ...GRAPH.definition.Graph.traces[0], practice })) } } }
+    charts.getReports.mockResolvedValue([graph, table])
+    practices.getUserPractices.mockResolvedValue([
+      { id: 'p1', practice: 'Japa', data_type: 'Duration', is_active: true },
+      { id: 'p2', practice: 'Reading', data_type: 'Duration', is_active: false },
+    ])
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    const { result } = renderHook(() => useInsights(undefined, true), { wrapper })
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(result.current.traces.map((t) => t.name)).toEqual(['Japa'])
+    act(() => result.current.select('g1'))
+    expect(result.current.traces.map((t) => t.name)).toEqual(['Japa'])
+  })
+
   it('says when there are no reports', async () => {
     charts.getReports.mockResolvedValue([GRID])
     const { result } = setup()

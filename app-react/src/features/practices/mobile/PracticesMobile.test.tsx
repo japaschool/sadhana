@@ -157,7 +157,7 @@ describe('PracticesMobile', () => {
     renderAt('/settings/practices/p1')
     const sheet = await screen.findByRole('dialog', { name: 'Japa rounds' })
     fireEvent.click(within(sheet).getByRole('button', { name: 'Hide' }))
-    expect(within(sheet).getByText('Hidden from Today when you save.')).toBeInTheDocument()
+    expect(within(sheet).getByText('Hidden from Today and from your charts and tables when you save.')).toBeInTheDocument()
     expect(api.updateUserPractice).not.toHaveBeenCalled()
     fireEvent.click(within(sheet).getByRole('button', { name: 'Save changes' }))
     await waitFor(() => expect(api.updateUserPractice).toHaveBeenCalledWith('p1', expect.objectContaining({ practice: 'Japa rounds', is_active: false, is_required: true })))

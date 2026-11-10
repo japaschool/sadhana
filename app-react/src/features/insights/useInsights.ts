@@ -88,7 +88,9 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     enabled: hasAround && duration !== 'Year' && !paused,
   })
 
-  const traces = tracesFor(report, practicesQ.data ?? [], COLORS)
+  // Archived and deleted practices stay in a saved report but aren't drawn, as in the editor; filtered after tracesFor so colors keep their slot.
+  const activeNames = new Set((practicesQ.data ?? []).filter((p) => p.is_active).map((p) => p.practice))
+  const traces = tracesFor(report, practicesQ.data ?? [], COLORS).filter((t) => activeNames.has(t.name))
   const entries = current.data ?? []
   const names = new Set(traces.map((t) => t.name))
   const barLayout = report && isGraph(report) ? report.definition.Graph.bar_layout : 'Grouped'

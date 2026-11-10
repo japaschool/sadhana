@@ -423,6 +423,8 @@ export function AxesCard({ ed }: { ed: Editor }) {
   )
 }
 
+const SMALL = 'flex min-h-10 items-center rounded-xl border px-3.5 text-sm font-bold'
+
 function SeriesRow({ s, lang, editor, onOpen, onChoose, onTurnOn, onRemove }: {
   s: Series; lang: string; editor?: { onDone: () => void; fields: ReactNode }
   onOpen: () => void; onChoose: () => void; onTurnOn: () => void; onRemove: () => void
@@ -431,7 +433,6 @@ function SeriesRow({ s, lang, editor, onOpen, onChoose, onTurnOn, onRemove }: {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: String(s.index) })
   const name = seriesName(s, t)
   const style = styleOf(s.trace.type_)
-  const SMALL = 'flex min-h-10 items-center rounded-xl border px-3.5 text-sm font-bold'
   const summary = s.practice && s.axis && (
     <>
       <SeriesTile style={style} color={s.color} />
@@ -517,6 +518,8 @@ export function TableColumns({ ed }: { ed: Editor }) {
   const groupOf = (id: string) => blocks.find((b) => b.rows.some((p) => p.id === id))?.key
   // Every save carries group_columns, so the server knows this client keeps the column order.
   const save = (practices: string[], group_columns = grouped) => ed.update((r) => ({ ...r, definition: { Grid: { practices, group_columns } } }))
+  // Saved columns whose practice is archived or deleted: not drawn, and not in the lists above, so they're listed here to remove.
+  const gone = ed.practicesLoaded ? grid.practices.filter((id) => !activeIds.has(id)) : []
   const toggle = (id: string) => save(checked.has(id) ? grid.practices.filter((x) => x !== id) : [...grid.practices, id])
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -553,6 +556,31 @@ export function TableColumns({ ed }: { ed: Editor }) {
           </div>
         ))}
       </DndContext>
+      {gone.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <h3 className={`${GROUP} px-1.5 pt-1`}>{t('chartSettings.notInTable')}</h3>
+          <ul className={LIST}>
+            {gone.map((id) => {
+              const p = ed.practices.find((x) => x.id === id)
+              return (
+                <li key={id} className="flex flex-col gap-2.5 bg-ui-surface py-3 pr-4 pl-12">
+                  <span className="flex min-w-0 flex-col">
+                    <span className="truncate text-[15px] font-semibold text-ui-ink2">{p?.practice ?? t('chartSettings.deletedPractice')}</span>
+                    <span className="flex items-center gap-1.5 text-xs font-semibold text-ui-danger">
+                      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ui-danger" />{t(p ? 'chartSettings.archivedColumn' : 'chartSettings.deletedColumn')}
+                    </span>
+                  </span>
+                  <span className="flex flex-wrap items-center gap-2">
+                    {p && <button type="button" onClick={() => ed.turnBackOn.mutate(p)} className="min-h-10 px-2 text-sm font-bold text-ui-accent">{t('chartSettings.turnBackOn')}</button>}
+                    <button type="button" onClick={() => save(grid.practices.filter((x) => x !== id))} aria-label={t('chartSettings.removeColumn', { name: p?.practice ?? t('chartSettings.deletedPractice') })}
+                      className={`${SMALL} border-ui-danger/40 text-ui-danger`}>{t('chartSettings.remove')}</button>
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
       <p className={`${HINT} px-1.5`}>{t(grouped ? 'chartSettings.columnsHintGrouped' : 'chartSettings.columnsHintFlat')}</p>
     </section>
   )

@@ -103,6 +103,21 @@ describe('ChartEditorMobile', () => {
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument())
   })
 
+  it('lists hidden and deleted columns under Not in the table, and Remove drops one', async () => {
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([
+      { id: 'wake', practice: 'Wake-up time', data_type: 'Time', is_active: true },
+      { id: 'read', practice: 'Book reading', data_type: 'Duration', is_active: false },
+    ])
+    charts.getReports.mockResolvedValue([{ ...TABLE, definition: { Grid: { practices: ['wake', 'read', 'gone'], group_columns: true } } }])
+    renderAt('/settings/charts/t1')
+    await screen.findByText('Not in the table')
+    expect(screen.getByText('Hidden practice · not in the table')).toBeTruthy()
+    expect(screen.getByText('Practice deleted · not in the table')).toBeTruthy()
+    expect(screen.queryByRole('checkbox', { name: /Book reading/ })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Book reading from the table' }))
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['wake', 'gone'], group_columns: true } }))
+  })
+
   it('ticking a column appends it and saves group_columns', async () => {
     renderAt('/settings/charts/t1')
     fireEvent.click(await screen.findByRole('checkbox', { name: /Japa rounds/ }))
