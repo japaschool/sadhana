@@ -115,7 +115,7 @@ export function PanelsReportView({ report, definition, entries, previous, practi
           <Fragment key={i}>
             {filter}
             {p.kind === 'Gaps' ? (
-              <GapsPanelView event={p.event} options={options} only={picked} days={days} prevDays={prevDays} lookup={lookup} todayCob={todayCob}
+              <GapsPanelView event={p.event} options={options} only={picked} days={days} prevDays={prevDays} range={range} lookup={lookup} todayCob={todayCob}
                 height={chartHeight} cols={cols} interactive={interactive} periods={periods} figures={monthFigures} />
             ) : p.kind === 'Around' ? (
               <AroundPanelView event={p.event} only={picked} rows={p.rows} days={year.days} prevDays={[]} lookup={year.lookup} todayCob={todayCob} />

@@ -594,6 +594,21 @@ describe('a Days between events report', () => {
     expect(same.getAttribute('aria-label')).toMatch(/usual 14\.\d/)
   })
 
+  it('words the typical gap’s change vs the previous window', () => {
+    // Every 5th day now, every 4th day in the 30 before: 5 vs 4 days.
+    const day = (i: number) => dayAt(TODAY, i - 59)
+    const pick = (from: number, to: number, every: number) => Array.from({ length: to - from }, (_, k) => from + k)
+      .filter((i) => i % every === 0).map((i) => e(day(i), EV.practice, { Bool: true }))
+    const def = gapsDef(EV.id)
+    render(
+      <MemoryRouter>
+        <PanelsReportView report={report(def)} definition={def} entries={pick(30, 60, 5)} previous={pick(0, 30, 4)} range="30d"
+          practices={[EV, ROUNDS]} todayCob={TODAY} chartHeight={300} formLink={null} />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('+25% vs previous 30 days')).toHaveClass('text-ui-good')
+  })
+
   it('draws a stem and a marker per event with a gap, over calendar time (16m16)', () => {
     const { container } = gapsView(EV, (i) => (i % 5 === 2 ? { Bool: true } : null))
     expect(screen.getByText('Days since the one before')).toBeInTheDocument()
