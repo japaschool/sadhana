@@ -8,20 +8,20 @@ import { practicesApi } from '../../api/practices'
 import { buildChartData, tracesFor } from './chartLogic'
 import { hasPanel, isPanels, REPORTS_KEY, useReportSort } from './useReports'
 import { addDays, fromDateStr, toDateStr } from '../today/date'
-import { averageLines, headline } from './insightsLogic'
+import { averageLines, headline, pickVs } from './insightsLogic'
 import { monthEnd } from './panels/panelLogic'
 
 const KEY = 'insights-report'
-export const COLORS = Array.from({ length: 8 }, (_, i) => `var(--ui-chart-${i + 1})`)
+export const COLORS = Array.from({ length: 12 }, (_, i) => `var(--ui-chart-${i + 1})`)
 
 export type Range = ReportRange
 export const RANGES: Range[] = ['7d', '30d', '90d', '1y', 'all']
 const DURATION: Record<Range, ReportDuration> = { '7d': 'Week', '30d': 'Month', '90d': 'Quarter', '1y': 'Year', all: 'AllData' }
 
 type GraphReportRow = Report & { definition: { Graph: GraphReport } }
-/** What a headline's change compares against: the previous window, or the same window a year back (`year`).
- *  `toggle` cycles them; absent when there is nothing to cycle (All, month and goals reports, and 1y, whose previous window is last year). */
-export interface Compare { year: boolean; toggle?: () => void; entries?: ReportDataEntry[] }
+/** What a headline's change compares against: the previous window, or the same window a year back when `year` is asked for.
+ *  `lastYear` is that window's data; none for All, month and goals reports, or 1y (whose previous window is last year). */
+export interface Compare { year: boolean; toggle?: () => void; lastYear?: ReportDataEntry[] }
 
 const isGraph = (r: Report): r is GraphReportRow => 'Graph' in r.definition
 export const isTable = (r: Report | null) => !!r && 'Grid' in r.definition
@@ -89,19 +89,14 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     queryFn: () => src.data(prevEnd!, duration),
     enabled: prevEnd !== null && !paused,
   })
-  const cyclable = prevEnd !== null && range !== '1y'
-  const yearBack = cyclable && vsYear
-  const lastYearEnd = yearBack ? (() => { const d = fromDateStr(endCob); d.setFullYear(d.getFullYear() - 1); return toDateStr(d) })() : null
+  // Read up front, so a headline offers last year only when that window has data to compare.
+  const lastYearEnd = prevEnd !== null && range !== '1y' ? (() => { const d = fromDateStr(endCob); d.setFullYear(d.getFullYear() - 1); return toDateStr(d) })() : null
   const lastYear = useQuery({
     queryKey: [...src.key, 'report-data', lastYearEnd, duration],
     queryFn: () => src.data(lastYearEnd!, duration),
     enabled: lastYearEnd !== null && !paused,
   })
-  const compare: Compare = {
-    year: yearBack,
-    toggle: cyclable ? () => setVsYear(!vsYear) : undefined,
-    entries: yearBack ? lastYear.data : previous.data,
-  }
+  const compare: Compare = { year: vsYear, toggle: () => setVsYear(!vsYear), lastYear: lastYearEnd ? lastYear.data : undefined }
   // The days-around table needs 10 events of one option, more than a week or a month holds: it reads the year to the window's end.
   const hasAround = !!report && isPanels(report) && report.definition.Panels.panels.some((p) => p.kind === 'Around')
   const year = useQuery({
@@ -117,6 +112,9 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
   const names = new Set(traces.map((t) => t.name))
   const barLayout = report && isGraph(report) ? report.definition.Graph.bar_layout : 'Grouped'
   const selectedId = report?.id ?? ''
+  const graphHeadline = headline(traces, barLayout, entries, previous.data, todayCob)
+  const headlineVs = pickVs(compare, graphHeadline?.delta ?? null,
+    compare.lastYear ? headline(traces, barLayout, entries, compare.lastYear, todayCob)?.delta ?? null : null)
   const hidden = hiddenFor.id === selectedId ? hiddenFor.set : new Set<number>()
 
   return {
@@ -146,7 +144,9 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     practices: practicesQ.data ?? [],
     /** A table's Group columns setting (on unless the report says otherwise). */
     grouped: !(report && 'Grid' in report.definition && report.definition.Grid.group_columns === false),
-    headline: headline(traces, barLayout, entries, compare.entries, todayCob),
+    headline: graphHeadline && { ...graphHeadline, delta: headlineVs.delta },
+    /** What a graph report's headline change compares against, and its cycle. */
+    headlineVs,
     averages: averageLines(traces, entries, barLayout, todayCob, hidden),
     hidden,
     toggle: (i: number) => {

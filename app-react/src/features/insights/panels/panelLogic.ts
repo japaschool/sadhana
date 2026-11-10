@@ -292,7 +292,7 @@ export function seriesName(s: Series, l: Lookup, t: TFunction): string {
 /** Bars take a palette colour by position; a bar drawn inside another is ink; a line or dot stands apart from the bars. */
 export function seriesColour(s: Series, i: number, layout: ChartPanel['bar_layout']): string {
   if (s.mark === 'Dot' || s.mark === 'Line') return 'var(--ui-state-over)'
-  return layout === 'Overlaid' && i > 0 ? 'var(--ui-ink)' : `var(--ui-chart-${i + 1})`
+  return layout === 'Overlaid' && i > 0 ? 'var(--ui-ink)' : `var(--ui-chart-${(i % 12) + 1})`
 }
 
 export const clockText = (afterNoon: number) => formatMinutesAsHHMM(afterNoon + 720)

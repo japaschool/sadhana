@@ -46,10 +46,14 @@
   --ui-chart-2: #D7867A;
   --ui-chart-3: #9DB98A;
   --ui-chart-4: #A99BD6;
-  --ui-chart-5: #0F9E95;
+  --ui-chart-5: #6FB5A6;
   --ui-chart-6: #C77A3E;
   --ui-chart-7: #5F82D6;
   --ui-chart-8: #C2689A;
+  --ui-chart-9: #7FA9C4;
+  --ui-chart-10: #C29A72;
+  --ui-chart-11: #B48ABF;
+  --ui-chart-12: #A9AA5E;
   /* Days-around cells: teal = above usual (or earlier), amber = below; never red or green. */
   --ui-div-p3: #0C7F78;
   --ui-div-p2: #93D0C9;
@@ -129,10 +133,14 @@
   --ui-chart-2: #E3978B;
   --ui-chart-3: #A9C996;
   --ui-chart-4: #B7AAE6;
-  --ui-chart-5: #22B89A;
+  --ui-chart-5: #86CBB8;
   --ui-chart-6: #E08A4C;
   --ui-chart-7: #7C9DF0;
   --ui-chart-8: #E07FB0;
+  --ui-chart-9: #9CC4DC;
+  --ui-chart-10: #D6B28C;
+  --ui-chart-11: #C9A3D3;
+  --ui-chart-12: #C6C67C;
   --ui-div-p3: #3FC2B8;
   --ui-div-p2: #1F6B66;
   --ui-div-p1: #1E3B3E;
@@ -202,10 +210,14 @@
     --ui-chart-2: #E3978B;
     --ui-chart-3: #A9C996;
     --ui-chart-4: #B7AAE6;
-    --ui-chart-5: #22B89A;
+    --ui-chart-5: #86CBB8;
     --ui-chart-6: #E08A4C;
     --ui-chart-7: #7C9DF0;
     --ui-chart-8: #E07FB0;
+  --ui-chart-9: #9CC4DC;
+  --ui-chart-10: #D6B28C;
+  --ui-chart-11: #C9A3D3;
+  --ui-chart-12: #C6C67C;
     --ui-div-p3: #3FC2B8;
     --ui-div-p2: #1F6B66;
     --ui-div-p1: #1E3B3E;

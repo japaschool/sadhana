@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import type { MarkedPeriod } from '../../../api/markedPeriods'
 import { fromDateStr, toDateStr } from '../../today/date'
 import { periodBands } from '../periodBands'
-import { deltaKey, formatDay, formatDelta, formatTick, spansYears } from '../insightsLogic'
+import { deltaKey, formatDay, pickVs, formatDelta, formatTick, spansYears } from '../insightsLogic'
 import type { Compare, Range } from '../useInsights'
 import { AXIS, PeriodAreas, PeriodKey, tipDate, TipRow, TipShell } from '../mobile/InsightsChart'
 import { FigureGrid, type Figure } from './StatsPanelView'
@@ -20,8 +20,8 @@ interface GapsPanelProps {
   days: string[]
   /** The window before `days`: the first event's gap reaches back into it. */
   prevDays: string[]
-  /** The days the typical gap's change compares against; `prevDays` when left out. */
-  cmpDays?: string[]
+  /** The same period last year, the typical gap's other comparison. */
+  yearDays?: string[]
   compare?: Compare
   /** The window's length, which words the typical gap's change; none in examples. */
   range?: Range
@@ -97,15 +97,18 @@ export function OptionFilter({ options, only, onChange }: { options: string[]; o
 }
 
 /** The gap figures, then a lollipop per event (16m16): a stem to the days since the one before, the option's marker on top, over calendar time. */
-export function GapsPanelView({ event, options, only, days, prevDays, cmpDays = prevDays, compare = { year: false }, range, lookup, height, cols, interactive = true, periods = [], figures: showFigures = true }: GapsPanelProps) {
+export function GapsPanelView({ event, options, only, days, prevDays, yearDays = [], compare = { year: false }, range, lookup, height, cols, interactive = true, periods = [], figures: showFigures = true }: GapsPanelProps) {
   const { t, i18n } = useTranslation()
   const tip = useChartTooltip()
   const locale = i18n.language || 'en'
   const events = gapEvents(event, days, prevDays, lookup, only)
   const { typical, longest, latest } = gapFigures(events)
   // ponytail: the previous window's first event has no gap (nothing before it is read); one gap fewer barely moves a median.
-  const prev = typical !== null && range && range !== 'all' && cmpDays.length ? gapFigures(gapEvents(event, cmpDays, [], lookup, only)).typical : null
-  const delta = prev ? Math.round(((typical! - prev) / prev) * 100) : null
+  const change = (d: string[]) => {
+    const prev = typical !== null && range && range !== 'all' && d.length ? gapFigures(gapEvents(event, d, [], lookup, only)).typical : null
+    return prev ? Math.round(((typical! - prev) / prev) * 100) : null
+  }
+  const { delta, year, toggle } = pickVs(compare, change(prevDays), change(yearDays))
   const y = days.length > 0 && spansYears(days[0], days[days.length - 1])
   const span = (x: GapEvent) => `${formatDay(x.prev!, locale, y)} – ${formatDay(x.cob, locale, y)}`
   const gapFigure = (label: string, x: GapEvent | null): Figure => (x
@@ -116,7 +119,7 @@ export function GapsPanelView({ event, options, only, days, prevDays, cmpDays = 
       ? { label: t('reportPanels.typicalGap'), text: '—', note: events.length < TYPICAL_MIN ? t('reportPanels.needsEvents', { count: TYPICAL_MIN }) : undefined }
       : {
         label: t('reportPanels.typicalGap'), text: t('reportPanels.gapDays', { count: typical }),
-        trend: delta === null ? undefined : { text: t(deltaKey(range, compare.year), { delta: formatDelta(delta) }), up: delta >= 0, onClick: compare.toggle },
+        trend: delta === null ? undefined : { text: t(deltaKey(range, year), { delta: formatDelta(delta) }), up: delta >= 0, onClick: toggle },
       },
     gapFigure(t('reportPanels.longestGap'), longest),
     gapFigure(t('reportPanels.latestGap'), latest),

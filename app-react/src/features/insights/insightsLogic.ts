@@ -59,6 +59,14 @@ export function formatHeadline(h: Headline, u: DurationUnits): string {
 }
 
 /** The words for a headline's change: vs the previous window, or vs the same period last year. */
+export interface Vs { delta: number | null; year: boolean; toggle?: () => void }
+
+/** Last year's change when it's asked for and there is one, else the previous window's; tapping cycles only when both exist. */
+export function pickVs(c: { year: boolean; toggle?: () => void }, prev: number | null, lastYear: number | null): Vs {
+  const year = c.year && lastYear !== null
+  return { delta: year ? lastYear : prev, year, toggle: prev !== null && lastYear !== null ? c.toggle : undefined }
+}
+
 export const deltaKey = (range: string | undefined, year: boolean) => (year ? 'insights.vsLastYear' : `insights.vsPrev${range}`)
 
 export function formatDelta(pct: number): string {

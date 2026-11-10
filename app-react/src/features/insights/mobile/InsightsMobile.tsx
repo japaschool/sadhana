@@ -89,7 +89,7 @@ export function InsightsMobile() {
                     {h && (
                       <Headline wide={false} className="mb-3" value={formatHeadline(h, units)} up={(h.delta ?? 0) >= 0}
                         label={t(h.kind === 'time' ? 'insights.average' : 'insights.dailyAverage', { range: windowLabel(ins.entries, i18n.language || 'en') })}
-                        delta={h.delta === null ? null : t(deltaKey(ins.range, ins.compare.year), { delta: formatDelta(h.delta) })} onDelta={ins.compare.toggle} />
+                        delta={h.delta === null ? null : t(deltaKey(ins.range, ins.headlineVs.year), { delta: formatDelta(h.delta) })} onDelta={ins.headlineVs.toggle} />
                     )}
                     {/* Remount per report and legend toggle: Recharts hangs updating in place when the series layout changes. */}
                     <InsightsChart key={`${ins.selectedId}|${[...ins.hidden]}`} rows={ins.rows} traces={ins.traces} barLayout={ins.barLayout}

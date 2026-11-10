@@ -6,7 +6,7 @@ import type { ChartPanel, Panel, Series } from '../../../api/charts'
 import type { MarkedPeriod } from '../../../api/markedPeriods'
 import { periodBands } from '../periodBands'
 import type { Trace } from '../chartLogic'
-import { barPlacement, deltaKey, formatDay, formatDelta, formatTick, spansYears } from '../insightsLogic'
+import { barPlacement, deltaKey, pickVs, formatDay, formatDelta, formatTick, spansYears } from '../insightsLogic'
 import type { Compare, Range } from '../useInsights'
 import { Headline } from '../Headline'
 import { AXIS, BandGlyph, LegendList, PeriodAreas, TICK, tipDate, TipRow, TipShell, type LegendItem } from '../mobile/InsightsChart'
@@ -20,8 +20,10 @@ interface ChartPanelProps {
   /** All the report's panels: a tapped day shows them together. */
   panels: Panel[]
   days: string[]
-  /** The days the headline's change compares against: the window before `days`, or the same period last year. */
+  /** The window before `days`, for the headline's change. */
   prevDays?: string[]
+  /** The same period last year, the headline's other comparison. */
+  yearDays?: string[]
   compare?: Compare
   range?: Range
   lookup: Lookup
@@ -154,8 +156,8 @@ function PanelLegend({ panel, first, lookup, hidden, onToggle, bands }: {
 }
 
 /** The daily average of what the target judges (else the first series) and its change vs the previous window, as the generic report draws it. */
-function PanelHeadline({ panel, days, prevDays, compare, range, lookup, todayCob, wide }: {
-  panel: ChartPanel; days: string[]; prevDays: string[]; compare: Compare; range?: Range; lookup: Lookup; todayCob: string; wide: boolean
+function PanelHeadline({ panel, days, prevDays, yearDays, compare, range, lookup, todayCob, wide }: {
+  panel: ChartPanel; days: string[]; prevDays: string[]; yearDays: string[]; compare: Compare; range?: Range; lookup: Lookup; todayCob: string; wide: boolean
 }) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
@@ -165,19 +167,22 @@ function PanelHeadline({ panel, days, prevDays, compare, range, lookup, todayCob
   }, d, lookup, todayCob).value
   const value = average(days)
   if (value === null || !days.length) return null
-  const prev = range && range !== 'all' && prevDays.length ? average(prevDays) : null
-  const delta = prev ? Math.round(((value - prev) / prev) * 100) : null
+  const change = (d: string[]) => {
+    const prev = range && range !== 'all' && d.length ? average(d) : null
+    return prev ? Math.round(((value - prev) / prev) * 100) : null
+  }
+  const { delta, year, toggle } = pickVs(compare, change(prevDays), change(yearDays))
   const y = spansYears(days[0], days[days.length - 1])
   return (
     <Headline wide={wide} up={(delta ?? 0) >= 0} value={panel.format === 'Duration' ? formatDuration(value, units) : String(value)}
       label={t('insights.dailyAverage', { range: `${formatDay(days[0], locale, y)} – ${formatDay(days[days.length - 1], locale, y)}` })}
-      delta={delta === null ? null : t(deltaKey(range, compare.year), { delta: formatDelta(delta) })} onDelta={compare.toggle} />
+      delta={delta === null ? null : t(deltaKey(range, year), { delta: formatDelta(delta) })} onDelta={toggle} />
   )
 }
 
 const LINE_LABEL = { fontSize: 10, fontFamily: TICK.fontFamily, fill: 'var(--ui-ink)', stroke: 'var(--ui-surface)', strokeWidth: 3, paintOrder: 'stroke' }
 
-export function ChartPanelView({ panel, panels, days, prevDays = [], compare = { year: false }, range, lookup, todayCob, height, first, compact, interactive = true, periods = [] }: ChartPanelProps) {
+export function ChartPanelView({ panel, panels, days, prevDays = [], yearDays = [], compare = { year: false }, range, lookup, todayCob, height, first, compact, interactive = true, periods = [] }: ChartPanelProps) {
   const { t, i18n } = useTranslation()
   const tip = useChartTooltip()
   const locale = i18n.language || 'en'
@@ -197,6 +202,8 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], compare = {
   }))
 
   const clock = panel.format === 'NoonClock'
+  // A stack's bars are as wide as a generic stacked chart's.
+  const stacked = panel.bar_layout === 'Stacked'
   const [lo, hi] = fitHours(values)
   const hours = (hi - lo) / 60
   // Tall enough for a label an hour, otherwise every other hour still gets its grid line.
@@ -242,11 +249,11 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], compare = {
   return (
     <section className={`flex min-w-0 flex-col gap-3 rounded-[20px] border border-ui-hairline bg-ui-surface ${compact ? 'p-4' : 'p-6'}`}>
       {panel.headline
-        ? <PanelHeadline panel={panel} days={days} prevDays={prevDays} compare={compare} range={range} lookup={lookup} todayCob={todayCob} wide={!compact} />
+        ? <PanelHeadline panel={panel} days={days} prevDays={prevDays} yearDays={yearDays} compare={compare} range={range} lookup={lookup} todayCob={todayCob} wide={!compact} />
         : panel.title && <h2 className="text-base leading-[1.3] font-extrabold text-ui-ink">{labelText(panel.title, t)}</h2>}
       <div className="relative">
         <ResponsiveContainer width="100%" height={height}>
-          <ComposedChart {...tip.chart} data={rows} barCategoryGap={thin ? '10%' : BAR_GAP} barGap={1} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
+          <ComposedChart {...tip.chart} data={rows} barCategoryGap={thin || stacked ? '10%' : BAR_GAP} barGap={1} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
             <defs>
               <pattern id={stripes} width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                 <rect width="4" height="4" fill="var(--ui-state-over)" />
@@ -289,7 +296,7 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], compare = {
               return (
                 <Bar key={i} dataKey={`s${i}`} xAxisId={bar.xAxisId} stackId={bar.stackId} fill={colour} fillOpacity={inner ? 1 : bar.fillOpacity}
                   // A stack's segments meet flush; only its top is rounded, as on the generic chart.
-                  radius={thin ? 0 : panel.bar_layout !== 'Stacked' ? 2 : bar.rounded ? [2, 2, 0, 0] : 0} maxBarSize={14} isAnimationActive={false} {...(inner ? { shape: InnerBar } : {})}>
+                  radius={thin ? 0 : panel.bar_layout !== 'Stacked' ? 2 : bar.rounded ? [2, 2, 0, 0] : 0} maxBarSize={stacked ? 16 : 14} isAnimationActive={false} {...(inner ? { shape: InnerBar } : {})}>
                   {target?.colour && !inner && rows.map((r) => <Cell key={r.cob} opacity={fade} {...stateCell(r.state ?? 'neutral', thin, stripes)} />)}
                 </Bar>
               )

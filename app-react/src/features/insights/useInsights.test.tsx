@@ -144,17 +144,27 @@ describe('useInsights', () => {
       : cob === '2025-10-06' ? [{ cob_date: '2025-09-07', practice: 'Japa', value: { Duration: 20 } }]
         : [{ cob_date: '2026-08-08', practice: 'Japa', value: { Duration: 60 } }])
     const { result } = setup()
-    await waitFor(() => expect(result.current.headline?.delta).toBe(-50))
-    expect(result.current.compare.year).toBe(false)
-    act(() => result.current.compare.toggle!())
-    await waitFor(() => expect(result.current.headline?.delta).toBe(50))
-    expect(result.current.compare.year).toBe(true)
-    expect(charts.getReportData).toHaveBeenCalledWith('2025-10-06', 'Month')
-    act(() => result.current.compare.toggle!())
+    await waitFor(() => expect(result.current.headlineVs.toggle).toBeDefined())
+    expect(result.current.headline?.delta).toBe(-50)
+    act(() => result.current.headlineVs.toggle!())
+    expect(result.current.headlineVs.year).toBe(true)
+    expect(result.current.headline?.delta).toBe(50)
+    act(() => result.current.headlineVs.toggle!())
     expect(result.current.headline?.delta).toBe(-50)
     // 1y's previous window is last year: nothing to cycle.
     act(() => result.current.setRange('1y'))
-    expect(result.current.compare.toggle).toBeUndefined()
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(result.current.headlineVs.toggle).toBeUndefined()
+  })
+
+  it('offers no last-year comparison when that period has no data', async () => {
+    charts.getReportData.mockImplementation(async (cob) => cob === '2026-10-06'
+      ? [{ cob_date: '2026-09-07', practice: 'Japa', value: { Duration: 30 } }]
+      : cob === '2025-10-06' ? [] : [{ cob_date: '2026-08-08', practice: 'Japa', value: { Duration: 60 } }])
+    const { result } = setup()
+    await waitFor(() => expect(charts.getReportData).toHaveBeenCalledWith('2025-10-06', 'Month'))
+    await waitFor(() => expect(result.current.headline?.delta).toBe(-50))
+    expect(result.current.headlineVs.toggle).toBeUndefined()
   })
 
   it('maps the range to the server duration and the end date to a local yyyy-mm-dd', async () => {

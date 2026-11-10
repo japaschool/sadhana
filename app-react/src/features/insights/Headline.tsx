@@ -1,7 +1,7 @@
 /** A headline's change; tapping it cycles what it compares against when `onClick` is given. */
 export function Delta({ text, onClick, className }: { text: string; onClick?: () => void; className: string }) {
   return onClick
-    ? <button type="button" onClick={onClick} className={`${className} cursor-pointer underline decoration-dotted underline-offset-2`}>{text}</button>
+    ? <button type="button" onClick={onClick} className={`${className} cursor-pointer`}>{text}</button>
     : <p className={className}>{text}</p>
 }
 

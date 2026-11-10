@@ -168,7 +168,7 @@ export function DeltaText({ s, className = '' }: { s: Shared; className?: string
   const { t } = useTranslation()
   const d = s.headline?.delta
   if (s.grid || d == null) return null
-  return <Delta text={t(deltaKey(s.range, s.compare.year), { delta: formatDelta(d) })} onClick={s.compare.toggle} className={`text-[13px] font-bold ${d >= 0 ? 'text-ui-good' : 'text-ui-muted'} ${className}`} />
+  return <Delta text={t(deltaKey(s.range, s.headlineVs.year), { delta: formatDelta(d) })} onClick={s.headlineVs.toggle} className={`text-[13px] font-bold ${d >= 0 ? 'text-ui-good' : 'text-ui-muted'} ${className}`} />
 }
 
 /** Tablet and desktop graph reports: the days as rows, newest first, with a total when every practice is a duration. */
