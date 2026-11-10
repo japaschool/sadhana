@@ -75,19 +75,21 @@ describe('InsightsMobile', () => {
     expect(await screen.findByText('+50% vs previous 30 days')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Insights' })).toBeInTheDocument()
     expect(screen.getByText('Daily average · Oct 5 – Oct 6')).toBeInTheDocument()
-    expect(screen.getAllByText('1h')).toHaveLength(2) // headline + Japa legend row
-    const legend = screen.getByRole('list', { name: 'Averages' })
-    expect(within(legend).getByText('Japa').parentElement).toHaveTextContent('1h')
+    expect(screen.getAllByText('1h')).toHaveLength(2) // headline + Japa's average
+    const averages = screen.getByRole('region', { name: 'Averages' })
+    expect(within(averages).getByText('Japa').parentElement).toHaveTextContent('1h')
   })
 
   it('a legend row toggles its series', async () => {
     renderScreen()
-    const japa = await screen.findByRole('button', { name: /Japa/ })
-    expect(japa).toHaveAttribute('aria-pressed', 'true')
-    fireEvent.click(japa)
-    expect(japa).toHaveAttribute('aria-pressed', 'false')
-    fireEvent.click(japa)
-    expect(japa).toHaveAttribute('aria-pressed', 'true')
+    // The chart remounts on each toggle, so the button is looked up again.
+    const japa = () => within(screen.getByRole('list', { name: 'Key' })).getByRole('button', { name: 'Japa' })
+    await screen.findByRole('list', { name: 'Key' })
+    expect(japa()).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(japa())
+    expect(japa()).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(japa())
+    expect(japa()).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('switches reports through the menu; Grid reports are listed too', async () => {
@@ -134,7 +136,7 @@ describe('InsightsMobile', () => {
     charts.getReportData.mockResolvedValue([{ cob_date: '2026-10-05', practice: 'Japa', value: null }])
     renderScreen()
     expect(await screen.findByText('No data in this range')).toBeInTheDocument()
-    expect(screen.queryByRole('list', { name: 'Averages' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Averages' })).toBeNull()
   })
 
   it('shows an inline error when the data request fails', async () => {
@@ -255,7 +257,7 @@ describe('InsightsMobile', () => {
       'Practices', 'DateJapaReading', 'TueOct 630m—', 'MonOct 51h—', '2 days1h—',
     ])
     expect(within(table).getAllByTestId('required-missing')).toHaveLength(2)
-    expect(screen.queryByRole('list', { name: 'Averages' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Averages' })).toBeNull()
 
     fireEvent.click(within(table).getByRole('button', { name: 'Monday, October 5' }))
     const editJapa = await screen.findByRole('button', { name: 'Edit Japa' })

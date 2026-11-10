@@ -1,5 +1,5 @@
 import { useChartTooltip } from '../../../ui/tooltipTrigger'
-import { useId, useState, type Key, type ReactNode } from 'react'
+import { useId, useState, type Key } from 'react'
 import { Bar, CartesianGrid, Cell, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import type { ChartPanel, Panel, Series } from '../../../api/charts'
@@ -9,7 +9,7 @@ import type { Trace } from '../chartLogic'
 import { barPlacement, formatDay, formatDelta, formatTick, spansYears } from '../insightsLogic'
 import type { Range } from '../useInsights'
 import { Headline } from '../Headline'
-import { AXIS, PeriodAreas, TICK, tipDate, TipRow, TipShell } from '../mobile/InsightsChart'
+import { AXIS, BandGlyph, LegendList, PeriodAreas, TICK, tipDate, TipRow, TipShell, type LegendItem } from '../mobile/InsightsChart'
 import { formatDuration } from '../../today/values'
 import {
   chartRows, clockText, durationFloor, fitHours, labelText, seriesColour, seriesName, statResult, tipLines, type BarState, type Lookup, type PanelRow, type Resolved,
@@ -101,7 +101,7 @@ function PanelLegend({ panel, first, lookup, hidden, onToggle, bands }: {
   const hrs = (v: number) => formatDuration(v, u)
   const target = first && panel.target?.colour ? panel.target : null
   const goal = targetKey(panel)
-  const items: { key: string; glyph: ReactNode; text: string; toggle?: number }[] = []
+  const items: LegendItem[] = []
   if (target && goal) {
     if (target.min !== null) {
       items.push({ key: 'ok', glyph: <Swatch state="ok" />, text: t(`${goal}Met`) })
@@ -148,22 +148,8 @@ function PanelLegend({ panel, first, lookup, hidden, onToggle, bands }: {
     const value = panel.format === 'Count' ? String(panel.target.min) : hrs(panel.target.min)
     items.push({ key: 'goal', glyph: <LineGlyph dashed />, text: t(`${goal}Line`, { value }) })
   }
-  if (bands) items.push({ key: 'period', glyph: <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px] bg-ui-chip" />, text: t('reportPanels.markedPeriod') })
-  if (!items.length) return null
-  return (
-    <ul aria-label={t('reportPanels.legend')} className="flex flex-wrap gap-x-3.5 gap-y-1.5">
-      {items.map((x) => (
-        <li key={x.key} className="inline-flex items-center gap-1.5 text-xs leading-[1.3] font-bold text-ui-ink2">
-          {x.toggle === undefined ? <>{x.glyph}<span>{x.text}</span></> : (
-            <button type="button" aria-pressed={!hidden.has(x.toggle)} onClick={() => onToggle(x.toggle!)}
-              className={`-my-2 inline-flex items-center gap-1.5 py-2 ${hidden.has(x.toggle) ? 'line-through opacity-40' : ''}`}>
-              {x.glyph}<span>{x.text}</span>
-            </button>
-          )}
-        </li>
-      ))}
-    </ul>
-  )
+  if (bands) items.push({ key: 'period', glyph: <BandGlyph />, text: t('reportPanels.markedPeriod') })
+  return <LegendList items={items} hidden={hidden} onToggle={onToggle} />
 }
 
 /** The daily average of what the target judges (else the first series) and its change vs the previous window, as the generic report draws it. */
@@ -202,7 +188,7 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], range, look
   const bands = periodBands(periods, days)
   const thin = days.length > THIN_FROM
   const marks = panel.series.map((s) => s.mark)
-  const placement = barPlacement(marks.map(asTrace), panel.bar_layout)
+  const placement = barPlacement(marks.map(asTrace), panel.bar_layout, hidden)
   const overlayAxes = placement.flatMap((p) => (p?.xAxisId ? [p.xAxisId] : []))
   const values = rows.flatMap((r: PanelRow) => panel.series.flatMap((_, i) => {
     const v: Resolved = hidden.has(i) ? null : r[`s${i}`]
@@ -301,7 +287,8 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], range, look
               const fade = panel.bar_layout === 'Stacked' && i > 0 ? 0.45 : 1
               return (
                 <Bar key={i} dataKey={`s${i}`} xAxisId={bar.xAxisId} stackId={bar.stackId} fill={colour} fillOpacity={inner ? 1 : bar.fillOpacity}
-                  radius={thin ? 0 : 2} maxBarSize={14} isAnimationActive={false} {...(inner ? { shape: InnerBar } : {})}>
+                  // A stack's segments meet flush; only its top is rounded, as on the generic chart.
+                  radius={thin ? 0 : panel.bar_layout !== 'Stacked' ? 2 : bar.rounded ? [2, 2, 0, 0] : 0} maxBarSize={14} isAnimationActive={false} {...(inner ? { shape: InnerBar } : {})}>
                   {target?.colour && !inner && rows.map((r) => <Cell key={r.cob} opacity={fade} {...stateCell(r.state ?? 'neutral', thin, stripes)} />)}
                 </Bar>
               )

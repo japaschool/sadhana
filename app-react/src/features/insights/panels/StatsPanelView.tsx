@@ -38,8 +38,8 @@ export interface Figure {
 
 /** Values stay on one line, because ru and uk spell units out; labels wrap. */
 export function FigureGrid({ items, cols }: { items: Figure[]; cols: 2 | 4 }) {
-  // One row on wide layouts, however many figures there are.
-  const across = cols === 2 ? 2 : items.length
+  // Up to four a row on wide layouts: a generic report's averages can run to eight.
+  const across = cols === 2 ? 2 : Math.min(items.length, 4)
   const left = items.length % across
   return (
     <div className={`grid gap-px overflow-hidden rounded-[18px] border border-ui-hairline bg-ui-hairline ${cols === 2 ? 'grid-cols-2' : ''}`}

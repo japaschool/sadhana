@@ -6,12 +6,12 @@ import { MobileShell } from '../../../layouts/mobile/MobileShell'
 import { SegmentedControl } from '../../../ui/primitives/SegmentedControl'
 import { Headline } from '../Headline'
 import { OverviewMobile } from '../overview/OverviewMobile'
-import { formatDelta, formatHeadline, traceAverageLabel, windowLabel } from '../insightsLogic'
+import { formatDelta, formatHeadline, windowLabel } from '../insightsLogic'
 import { PanelsReportView } from '../panels/PanelsReportView'
 import { isTable, RANGES, useInsights } from '../useInsights'
 import { DaySheet } from './DaySheet'
 import { EndDateControl } from './EndDateControl'
-import { InsightsChart } from './InsightsChart'
+import { InsightsChart, TraceAverages } from './InsightsChart'
 import { InsightsTable } from './InsightsTable'
 import { MonthNav } from './MonthNav'
 import { useMoreMenu } from './MoreMenu'
@@ -30,7 +30,6 @@ export function InsightsMobile() {
   const more = useMoreMenu(view === 'charts' ? ins.report : null)
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const h = ins.headline
-  const ready = !ins.isLoading && !ins.isError && ins.hasData
   // A table shows empty days too, so they can be filled in from it.
   const table = view === 'charts' && isTable(ins.report) && !ins.isLoading && !ins.isError && ins.entries.length > 0
   const panels = !ins.isLoading && !ins.isError ? ins.panels : null
@@ -73,6 +72,8 @@ export function InsightsMobile() {
               <PanelsReportView key={ins.selectedId} report={ins.report!} definition={panels} entries={ins.entries} previous={ins.previousEntries}
                 practices={ins.practices} todayCob={ins.todayCob} chartHeight={230} formLink={`/settings/charts/${ins.selectedId}`} cols={2} month={ins.month ?? undefined} range={ins.range} yearEntries={ins.yearEntries} periods={periods} />
             ) : (
+              <>
+              {!ins.isLoading && !ins.isError && ins.hasData && <TraceAverages traces={ins.traces} entries={ins.entries} todayCob={ins.todayCob} cols={2} />}
               <section className={`${CARD} p-4`}>
                 {ins.isLoading ? (
                   <div className="flex h-[170px] items-center justify-center">
@@ -92,27 +93,13 @@ export function InsightsMobile() {
                     )}
                     {/* Remount per report and legend toggle: Recharts hangs updating in place when the series layout changes. */}
                     <InsightsChart key={`${ins.selectedId}|${[...ins.hidden]}`} rows={ins.rows} traces={ins.traces} barLayout={ins.barLayout}
-                      averages={ins.averages} hidden={ins.hidden} periods={periods} />
+                      averages={ins.averages} hidden={ins.hidden} periods={periods} onToggle={ins.toggle} />
                   </>
                 )}
               </section>
+              </>
             )}
 
-            {ready && !table && !panels && (
-              <ul aria-label={t('insights.legend')} className={`${CARD} px-4 py-1`}>
-                {ins.traces.map((tr, i) => (
-                  <li key={i} className="border-b border-ui-hairline last:border-0">
-                    {/* Tapping a row shows or hides its series on the chart. */}
-                    <button type="button" aria-pressed={!ins.hidden.has(i)} onClick={() => ins.toggle(i)}
-                      className={`flex min-h-11 w-full items-center gap-3 text-left ${ins.hidden.has(i) ? 'opacity-40' : ''}`}>
-                      <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: tr.color }} />
-                      <span className="min-w-0 flex-1 truncate text-[15px] text-ui-ink2">{tr.name}</span>
-                      <span className="font-ui-mono text-sm text-ui-ink">{traceAverageLabel(tr, ins.entries, ins.todayCob, units)}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
           </>
         )}
       </div>

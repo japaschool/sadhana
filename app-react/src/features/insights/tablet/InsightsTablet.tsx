@@ -5,7 +5,7 @@ import { TabletShell } from '../../../layouts/tablet/TabletShell'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import { SegmentedControl } from '../../../ui/primitives/SegmentedControl'
 import { Headline } from '../Headline'
-import { formatDelta, formatHeadline, traceAverageLabel, windowLabel } from '../insightsLogic'
+import { formatDelta, formatHeadline, windowLabel } from '../insightsLogic'
 import { fromDateStr } from '../../today/date'
 import { OverviewWide } from '../overview/OverviewWide'
 import { PanelsReportView } from '../panels/PanelsReportView'
@@ -13,7 +13,7 @@ import { isTable, RANGES, useInsights } from '../useInsights'
 import { DaySheet } from '../mobile/DaySheet'
 import { EndDateControl } from '../mobile/EndDateControl'
 import { MonthNav } from '../mobile/MonthNav'
-import { InsightsChart } from '../mobile/InsightsChart'
+import { InsightsChart, TraceAverages } from '../mobile/InsightsChart'
 import { InsightsTable } from '../mobile/InsightsTable'
 import { useMoreMenu } from '../mobile/MoreMenu'
 import { ReportMenu } from '../mobile/ReportMenu'
@@ -41,8 +41,6 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300, panelHei
   const charts = view === 'charts'
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const h = ins.headline
-  // Pad the legend to whole rows so the hairline grid background doesn't show through empty cells.
-  const pad = (4 - (ins.traces.length % 4)) % 4
   // A table shows empty days too, so they can be filled in from it.
   const table = charts && isTable(ins.report) && !ins.isLoading && !ins.isError && ins.entries.length > 0
   const panels = !ins.isLoading && !ins.isError ? ins.panels : null
@@ -94,6 +92,9 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300, panelHei
             <PanelsReportView key={ins.selectedId} report={ins.report!} definition={panels} entries={ins.entries} previous={ins.previousEntries}
               practices={ins.practices} todayCob={ins.todayCob} chartHeight={panelHeight} formLink={`/settings/charts/${ins.selectedId}`} month={ins.month ?? undefined} range={ins.range} yearEntries={ins.yearEntries} periods={periods} />
           ) : (
+            // The averages sit over the chart as a report's figures do over its chart.
+            <div className="flex flex-col gap-3">
+            {!ins.isLoading && !ins.isError && ins.hasData && <TraceAverages traces={ins.traces} entries={ins.entries} todayCob={ins.todayCob} cols={4} />}
             <section className="flex flex-col gap-[18px] rounded-[24px] border border-ui-hairline bg-ui-surface p-6">
               {ins.isLoading ? (
                 <div className="flex h-[300px] items-center justify-center">
@@ -113,27 +114,11 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300, panelHei
                   )}
                   {/* Remount per report and legend toggle: Recharts hangs updating in place when the series layout changes. */}
                   <InsightsChart key={`${ins.selectedId}|${[...ins.hidden]}`} rows={ins.rows} traces={ins.traces} barLayout={ins.barLayout}
-                    averages={ins.averages} hidden={ins.hidden} periods={periods} height={chartHeight} />
-                  <ul aria-label={t('insights.legend')}
-                    className="grid grid-cols-4 gap-px overflow-hidden rounded-2xl border border-ui-hairline bg-ui-hairline">
-                    {ins.traces.map((tr, i) => (
-                      <li key={i} className="flex min-w-0 bg-ui-surface">
-                        {/* Clicking a cell shows or hides its series on the chart. */}
-                        <button type="button" aria-pressed={!ins.hidden.has(i)} onClick={() => ins.toggle(i)}
-                          className={`flex min-w-0 flex-1 flex-col gap-1 px-3.5 py-3 text-left ${ins.hidden.has(i) ? 'opacity-40' : ''}`}>
-                          <span className="flex min-w-0 items-center gap-2 text-[13px] font-semibold text-ui-ink2">
-                            <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: tr.color }} />
-                            <span className="truncate">{tr.name}</span>
-                          </span>
-                          <span className="font-ui-mono text-lg text-ui-ink">{traceAverageLabel(tr, ins.entries, ins.todayCob, units)}</span>
-                        </button>
-                      </li>
-                    ))}
-                    {Array.from({ length: pad }, (_, i) => <li key={`pad${i}`} aria-hidden className="bg-ui-surface" />)}
-                  </ul>
+                    averages={ins.averages} hidden={ins.hidden} periods={periods} height={chartHeight} onToggle={ins.toggle} />
                 </>
               )}
             </section>
+            </div>
           )}
         </>
       )}

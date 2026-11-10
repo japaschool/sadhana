@@ -13,7 +13,7 @@ import type { Trace } from '../insights/chartLogic'
 import { valueToNumber } from '../insights/chartLogic'
 import { fromDateStr, toDateStr } from '../today/date'
 import { formatDuration } from '../today/values'
-import { cellText, formatDay, formatDelta, formatHeadline, traceAverageLabel, windowLabel } from '../insights/insightsLogic'
+import { cellText, formatDay, formatDelta, formatHeadline, windowLabel } from '../insights/insightsLogic'
 import { isTable, useInsights } from '../insights/useInsights'
 import { doneAverage } from './sharedLogic'
 
@@ -168,27 +168,6 @@ export function DeltaText({ s, className = '' }: { s: Shared; className?: string
   const d = s.headline?.delta
   if (s.grid || d == null) return null
   return <span className={`text-[13px] font-bold ${d >= 0 ? 'text-ui-good' : 'text-ui-muted'} ${className}`}>{t(`insights.vsPrev${s.range}`, { delta: formatDelta(d) })}</span>
-}
-
-export function Legend({ s, cols }: { s: Shared; cols: 2 | 4 }) {
-  const { t } = useTranslation()
-  const units = { h: t('today.unitH'), min: t('today.unitMin') }
-  const pad = (cols - (s.traces.length % cols)) % cols
-  return (
-    <ul aria-label={t('insights.legend')}
-      className={`grid ${cols === 2 ? 'grid-cols-2' : 'grid-cols-4'} gap-px overflow-hidden rounded-2xl border border-ui-hairline bg-ui-hairline`}>
-      {s.traces.map((tr, i) => (
-        <li key={i} className="flex min-w-0 flex-col gap-[3px] bg-ui-surface px-3 py-2.5">
-          <span className="flex min-w-0 items-center gap-2 text-xs font-semibold text-ui-ink2">
-            <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: tr.color }} />
-            <span className="truncate">{tr.name}</span>
-          </span>
-          <span className="font-ui-mono text-base font-medium">{traceAverageLabel(tr, s.entries, s.todayCob, units)}</span>
-        </li>
-      ))}
-      {Array.from({ length: pad }, (_, i) => <li key={`pad${i}`} aria-hidden className="bg-ui-surface" />)}
-    </ul>
-  )
 }
 
 /** Tablet and desktop graph reports: the days as rows, newest first, with a total when every practice is a duration. */

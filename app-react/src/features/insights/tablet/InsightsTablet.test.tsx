@@ -54,8 +54,8 @@ describe('InsightsTablet', () => {
     expect(await screen.findByText('+50% vs previous 30 days')).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Insights')
     expect(screen.getByRole('link', { name: 'Insights' })).toHaveAttribute('aria-current', 'page')
-    const items = within(screen.getByRole('list', { name: 'Averages' })).getAllByRole('listitem')
-    expect(items.map((li) => li.textContent)).toEqual(['Japa1h', 'Reading—'])
+    expect(screen.getByRole('region', { name: 'Averages' })).toHaveTextContent('Japa1hReading—')
+    expect(within(screen.getByRole('list', { name: 'Key' })).getAllByRole('button').map((b) => b.textContent)).toEqual(['Japa', 'Reading'])
   })
 
   it('picks the end date from the calendar and opens the more menu', async () => {
@@ -106,7 +106,7 @@ describe('InsightsTablet', () => {
     expect(within(table).getAllByRole('row').map((r) => r.textContent)).toEqual([
       'Practices', 'DateJapaReading', 'MonOct 51h—', '1 day1h—',
     ])
-    expect(screen.queryByRole('list', { name: 'Averages' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Averages' })).toBeNull()
     fireEvent.click(within(table).getByRole('button', { name: 'Monday, October 5' }))
     await screen.findByRole('button', { name: 'Edit Japa' })
     expect(screen.getByRole('dialog', { name: 'Monday, October 5' })).toBeInTheDocument()

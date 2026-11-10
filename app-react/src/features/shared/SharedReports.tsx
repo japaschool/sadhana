@@ -9,12 +9,12 @@ import { UiToastContainer } from '../../ui/primitives/Toast'
 import { EndDateControl } from '../insights/mobile/EndDateControl'
 import { MonthNav } from '../insights/mobile/MonthNav'
 import { ReportMenu } from '../insights/mobile/ReportMenu'
-import { InsightsChart } from '../insights/mobile/InsightsChart'
+import { InsightsChart, TraceAverages } from '../insights/mobile/InsightsChart'
 import { PanelsReportView } from '../insights/panels/PanelsReportView'
 import { InsightsTable } from '../insights/mobile/InsightsTable'
 import type { Range } from '../insights/useInsights'
 import {
-  CARD, DayTable, DeltaText, EmptyState, Eyebrow, Headline, Legend, Mark, ReportList,
+  CARD, DayTable, DeltaText, EmptyState, Eyebrow, Headline, Mark, ReportList,
   SHARED_RANGES, SignUpLink, Spinner, useCsv, useKind, useShared, type Shared,
 } from './parts'
 
@@ -144,6 +144,8 @@ export function SharedMobile() {
       </div>
       <div className="px-4 pt-2.5" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         {s.panelsReady ? <Panels s={s} height={230} cols={2} /> : s.table ? <Table s={s} bottomGap={s.visitor ? 108 : 32} /> : (
+          <div className="flex flex-col gap-3">
+          {!s.grid && s.hasData && !s.isLoading && !s.isError && <TraceAverages traces={s.traces} entries={s.entries} todayCob={s.todayCob} cols={2} />}
           <section className={`${CARD} flex flex-col gap-3.5 p-4`}>
             <div className="flex items-start justify-between gap-3">
               {!s.isLoading && !s.isError ? <Headline s={s} size={30} /> : <span />}
@@ -158,11 +160,11 @@ export function SharedMobile() {
               {!s.grid && (
                 <>
                   <InsightsChart key={s.selectedId} rows={s.rows} traces={s.traces} barLayout={s.barLayout} averages={s.averages} />
-                  <Legend s={s} cols={2} />
                 </>
               )}
             </ChartBody>
           </section>
+          </div>
         )}
       </div>
       {s.reports.length > 1 && (
@@ -230,6 +232,8 @@ export function SharedTablet() {
                 {!s.panels && s.kind === 'legacy' && <CsvButton onClick={csv} />}
               </div>
               {s.panelsReady ? <Panels s={s} height={300} cols={2} /> : s.table ? <Table s={s} bottomGap={36} /> : (
+                <div className="flex flex-col gap-3">
+                {!s.grid && s.hasData && !s.isLoading && !s.isError && <TraceAverages traces={s.traces} entries={s.entries} todayCob={s.todayCob} cols={4} />}
                 <section className={`${CARD} flex flex-col gap-3.5 p-5`}>
                   <div className="flex items-start justify-between gap-3">
                     {!s.isLoading && !s.isError && <Headline s={s} size={34} delta={false} />}
@@ -239,11 +243,11 @@ export function SharedTablet() {
                     {!s.grid && (
                       <>
                         <InsightsChart key={s.selectedId} rows={s.rows} traces={s.traces} barLayout={s.barLayout} averages={s.averages} height={220} />
-                        <Legend s={s} cols={4} />
                       </>
                     )}
                   </ChartBody>
                 </section>
+                </div>
               )}
               {!s.grid && s.hasData && !s.isLoading && (
                 <section className={`${CARD} flex flex-col gap-3.5 px-5 py-[18px]`}>
@@ -306,6 +310,8 @@ export function SharedDesktop() {
               </div>
             </div>
             {s.panelsReady ? <Panels s={s} height={300} /> : s.table ? <Table s={s} bottomGap={36} /> : (
+              <div className="flex flex-col gap-3">
+              {!s.grid && s.hasData && !s.isLoading && !s.isError && <TraceAverages traces={s.traces} entries={s.entries} todayCob={s.todayCob} cols={4} />}
               <section className={`${CARD} flex flex-col gap-[18px] rounded-[24px] p-6`}>
                 <div className="flex items-start justify-between gap-3">
                   {!s.isLoading && !s.isError && <Headline s={s} size={40} delta={false} />}
@@ -321,11 +327,11 @@ export function SharedDesktop() {
                   {s.grid ? null : view === 'table' ? <DayTable s={s} /> : (
                     <>
                       <InsightsChart key={s.selectedId} rows={s.rows} traces={s.traces} barLayout={s.barLayout} averages={s.averages} height={400} />
-                      <Legend s={s} cols={4} />
                     </>
                   )}
                 </ChartBody>
               </section>
+              </div>
             )}
           </>
         )}

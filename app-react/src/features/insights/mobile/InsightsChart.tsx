@@ -7,7 +7,9 @@ import type { MarkedPeriod } from '../../../api/markedPeriods'
 import { labelSpots, periodBands, type Band } from '../periodBands'
 import { formatMinutesAsHHMM, type ChartDataRow, type Trace } from '../chartLogic'
 import { assignAxes, AXES, isLeft, type Axis } from '../axes'
-import { barPlacement, seriesRows, formatTick, spansYears, type AverageLine } from '../insightsLogic'
+import { barPlacement, seriesRows, formatTick, spansYears, traceAverageLabel, type AverageLine } from '../insightsLogic'
+import type { ReportDataEntry } from '../../../api/charts'
+import { FigureGrid } from '../panels/StatsPanelView'
 import { fromDateStr } from '../../today/date'
 import { formatDuration, type DurationUnits } from '../../today/values'
 
@@ -20,6 +22,8 @@ interface InsightsChartProps {
   hidden?: Set<number>
   /** The signed-in user's marked periods, drawn as bands behind the series. Shared pages pass none. */
   periods?: MarkedPeriod[]
+  /** Makes legend items toggle their series; shared pages pass none. */
+  onToggle?: (i: number) => void
 }
 
 /** IBM Plex Mono at 10px: 6px a character. */
@@ -77,8 +81,50 @@ export function PeriodKey() {
   const { t } = useTranslation()
   return (
     <span className="inline-flex items-center gap-1.5 text-xs leading-[1.3] font-bold text-ui-ink2">
-      <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px] bg-ui-chip" />{t('reportPanels.markedPeriod')}
+      <BandGlyph />{t('reportPanels.markedPeriod')}
     </span>
+  )
+}
+
+export interface LegendItem { key: string; glyph: ReactNode; text: string; toggle?: number }
+
+/** A chart's legend, as report panels draw it; an item with `toggle` shows or hides that series. */
+export function LegendList({ items, hidden = NONE, onToggle }: { items: LegendItem[]; hidden?: Set<number>; onToggle?: (i: number) => void }) {
+  const { t } = useTranslation()
+  if (!items.length) return null
+  return (
+    <ul aria-label={t('reportPanels.legend')} className="flex flex-wrap gap-x-3.5 gap-y-1.5">
+      {items.map((x) => (
+        <li key={x.key} className="inline-flex items-center gap-1.5 text-xs leading-[1.3] font-bold text-ui-ink2">
+          {x.toggle === undefined || !onToggle ? <>{x.glyph}<span>{x.text}</span></> : (
+            <button type="button" aria-pressed={!hidden.has(x.toggle)} onClick={() => onToggle(x.toggle!)}
+              className={`-my-2 inline-flex items-center gap-1.5 py-2 ${hidden.has(x.toggle) ? 'line-through opacity-40' : ''}`}>
+              {x.glyph}<span>{x.text}</span>
+            </button>
+          )}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+export function BandGlyph() { return <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px] bg-ui-chip" /> }
+
+function TraceGlyph({ tr }: { tr: Trace }) {
+  if (tr.type_ === 'Bar') return <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: tr.color }} />
+  if (tr.type_ === 'Dot') return <span aria-hidden className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: tr.color }} />
+  return <span aria-hidden className="h-0 w-4 shrink-0 border-t-2" style={{ borderColor: tr.color }} />
+}
+
+/** Each series' average over the window, as a report's figures block. */
+export function TraceAverages({ traces, entries, todayCob, cols }: { traces: Trace[]; entries: ReportDataEntry[]; todayCob: string; cols: 2 | 4 }) {
+  const { t } = useTranslation()
+  const units = { h: t('today.unitH'), min: t('today.unitMin') }
+  if (!traces.length) return null
+  return (
+    <section aria-label={t('insights.legend')}>
+      <FigureGrid cols={cols} items={traces.map((tr) => ({ label: tr.name, text: traceAverageLabel(tr, entries, todayCob, units) }))} />
+    </section>
   )
 }
 
@@ -132,7 +178,7 @@ function PointTip({ active, label, payload, traces, units, locale }: TipProps & 
 
 // Colours are var(--ui-chart-n) strings in SVG attributes. If iOS Safari ignores them (Task 8 check),
 // resolve them with getComputedStyle on the .ui-root ancestor instead.
-export function InsightsChart({ rows, traces, barLayout, averages, height = 170, hidden = NONE, periods = NO_PERIODS }: InsightsChartProps) {
+export function InsightsChart({ rows, traces, barLayout, averages, height = 170, hidden = NONE, periods = NO_PERIODS, onToggle }: InsightsChartProps) {
   const { t, i18n } = useTranslation()
   const tip = useChartTooltip()
   const locale = i18n.language || 'en'
@@ -162,8 +208,13 @@ export function InsightsChart({ rows, traces, barLayout, averages, height = 170,
   const overlayAxes = placement.flatMap((p) => (p?.xAxisId ? [p.xAxisId] : []))
   const bands = periodBands(periods, rows.map((r) => r.cob))
 
+  const legend: LegendItem[] = [
+    ...traces.map((tr, i) => ({ key: `t${i}`, glyph: <TraceGlyph tr={tr} />, text: tr.name, toggle: i })),
+    ...(bands.length ? [{ key: 'period', glyph: <BandGlyph />, text: t('reportPanels.markedPeriod') }] : []),
+  ]
+
   return (
-    <>
+    <div className="flex flex-col gap-3">
     <ResponsiveContainer width="100%" height={height}>
       {/* Without a Y axis on a side, leave room for the end date ticks there. */}
       <ComposedChart {...tip.chart} data={data} barGap={1} margin={{ top: 6, right: hasRight ? 0 : 16, bottom: 0, left: hasLeft ? 0 : 16 }}>
@@ -208,7 +259,7 @@ export function InsightsChart({ rows, traces, barLayout, averages, height = 170,
         ))}
       </ComposedChart>
     </ResponsiveContainer>
-    {bands.length > 0 && <PeriodKey />}
-    </>
+    <LegendList items={legend} hidden={hidden} onToggle={onToggle} />
+    </div>
   )
 }
