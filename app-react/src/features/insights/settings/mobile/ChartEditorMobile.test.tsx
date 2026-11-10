@@ -115,13 +115,13 @@ describe('ChartEditorMobile', () => {
     expect(screen.getByText('Practice deleted · not in the table')).toBeTruthy()
     expect(screen.queryByRole('checkbox', { name: /Book reading/ })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Remove Book reading from the table' }))
-    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['wake', 'gone'], group_columns: true } }))
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['wake', 'gone'], group_columns: true } }, undefined))
   })
 
   it('ticking a column appends it and saves group_columns', async () => {
     renderAt('/settings/charts/t1')
     fireEvent.click(await screen.findByRole('checkbox', { name: /Japa rounds/ }))
-    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['wake', 'japa'], group_columns: true } }))
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['wake', 'japa'], group_columns: true } }, undefined))
   })
 
   it('the Group columns toggle saves group_columns:false and keeps the practices order', async () => {
@@ -130,7 +130,7 @@ describe('ChartEditorMobile', () => {
     const toggle = await screen.findByRole('switch', { name: 'Group columns' })
     expect(toggle).toHaveAttribute('aria-checked', 'true')
     fireEvent.click(toggle)
-    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['wake', 'japa'], group_columns: false } }))
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['wake', 'japa'], group_columns: false } }, undefined))
   })
 
   const MORNING = { id: 'm', name: 'Morning', is_default: false }
@@ -152,7 +152,7 @@ describe('ChartEditorMobile', () => {
     act(() => dnd.onDragEnd!({ active: { id: 'wake' }, over: { id: 'japa' } }))
     expect(charts.updateReport).not.toHaveBeenCalled()
     act(() => dnd.onDragEnd!({ active: { id: 'read' }, over: { id: 'japa' } }))
-    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['wake', 'read', 'japa'], group_columns: true } }))
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['wake', 'read', 'japa'], group_columns: true } }, undefined))
   })
 
   it('with grouping on, the column list is split by group', async () => {
@@ -182,7 +182,7 @@ describe('ChartEditorMobile', () => {
     renderAt('/settings/charts/t1')
     await screen.findByRole('button', { name: 'Move Wake-up time' })
     act(() => dnd.onDragEnd!({ active: { id: 'wake' }, over: { id: 'read' } }))
-    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['read', 'wake'], group_columns: false } }))
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['read', 'wake'], group_columns: false } }, undefined))
   })
 
   it('creating a graph opens its settings with the practice picker up', async () => {

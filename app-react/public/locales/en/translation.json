@@ -774,6 +774,7 @@
     "noEntries": "Nothing logged in the last 30 days",
     "type": "Type",
     "typeSet": "Set when the chart was created",
+    "opensOn": "Opens on",
     "series": "Series",
     "seriesCount": "Series · {{count}}",
     "noSeries": "No series yet",

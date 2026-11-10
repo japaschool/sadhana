@@ -2,7 +2,7 @@ use std::{collections::HashSet, fmt::Display, str::FromStr};
 
 use actix_web::{web, HttpRequest, HttpResponse};
 use common::error::AppError;
-use diesel::PgConnection;
+use diesel::{Connection, PgConnection};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -23,6 +23,8 @@ pub struct Report {
     pub id: Uuid,
     pub definition: ReportDefinition,
     pub name: String,
+    /// The range the report opens on; null is the app's default.
+    pub default_range: Option<String>,
 }
 
 impl Report {
@@ -70,6 +72,7 @@ impl Report {
                 id: report.id,
                 definition,
                 name: report.name,
+                default_range: report.default_range,
             });
         }
 
@@ -224,6 +227,9 @@ fn level<'de, D: serde::Deserializer<'de>>(d: D) -> Result<u8, D::Error> {
 pub struct NewReport {
     pub name: String,
     pub definition: ReportDefinition,
+    /// Left out by older clients, which keeps the stored range.
+    #[serde(default)]
+    pub default_range: Option<String>,
 }
 
 /// Gets all the reports
@@ -251,12 +257,11 @@ pub async fn create_report(
     let user_id = auth::get_current_user(&req)?.id;
 
     let report_id = web::block(move || {
-        DBReport::create(
-            &mut conn,
-            &user_id,
-            &form.report.name,
-            &form.report.definition,
-        )
+        conn.transaction(|conn| {
+            let id = DBReport::create(conn, &user_id, &form.report.name, &form.report.definition)?;
+            DBReport::set_default_range(conn, &user_id, &id, form.report.default_range.as_deref())?;
+            Ok::<_, AppError>(id)
+        })
     })
     .await??;
 
@@ -275,13 +280,11 @@ pub async fn update_report(
     let report_id = path.into_inner();
 
     web::block(move || {
-        DBReport::update(
-            &mut conn,
-            &user_id,
-            &report_id,
-            &form.report.name,
-            &form.report.definition,
-        )
+        conn.transaction(|conn| {
+            let r = &form.report;
+            DBReport::update(conn, &user_id, &report_id, &r.name, &r.definition)?;
+            DBReport::set_default_range(conn, &user_id, &report_id, r.default_range.as_deref())
+        })
     })
     .await??;
 

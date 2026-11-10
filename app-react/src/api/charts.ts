@@ -114,10 +114,14 @@ export interface PanelsReport {
 
 export type ReportDefinition = { Graph: GraphReport } | { Grid: GridReport } | { Panels: PanelsReport }
 
+export type ReportRange = '7d' | '30d' | '90d' | '1y' | 'all'
+
 export interface Report {
   id: string
   name: string
   definition: ReportDefinition
+  /** The range Insights opens it on; unset is 30d. */
+  default_range?: ReportRange | null
 }
 
 export interface SharedUser { id: string; name: string; kind: 'link' | 'legacy'; start_date: string | null }
@@ -132,8 +136,9 @@ export const chartsApi = {
     const res = await apiClient.post<{ report_id: string }>('/reports', { report: { name, definition } })
     return res.data.report_id
   },
-  async updateReport(id: string, name: string, definition: ReportDefinition): Promise<void> {
-    await apiClient.put(`/report/${id}`, { report: { name, definition } })
+  /** Without `default_range` the server keeps the stored one. */
+  async updateReport(id: string, name: string, definition: ReportDefinition, default_range?: ReportRange | null): Promise<void> {
+    await apiClient.put(`/report/${id}`, { report: { name, definition, default_range } })
   },
   async deleteReport(id: string): Promise<void> {
     await apiClient.delete(`/report/${id}`)

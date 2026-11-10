@@ -101,6 +101,17 @@ describe('InsightsMobile', () => {
     expect(localStorage.getItem('insights-report')).toBe('g1')
   })
 
+  it('opens a report on its own default range', async () => {
+    charts.getReports.mockResolvedValue([
+      { id: 'r1', name: LONG, default_range: '90d', definition: { Graph: { bar_layout: 'Stacked', traces: [
+        { label: null, type_: 'Bar', practice: 'p1', y_axis: null, show_average: true },
+      ] } } },
+    ])
+    renderScreen()
+    await waitFor(() => expect(charts.getReportData).toHaveBeenCalledWith('2026-10-06', 'Quarter'))
+    expect(await screen.findByRole('radio', { name: '90d' })).toHaveAttribute('aria-checked', 'true')
+  })
+
   it('switches the range', async () => {
     renderScreen()
     await screen.findByText('+50% vs previous 30 days')

@@ -97,11 +97,20 @@ describe('ChartEditorWide', () => {
     expect(within(panel).getByRole('heading', { name: 'Axes' })).toBeInTheDocument()
   })
 
+  it('Opens on saves the report’s default range', async () => {
+    setViewportWidth(1200)
+    renderAt('/settings/charts/t1')
+    const opens = await screen.findByRole('radiogroup', { name: 'Opens on' })
+    expect(within(opens).getByRole('radio', { name: '30d' })).toHaveAttribute('aria-checked', 'true')
+    fireEvent.click(within(opens).getByRole('radio', { name: '90d' }))
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', expect.anything(), '90d'))
+  })
+
   it('a table has the Group columns setting too', async () => {
     setViewportWidth(1200)
     renderAt('/settings/charts/t1')
     fireEvent.click(await screen.findByRole('switch', { name: 'Group columns' }))
-    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['wake'], group_columns: false } }))
+    await waitFor(() => expect(charts.updateReport).toHaveBeenCalledWith('t1', 'Monthly table', { Grid: { practices: ['wake'], group_columns: false } }, undefined))
   })
 
   describe('a template report', () => {

@@ -61,7 +61,7 @@ export function useChartEditor(id: string) {
       pending.current = null
       batch.current = null
       try {
-        await chartsApi.updateReport(r.id, r.name, r.definition)
+        await chartsApi.updateReport(r.id, r.name, r.definition, r.default_range)
         qc.setQueryData<Report[]>([...REPORTS_KEY], (list) => list?.map((x) => (x.id === r.id ? r : x)))
       } catch {
         pending.current ??= r

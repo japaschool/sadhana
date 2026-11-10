@@ -28,6 +28,7 @@ pub struct Report {
     pub bar_layout: Option<BarLayout>,
     pub group_columns: bool,
     pub definition: Option<serde_json::Value>,
+    pub default_range: Option<String>,
 }
 
 impl Report {
@@ -118,6 +119,23 @@ impl Report {
             Ok::<_, AppError>(())
         })?;
 
+        Ok(())
+    }
+
+    /// None (an older client) keeps what is stored. The column's CHECK limits the values.
+    pub fn set_default_range(
+        conn: &mut PgConnection,
+        user_id: &Uuid,
+        report_id: &Uuid,
+        range: Option<&str>,
+    ) -> Result<(), AppError> {
+        if let Some(range) = range {
+            diesel::update(reports::table)
+                .set(reports::default_range.eq(range))
+                .filter(reports::id.eq(report_id))
+                .filter(reports::user_id.eq(user_id))
+                .execute(conn)?;
+        }
         Ok(())
     }
 
@@ -349,6 +367,28 @@ pub(crate) mod tests {
             ReportDefinition::Grid(g) => (g.practices, g.group_columns),
             _ => panic!("not a grid"),
         }
+    }
+
+    #[test]
+    fn default_range_is_stored_kept_and_checked() {
+        run(|conn| {
+            let (u, [a, ..]) = user_with_practices(conn);
+            let id = Report::create(conn, &u, "r", &grid(vec![a], Some(true)))?;
+            let range = |c: &mut PgConnection| {
+                ApiReport::get_all(c, &u, 0, false)
+                    .unwrap()
+                    .remove(0)
+                    .default_range
+            };
+            assert_eq!(range(conn), None);
+            Report::set_default_range(conn, &u, &id, Some("90d"))?;
+            // An older client sends none: the stored range stays.
+            Report::set_default_range(conn, &u, &id, None)?;
+            assert_eq!(range(conn).as_deref(), Some("90d"));
+            // Last: the failed statement aborts the test transaction.
+            assert!(Report::set_default_range(conn, &u, &id, Some("2w")).is_err());
+            Ok(())
+        });
     }
 
     #[test]

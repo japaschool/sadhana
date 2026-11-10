@@ -138,6 +138,7 @@ diesel::table! {
         updated_at -> Timestamptz,
         group_columns -> Bool,
         definition -> Nullable<Jsonb>,
+        default_range -> Nullable<Text>,
     }
 }
 

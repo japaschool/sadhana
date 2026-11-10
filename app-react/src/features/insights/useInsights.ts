@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { failedWithoutData } from '../../api/queryState'
 import { chartsApi } from '../../api/charts'
-import type { GraphReport, Report, ReportDuration } from '../../api/charts'
+import type { GraphReport, Report, ReportDuration, ReportRange } from '../../api/charts'
 import { practicesApi } from '../../api/practices'
 import { buildChartData, tracesFor } from './chartLogic'
 import { hasPanel, isPanels, REPORTS_KEY, useReportSort } from './useReports'
@@ -14,7 +14,7 @@ import { monthEnd } from './panels/panelLogic'
 const KEY = 'insights-report'
 export const COLORS = Array.from({ length: 8 }, (_, i) => `var(--ui-chart-${i + 1})`)
 
-export type Range = '7d' | '30d' | '90d' | '1y' | 'all'
+export type Range = ReportRange
 export const RANGES: Range[] = ['7d', '30d', '90d', '1y', 'all']
 const DURATION: Record<Range, ReportDuration> = { '7d': 'Week', '30d': 'Month', '90d': 'Quarter', '1y': 'Year', all: 'AllData' }
 
@@ -49,7 +49,8 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
   const reportsQ = useQuery({ queryKey: sharedUser ? [...src.key, 'reports', 'panels'] : [...REPORTS_KEY], queryFn: src.reports, select: sortReports, retry: !sharedUser })
   const practicesQ = useQuery({ queryKey: [...src.key, 'practices'], queryFn: src.practices })
   const [stored, setStored] = useState(sharedUser ? '' : readStored)
-  const [range, setRange] = useState<Range>('30d')
+  // A range picked here lasts while its report is shown; another report opens on its own default.
+  const [rangeFor, setRangeFor] = useState<{ id: string; range: Range } | null>(null)
   const [end, setEndState] = useState<Date | null>(null)
   const [picked, setPicked] = useState<string | null>(null)
   // Legend toggles, per report: switching reports starts with every series shown.
@@ -59,6 +60,9 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
   // An unknown or deleted id (or a Grid one, without tables) simply isn't found, so the screen shows the first report.
   const report = reports.find((r) => r.id === stored) ?? reports[0] ?? null
   const todayCob = toDateStr(new Date())
+  // A shared page has no All.
+  const opensOn = report?.default_range && !(sharedUser && report.default_range === 'all') ? report.default_range : '30d'
+  const range = rangeFor && rangeFor.id === (report?.id ?? '') ? rangeFor.range : opensOn
   // A month report has no range or end date: it reads half a year to the shown month's end, which covers that month, the one before and any 90 days.
   // A goals report has no range or end date either: it reads the last year to today, whatever the range or log date.
   const goals = hasPanel(report, 'Goals')
@@ -103,7 +107,7 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     selectedId,
     select: (id: string) => { setStored(id); setPicked(null); if (!sharedUser) writeStored(id) },
     range,
-    setRange,
+    setRange: (r: Range) => setRangeFor({ id: report?.id ?? '', range: r }),
     end,
     setEnd: (d: Date | null) => setEndState(d && toDateStr(d) !== todayCob ? d : null),
     todayCob,
