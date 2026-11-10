@@ -6,7 +6,7 @@ import { MobileShell } from '../../../layouts/mobile/MobileShell'
 import { SegmentedControl } from '../../../ui/primitives/SegmentedControl'
 import { Headline } from '../Headline'
 import { OverviewMobile } from '../overview/OverviewMobile'
-import { formatDelta, formatHeadline, windowLabel } from '../insightsLogic'
+import { deltaKey, formatDelta, formatHeadline, windowLabel } from '../insightsLogic'
 import { PanelsReportView } from '../panels/PanelsReportView'
 import { isTable, RANGES, useInsights } from '../useInsights'
 import { DaySheet } from './DaySheet'
@@ -69,7 +69,7 @@ export function InsightsMobile() {
             {table ? (
               <InsightsTable grouped={ins.grouped} traces={ins.traces} entries={ins.entries} todayCob={ins.todayCob} onOpenDay={setOpenDay} />
             ) : panels ? (
-              <PanelsReportView key={ins.selectedId} report={ins.report!} definition={panels} entries={ins.entries} previous={ins.previousEntries}
+              <PanelsReportView key={ins.selectedId} report={ins.report!} definition={panels} entries={ins.entries} previous={ins.previousEntries} compare={ins.compare}
                 practices={ins.practices} todayCob={ins.todayCob} chartHeight={230} formLink={`/settings/charts/${ins.selectedId}`} cols={2} month={ins.month ?? undefined} range={ins.range} yearEntries={ins.yearEntries} periods={periods} />
             ) : (
               <>
@@ -89,7 +89,7 @@ export function InsightsMobile() {
                     {h && (
                       <Headline wide={false} className="mb-3" value={formatHeadline(h, units)} up={(h.delta ?? 0) >= 0}
                         label={t(h.kind === 'time' ? 'insights.average' : 'insights.dailyAverage', { range: windowLabel(ins.entries, i18n.language || 'en') })}
-                        delta={h.delta === null ? null : t(`insights.vsPrev${ins.range}`, { delta: formatDelta(h.delta) })} />
+                        delta={h.delta === null ? null : t(deltaKey(ins.range, ins.compare.year), { delta: formatDelta(h.delta) })} onDelta={ins.compare.toggle} />
                     )}
                     {/* Remount per report and legend toggle: Recharts hangs updating in place when the series layout changes. */}
                     <InsightsChart key={`${ins.selectedId}|${[...ins.hidden]}`} rows={ins.rows} traces={ins.traces} barLayout={ins.barLayout}

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { failedWithoutData } from '../../api/queryState'
 import { chartsApi } from '../../api/charts'
-import type { GraphReport, Report, ReportDuration, ReportRange } from '../../api/charts'
+import type { GraphReport, Report, ReportDataEntry, ReportDuration, ReportRange } from '../../api/charts'
 import { practicesApi } from '../../api/practices'
 import { buildChartData, tracesFor } from './chartLogic'
 import { hasPanel, isPanels, REPORTS_KEY, useReportSort } from './useReports'
@@ -19,6 +19,10 @@ export const RANGES: Range[] = ['7d', '30d', '90d', '1y', 'all']
 const DURATION: Record<Range, ReportDuration> = { '7d': 'Week', '30d': 'Month', '90d': 'Quarter', '1y': 'Year', all: 'AllData' }
 
 type GraphReportRow = Report & { definition: { Graph: GraphReport } }
+/** What a headline's change compares against: the previous window, or the same window a year back (`year`).
+ *  `toggle` cycles them; absent when there is nothing to cycle (All, month and goals reports, and 1y, whose previous window is last year). */
+export interface Compare { year: boolean; toggle?: () => void; entries?: ReportDataEntry[] }
+
 const isGraph = (r: Report): r is GraphReportRow => 'Graph' in r.definition
 export const isTable = (r: Report | null) => !!r && 'Grid' in r.definition
 
@@ -53,6 +57,7 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
   const [rangeFor, setRangeFor] = useState<{ id: string; range: Range } | null>(null)
   const [end, setEndState] = useState<Date | null>(null)
   const [picked, setPicked] = useState<string | null>(null)
+  const [vsYear, setVsYear] = useState(false)
   // Legend toggles, per report: switching reports starts with every series shown.
   const [hiddenFor, setHiddenFor] = useState<{ id: string; set: Set<number> }>({ id: '', set: new Set() })
 
@@ -84,6 +89,19 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     queryFn: () => src.data(prevEnd!, duration),
     enabled: prevEnd !== null && !paused,
   })
+  const cyclable = prevEnd !== null && range !== '1y'
+  const yearBack = cyclable && vsYear
+  const lastYearEnd = yearBack ? (() => { const d = fromDateStr(endCob); d.setFullYear(d.getFullYear() - 1); return toDateStr(d) })() : null
+  const lastYear = useQuery({
+    queryKey: [...src.key, 'report-data', lastYearEnd, duration],
+    queryFn: () => src.data(lastYearEnd!, duration),
+    enabled: lastYearEnd !== null && !paused,
+  })
+  const compare: Compare = {
+    year: yearBack,
+    toggle: cyclable ? () => setVsYear(!vsYear) : undefined,
+    entries: yearBack ? lastYear.data : previous.data,
+  }
   // The days-around table needs 10 events of one option, more than a week or a month holds: it reads the year to the window's end.
   const hasAround = !!report && isPanels(report) && report.definition.Panels.panels.some((p) => p.kind === 'Around')
   const year = useQuery({
@@ -121,13 +139,14 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     rows: buildChartData(entries, traces, locale),
     barLayout,
     previousEntries: previous.data,
+    compare,
     /** The year to the window's end, for the days-around table; undefined while it loads or without one. */
     yearEntries: duration === 'Year' ? current.data : year.data,
     panels: report && isPanels(report) ? report.definition.Panels : null,
     practices: practicesQ.data ?? [],
     /** A table's Group columns setting (on unless the report says otherwise). */
     grouped: !(report && 'Grid' in report.definition && report.definition.Grid.group_columns === false),
-    headline: headline(traces, barLayout, entries, previous.data, todayCob),
+    headline: headline(traces, barLayout, entries, compare.entries, todayCob),
     averages: averageLines(traces, entries, barLayout, todayCob, hidden),
     hidden,
     toggle: (i: number) => {

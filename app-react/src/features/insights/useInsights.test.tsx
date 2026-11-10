@@ -138,6 +138,25 @@ describe('useInsights', () => {
     expect(charts.getReportData).toHaveBeenCalledWith('2026-10-06', 'Month')
   })
 
+  it('cycles the headline change from the previous window to the same period last year and back', async () => {
+    charts.getReportData.mockImplementation(async (cob) => cob === '2026-10-06'
+      ? [{ cob_date: '2026-09-07', practice: 'Japa', value: { Duration: 30 } }]
+      : cob === '2025-10-06' ? [{ cob_date: '2025-09-07', practice: 'Japa', value: { Duration: 20 } }]
+        : [{ cob_date: '2026-08-08', practice: 'Japa', value: { Duration: 60 } }])
+    const { result } = setup()
+    await waitFor(() => expect(result.current.headline?.delta).toBe(-50))
+    expect(result.current.compare.year).toBe(false)
+    act(() => result.current.compare.toggle!())
+    await waitFor(() => expect(result.current.headline?.delta).toBe(50))
+    expect(result.current.compare.year).toBe(true)
+    expect(charts.getReportData).toHaveBeenCalledWith('2025-10-06', 'Month')
+    act(() => result.current.compare.toggle!())
+    expect(result.current.headline?.delta).toBe(-50)
+    // 1y's previous window is last year: nothing to cycle.
+    act(() => result.current.setRange('1y'))
+    expect(result.current.compare.toggle).toBeUndefined()
+  })
+
   it('maps the range to the server duration and the end date to a local yyyy-mm-dd', async () => {
     const { result } = setup()
     await waitFor(() => expect(result.current.isLoading).toBe(false))

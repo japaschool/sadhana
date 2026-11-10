@@ -11,7 +11,7 @@ import { GoalsPanelView } from './GoalsPanelView'
 import { eventOptions, gapEvents } from './gapLogic'
 import { MonthPanelView } from './MonthPanelView'
 import { StatsPanelView } from './StatsPanelView'
-import type { Range } from '../useInsights'
+import type { Compare, Range } from '../useInsights'
 import { current } from './templates'
 import { labelText, makeLookup, missingRequired, monthEnd, visiblePanels, windowDays } from './panelLogic'
 
@@ -39,6 +39,8 @@ interface PanelsReportViewProps {
   range?: Range
   /** The year to the window's end, read by the days-around table; it falls back to the window without it. */
   yearEntries?: ReportDataEntry[]
+  /** What headline changes compare against; the previous window when left out. */
+  compare?: Compare
   /** The signed-in user's marked periods, drawn as bands on charts; none on shared pages. */
   periods?: MarkedPeriod[]
 }
@@ -82,11 +84,14 @@ function MonthLegend() {
   )
 }
 
-export function PanelsReportView({ report, definition, entries, previous, practices, todayCob, chartHeight, formLink, cols = 4, month = todayCob.slice(0, 7), interactive = true, legendLast = false, monthFigures = true, range, yearEntries, periods }: PanelsReportViewProps) {
+export function PanelsReportView({ report, definition, entries, previous, practices, todayCob, chartHeight, formLink, cols = 4, month = todayCob.slice(0, 7), interactive = true, legendLast = false, monthFigures = true, range, yearEntries, periods, compare = { year: false } }: PanelsReportViewProps) {
   const { t } = useTranslation()
-  const lookup = makeLookup(entries, previous, practices)
+  const cmp = compare.year ? compare.entries ?? [] : previous ?? []
+  // Last year's days sit apart from the window and the one before it, so one lookup holds them all.
+  const lookup = makeLookup(entries, compare.year ? [...(previous ?? []), ...cmp] : previous, practices)
   const days = windowDays(entries)
   const prevDays = windowDays(previous ?? [])
+  const cmpDays = windowDays(cmp)
   const def = current(definition)
   const panels = visiblePanels(def, lookup)
   const missing = missingRequired(def, lookup)
@@ -115,7 +120,7 @@ export function PanelsReportView({ report, definition, entries, previous, practi
           <Fragment key={i}>
             {filter}
             {p.kind === 'Gaps' ? (
-              <GapsPanelView event={p.event} options={options} only={picked} days={days} prevDays={prevDays} range={range} lookup={lookup} todayCob={todayCob}
+              <GapsPanelView event={p.event} options={options} only={picked} days={days} prevDays={prevDays} cmpDays={cmpDays} compare={compare} range={range} lookup={lookup} todayCob={todayCob}
                 height={chartHeight} cols={cols} interactive={interactive} periods={periods} figures={monthFigures} />
             ) : p.kind === 'Around' ? (
               <AroundPanelView event={p.event} only={picked} rows={p.rows} days={year.days} prevDays={[]} lookup={year.lookup} todayCob={todayCob} />
@@ -129,7 +134,7 @@ export function PanelsReportView({ report, definition, entries, previous, practi
               <StatsPanelView stats={p.stats} days={days} lookup={lookup} todayCob={todayCob} cols={cols} />
             ) : (
               // The first chart leads; the rest are shorter (15m6, 15m12).
-              <ChartPanelView panel={p} panels={panels} days={days} prevDays={prevDays} range={range} lookup={lookup} todayCob={todayCob}
+              <ChartPanelView panel={p} panels={panels} days={days} prevDays={cmpDays} compare={compare} range={range} lookup={lookup} todayCob={todayCob}
                 height={i === firstChart ? chartHeight : Math.round(chartHeight * 0.72)} first={i === firstChart} compact={cols === 2} interactive={interactive} periods={periods} />
             )}
           </Fragment>

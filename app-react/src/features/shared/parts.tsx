@@ -13,8 +13,9 @@ import type { Trace } from '../insights/chartLogic'
 import { valueToNumber } from '../insights/chartLogic'
 import { fromDateStr, toDateStr } from '../today/date'
 import { formatDuration } from '../today/values'
-import { cellText, formatDay, formatDelta, formatHeadline, windowLabel } from '../insights/insightsLogic'
+import { cellText, deltaKey, formatDay, formatDelta, formatHeadline, windowLabel } from '../insights/insightsLogic'
 import { isTable, useInsights } from '../insights/useInsights'
+import { Delta } from '../insights/Headline'
 import { doneAverage } from './sharedLogic'
 
 export const SHARED_RANGES = ['7d', '30d', '90d', '1y'] as const
@@ -167,7 +168,7 @@ export function DeltaText({ s, className = '' }: { s: Shared; className?: string
   const { t } = useTranslation()
   const d = s.headline?.delta
   if (s.grid || d == null) return null
-  return <span className={`text-[13px] font-bold ${d >= 0 ? 'text-ui-good' : 'text-ui-muted'} ${className}`}>{t(`insights.vsPrev${s.range}`, { delta: formatDelta(d) })}</span>
+  return <Delta text={t(deltaKey(s.range, s.compare.year), { delta: formatDelta(d) })} onClick={s.compare.toggle} className={`text-[13px] font-bold ${d >= 0 ? 'text-ui-good' : 'text-ui-muted'} ${className}`} />
 }
 
 /** Tablet and desktop graph reports: the days as rows, newest first, with a total when every practice is a duration. */

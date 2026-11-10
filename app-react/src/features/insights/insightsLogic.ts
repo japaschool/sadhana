@@ -58,6 +58,9 @@ export function formatHeadline(h: Headline, u: DurationUnits): string {
   return String(h.value)
 }
 
+/** The words for a headline's change: vs the previous window, or vs the same period last year. */
+export const deltaKey = (range: string | undefined, year: boolean) => (year ? 'insights.vsLastYear' : `insights.vsPrev${range}`)
+
 export function formatDelta(pct: number): string {
   return `${pct >= 0 ? '+' : '−'}${Math.abs(pct)}%`
 }

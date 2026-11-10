@@ -5,7 +5,7 @@ import { TabletShell } from '../../../layouts/tablet/TabletShell'
 import { AnchoredMenu, MenuItem } from '../../../ui/primitives/AnchoredMenu'
 import { SegmentedControl } from '../../../ui/primitives/SegmentedControl'
 import { Headline } from '../Headline'
-import { formatDelta, formatHeadline, windowLabel } from '../insightsLogic'
+import { deltaKey, formatDelta, formatHeadline, windowLabel } from '../insightsLogic'
 import { fromDateStr } from '../../today/date'
 import { OverviewWide } from '../overview/OverviewWide'
 import { PanelsReportView } from '../panels/PanelsReportView'
@@ -89,7 +89,7 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300, panelHei
             <InsightsTable grouped={ins.grouped} traces={ins.traces} entries={ins.entries} todayCob={ins.todayCob} bottomGap={36}
               onOpenDay={(cob) => (onLogDate ? onLogDate(fromDateStr(cob)) : setOpenDay(cob))} />
           ) : panels ? (
-            <PanelsReportView key={ins.selectedId} report={ins.report!} definition={panels} entries={ins.entries} previous={ins.previousEntries}
+            <PanelsReportView key={ins.selectedId} report={ins.report!} definition={panels} entries={ins.entries} previous={ins.previousEntries} compare={ins.compare}
               practices={ins.practices} todayCob={ins.todayCob} chartHeight={panelHeight} formLink={`/settings/charts/${ins.selectedId}`} month={ins.month ?? undefined} range={ins.range} yearEntries={ins.yearEntries} periods={periods} />
           ) : (
             // The averages sit over the chart as a report's figures do over its chart.
@@ -110,7 +110,7 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300, panelHei
                   {h && (
                     <Headline wide value={formatHeadline(h, units)} up={(h.delta ?? 0) >= 0}
                       label={t(h.kind === 'time' ? 'insights.average' : 'insights.dailyAverage', { range: windowLabel(ins.entries, i18n.language || 'en') })}
-                      delta={h.delta === null ? null : t(`insights.vsPrev${ins.range}`, { delta: formatDelta(h.delta) })} />
+                      delta={h.delta === null ? null : t(deltaKey(ins.range, ins.compare.year), { delta: formatDelta(h.delta) })} onDelta={ins.compare.toggle} />
                   )}
                   {/* Remount per report and legend toggle: Recharts hangs updating in place when the series layout changes. */}
                   <InsightsChart key={`${ins.selectedId}|${[...ins.hidden]}`} rows={ins.rows} traces={ins.traces} barLayout={ins.barLayout}

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Delta } from '../Headline'
 import { Trans, useTranslation } from 'react-i18next'
 import type { Format, Stat, StatValue } from '../../../api/charts'
 import { figureDuration, formatValue, labelText, statResult, type Lookup } from './panelLogic'
@@ -33,7 +34,7 @@ export interface Figure {
   content?: ReactNode
   note?: string
   /** The change vs the previous window, toned as a chart headline's. */
-  trend?: { text: string; up: boolean }
+  trend?: { text: string; up: boolean; onClick?: () => void }
 }
 
 /** Values stay on one line, because ru and uk spell units out; labels wrap. */
@@ -51,7 +52,7 @@ export function FigureGrid({ items, cols }: { items: Figure[]; cols: 2 | 4 }) {
           <span className={`font-ui-mono leading-[1.15] font-semibold tracking-[-0.02em] whitespace-nowrap text-ui-ink ${cols === 2 ? 'text-[22px]' : f.text.length > LONG ? 'text-[20px]' : 'text-[26px]'}`}>
             {f.content ?? f.text}
           </span>
-          {f.trend && <span className={`text-xs font-semibold ${f.trend.up ? 'text-ui-good' : 'text-ui-muted'}`}>{f.trend.text}</span>}
+          {f.trend && <Delta text={f.trend.text} onClick={f.trend.onClick} className={`self-start text-xs font-semibold ${f.trend.up ? 'text-ui-good' : 'text-ui-muted'}`} />}
           {f.note && <span className="text-[11px] leading-[1.35] text-ui-faint2">{f.note}</span>}
         </div>
       ))}

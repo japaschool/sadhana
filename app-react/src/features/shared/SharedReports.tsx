@@ -73,7 +73,7 @@ function Table({ s, bottomGap }: { s: Shared; bottomGap: number }) {
 
 function Panels({ s, height, cols }: { s: Shared; height: number; cols?: 2 }) {
   return (
-    <PanelsReportView key={s.selectedId} report={s.report!} definition={s.panels!} entries={s.entries} previous={s.previousEntries}
+    <PanelsReportView key={s.selectedId} report={s.report!} definition={s.panels!} entries={s.entries} previous={s.previousEntries} compare={s.compare}
       practices={s.practices} todayCob={s.todayCob} chartHeight={height} formLink={null} cols={cols} month={s.month ?? undefined} range={s.range} yearEntries={s.yearEntries} />
   )
 }

@@ -157,6 +157,7 @@ if (!i18n.isInitialized) {
             vsPrev30d: '{{delta}} vs previous 30 days',
             vsPrev90d: '{{delta}} vs previous 90 days',
             vsPrev1y: '{{delta}} vs previous year',
+            vsLastYear: '{{delta}} vs same period last year',
             noData: 'No data in this range',
             loadFailed: "Couldn't load data",
             legend: 'Averages',
