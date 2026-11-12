@@ -9,7 +9,9 @@ import type { Trace } from '../chartLogic'
 import { barPlacement, deltaKey, pickVs, formatDay, formatDelta, formatTick, spansYears } from '../insightsLogic'
 import type { Compare, Range } from '../useInsights'
 import { Headline } from '../Headline'
-import { AXIS, BandGlyph, LegendList, PeriodAreas, TICK, tipDate, TipRow, TipShell, type LegendItem } from '../mobile/InsightsChart'
+import { LINE_LABEL, MonthlyChart } from './MonthlyChart'
+import { monthRows } from './monthly'
+import { AXIS, BandGlyph, LegendList, PeriodAreas, tipDate, TipRow, TipShell, type LegendItem } from '../mobile/InsightsChart'
 import { formatDuration } from '../../today/values'
 import {
   chartRows, clockText, durationFloor, fitHours, labelText, seriesColour, seriesName, statResult, tipLines, type BarState, type Lookup, type PanelRow, type Resolved,
@@ -36,6 +38,10 @@ interface ChartPanelProps {
   interactive?: boolean
   /** Marked periods, drawn as bands; none on shared pages. */
   periods?: MarkedPeriod[]
+  /** 1y and All on a template: drawn month by month. */
+  monthly?: boolean
+  /** The first day anything was logged: months before it are left out of a monthly chart. */
+  firstLog?: string | null
 }
 
 /** About 1px a bar: outlines and stripes can't render (15m8). */
@@ -180,9 +186,7 @@ function PanelHeadline({ panel, days, prevDays, yearDays, compare, range, lookup
   )
 }
 
-const LINE_LABEL = { fontSize: 10, fontFamily: TICK.fontFamily, fill: 'var(--ui-ink)', stroke: 'var(--ui-surface)', strokeWidth: 3, paintOrder: 'stroke' }
-
-export function ChartPanelView({ panel, panels, days, prevDays = [], yearDays = [], compare = { year: false }, range, lookup, todayCob, height, first, compact, interactive = true, periods = [] }: ChartPanelProps) {
+export function ChartPanelView({ panel, panels, days, prevDays = [], yearDays = [], compare = { year: false }, range, lookup, todayCob, height, first, compact, interactive = true, periods = [], monthly = false, firstLog = null }: ChartPanelProps) {
   const { t, i18n } = useTranslation()
   const tip = useChartTooltip()
   const locale = i18n.language || 'en'
@@ -246,11 +250,28 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], yearDays = 
     Average: { of: panel.lines[i].of, pick: panel.lines[i].pick, format: panel.format, scope: { today: true, missing_zero: false } },
   }, days, lookup, todayCob).value
 
+  const box = `flex min-w-0 flex-col gap-3 rounded-[20px] border border-ui-hairline bg-ui-surface ${compact ? 'p-4' : 'p-6'}`
+  const head = panel.headline
+    ? <PanelHeadline panel={panel} days={days} prevDays={prevDays} yearDays={yearDays} compare={compare} range={range} lookup={lookup} todayCob={todayCob} wide={!compact} />
+    : panel.title && <h2 className="text-base leading-[1.3] font-extrabold text-ui-ink">{labelText(panel.title, t)}</h2>
+
+  if (monthly) {
+    const months = monthRows(panel, days, lookup, todayCob, firstLog)
+    const from = months[0]?.month ?? '9999'
+    // A period covers every month it touches.
+    const monthBands = periodBands(periods, days.filter((d) => d >= from)).map((b) => ({ ...b, x1: b.x1.slice(0, 7), x2: b.x2.slice(0, 7) }))
+    return (
+      <section className={box}>
+        {head}
+        <MonthlyChart panel={panel} rows={months} bands={monthBands} limits={limits.map((l) => ({ ...l, text: limitText(l.key, l.value) }))}
+          height={height} interactive={interactive} />
+      </section>
+    )
+  }
+
   return (
-    <section className={`flex min-w-0 flex-col gap-3 rounded-[20px] border border-ui-hairline bg-ui-surface ${compact ? 'p-4' : 'p-6'}`}>
-      {panel.headline
-        ? <PanelHeadline panel={panel} days={days} prevDays={prevDays} yearDays={yearDays} compare={compare} range={range} lookup={lookup} todayCob={todayCob} wide={!compact} />
-        : panel.title && <h2 className="text-base leading-[1.3] font-extrabold text-ui-ink">{labelText(panel.title, t)}</h2>}
+    <section className={box}>
+      {head}
       <div className="relative">
         <ResponsiveContainer width="100%" height={height}>
           <ComposedChart {...tip.chart} data={rows} barCategoryGap={thin || stacked ? '10%' : BAR_GAP} barGap={1} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>

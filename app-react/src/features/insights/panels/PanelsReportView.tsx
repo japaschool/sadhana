@@ -13,6 +13,7 @@ import { MonthPanelView } from './MonthPanelView'
 import { StatsPanelView } from './StatsPanelView'
 import type { Compare, Range } from '../useInsights'
 import { current } from './templates'
+import { isMonthly } from './monthly'
 import { labelText, makeLookup, missingRequired, monthEnd, visiblePanels, windowDays } from './panelLogic'
 
 interface PanelsReportViewProps {
@@ -94,6 +95,8 @@ export function PanelsReportView({ report, definition, entries, previous, practi
   const def = current(definition)
   const panels = visiblePanels(def, lookup)
   const missing = missingRequired(def, lookup)
+  const monthly = isMonthly(def, range)
+  const firstLog = entries.reduce<string | null>((m, x) => (x.value !== null && x.value !== undefined && (m === null || x.cob_date < m) ? x.cob_date : m), null)
   const firstChart = panels.findIndex((p) => p.kind === 'Chart')
   const labels = [...new Set(missing.map((r) => labelText(r.label, t)))].join(', ')
   const year = yearEntries ? { lookup: makeLookup(yearEntries, undefined, practices), days: windowDays(yearEntries) } : { lookup, days }
@@ -134,7 +137,8 @@ export function PanelsReportView({ report, definition, entries, previous, practi
             ) : (
               // The first chart leads; the rest are shorter (15m6, 15m12).
               <ChartPanelView panel={p} panels={panels} days={days} prevDays={prevDays} yearDays={yearDays} compare={compare} range={range} lookup={lookup} todayCob={todayCob}
-                height={i === firstChart ? chartHeight : Math.round(chartHeight * 0.72)} first={i === firstChart} compact={cols === 2} interactive={interactive} periods={periods} />
+                height={i === firstChart ? chartHeight : Math.round(chartHeight * 0.72)} first={i === firstChart} compact={cols === 2} interactive={interactive} periods={periods}
+                monthly={monthly} firstLog={firstLog} />
             )}
           </Fragment>
         )
