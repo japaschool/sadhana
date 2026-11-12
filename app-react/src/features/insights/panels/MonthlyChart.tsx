@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import type { ChartPanel } from '../../../api/charts'
 import { useChartTooltip } from '../../../ui/tooltipTrigger'
 import type { Band } from '../periodBands'
-import { AXIS, BandGlyph, LegendList, PeriodAreas, TICK, TipRow, TipShell, type LegendItem } from '../mobile/InsightsChart'
+import { AXIS, LegendList, PeriodAreas, TICK, TipRow, TipShell, type LegendItem } from '../mobile/InsightsChart'
 import { formatDuration } from '../../today/values'
 import { clockText, fitHours, monthName } from './panelLogic'
 import type { MonthRow } from './monthly'
@@ -18,14 +18,14 @@ const LINE = 'var(--ui-ink)'
 /** The month still going is drawn lighter. */
 const opacity = (r: MonthRow) => (r.soFar ? 0.4 : 0.85)
 
-/** What the bars count, worded as the template's own stat. */
+/** What the bars count, as a share of the month's days. */
 function barKey(panel: ChartPanel): string {
   const tg = panel.target
   const limited = !!tg && (tg.min !== null || tg.max !== null)
   const key = tg?.label && 'Key' in tg.label ? tg.label.Key : null
-  if (tg && !key) return limited ? 'nightsInRange' : 'nightsLogged'
-  if (limited) return key === 'reportPanels.goal' ? 'daysOnGoal' : 'daysOnTarget'
-  return 'daysLogged'
+  if (tg && !key) return limited ? 'monthPctInRange' : 'monthPctNights'
+  if (limited) return key === 'reportPanels.goal' ? 'monthPctOnGoal' : 'monthPctOnTarget'
+  return 'monthPctLogged'
 }
 
 /** A Japa, Time spent or Sleep panel at 1y or All: % of the month's days done as bars, the median on those days as a line (a Range panel: one median range a month). */
@@ -55,14 +55,13 @@ export function MonthlyChart({ panel, rows, bands, limits, height, interactive }
   const items: LegendItem[] = clock
     ? [{ key: 'range', glyph: <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px]" style={{ background: BAR }} />, text: t('reportPanels.monthSleepRange') }]
     : [
-      { key: 'pct', glyph: <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px]" style={{ background: BAR }} />, text: t('reportPanels.monthPct', { label: t(`reportPanels.${barKey(panel)}`) }) },
+      { key: 'pct', glyph: <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px]" style={{ background: BAR }} />, text: t(`reportPanels.${barKey(panel)}`) },
       { key: 'median', glyph: <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ background: LINE }} />, text: t('reportPanels.monthMedian') },
     ]
   for (const l of limits) items.push({ key: l.key, glyph: <span aria-hidden className="h-0 w-4 shrink-0 border-t-2 border-dashed border-ui-ink" />, text: l.text })
   if (rows.some((r) => r.soFar)) {
     items.push({ key: 'soFar', glyph: <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px] opacity-40" style={{ background: BAR }} />, text: t('reportPanels.monthSoFarKey') })
   }
-  if (bands.length) items.push({ key: 'period', glyph: <BandGlyph />, text: t('reportPanels.markedPeriod') })
 
   return (
     <>

@@ -6,7 +6,7 @@ import { fromDateStr, toDateStr } from '../../today/date'
 import { periodBands } from '../periodBands'
 import { deltaKey, formatDay, pickVs, formatDelta, formatTick, spansYears } from '../insightsLogic'
 import type { Compare, Range } from '../useInsights'
-import { AXIS, PeriodAreas, PeriodKey, tipDate, TipRow, TipShell } from '../mobile/InsightsChart'
+import { AXIS, PeriodAreas, tipDate, TipRow, TipShell } from '../mobile/InsightsChart'
 import { FigureGrid, type Figure } from './StatsPanelView'
 import { gapEvents, gapFigures, TYPICAL_MIN, type GapEvent } from './gapLogic'
 import type { Lookup } from './panelLogic'
@@ -171,10 +171,6 @@ export function GapsPanelView({ event, options, only, days, prevDays, yearDays =
                 }} />}
             </ComposedChart>
           </ResponsiveContainer>
-        )}
-        {/* The options' key is the chips above the report. */}
-        {bands.length > 0 && (
-          <ul aria-label={t('reportPanels.legend')} className="flex flex-wrap gap-x-3.5 gap-y-1.5"><li><PeriodKey /></li></ul>
         )}
       </section>
     </>

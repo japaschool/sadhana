@@ -86,7 +86,7 @@ export function japaPanels(t: JapaTemplate): PanelsReport {
   const average = (label: string, id: string): Stat =>
     ({ label: key(label), value: { Average: { of: practice(id), pick: null, format: 'Count', scope: past } }, under: null })
   const stats: Stat[] = [
-    { label: key('daysOnTarget'), value: { OnTarget: { of: total, min: t.target, max: null, scope: past } }, under: null },
+    ...(t.target === null ? [] : [{ label: key('daysOnTarget'), value: { OnTarget: { of: total, min: t.target, max: null, scope: past } }, under: null }]),
     ...(t.morning ? [average('avgMorning', t.morning)] : []),
   ]
   const chart: ChartPanel = {
@@ -99,14 +99,14 @@ export function japaPanels(t: JapaTemplate): PanelsReport {
     bar_layout: 'Overlaid',
     format: 'Count',
     reversed: false,
-    target: { min: t.target, max: null, of: total, lines: true, colour: true, label: key('target') },
+    target: { min: t.target, max: null, of: total, lines: t.target !== null, colour: true, label: key('target') },
     lines: [],
   }
   return {
     version: 1,
     template: { Japa: t },
     required: [{ practice: t.total, label: key('totalRounds') }],
-    panels: [{ kind: 'Stats', stats }, { kind: 'Chart', ...chart }],
+    panels: [...(stats.length ? [{ kind: 'Stats' as const, stats }] : []), { kind: 'Chart', ...chart }],
   }
 }
 

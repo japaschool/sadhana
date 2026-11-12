@@ -76,16 +76,6 @@ export function PeriodAreas({ bands, yAxisId, xAxisId, at, focus }: {
   )
 }
 
-/** The legend swatch for a band (16m11). */
-export function PeriodKey() {
-  const { t } = useTranslation()
-  return (
-    <span className="inline-flex items-center gap-1.5 text-xs leading-[1.3] font-bold text-ui-ink2">
-      <BandGlyph />{t('reportPanels.markedPeriod')}
-    </span>
-  )
-}
-
 export interface LegendItem { key: string; glyph: ReactNode; text: string; toggle?: number }
 
 /** A chart's legend, as report panels draw it; an item with `toggle` shows or hides that series. */
@@ -108,7 +98,6 @@ export function LegendList({ items, hidden = NONE, onToggle }: { items: LegendIt
   )
 }
 
-export function BandGlyph() { return <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px] bg-ui-chip" /> }
 
 function TraceGlyph({ tr }: { tr: Trace }) {
   if (tr.type_ === 'Bar') return <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: tr.color }} />
@@ -210,7 +199,6 @@ export function InsightsChart({ rows, traces, barLayout, averages, height = 170,
 
   const legend: LegendItem[] = [
     ...traces.map((tr, i) => ({ key: `t${i}`, glyph: <TraceGlyph tr={tr} />, text: tr.name, toggle: i })),
-    ...(bands.length ? [{ key: 'period', glyph: <BandGlyph />, text: t('reportPanels.markedPeriod') }] : []),
   ]
 
   return (

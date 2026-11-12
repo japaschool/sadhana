@@ -95,7 +95,7 @@ export interface GoalsTemplate { goals: Goal[] }
 
 export interface SleepTemplate { bedtime: string; wake: string; nap: string | null; min: number | null; max: number | null }
 /** `quality` and `attunement`: older reports may have them; no longer drawn, and saved as null. */
-export interface JapaTemplate { total: string; target: number; morning: string | null; quality: string | null; attunement: string | null }
+export interface JapaTemplate { total: string; target: number | null; morning: string | null; quality: string | null; attunement: string | null }
 export interface DurationTemplate { practices: string[]; goal: number | null }
 export interface DaysTemplate { practices: string[] }
 export interface SleepRows { bedtime: string; wake: string; nap: string | null }

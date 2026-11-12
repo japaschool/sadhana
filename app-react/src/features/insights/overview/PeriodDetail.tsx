@@ -11,7 +11,7 @@ import { UiLoading } from '../../../layouts/ByLayout'
 import { SettingsSubpage } from '../../settings/SettingsSubpage'
 import { toDateStr } from '../../today/date'
 import { formatDay, formatTick, spansYears } from '../insightsLogic'
-import { AXIS, PeriodAreas, PeriodKey, tipDate, TipRow, TipShell } from '../mobile/InsightsChart'
+import { AXIS, PeriodAreas, tipDate, TipRow, TipShell } from '../mobile/InsightsChart'
 import { periodBands } from '../periodBands'
 import type { RowKind } from '../panels/gapLogic'
 import { clockText } from '../panels/panelLogic'
@@ -88,7 +88,6 @@ function RowChart({ series, periods, focus, todayCob, from, kind, label }: {
         <li className="inline-flex items-center gap-1.5"><span aria-hidden className="h-0.5 w-[18px] bg-ui-ink" />{t('insights.period.average')}</li>
         <li className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2.5 w-[18px] rounded-[5px] bg-[var(--ui-div-0)]" />{t('insights.overview.usualRange')}</li>
         <li className="inline-flex items-center gap-1.5"><span aria-hidden className="w-[18px] border-t-[1.5px] border-dashed border-ui-faint2" />{t('insights.overview.usual')}</li>
-        {bands.length > 0 && <li><PeriodKey /></li>}
       </ul>
     </div>
   )

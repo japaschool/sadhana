@@ -288,11 +288,15 @@ describe('the Japa template', () => {
     )
   }
 
-  it('needs total rounds and a target', () => {
+  it('needs total rounds; the target is optional', () => {
     expect(draftProblem(JAPA)).toBeNull()
     expect(draftProblem({ ...JAPA, total: null })).toBe('required')
-    expect(draftProblem({ ...JAPA, target: null })).toBe('required')
-    expect(draftToDefinition({ ...JAPA, target: null })).toBeNull()
+    expect(draftProblem({ ...JAPA, target: null })).toBeNull()
+    const def = draftToDefinition({ ...JAPA, target: null })!.Panels
+    expect(def.template).toMatchObject({ Japa: { target: null } })
+    // No target: no days-on-target stat, and the bars aren't judged.
+    expect(def.panels.map((p) => p.kind)).toEqual(['Chart'])
+    expect(def.panels[0]).toMatchObject({ target: { min: null, lines: false } })
   })
 
   it('builds the Japa report', () => {
@@ -329,11 +333,6 @@ describe('the Japa template', () => {
     expect(shown()).toMatchObject({ total: null })
     fireEvent.click(screen.getByRole('button', { name: 'Use Japa rounds' }))
     expect(shown()).toMatchObject({ total: 'japa' })
-  })
-
-  it('says why a cleared target isn’t saved on a saved report', () => {
-    render(<JapaForm start={{ ...JAPA, target: null }} flagMissing />)
-    expect(screen.getByRole('alert')).toHaveTextContent('Set a target to save your changes.')
   })
 
   it('flags a deleted total on a saved report', () => {

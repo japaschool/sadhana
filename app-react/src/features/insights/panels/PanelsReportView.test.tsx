@@ -211,12 +211,12 @@ describe('PanelsReportView', () => {
     expect(screen.getByText('7 год 18 хв')).toHaveClass('text-[20px]')
   })
 
-  it('marked periods show as named bands with a legend row; none without periods', () => {
+  it('marked periods show as named bands, with no legend row; none without periods', () => {
     const period: MarkedPeriod = { id: 'p1', name: 'Autumn fast', start_date: dayAt(TODAY, -10), end_date: null, exclude_from_usual: false }
     const { container } = view({ periods: [period] })
     expect(container.querySelectorAll('.recharts-reference-area').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Autumn fast').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Marked period').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Marked period')).toBeNull()
     cleanup()
     view()
     expect(screen.queryByText('Autumn fast')).toBeNull()

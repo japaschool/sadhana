@@ -1135,7 +1135,7 @@ pub(crate) mod tests {
         });
     }
 
-    fn japa_report(total: Uuid, target: i32) -> PanelsReport {
+    fn japa_report(total: Uuid, target: Option<i32>) -> PanelsReport {
         use super::super::panels::*;
         let mut r = sleep_report(total, total);
         r.template = Some(Template::Japa(JapaTemplate {
@@ -1152,7 +1152,21 @@ pub(crate) mod tests {
     fn japa_round_trips() {
         run(|conn| {
             let (u, [a, _, _, _]) = user_with_practices(conn);
-            let sent = japa_report(a, 16);
+            let sent = japa_report(a, Some(16));
+            Report::create(conn, &u, "r", &panels(sent.clone()))?;
+            match ApiReport::get_all(conn, &u, 1, true)?.remove(0).definition {
+                ReportDefinition::Panels(got) => assert_eq!(got, sent),
+                _ => panic!("not panels"),
+            }
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn japa_target_is_optional() {
+        run(|conn| {
+            let (u, [a, _, _, _]) = user_with_practices(conn);
+            let sent = japa_report(a, None);
             Report::create(conn, &u, "r", &panels(sent.clone()))?;
             match ApiReport::get_all(conn, &u, 1, true)?.remove(0).definition {
                 ReportDefinition::Panels(got) => assert_eq!(got, sent),
@@ -1166,7 +1180,7 @@ pub(crate) mod tests {
     fn japa_rejects_a_negative_target() {
         run(|conn| {
             let (u, [a, _, _, _]) = user_with_practices(conn);
-            unprocessable(Report::create(conn, &u, "r", &panels(japa_report(a, -1))));
+            unprocessable(Report::create(conn, &u, "r", &panels(japa_report(a, Some(-1)))));
             Ok(())
         });
     }
@@ -1176,7 +1190,7 @@ pub(crate) mod tests {
         use super::super::panels::*;
         run(|conn| {
             let (u, [a, _, _, _]) = user_with_practices(conn);
-            let mut r = japa_report(a, 16);
+            let mut r = japa_report(a, Some(16));
             if let Some(Template::Japa(j)) = &mut r.template {
                 j.quality = Some(Uuid::new_v4());
             }

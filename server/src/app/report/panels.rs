@@ -49,7 +49,8 @@ pub struct SleepTemplate {
 #[serde(deny_unknown_fields)]
 pub struct JapaTemplate {
     pub total: Uuid,
-    pub target: i32,
+    /// None: no target, as a Duration goal.
+    pub target: Option<i32>,
     pub morning: Option<Uuid>,
     pub quality: Option<Uuid>,
     /// A done marker older reports may have; no longer drawn.
@@ -453,7 +454,7 @@ impl PanelsReport {
                 out.extend(s.nap);
             }
             Some(Template::Japa(j)) => {
-                check_bounds(Some(j.target), None)?;
+                check_bounds(j.target, None)?;
                 out.insert(j.total);
                 out.extend([j.morning, j.quality, j.attunement].into_iter().flatten());
             }

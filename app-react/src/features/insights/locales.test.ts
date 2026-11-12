@@ -42,10 +42,6 @@ describe('insights marked-period screens translations', () => {
       for (const d of dicts) expect(base(nested(d, ns)), ns).toEqual(keys)
     }
   })
-
-  it('has the marked-period legend label in en, ru and uk', () => {
-    for (const [path, dict] of Object.entries(files)) expect(dict.reportPanels?.markedPeriod, path).toBeTruthy()
-  })
 })
 
 describe('reportPanels.* translations', () => {

@@ -11,7 +11,7 @@ import type { Compare, Range } from '../useInsights'
 import { Headline } from '../Headline'
 import { LINE_LABEL, MonthlyChart } from './MonthlyChart'
 import { monthRows } from './monthly'
-import { AXIS, BandGlyph, LegendList, PeriodAreas, tipDate, TipRow, TipShell, type LegendItem } from '../mobile/InsightsChart'
+import { AXIS, LegendList, PeriodAreas, tipDate, TipRow, TipShell, type LegendItem } from '../mobile/InsightsChart'
 import { formatDuration } from '../../today/values'
 import {
   chartRows, clockText, durationFloor, fitHours, labelText, seriesColour, seriesName, statResult, tipLines, type BarState, type Lookup, type PanelRow, type Resolved,
@@ -102,8 +102,8 @@ function MarkGlyph({ mark, colour }: { mark: Series['mark']; colour: string }) {
 }
 
 /** Stacked practices with their own colours can be tapped to hide them from the chart. */
-function PanelLegend({ panel, first, lookup, hidden, onToggle, bands }: {
-  panel: ChartPanel; first: boolean; lookup: Lookup; hidden: Set<number>; onToggle: (i: number) => void; bands: boolean
+function PanelLegend({ panel, first, lookup, hidden, onToggle }: {
+  panel: ChartPanel; first: boolean; lookup: Lookup; hidden: Set<number>; onToggle: (i: number) => void
 }) {
   const { t } = useTranslation()
   const u = { h: t('today.unitH'), min: t('today.unitMin') }
@@ -157,7 +157,6 @@ function PanelLegend({ panel, first, lookup, hidden, onToggle, bands }: {
     const value = panel.format === 'Count' ? String(panel.target.min) : hrs(panel.target.min)
     items.push({ key: 'goal', glyph: <LineGlyph dashed />, text: t(`${goal}Line`, { value }) })
   }
-  if (bands) items.push({ key: 'period', glyph: <BandGlyph />, text: t('reportPanels.markedPeriod') })
   return <LegendList items={items} hidden={hidden} onToggle={onToggle} />
 }
 
@@ -351,7 +350,7 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], yearDays = 
           <p className="absolute inset-0 flex items-center justify-center pb-6 text-sm font-extrabold text-ui-ink">{t('insights.noData')}</p>
         )}
       </div>
-      <PanelLegend panel={panel} first={first} lookup={lookup} hidden={hidden} onToggle={toggle} bands={bands.length > 0} />
+      <PanelLegend panel={panel} first={first} lookup={lookup} hidden={hidden} onToggle={toggle} />
     </section>
   )
 }

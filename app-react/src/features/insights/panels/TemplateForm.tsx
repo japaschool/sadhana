@@ -45,7 +45,7 @@ const slotValue = (d: TemplateDraft, slot: Slot) => (d as unknown as Record<stri
 
 export function draftProblem(d: TemplateDraft): 'required' | 'minMax' | 'tooMany' | null {
   if (d.kind === 'Duration' || d.kind === 'Days') return d.practices.length === 0 ? 'required' : d.practices.length > MAX[d.kind] ? 'tooMany' : null
-  if (d.kind === 'Japa') return !d.total || d.target === null ? 'required' : null
+  if (d.kind === 'Japa') return !d.total ? 'required' : null
   if (d.kind === 'Goals') {
     if (d.goals.length > MAX_GOALS) return 'tooMany'
     const unset = (g: GoalDraft) => !g.practice || g.amount === null || (g.direction === 'AtLeast' && g.amount < 1)
@@ -64,7 +64,7 @@ export function draftToDefinition(d: TemplateDraft): { Panels: PanelsReport } | 
   if (d.kind === 'Gaps') return { Panels: gapsPanels({ event: d.event!, rows: d.rows, sleep: d.sleep }) }
   if (d.kind === 'Japa') {
     // Quality and done markers are no longer drawn, so a saved report drops its old ones.
-    return { Panels: japaPanels({ total: d.total!, target: d.target!, morning: d.morning, quality: null, attunement: null }) }
+    return { Panels: japaPanels({ total: d.total!, target: d.target, morning: d.morning, quality: null, attunement: null }) }
   }
   return { Panels: sleepPanels({ bedtime: d.bedtime!, wake: d.wake!, nap: d.nap, min: d.min, max: d.max }) }
 }
@@ -490,10 +490,9 @@ export function TemplateForm({ value, onChange, practices, name, flagMissing }: 
             <div className={`${CARD} flex flex-col gap-1.5 p-4`}>
               <div className="flex items-baseline justify-between gap-2">
                 <label htmlFor="japa-target" className="text-[15px] font-extrabold text-ui-ink">{t('templateForm.target')}</label>
-                <span className="text-xs font-bold whitespace-nowrap text-ui-accent">{t('templateForm.required')}</span>
+                <span className="text-xs font-bold whitespace-nowrap text-ui-faint">{t('templateForm.optional')}</span>
               </div>
               <LimitField id="japa-target" label="" placeholder="" suffix={t('templateForm.targetSuffix')} value={value.target} onChange={(target) => onChange({ ...value, target })} />
-              {flagMissing && value.target === null && <p role="alert" className="text-[13px] font-semibold text-ui-danger">{t('templateForm.targetMissing')}</p>}
               <p className={HINT}>{t('templateForm.targetHint')}</p>
             </div>
           </section>
