@@ -27,7 +27,7 @@ import { draftOf, draftToDefinition, TemplateForm, type TemplateDraft } from '..
 import { templateSlug } from '../../panels/templates'
 import { KindGlyph } from '../../ReportGlyph'
 import { useChartEditor, type Series } from '../useChartEditor'
-import { RANGES } from '../../useInsights'
+import { LONG_RANGES, RANGES } from '../../useInsights'
 import { axisName, kindName, LegendMark, onAxis, SaveDot, SeriesTile, StyleIcon, styleOf } from './parts'
 import { PracticePickerSheet, SeriesFields, SeriesSheet } from './SeriesSheets'
 
@@ -177,7 +177,7 @@ export function NameCard({ ed }: { ed: Editor }) {
       {/* Month and goals reports have no range. */}
       {!hasPanel(report, 'Goals') && !hasPanel(report, 'Month') && (
         <ChoiceChips label={t('chartSettings.opensOn')} value={report.default_range ?? '30d'}
-          options={RANGES.map((r) => ({ value: r, label: t(`insights.range${r}`) }))}
+          options={[...RANGES, ...LONG_RANGES].map((r) => ({ value: r, label: t(`insights.range${r}`) }))}
           onChange={(r) => ed.update((x) => ({ ...x, default_range: r }))} />
       )}
     </section>

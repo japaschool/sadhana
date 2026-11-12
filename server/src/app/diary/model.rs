@@ -157,6 +157,9 @@ impl ReportEntry {
             ReportDuration::Quarter => Some(3.months()),
             ReportDuration::HalfYear => Some(6.months()),
             ReportDuration::Year => Some(1.year()),
+            ReportDuration::TwoYears => Some(2.years()),
+            ReportDuration::ThreeYears => Some(3.years()),
+            ReportDuration::FiveYears => Some(5.years()),
             ReportDuration::AllData => None,
         };
 

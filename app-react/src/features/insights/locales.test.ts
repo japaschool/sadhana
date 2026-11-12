@@ -5,9 +5,10 @@ type Dict = { insights?: Record<string, string> & { overview?: Record<string, st
 const files = import.meta.glob<Dict>('../../../public/locales/*/translation.json', { eager: true, import: 'default' })
 
 const KEYS = [
-  'title', 'reports', 'range', 'range7d', 'range30d', 'range90d', 'range1y', 'rangeall',
+  'title', 'reports', 'range', 'range7d', 'range30d', 'range90d', 'range1y', 'range2y', 'range3y', 'range5y', 'rangeall',
+  'rangeLong2y', 'rangeLong3y', 'rangeLong5y', 'rangeLongall', 'moreRanges',
   'endingToday', 'endingOn', 'resetEnd', 'dailyAverage', 'average',
-  'vsPrev7d', 'vsPrev30d', 'vsPrev90d', 'vsPrev1y', 'vsLastYear', 'noData', 'loadFailed',
+  'vsPrev7d', 'vsPrev30d', 'vsPrev90d', 'vsPrev1y', 'vsPrev2y', 'vsPrev3y', 'vsPrev5y', 'vsLastYear', 'noData', 'loadFailed',
   'legend', 'newChart', 'editReport', 'deleteReport', 'date', 'days_one', 'days_other',
 ]
 

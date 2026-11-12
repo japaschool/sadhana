@@ -9,9 +9,10 @@ import { deltaKey, formatDelta, formatHeadline, windowLabel } from '../insightsL
 import { fromDateStr } from '../../today/date'
 import { OverviewWide } from '../overview/OverviewWide'
 import { PanelsReportView } from '../panels/PanelsReportView'
-import { isTable, RANGES, useInsights } from '../useInsights'
+import { isTable, useInsights } from '../useInsights'
 import { DaySheet } from '../mobile/DaySheet'
 import { EndDateControl } from '../mobile/EndDateControl'
+import { RangePicker } from '../mobile/RangePicker'
 import { MonthNav } from '../mobile/MonthNav'
 import { InsightsChart, TraceAverages } from '../mobile/InsightsChart'
 import { InsightsTable } from '../mobile/InsightsTable'
@@ -77,8 +78,7 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300, panelHei
           {ins.goals ? null : ins.month ? <MonthNav month={ins.month} todayCob={ins.todayCob} onChange={ins.setMonth} /> : (
             <div className="flex items-center justify-between gap-3">
               <div className="font-ui-mono [&_button]:px-3.5 [&_button]:text-[13px]">
-                <SegmentedControl label={t('insights.range')} value={ins.range} onChange={ins.setRange}
-                  options={RANGES.map((r) => ({ value: r, label: t(`insights.range${r}`) }))} />
+                <RangePicker value={ins.range} onChange={ins.setRange} />
               </div>
               {!logDate && <EndDateControl end={ins.end} onChange={ins.setEnd} />}
             </div>

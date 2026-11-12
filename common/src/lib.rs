@@ -11,6 +11,9 @@ pub enum ReportDuration {
     Quarter,
     HalfYear,
     Year,
+    TwoYears,
+    ThreeYears,
+    FiveYears,
     AllData,
 }
 
@@ -30,6 +33,9 @@ impl FromStr for ReportDuration {
             "Quarter" => Ok(ReportDuration::Quarter),
             "HalfYear" => Ok(ReportDuration::HalfYear),
             "Year" => Ok(ReportDuration::Year),
+            "TwoYears" => Ok(ReportDuration::TwoYears),
+            "ThreeYears" => Ok(ReportDuration::ThreeYears),
+            "FiveYears" => Ok(ReportDuration::FiveYears),
             "AllData" => Ok(ReportDuration::AllData),
             _ => Err(()),
         }

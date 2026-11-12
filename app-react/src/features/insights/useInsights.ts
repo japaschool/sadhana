@@ -15,12 +15,16 @@ const KEY = 'insights-report'
 export const COLORS = Array.from({ length: 12 }, (_, i) => `var(--ui-chart-${i + 1})`)
 
 export type Range = ReportRange
-export const RANGES: Range[] = ['7d', '30d', '90d', '1y', 'all']
-const DURATION: Record<Range, ReportDuration> = { '7d': 'Week', '30d': 'Month', '90d': 'Quarter', '1y': 'Year', all: 'AllData' }
+export const RANGES: Range[] = ['7d', '30d', '90d', '1y']
+/** Past a year: picked from the range control's last button. */
+export const LONG_RANGES: Range[] = ['2y', '3y', '5y', 'all']
+const DURATION: Record<Range, ReportDuration> = {
+  '7d': 'Week', '30d': 'Month', '90d': 'Quarter', '1y': 'Year', '2y': 'TwoYears', '3y': 'ThreeYears', '5y': 'FiveYears', all: 'AllData',
+}
 
 type GraphReportRow = Report & { definition: { Graph: GraphReport } }
 /** What a headline's change compares against: the previous window, or the same window a year back when `year` is asked for.
- *  `lastYear` is that window's data; none for All, month and goals reports, or 1y (whose previous window is last year). */
+ *  `lastYear` is that window's data; none for All, month and goals reports, or 1y and longer (whose previous window is last year). */
 export interface Compare { year: boolean; toggle?: () => void; lastYear?: ReportDataEntry[] }
 
 const isGraph = (r: Report): r is GraphReportRow => 'Graph' in r.definition
@@ -65,8 +69,8 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
   // An unknown or deleted id (or a Grid one, without tables) simply isn't found, so the screen shows the first report.
   const report = reports.find((r) => r.id === stored) ?? reports[0] ?? null
   const todayCob = toDateStr(new Date())
-  // A shared page has no All.
-  const opensOn = report?.default_range && !(sharedUser && report.default_range === 'all') ? report.default_range : '30d'
+  // A shared page has nothing past a year.
+  const opensOn = report?.default_range && !(sharedUser && LONG_RANGES.includes(report.default_range)) ? report.default_range : '30d'
   const range = rangeFor && rangeFor.id === (report?.id ?? '') ? rangeFor.range : opensOn
   // A month report has no range or end date: it reads half a year to the shown month's end, which covers that month, the one before and any 90 days.
   // A goals report has no range or end date either: it reads the last year to today, whatever the range or log date.
@@ -90,7 +94,7 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     enabled: prevEnd !== null && !paused,
   })
   // Read up front, so a headline offers last year only when that window has data to compare.
-  const lastYearEnd = prevEnd !== null && range !== '1y' ? (() => { const d = fromDateStr(endCob); d.setFullYear(d.getFullYear() - 1); return toDateStr(d) })() : null
+  const lastYearEnd = prevEnd !== null && range !== '1y' && !LONG_RANGES.includes(range) ? (() => { const d = fromDateStr(endCob); d.setFullYear(d.getFullYear() - 1); return toDateStr(d) })() : null
   const lastYear = useQuery({
     queryKey: [...src.key, 'report-data', lastYearEnd, duration],
     queryFn: () => src.data(lastYearEnd!, duration),

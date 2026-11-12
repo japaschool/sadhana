@@ -1,6 +1,6 @@
 import type { ChartPanel, PanelsReport } from '../../../api/charts'
 import { percentile } from '../overview/usual'
-import type { Range } from '../useInsights'
+import { LONG_RANGES, type Range } from '../useInsights'
 import { resolve, scalar, stateOf, type Lookup } from './panelLogic'
 
 export interface MonthRow {
@@ -20,9 +20,9 @@ export interface MonthRow {
   soFar: boolean
 }
 
-/** 1y and All draw a Japa, Time spent or Sleep chart month by month. */
+/** 1y and longer draw a Japa, Time spent or Sleep chart month by month. */
 export const isMonthly = (def: PanelsReport, range: Range | undefined) =>
-  (range === '1y' || range === 'all') && !!def.template && ('Japa' in def.template || 'Duration' in def.template || 'Sleep' in def.template)
+  !!range && (range === '1y' || LONG_RANGES.includes(range)) && !!def.template && ('Japa' in def.template || 'Duration' in def.template || 'Sleep' in def.template)
 
 const median = (xs: number[]) => (xs.length ? percentile([...xs].sort((a, b) => a - b), 0.5) : null)
 

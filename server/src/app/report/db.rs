@@ -385,6 +385,8 @@ pub(crate) mod tests {
             // An older client sends none: the stored range stays.
             Report::set_default_range(conn, &u, &id, None)?;
             assert_eq!(range(conn).as_deref(), Some("90d"));
+            Report::set_default_range(conn, &u, &id, Some("3y"))?;
+            assert_eq!(range(conn).as_deref(), Some("3y"));
             // Last: the failed statement aborts the test transaction.
             assert!(Report::set_default_range(conn, &u, &id, Some("2w")).is_err());
             Ok(())

@@ -114,7 +114,7 @@ export interface PanelsReport {
 
 export type ReportDefinition = { Graph: GraphReport } | { Grid: GridReport } | { Panels: PanelsReport }
 
-export type ReportRange = '7d' | '30d' | '90d' | '1y' | 'all'
+export type ReportRange = '7d' | '30d' | '90d' | '1y' | '2y' | '3y' | '5y' | 'all'
 
 export interface Report {
   id: string
@@ -167,7 +167,7 @@ export const chartsApi = {
   },
 }
 
-export type ReportDuration = 'Week' | 'Month' | 'Quarter' | 'HalfYear' | 'Year' | 'AllData'
+export type ReportDuration = 'Week' | 'Month' | 'Quarter' | 'HalfYear' | 'Year' | 'TwoYears' | 'ThreeYears' | 'FiveYears' | 'AllData'
 
 export interface ReportDataEntry {
   cob_date: string
