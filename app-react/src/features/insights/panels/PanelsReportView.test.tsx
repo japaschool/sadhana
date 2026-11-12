@@ -292,6 +292,28 @@ describe('a Japa report', () => {
   )
   const full = japaPanels({ total: 'r', target: 16, morning: 'm', quality: 'q', attunement: 'a' })
 
+  it('at 1y draws months: % on target as bars only with a target, the median line either way', () => {
+    const at1y = (def: PanelsReport) => render(
+      <MemoryRouter>
+        <PanelsReportView report={report(def)} definition={def} entries={entries} previous={undefined} practices={[ROUNDS, MORNING]} todayCob={TODAY} chartHeight={300} formLink="/f" range="1y" />
+      </MemoryRouter>,
+    )
+    const legend = () => within(screen.getByRole('list', { name: 'Key' })).getAllByRole('listitem').map((x) => x.textContent)
+    at1y(japaPanels({ total: 'r', target: 16, morning: 'm', quality: null, attunement: null }))
+    expect(legend()).toEqual(['% of days on target', 'Median on days done', 'Target 16', 'This month (so far)'])
+    cleanup()
+    const { container } = at1y(japaPanels({ total: 'r', target: null, morning: 'm', quality: null, attunement: null }))
+    expect(legend()).toEqual(['Median on days done', 'This month (so far)'])
+    expect(container.querySelectorAll('.recharts-bar-rectangle')).toHaveLength(0)
+  })
+
+  it('without a target, bars take the palette colour, not the unjudged grey', () => {
+    const { container } = show(japaPanels({ total: 'r', target: null, morning: null, quality: null, attunement: null }), [ROUNDS])
+    const fills = [...container.querySelectorAll('.recharts-bar-rectangle path')].map((x) => x.getAttribute('fill'))
+    expect(fills.length).toBeGreaterThan(0)
+    expect(new Set(fills)).toEqual(new Set(['var(--ui-chart-1)']))
+  })
+
   it('names the states, extras and target in the legend', () => {
     show(full)
     const legend = screen.getByRole('list', { name: 'Key' })

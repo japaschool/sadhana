@@ -99,7 +99,8 @@ export function japaPanels(t: JapaTemplate): PanelsReport {
     bar_layout: 'Overlaid',
     format: 'Count',
     reversed: false,
-    target: { min: t.target, max: null, of: total, lines: t.target !== null, colour: true, label: key('target') },
+    // Without a target nothing judges a day, so the bars take the palette colour.
+    target: { min: t.target, max: null, of: total, lines: t.target !== null, colour: t.target !== null, label: key('target') },
     lines: [],
   }
   return {

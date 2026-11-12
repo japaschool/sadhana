@@ -18,17 +18,17 @@ const LINE = 'var(--ui-ink)'
 /** The month still going is drawn lighter. */
 const opacity = (r: MonthRow) => (r.soFar ? 0.4 : 0.85)
 
-/** What the bars count, as a share of the month's days. */
+/** What the bars count, as a share of the month's days; Sleep's limits have no label. */
 function barKey(panel: ChartPanel): string {
-  const tg = panel.target
-  const limited = !!tg && (tg.min !== null || tg.max !== null)
-  const key = tg?.label && 'Key' in tg.label ? tg.label.Key : null
-  if (tg && !key) return limited ? 'monthPctInRange' : 'monthPctNights'
-  if (limited) return key === 'reportPanels.goal' ? 'monthPctOnGoal' : 'monthPctOnTarget'
-  return 'monthPctLogged'
+  const label = panel.target?.label
+  const key = label && 'Key' in label ? label.Key : null
+  return !key ? 'monthPctInRange' : key === 'reportPanels.goal' ? 'monthPctOnGoal' : 'monthPctOnTarget'
 }
 
-/** A Japa, Time spent or Sleep panel at 1y or All: % of the month's days done as bars, the median on those days as a line (a Range panel: one median range a month). */
+/**
+ * A Japa, Time spent or Sleep panel at 1y or All: the median on logged days as a line, with % of the month's days on target as bars
+ * when there is a target (without one, "how often" is just days logged, which says little). A Range panel: one median range a month.
+ */
 export function MonthlyChart({ panel, rows, bands, limits, height, interactive }: {
   panel: ChartPanel; rows: MonthRow[]; bands: Band[]; limits: Limit[]; height: number; interactive: boolean
 }) {
@@ -38,6 +38,11 @@ export function MonthlyChart({ panel, rows, bands, limits, height, interactive }
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const clock = panel.format === 'NoonClock'
   const duration = panel.format !== 'Count'
+  const bars = !clock && !!panel.target && (panel.target.min !== null || panel.target.max !== null)
+  // Alone, the line takes the bars' colour and the left axis.
+  const line = bars ? LINE : BAR
+  // Without bars the line's axis is the only one, under the id the grid and bands use.
+  const v = bars ? 'v' : 'pct'
   const fmt = (v: number) => (duration ? formatDuration(Math.round(v), units) : String(Math.round(v * 10) / 10))
   const multiYear = rows.length > 0 && rows[0].month.slice(0, 4) !== rows[rows.length - 1].month.slice(0, 4)
   const tick = (m: string) => {
@@ -55,42 +60,47 @@ export function MonthlyChart({ panel, rows, bands, limits, height, interactive }
   const items: LegendItem[] = clock
     ? [{ key: 'range', glyph: <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px]" style={{ background: BAR }} />, text: t('reportPanels.monthSleepRange') }]
     : [
-      { key: 'pct', glyph: <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px]" style={{ background: BAR }} />, text: t(`reportPanels.${barKey(panel)}`) },
-      { key: 'median', glyph: <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ background: LINE }} />, text: t('reportPanels.monthMedian') },
+      ...(bars ? [{ key: 'pct', glyph: <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px]" style={{ background: BAR }} />, text: t(`reportPanels.${barKey(panel)}`) }] : []),
+      { key: 'median', glyph: <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ background: line }} />, text: t('reportPanels.monthMedian') },
     ]
-  for (const l of limits) items.push({ key: l.key, glyph: <span aria-hidden className="h-0 w-4 shrink-0 border-t-2 border-dashed border-ui-ink" />, text: l.text })
+  for (const l of limits) items.push({ key: l.key, glyph: <span aria-hidden className="h-0 w-4 shrink-0 border-t-2 border-dashed border-ui-ink" />, text: l.text.charAt(0).toLocaleUpperCase(locale) + l.text.slice(1) })
   if (rows.some((r) => r.soFar)) {
-    items.push({ key: 'soFar', glyph: <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px] opacity-40" style={{ background: BAR }} />, text: t('reportPanels.monthSoFarKey') })
+    items.push({ key: 'soFar', glyph: <span aria-hidden className={`shrink-0 opacity-40 ${bars || clock ? 'h-3 w-3 rounded-[2px]' : 'h-2 w-2 rounded-full'}`} style={{ background: BAR }} />, text: t('reportPanels.monthSoFarKey') })
   }
 
   return (
     <>
       <div className="relative">
         <ResponsiveContainer width="100%" height={height}>
-          <ComposedChart {...tip.chart} data={rows} barCategoryGap="18%" margin={{ top: 8, right: clock ? 16 : 0, bottom: 0, left: 0 }}>
+          <ComposedChart {...tip.chart} data={rows} barCategoryGap="18%" margin={{ top: 8, right: bars ? 0 : 16, bottom: 0, left: 0 }}>
             <CartesianGrid vertical={false} stroke="var(--ui-hairline)" yAxisId={clock ? undefined : 'pct'} />
             <XAxis dataKey="month" tickFormatter={tick} interval={Math.max(0, Math.ceil(rows.length / 6) - 1)} {...AXIS} />
             {clock ? (
               <YAxis width={44} domain={[lo, hi]} ticks={clockTicks} interval={0} tickFormatter={clockText} {...AXIS} />
             ) : (
               <>
-                <YAxis yAxisId="pct" width={40} domain={[0, 100]} ticks={[0, 50, 100]} tickFormatter={(v: number) => `${v}%`} {...AXIS} />
-                <YAxis yAxisId="v" orientation="right" width={44} domain={duration ? [0, hourTicks[hourTicks.length - 1]] : [0, 'auto']} tickFormatter={fmt}
+                {bars && <YAxis yAxisId="pct" width={40} domain={[0, 100]} ticks={[0, 50, 100]} tickFormatter={(x: number) => `${x}%`} {...AXIS} />}
+                <YAxis yAxisId={v} orientation={bars ? 'right' : 'left'} width={44} domain={duration ? [0, hourTicks[hourTicks.length - 1]] : [0, 'auto']} tickFormatter={fmt}
                   {...(duration ? { ticks: hourTicks, interval: 0 as const } : {})} {...AXIS} />
               </>
             )}
             <PeriodAreas bands={bands} yAxisId={clock ? undefined : 'pct'} />
-            <Bar dataKey={clock ? 'range' : 'pct'} yAxisId={clock ? undefined : 'pct'} fill={BAR} radius={2} isAnimationActive={false}>
-              {rows.map((r) => <Cell key={r.month} fillOpacity={opacity(r)} />)}
-            </Bar>
+            {bars || clock ? (
+              <Bar dataKey={clock ? 'range' : 'pct'} yAxisId={clock ? undefined : 'pct'} fill={BAR} radius={2} isAnimationActive={false}>
+                {rows.map((r) => <Cell key={r.month} fillOpacity={opacity(r)} />)}
+              </Bar>
+            ) : (
+              // ponytail: an empty bar keeps each month a slot, so the line sits as it would over bars and a one-month band has width.
+              <Bar dataKey={() => 0} yAxisId="pct" fill="none" isAnimationActive={false} />
+            )}
             {!clock && (
-              <Line dataKey="median" yAxisId="v" stroke={LINE} strokeWidth={1.5} activeDot={false} isAnimationActive={false}
+              <Line dataKey="median" yAxisId={v} stroke={line} strokeWidth={1.5} activeDot={false} isAnimationActive={false}
                 dot={(d: { key?: Key | null; index?: number; cx?: number; cy?: number | null }) => (d.cx === undefined || d.cy === undefined || d.cy === null
                   ? <g key={d.key} />
-                  : <circle key={d.key} cx={d.cx} cy={d.cy} r={2.6} fill={LINE} opacity={rows[d.index ?? 0]?.soFar ? 0.4 : 1} />)} />
+                  : <circle key={d.key} cx={d.cx} cy={d.cy} r={2.6} fill={line} opacity={rows[d.index ?? 0]?.soFar ? 0.4 : 1} />)} />
             )}
             {limits.map((l) => (
-              <ReferenceLine key={l.key} y={l.value} yAxisId={clock ? undefined : 'v'} ifOverflow="extendDomain" stroke="var(--ui-ink)" strokeWidth={1.3} strokeDasharray="4 3"
+              <ReferenceLine key={l.key} y={l.value} yAxisId={clock ? undefined : v} ifOverflow="extendDomain" stroke="var(--ui-ink)" strokeWidth={1.3} strokeDasharray="4 3"
                 label={{ ...LINE_LABEL, value: l.text, position: l.position }} />
             ))}
             {interactive && <Tooltip {...tip.tooltip} isAnimationActive={false} cursor={{ fill: 'var(--ui-hairline)', stroke: 'var(--ui-hairline)' }}
@@ -99,10 +109,10 @@ export function MonthlyChart({ panel, rows, bands, limits, height, interactive }
                 if (!r) return null
                 return (
                   <TipShell title={r.soFar ? `${monthName(r.month, locale)} · ${t('reportPanels.monthSoFar')}` : monthName(r.month, locale)}>
-                    <TipRow color={BAR} name={t('reportPanels.monthDone')} value={t('reportPanels.monthDoneOf', { done: r.done, count: r.days, pct: r.pct })} />
+                    {(bars || clock) && <TipRow color={BAR} name={t('reportPanels.monthDone')} value={t('reportPanels.monthDoneOf', { done: r.done, count: r.days, pct: r.pct })} />}
                     {r.range
                       ? <TipRow color={BAR} name={t('reportPanels.monthSleepRange')} value={`${clockText(Math.round(r.range[0]))} → ${clockText(Math.round(r.range[1]))}`} />
-                      : r.median !== null && <TipRow color={LINE} name={t('reportPanels.monthMedian')} value={fmt(r.median)} />}
+                      : r.median !== null && <TipRow color={line} name={t('reportPanels.monthMedian')} value={fmt(r.median)} />}
                   </TipShell>
                 )
               }} />}

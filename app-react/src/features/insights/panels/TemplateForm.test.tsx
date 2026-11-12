@@ -296,7 +296,7 @@ describe('the Japa template', () => {
     expect(def.template).toMatchObject({ Japa: { target: null } })
     // No target: no days-on-target stat, and the bars aren't judged.
     expect(def.panels.map((p) => p.kind)).toEqual(['Chart'])
-    expect(def.panels[0]).toMatchObject({ target: { min: null, lines: false } })
+    expect(def.panels[0]).toMatchObject({ target: { min: null, lines: false, colour: false } })
   })
 
   it('builds the Japa report', () => {
