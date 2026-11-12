@@ -11,7 +11,7 @@ import type { MonthRow } from './monthly'
 
 export const LINE_LABEL = { fontSize: 10, fontFamily: TICK.fontFamily, fill: 'var(--ui-ink)', stroke: 'var(--ui-surface)', strokeWidth: 3, paintOrder: 'stroke' }
 
-export interface Limit { key: string; value: number; text: string; position: 'insideTopRight' | 'insideBottomRight' }
+export interface Limit { key: string; value: number; text: string }
 
 const BAR = 'var(--ui-chart-1)'
 const LINE = 'var(--ui-ink)'
@@ -55,7 +55,8 @@ export function MonthlyChart({ panel, rows, bands, limits, height, interactive }
   const clockTicks = Array.from({ length: (hi - lo) / 60 / every + 1 }, (_, k) => lo + k * every * 60)
   const maxHour = Math.ceil(Math.max(0, ...rows.map((r) => r.median ?? 0), ...limits.map((l) => l.value)) / 60)
   const step = Math.ceil(maxHour / 4) || 1
-  const hourTicks = Array.from({ length: Math.ceil(maxHour / step) + 1 }, (_, k) => k * step * 60)
+  // Marked periods' names sit at the top of the plot: a spare tick keeps the median line below them.
+  const hourTicks = Array.from({ length: Math.ceil(maxHour / step) + (bands.length ? 2 : 1) }, (_, k) => k * step * 60)
 
   const items: LegendItem[] = clock
     ? [{ key: 'range', glyph: <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px]" style={{ background: BAR }} />, text: t('reportPanels.monthSleepRange') }]
@@ -101,8 +102,8 @@ export function MonthlyChart({ panel, rows, bands, limits, height, interactive }
                   : <circle key={d.key} cx={d.cx} cy={d.cy} r={2.6} fill={line} opacity={rows[d.index ?? 0]?.soFar ? 0.4 : 1} />)} />
             )}
             {limits.map((l) => (
-              <ReferenceLine key={l.key} y={l.value} yAxisId={clock ? undefined : v} ifOverflow="extendDomain" stroke="var(--ui-ink)" strokeWidth={1.3} strokeDasharray="4 3"
-                label={{ ...LINE_LABEL, value: l.text, position: l.position }} />
+              // Unlabelled: the legend names each line, and a label here would land on the median or a period's name.
+              <ReferenceLine key={l.key} y={l.value} yAxisId={clock ? undefined : v} ifOverflow="extendDomain" stroke="var(--ui-ink)" strokeWidth={1.3} strokeDasharray="4 3" />
             ))}
             {interactive && <Tooltip {...tip.tooltip} isAnimationActive={false} cursor={{ fill: 'var(--ui-hairline)', stroke: 'var(--ui-hairline)' }}
               content={({ active, label }) => {

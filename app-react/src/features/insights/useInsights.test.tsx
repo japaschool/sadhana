@@ -184,6 +184,17 @@ describe('useInsights', () => {
     expect(charts.getReportData).toHaveBeenCalledTimes(1)
   })
 
+  it('2y skips the previous window too: no change over years', async () => {
+    const { result } = setup()
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    vi.clearAllMocks()
+    act(() => result.current.setRange('2y'))
+    await waitFor(() => expect(charts.getReportData).toHaveBeenCalledWith('2026-10-06', 'TwoYears'))
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(charts.getReportData).toHaveBeenCalledTimes(1)
+    expect(result.current.headline?.delta ?? null).toBeNull()
+  })
+
   it('choosing today clears the end date', async () => {
     const { result } = setup()
     act(() => result.current.setEnd(new Date(2026, 9, 6, 18)))

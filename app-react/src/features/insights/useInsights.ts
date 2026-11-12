@@ -100,8 +100,8 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     queryFn: () => src.data(endCob, duration),
     enabled: !paused,
   })
-  // From the response, so it matches the server's calendar-month/-year arithmetic. All data has no previous window.
-  const first = range === 'all' || hasMonth || goals ? undefined : current.data?.[0]?.cob_date
+  // From the response, so it matches the server's calendar-month/-year arithmetic. Ranges past a year have no previous window: a % change over years says nothing.
+  const first = LONG_RANGES.includes(range) || hasMonth || goals ? undefined : current.data?.[0]?.cob_date
   const prevEnd = first ? toDateStr(addDays(fromDateStr(first), -1)) : null
   const previous = useQuery({
     queryKey: [...src.key, 'report-data', prevEnd, duration],
@@ -109,7 +109,7 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     enabled: prevEnd !== null && !paused,
   })
   // Read up front, so a headline offers last year only when that window has data to compare.
-  const lastYearEnd = prevEnd !== null && range !== '1y' && !LONG_RANGES.includes(range) ? (() => { const d = fromDateStr(endCob); d.setFullYear(d.getFullYear() - 1); return toDateStr(d) })() : null
+  const lastYearEnd = prevEnd !== null && range !== '1y' ? (() => { const d = fromDateStr(endCob); d.setFullYear(d.getFullYear() - 1); return toDateStr(d) })() : null
   const lastYear = useQuery({
     queryKey: [...src.key, 'report-data', lastYearEnd, duration],
     queryFn: () => src.data(lastYearEnd!, duration),
