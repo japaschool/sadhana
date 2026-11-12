@@ -8,7 +8,7 @@ import { Headline } from '../Headline'
 import { OverviewMobile } from '../overview/OverviewMobile'
 import { deltaKey, formatDelta, formatHeadline, windowLabel } from '../insightsLogic'
 import { PanelsReportView } from '../panels/PanelsReportView'
-import { isTable, useInsights } from '../useInsights'
+import { isTable, useInsights, useInsightsView } from '../useInsights'
 import { DaySheet } from './DaySheet'
 import { EndDateControl } from './EndDateControl'
 import { RangePicker } from './RangePicker'
@@ -26,8 +26,7 @@ export function InsightsMobile() {
   const ins = useInsights(undefined, true)
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
   const [openDay, setOpenDay] = useState<string | null>(null)
-  // Always opens on Overview; the choice isn't stored.
-  const [view, setView] = useState<'overview' | 'charts'>('overview')
+  const [view, setView] = useInsightsView()
   const more = useMoreMenu(view === 'charts' ? ins.report : null)
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const h = ins.headline

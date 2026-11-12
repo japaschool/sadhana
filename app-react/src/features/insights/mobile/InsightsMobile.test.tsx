@@ -177,6 +177,13 @@ describe('InsightsMobile', () => {
     ])
   })
 
+  it('reopens on Charts after leaving from Charts', async () => {
+    const { unmount } = renderScreen('charts')
+    unmount()
+    renderScreen('overview')
+    expect(screen.getByRole('radio', { name: 'Charts' })).toBeChecked()
+  })
+
   it('Sharing opens Settings → Sharing', async () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(

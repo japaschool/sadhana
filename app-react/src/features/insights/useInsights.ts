@@ -38,6 +38,21 @@ export function writeStored(id: string) {
   try { localStorage.setItem(KEY, id) } catch { /* blocked storage: the choice lasts for this visit */ }
 }
 
+export type InsightsView = 'overview' | 'charts'
+const VIEW_KEY = 'insights-view'
+
+/** Overview or Charts, remembered on this device so Insights reopens where it was left. */
+export function useInsightsView() {
+  const [view, setView] = useState<InsightsView>(() => {
+    try { return localStorage.getItem(VIEW_KEY) === 'charts' ? 'charts' : 'overview' } catch { return 'overview' }
+  })
+  const set = (v: InsightsView) => {
+    setView(v)
+    try { localStorage.setItem(VIEW_KEY, v) } catch { /* blocked storage: the choice lasts for this visit */ }
+  }
+  return [view, set] as const
+}
+
 /** `logDate` (desktop) pins the window's end to the log panel's day instead of the screen's own end date.
  *  `withTables` also lists Grid (table) reports; layouts without a table view leave them out.
  *  `sharedUser` reads that user's shared reports (/shared/:userId) instead.
