@@ -64,8 +64,9 @@ export function MonthlyChart({ panel, rows, bands, limits, height, interactive }
       { key: 'median', glyph: <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ background: line }} />, text: t('reportPanels.monthMedian') },
     ]
   for (const l of limits) items.push({ key: l.key, glyph: <span aria-hidden className="h-0 w-4 shrink-0 border-t-2 border-dashed border-ui-ink" />, text: l.text.charAt(0).toLocaleUpperCase(locale) + l.text.slice(1) })
-  if (rows.some((r) => r.soFar)) {
-    items.push({ key: 'soFar', glyph: <span aria-hidden className={`shrink-0 opacity-40 ${bars || clock ? 'h-3 w-3 rounded-[2px]' : 'h-2 w-2 rounded-full'}`} style={{ background: BAR }} />, text: t('reportPanels.monthSoFarKey') })
+  // Only a lighter bar needs the key; the tooltip says "so far" either way.
+  if ((bars || clock) && rows.some((r) => r.soFar)) {
+    items.push({ key: 'soFar', glyph: <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px] opacity-40" style={{ background: BAR }} />, text: t('reportPanels.monthSoFarKey') })
   }
 
   return (

@@ -303,7 +303,7 @@ describe('a Japa report', () => {
     expect(legend()).toEqual(['% of days on target', 'Median on days done', 'Target 16', 'This month (so far)'])
     cleanup()
     const { container } = at1y(japaPanels({ total: 'r', target: null, morning: 'm', quality: null, attunement: null }))
-    expect(legend()).toEqual(['Median on days done', 'This month (so far)'])
+    expect(legend()).toEqual(['Median on days done'])
     expect(container.querySelectorAll('.recharts-bar-rectangle')).toHaveLength(0)
   })
 
