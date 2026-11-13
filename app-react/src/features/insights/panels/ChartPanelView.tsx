@@ -261,8 +261,8 @@ export function ChartPanelView({ panel, panels, days, prevDays = [], yearDays = 
     const monthBands = periodBands(periods, days.filter((d) => d >= from)).map((b) => ({ ...b, x1: b.x1.slice(0, 7), x2: b.x2.slice(0, 7) }))
     return (
       <section className={box}>
-        {head}
-        <MonthlyChart panel={panel} rows={months} bands={monthBands} limits={limits.map((l) => ({ ...l, text: limitText(l.key, l.value) }))}
+        {!panel.headline && head}
+        <MonthlyChart head={!!panel.headline} wide={!compact} panel={panel} rows={months} bands={monthBands} limits={limits.map((l) => ({ ...l, text: limitText(l.key, l.value) }))}
           height={height} interactive={interactive} />
       </section>
     )

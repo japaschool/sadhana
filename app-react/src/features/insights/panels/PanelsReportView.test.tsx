@@ -301,9 +301,14 @@ describe('a Japa report', () => {
     const legend = () => within(screen.getByRole('list', { name: 'Key' })).getAllByRole('listitem').map((x) => x.textContent)
     at1y(japaPanels({ total: 'r', target: 16, morning: 'm', quality: null, attunement: null }))
     expect(legend()).toEqual(['% of days on target', 'Median on days done', 'Target 16', 'This month (so far)'])
+    // The daily average gives way to a by-month label.
+    expect(screen.queryByText(/^Daily average/)).toBeNull()
+    expect(screen.getByText(/^By month · /)).toBeInTheDocument()
+    expect(screen.getByText('1 bar = 1 month')).toBeInTheDocument()
     cleanup()
     const { container } = at1y(japaPanels({ total: 'r', target: null, morning: 'm', quality: null, attunement: null }))
     expect(legend()).toEqual(['Median on days done'])
+    expect(screen.getByText('1 point = 1 month')).toBeInTheDocument()
     expect(container.querySelectorAll('.recharts-bar-rectangle')).toHaveLength(0)
   })
 

@@ -29,8 +29,10 @@ function barKey(panel: ChartPanel): string {
  * A Japa, Time spent or Sleep panel at 1y or All: the median on logged days as a line, with % of the month's days on target as bars
  * when there is a target (without one, "how often" is just days logged, which says little). A Range panel: one median range a month.
  */
-export function MonthlyChart({ panel, rows, bands, limits, height, interactive }: {
+export function MonthlyChart({ panel, rows, bands, limits, height, interactive, head, wide }: {
   panel: ChartPanel; rows: MonthRow[]; bands: Band[]; limits: Limit[]; height: number; interactive: boolean
+  /** Says the chart is by month in place of the daily average, which over a year or more says little. */
+  head: boolean; wide: boolean
 }) {
   const { t, i18n } = useTranslation()
   const locale = i18n.language || 'en'
@@ -70,8 +72,31 @@ export function MonthlyChart({ panel, rows, bands, limits, height, interactive }
     items.push({ key: 'soFar', glyph: <span aria-hidden className="h-3 w-3 shrink-0 rounded-[2px] opacity-40" style={{ background: BAR }} />, text: t('reportPanels.monthSoFarKey') })
   }
 
+  const short = (m: string) => {
+    const [y, mo] = m.split('-').map(Number)
+    return new Date(y, mo - 1, 1).toLocaleDateString(locale, { month: 'short', year: 'numeric' })
+  }
+
   return (
     <>
+      {head && rows.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className={`${wide ? 'text-[13px]' : 'text-xs'} font-semibold text-ui-muted`}>
+            {t('reportPanels.byMonth', { range: `${short(rows[0].month)} – ${short(rows[rows.length - 1].month)}` })}
+          </p>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-ui-chip px-2.5 py-0.5 text-[11px] font-bold text-ui-ink2">
+            <svg aria-hidden viewBox="0 0 12 12" className="h-[11px] w-[11px]">
+              {bars || clock
+                ? [[1, 5, 6], [4.75, 2, 9], [8.5, 4, 7]].map(([x, y, h]) => <rect key={x} x={x} y={y} width="2.5" height={h} rx=".6" fill="currentColor" />)
+                : <>
+                  <polyline points="1,9 4,5 8,7 11,3" fill="none" stroke="currentColor" strokeWidth="1.4" />
+                  {[[1, 9], [4, 5], [8, 7], [11, 3]].map(([x, y]) => <circle key={x} cx={x} cy={y} r="1.3" fill="currentColor" />)}
+                </>}
+            </svg>
+            {t(bars || clock ? 'reportPanels.oneBarMonth' : 'reportPanels.onePointMonth')}
+          </span>
+        </div>
+      )}
       <div className="relative">
         <ResponsiveContainer width="100%" height={height}>
           <ComposedChart {...tip.chart} data={rows} barCategoryGap="18%" margin={{ top: 8, right: bars ? 0 : 16, bottom: 0, left: 0 }}>
