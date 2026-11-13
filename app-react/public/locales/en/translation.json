@@ -412,7 +412,9 @@
       "skip": "Skip for now",
       "skipHint": "If you skip, Sleep stays off. Change it any time in Settings › Insights.",
       "choose": "Choose…",
-      "streaks": "Streaks"
+      "streaks": "Streaks",
+      "usualOverTime": "Usual over time",
+      "usualOverTimeText": "How your usual has moved"
     },
     "periods": {
       "title": "Marked periods",
@@ -480,6 +482,17 @@
     },
     "prefs": {
       "title": "Overview"
+    },
+    "usualOverTime": {
+      "title": "Usual over time",
+      "intro": "Each week shows your usual as it stood then: your middle range over the 90 days before it, a week behind. Periods marked as left out don't count.",
+      "now": "Usual now {{now}} · at the start {{start}}",
+      "last": "Last usual {{value}} · {{month}}",
+      "notEnough": "Not enough history yet",
+      "noneInRange": "No usual in this range",
+      "tip": "Usual {{median}} · {{p25}}–{{p75}}",
+      "median": "Median",
+      "chart": "{{name}}: usual by week"
     }
   },
   "yatraSettings": {
