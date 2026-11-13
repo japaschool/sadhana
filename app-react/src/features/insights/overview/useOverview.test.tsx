@@ -161,4 +161,18 @@ describe('useOverview', () => {
       }
     })
   })
+
+  it('usual_link_needs_26_weeks_of_year_data', async () => {
+    const back = (n: number) => entries(Object.fromEntries(Array.from({ length: n }, (_, i) => [toDateStr(addDays(new Date(), -(i + 1))), { 'Кругов за день': 16 + (i % 3) }])))
+    practices.getUserPractices.mockResolvedValue(FOUR)
+    charts.getReportData.mockResolvedValue(back(300))
+    let r = setup(); await load(r)
+    expect(r.result.current.usualHistory).toBe(true)
+    r.unmount()
+    charts.getReportData.mockResolvedValue(back(120))
+    r = setup(); await load(r)
+    expect(r.result.current.regular).toBe(true)
+    expect(r.result.current.usualHistory).toBe(false)
+    expect(charts.getReportData).not.toHaveBeenCalledWith(expect.anything(), 'AllData')
+  })
 })

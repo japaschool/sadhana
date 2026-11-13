@@ -6,20 +6,21 @@ import { UiToastContainer } from '../../ui/primitives/Toast'
 import { useAuthStore } from '../../store/authStore'
 import { initials } from '../../ui/initials'
 import { TabIcon } from '../TabIcon'
-import { TABS, tabActive } from '../tabIcons'
+import { TABS, tabActive, useInsightsTabTo } from '../tabIcons'
 import { useShellBackground } from '../useShellBackground'
 
 function Rail() {
   const { t } = useTranslation()
   const name = useAuthStore((s) => s.user?.name ?? '')
   const { pathname } = useLocation()
+  const insightsTo = useInsightsTabTo(pathname)
   return (
     <nav aria-label={t('today.tabs')}
       className="fixed inset-y-0 left-0 z-40 flex w-[88px] flex-col items-center gap-[22px] border-r border-ui-control bg-ui-bg pt-[calc(32px+env(safe-area-inset-top))] pb-[calc(24px+env(safe-area-inset-bottom))] text-[11px] font-bold text-ui-faint2">
       {/* The Rust app's header lotus, masked so it's the same colour as the active nav icon. */}
       <span aria-hidden className="mb-2 h-10 w-10 bg-ui-accent [mask:url(/logo.png)_center/contain_no-repeat]" />
       {TABS.map((tab) => (
-        <NavLink key={tab.to} to={tab.to} end={tab.to === '/'} className="flex flex-col items-center gap-1.5">
+        <NavLink key={tab.to} to={tab.to === '/charts' ? insightsTo : tab.to} end={tab.to === '/'} className="flex flex-col items-center gap-1.5">
           {({ isActive }) => {
             const on = tabActive(tab.to, isActive, pathname)
             return (

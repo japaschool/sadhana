@@ -8,7 +8,7 @@ import { useLogDate } from '../../features/today/useLogDate'
 import { useAuthStore } from '../../store/authStore'
 import { initials } from '../../ui/initials'
 import { TabIcon } from '../TabIcon'
-import { TABS, tabActive } from '../tabIcons'
+import { TABS, tabActive, useInsightsTabTo } from '../tabIcons'
 import { useShellBackground } from '../useShellBackground'
 
 function Sidebar() {
@@ -16,6 +16,7 @@ function Sidebar() {
   const user = useAuthStore((s) => s.user)
   const name = user?.name ?? ''
   const { pathname } = useLocation()
+  const insightsTo = useInsightsTabTo(pathname)
   return (
     // Below xl the main column gets tight, so the sidebar collapses to the tablet's 88px rail (icon over a small label).
     <nav aria-label={t('today.tabs')}
@@ -24,7 +25,7 @@ function Sidebar() {
       <span aria-hidden className="mb-2 h-10 w-10 shrink-0 self-center bg-ui-accent [mask:url(/logo.png)_center/contain_no-repeat] xl:mb-[18px] xl:h-12 xl:w-12" />
       {/* No Log tab: the log is always open in the right-hand panel. */}
       {TABS.filter((tab) => tab.to !== '/').map((tab) => (
-        <NavLink key={tab.to} to={tab.to}
+        <NavLink key={tab.to} to={tab.to === '/charts' ? insightsTo : tab.to}
           className={({ isActive }) => `flex flex-col items-center gap-1.5 text-[11px] font-bold xl:flex-row xl:gap-3 xl:rounded-xl xl:px-3 xl:py-2.5 xl:text-sm ${tabActive(tab.to, isActive, pathname) ? 'text-ui-ink xl:bg-ui-accent-pill' : 'xl:font-semibold'}`}>
           {({ isActive }) => {
             const on = tabActive(tab.to, isActive, pathname)

@@ -4,17 +4,18 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { UiToastContainer } from '../../ui/primitives/Toast'
 import { TabIcon } from '../TabIcon'
-import { TABS, tabActive } from '../tabIcons'
+import { TABS, tabActive, useInsightsTabTo } from '../tabIcons'
 import { useShellBackground } from '../useShellBackground'
 
 function TabBar() {
   const { t } = useTranslation()
   const { pathname } = useLocation()
+  const insightsTo = useInsightsTabTo(pathname)
   return (
     <nav aria-label={t('today.tabs')}
       className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-ui-control bg-ui-tabbar px-4 pt-2 pb-[calc(8px+env(safe-area-inset-bottom))] text-ui-faint2">
       {TABS.map((tab) => (
-        <NavLink key={tab.to} to={tab.to} end={tab.to === '/'} aria-label={t(tab.key)} className="flex justify-center">
+        <NavLink key={tab.to} to={tab.to === '/charts' ? insightsTo : tab.to} end={tab.to === '/'} aria-label={t(tab.key)} className="flex justify-center">
           {({ isActive }) => {
             const on = tabActive(tab.to, isActive, pathname)
             return (

@@ -26,7 +26,7 @@ export function OverviewMobile() {
           <MeVsNormal normal={ov.normal} practices={ov.practices} variant="stacked" />
           {ov.prefs.streaks && <StreaksCard logged={ov.logged} todayCob={ov.todayCob} />}
           <BdaCards rows={ov.rows} series={ov.series} periods={ov.periods} practices={ov.practices} todayCob={ov.todayCob} />
-          <OverviewLinks />
+          <OverviewLinks usual={ov.usualHistory} />
         </>
       ) : (
         <LessRegular logged={ov.logged} todayCob={ov.todayCob} streaks={ov.prefs.streaks} rows={ov.rows} series={ov.series} practices={ov.practices} periods={ov.periods} />

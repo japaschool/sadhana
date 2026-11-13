@@ -5,7 +5,8 @@ import { resolveSleep, useInsightRows } from './useInsightRows'
 import { loggedDays } from './series'
 import { useYearData } from './useYearData'
 import { detectChange, openPeriodToAsk } from './suggest'
-import { isRegular, meVsNormal } from './usual'
+import { isRegular, leftOutDays, meVsNormal } from './usual'
+import { enoughHistory, usualWeeks } from './usualOverTime'
 
 // Callers import it from here.
 export { resolveSleep }
@@ -30,11 +31,17 @@ export function useOverview() {
     () => (prefs.suggest && periodsKnown && prefsReady ? detectChange(series, rows, logged, periods, prefs.dismissed, todayCob) : null),
     [prefs.suggest, periodsKnown, prefsReady, prefs.dismissed, series, rows, logged, periods, todayCob],
   )
+  // Year data is enough: 26 weekly usuals need ~7 months. The Overview never fetches All data.
+  const usualHistory = useMemo(() => {
+    if (!logged.length) return false
+    const leftOut = leftOutDays(periods, todayCob)
+    return rows.some((row) => enoughHistory(usualWeeks(series.get(row.key) ?? new Map(), leftOut, todayCob, logged[0])))
+  }, [rows, series, periods, todayCob, logged])
   // Until prefs are loaded, a dismissed suggestion or an answered ask would come back.
   const openPeriod = useMemo(() => (periodsKnown && prefsReady ? openPeriodToAsk(periods, prefs.openAsked, todayCob) : null), [periodsKnown, prefsReady, periods, prefs.openAsked, todayCob])
 
   return {
     isLoading, isError, todayCob, rows, series, logged, normal, regular, suggestion, openPeriod, periods,
-    sleep, askSleep, timePractices, practices, prefs, setPrefs,
+    sleep, askSleep, timePractices, practices, prefs, setPrefs, usualHistory,
   }
 }

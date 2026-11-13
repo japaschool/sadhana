@@ -39,7 +39,7 @@ const SLEEP: SleepRows = { bedtime: 'bed', wake: 'wake', nap: null }
 /** useOverview's result, computed from raw days by the real logic. */
 function overview(days: Record<string, Record<string, unknown>>, opts: {
   todayCob?: string; practices?: UserPractice[]; sleep?: SleepRows | null; prefs?: Partial<InsightPrefs>
-  suggestion?: Suggestion | null; askSleep?: boolean; periods?: MarkedPeriod[]; openPeriod?: MarkedPeriod | null
+  suggestion?: Suggestion | null; askSleep?: boolean; periods?: MarkedPeriod[]; openPeriod?: MarkedPeriod | null; usualHistory?: boolean
 } = {}) {
   const todayCob = opts.todayCob ?? TODAY
   const practices = opts.practices ?? FOUR
@@ -55,7 +55,7 @@ function overview(days: Record<string, Record<string, unknown>>, opts: {
     isLoading: false, isError: false, todayCob, rows, series, logged, normal,
     regular: isRegular(normal, logged, todayCob), suggestion: opts.suggestion ?? null, openPeriod: opts.openPeriod ?? null, periods,
     sleep, askSleep: opts.askSleep ?? false, timePractices: practices.filter((p) => p.data_type === 'Time'), practices,
-    prefs: { ...DEFAULT_PREFS, ...opts.prefs }, setPrefs,
+    prefs: { ...DEFAULT_PREFS, ...opts.prefs }, setPrefs, usualHistory: opts.usualHistory ?? false,
   }
   vi.mocked(useOverview).mockReturnValue(value as ReturnType<typeof useOverview>)
   return value
@@ -96,6 +96,13 @@ describe('Overview (mobile)', () => {
     expect(sleep).toHaveTextContent('5h 40m') // 21:45 → 3:25 each night of the last week
     expect(screen.getByRole('link', { name: /Year map/ })).toHaveAttribute('href', '/insights/year')
     expect(screen.getByRole('link', { name: /Rhythm fingerprint/ })).toHaveAttribute('href', '/insights/rhythm')
+    expect(screen.queryByRole('link', { name: /Usual over time/ })).not.toBeInTheDocument()
+  })
+
+  it('usual_link_needs_usual_history', () => {
+    overview(steady(), { usualHistory: true })
+    wrap(<OverviewMobile />)
+    expect(screen.getByRole('link', { name: /Usual over time/ })).toHaveAttribute('href', '/insights/usual')
   })
 
   it('thin_week_shows_no_word', () => {
