@@ -18,7 +18,7 @@ import { RowLabel } from './MeVsNormal'
 import { loggedDays } from './series'
 import { useInsightRows } from './useInsightRows'
 import { leftOutDays } from './usual'
-import { enoughHistory, offeredRanges, openingRange, rangeStart, rangeSummary, usualWeeks } from './usualOverTime'
+import { enoughHistory, hourTicks, offeredRanges, openingRange, rangeStart, rangeSummary, usualWeeks } from './usualOverTime'
 import type { UsualRange, Week } from './usualOverTime'
 
 function UsualChart({ weeks, kind, label }: { weeks: Week[]; kind: RowKind; label: string }) {
@@ -28,13 +28,16 @@ function UsualChart({ weeks, kind, label }: { weeks: Week[]; kind: RowKind; labe
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const text = (v: number) => rowValueText(kind, v, units)
   const years = spansYears(weeks[0].week, weeks[weeks.length - 1].week)
+  const hours = kind === 'Duration' ? hourTicks(weeks) : null
+  const yTick = (v: number) => (kind === 'Count' ? String(Math.round(v * 10) / 10) : text(v))
   return (
     <div role="img" aria-label={label} className="h-[140px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart {...tip.chart} data={weeks} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--ui-hairline)" />
           <XAxis dataKey="week" minTickGap={36} tickFormatter={(d: string) => formatTick(d, locale, years)} {...AXIS} />
-          <YAxis width={44} domain={['auto', 'auto']} tickFormatter={(v: number) => (kind === 'Clock' ? text(v) : String(Math.round(v * 10) / 10))} {...AXIS} />
+          <YAxis width={kind === 'Duration' && !hours ? 56 : 44} domain={hours ? [hours[0], hours[hours.length - 1]] : ['auto', 'auto']}
+            ticks={hours ?? undefined} tickFormatter={yTick} {...AXIS} />
           <Area dataKey={(w: Week) => (w.usual ? [w.usual.p25, w.usual.p75] : null)} stroke="none" fill="var(--ui-chart-1)" fillOpacity={0.3}
             connectNulls={false} isAnimationActive={false} activeDot={false} />
           <Line dataKey={(w: Week) => w.usual?.median ?? null} stroke="var(--ui-chart-1)" strokeWidth={2} connectNulls={false} dot={false} isAnimationActive={false} />

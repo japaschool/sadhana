@@ -3,7 +3,7 @@ import { addDays, fromDateStr, toDateStr } from '../../today/date'
 import { TODAY } from './fixtures'
 import type { Series } from './series'
 import { shift, usualAt } from './usual'
-import { enoughHistory, offeredRanges, openingRange, rangeStart, rangeSummary, usualWeeks } from './usualOverTime'
+import { enoughHistory, hourTicks, offeredRanges, openingRange, rangeStart, rangeSummary, usualWeeks } from './usualOverTime'
 
 const day = (offset: number, from = TODAY) => toDateStr(addDays(fromDateStr(from), offset))
 const fill = (from: number, to: number, value: (i: number) => number): Series => {
@@ -64,5 +64,16 @@ describe('rangeSummary', () => {
   })
   it('summary_none_in_range', () => {
     expect(rangeSummary([{ week: 'c', usual: null }])).toBeNull()
+  })
+})
+
+describe('hourTicks', () => {
+  const w = (p25: number, p75: number) => ({ week: TODAY, usual: { median: (p25 + p75) / 2, p25, p75, n: 90 } })
+  it('gives whole hours covering a span of 2h or more', () => {
+    expect(hourTicks([w(70, 100), w(150, 200), { week: TODAY, usual: null }])).toEqual([60, 120, 180, 240])
+  })
+  it('leaves a short span to the chart', () => {
+    expect(hourTicks([w(20, 45), w(30, 80)])).toBeNull()
+    expect(hourTicks([])).toBeNull()
   })
 })

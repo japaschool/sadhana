@@ -39,3 +39,11 @@ export function rangeSummary(weeks: Week[]): { start: Usual; last: { week: strin
   const last = has[has.length - 1]
   return { start: has[0].usual, last, now: last.week === weeks[weeks.length - 1].week }
 }
+
+/** Whole-hour y ticks for a duration chart spanning 2h or more; null leaves the ticks to the chart (minutes). */
+export function hourTicks(weeks: Week[]): number[] | null {
+  const vs = weeks.flatMap((w) => (w.usual ? [w.usual.p25, w.usual.p75] : []))
+  const lo = Math.floor(Math.min(...vs) / 60), hi = Math.ceil(Math.max(...vs) / 60)
+  if (!vs.length || Math.max(...vs) - Math.min(...vs) < 120) return null
+  return Array.from({ length: hi - lo + 1 }, (_, i) => (lo + i) * 60)
+}
