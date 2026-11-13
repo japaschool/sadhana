@@ -1,5 +1,5 @@
 // Seeds a demo account per language (plus yatra members) into the local dev server, for the landing screenshots.
-// Run: npx -y tsx scripts/seed-demo.ts   (server at $API or localhost:8080; $DATABASE_URL or the Makefile's dev DB)
+// Run: npx -y tsx scripts/seed-demo.ts   ($DAYS of history, default 400; server at $API or localhost:8080; $DATABASE_URL or the Makefile's dev DB)
 // It deletes and recreates every user whose email ends in DEMO_DOMAIN, so it can be rerun.
 import { execFileSync } from 'node:child_process'
 import { durationPanels, japaPanels, sleepPanels } from '../../app-react/src/features/insights/panels/templates'
@@ -8,7 +8,7 @@ const API = process.env.API ?? 'http://localhost:8080/api'
 const DB = process.env.DATABASE_URL ?? 'postgres://postgres:postgres@192.168.68.102:5432/sadhana_pro'
 export const DEMO_DOMAIN = 'demo.sadhana.pro'
 export const PASSWORD = 'demo-password'
-const DAYS = 400
+const DAYS = Number(process.env.DAYS ?? 400) // DAYS=1100 gives Usual over time its 1y–3y ranges
 
 type Lang = 'en' | 'ru' | 'uk'
 type Val = { Int: number } | { Bool: boolean } | { Time: { h: number; m: number } } | { Text: string } | { Duration: number }
