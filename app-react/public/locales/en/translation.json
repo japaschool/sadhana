@@ -147,7 +147,8 @@
     "yatras": "Yatras",
     "yourSadhana": "Your sadhana",
     "on": "On",
-    "off": "Off"
+    "off": "Off",
+    "exportCsv": "Export CSV"
   },
   "help": {
     "short": "Help",
@@ -241,6 +242,29 @@
     "imported_other": "Imported {{count}} rows",
     "rowsFailed_one": "{{count}} row couldn't be read. Fix it in the spreadsheet, then choose the file again.",
     "rowsFailed_other": "{{count}} rows couldn't be read. Fix them in the spreadsheet, then choose the file again."
+  },
+  "export": {
+    "title": "Export CSV",
+    "duration": "Period",
+    "lastDay": "Last day",
+    "practices": "Practices",
+    "all": "Select all",
+    "none": "Select none",
+    "noPractices": "No active practices to export.",
+    "download": "Download CSV",
+    "failed": "Could not export",
+    "failedHint": "Check your connection and try again.",
+    "range": {
+      "Week": "Week",
+      "Month": "Month",
+      "Quarter": "3 months",
+      "HalfYear": "6 months",
+      "Year": "Year",
+      "TwoYears": "2 years",
+      "ThreeYears": "3 years",
+      "FiveYears": "5 years",
+      "AllData": "All time"
+    }
   },
   "today": {
     "offlinePending_one": "Offline — {{count}} change will sync",

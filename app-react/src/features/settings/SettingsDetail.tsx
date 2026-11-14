@@ -69,6 +69,7 @@ function SettingsColumn() {
       <p className={GROUP}>{t('settings.accountData')}</p>
       {item('/settings/edit-password', t('settings.changePassword'))}
       {item('/settings/import', t('settings.importCsv'))}
+      {item('/settings/export', t('settings.exportCsv'))}
       <p className={GROUP}>{t('settings.support')}</p>
       {item('/help', t('settings.helpSupport'))}
       <a href="https://sadhana.pro" target="_blank" rel="noopener noreferrer" onClick={openInBrowser}

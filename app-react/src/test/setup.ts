@@ -118,6 +118,7 @@ if (!i18n.isInitialized) {
             previewHint: 'Try new features before release',
             accountData: 'Account & data',
             importCsv: 'Import CSV',
+            exportCsv: 'Export CSV',
             support: 'Support',
             helpSupport: 'Help and support',
             aboutShort: 'About',

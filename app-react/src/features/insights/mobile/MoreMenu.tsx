@@ -5,14 +5,16 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { chartsApi } from '../../../api/charts'
 import { REPORTS_KEY } from '../useReports'
+import { DURATION } from '../useInsights'
+import type { Range } from '../useInsights'
 import { useToast } from '../../../hooks/useToast'
 import type { AppBarAction } from '../../../layouts/mobile/AppBar'
 import { BottomSheet } from '../../../ui/primitives/BottomSheet'
-import { downloadCsv } from '../../today/actions'
 import { NewChartSheet } from '../settings/mobile/NewChartSheet'
 import type { Report } from '../../../api/charts'
 
-export function useMoreMenu(report: Report | null): { actions: AppBarAction[]; sheet: ReactNode; create: () => void } {
+/** `range`: the shown report's, which Export CSV opens on. */
+export function useMoreMenu(report: Report | null, range?: Range): { actions: AppBarAction[]; sheet: ReactNode; create: () => void } {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -34,7 +36,7 @@ export function useMoreMenu(report: Report | null): { actions: AppBarAction[]; s
       }]
       : []),
     { label: t('sharing.title'), onSelect: () => navigate('/settings/sharing') },
-    { label: t('charts.downloadCsv'), onSelect: () => { downloadCsv().catch(() => showToast({ message: t('common.error'), variant: 'error' })) } },
+    { label: t('charts.downloadCsv'), onSelect: () => navigate(report && range ? `/settings/export?duration=${DURATION[range]}` : '/settings/export') },
     ...(report ? [{ label: t('insights.deleteReport'), onSelect: () => setConfirming(true) }] : []),
     { label: t('common.reportProblem'), onSelect: () => navigate('/help/support-form') },
   ]

@@ -37,7 +37,7 @@ export function InsightsTablet({ logDate, onLogDate, chartHeight = 300, panelHei
   const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null)
   const [openDay, setOpenDay] = useState<string | null>(null)
   const [view, setView] = useInsightsView()
-  const more = useMoreMenu(view === 'charts' ? ins.report : null)
+  const more = useMoreMenu(view === 'charts' ? ins.report : null, ins.range)
   const charts = view === 'charts'
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const h = ins.headline

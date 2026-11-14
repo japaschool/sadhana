@@ -18,7 +18,7 @@ export type Range = ReportRange
 export const RANGES: Range[] = ['7d', '30d', '90d', '1y']
 /** Past a year: picked from the range control's last button. */
 export const LONG_RANGES: Range[] = ['2y', '3y', '5y', 'all']
-const DURATION: Record<Range, ReportDuration> = {
+export const DURATION: Record<Range, ReportDuration> = {
   '7d': 'Week', '30d': 'Month', '90d': 'Quarter', '1y': 'Year', '2y': 'TwoYears', '3y': 'ThreeYears', '5y': 'FiveYears', all: 'AllData',
 }
 

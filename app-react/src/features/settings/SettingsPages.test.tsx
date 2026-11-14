@@ -10,6 +10,7 @@ import { UserDetails } from './UserDetails'
 import { ChangePassword } from './ChangePassword'
 import { SendMessage } from './SendMessage'
 import { ImportCsv } from './ImportCsv'
+import { ExportCsv } from './ExportCsv'
 
 vi.mock('../../api/auth', () => ({ authApi: { updateUser: vi.fn(), updatePassword: vi.fn() } }))
 import { authApi } from '../../api/auth'
@@ -18,7 +19,10 @@ import { supportApi } from '../../api/support'
 vi.mock('../../api/practices', () => ({ practicesApi: { getUserPractices: vi.fn(), saveDiaryDay: vi.fn(), createUserPractice: vi.fn() } }))
 import { practicesApi } from '../../api/practices'
 vi.mock('../../api/yatras', () => ({ yatrasApi: { getYatras: vi.fn().mockResolvedValue([]) } }))
-vi.mock('../../api/charts', () => ({ chartsApi: { getReports: vi.fn().mockResolvedValue([]) } }))
+vi.mock('../../api/charts', () => ({ chartsApi: { getReports: vi.fn().mockResolvedValue([]), getReportData: vi.fn() } }))
+import { chartsApi } from '../../api/charts'
+vi.mock('../insights/csv', async (orig) => ({ ...(await orig<object>()), triggerCSVDownload: vi.fn() }))
+import { triggerCSVDownload } from '../insights/csv'
 
 function renderAt(path: string, element: ReactElement) {
   useAuthStore.setState({ user: { id: '1', email: 'alex@example.org', token: 'tok', name: 'Alex das' }, token: 'tok' })
@@ -27,7 +31,7 @@ function renderAt(path: string, element: ReactElement) {
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={[path]}>
         <Routes>
-          <Route path={path} element={element} />
+          <Route path={path.split('?')[0]} element={element} />
           <Route path="/settings" element={<p>Settings page</p>} />
         </Routes>
       </MemoryRouter>
@@ -176,5 +180,40 @@ describe('ImportCsv', () => {
     await pick('date,Rounds\n2024-10-01,16')
     expect(await screen.findByText('No columns match your practices')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Import' })).toBeDisabled()
+  })
+})
+
+describe('ExportCsv', () => {
+  it('exports the ticked practices over the chosen period, ending on the log day', async () => {
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([
+      { id: 'a', practice: 'Japa', data_type: 'Int', is_active: true },
+      { id: 'b', practice: 'Reading', data_type: 'Duration', is_active: true },
+      { id: 'c', practice: 'Old', data_type: 'Int', is_active: false },
+    ])
+    vi.mocked(chartsApi.getReportData).mockResolvedValue([
+      { cob_date: '2026-11-12', practice: 'Japa', value: { Int: 16 } },
+      { cob_date: '2026-11-12', practice: 'Reading', value: { Duration: 30 } },
+    ])
+    renderAt('/settings/export', <ExportCsv />)
+    fireEvent.click(await screen.findByLabelText('Reading'))
+    expect(screen.queryByLabelText('Old')).toBeNull()
+    fireEvent.change(screen.getByLabelText('Period'), { target: { value: 'Month' } })
+    fireEvent.change(screen.getByLabelText('Last day'), { target: { value: '2026-11-12' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Download CSV' }))
+    await waitFor(() => expect(triggerCSVDownload).toHaveBeenCalledWith('date,Japa\n2026-11-12,16'))
+    expect(chartsApi.getReportData).toHaveBeenCalledWith('2026-11-12', 'Month')
+  })
+
+  it('opens on the period of the report it was opened from', async () => {
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([])
+    renderAt('/settings/export?duration=Quarter', <ExportCsv />)
+    expect(screen.getByLabelText('Period')).toHaveValue('Quarter')
+  })
+
+  it('cannot download with nothing ticked', async () => {
+    vi.mocked(practicesApi.getUserPractices).mockResolvedValue([{ id: 'a', practice: 'Japa', data_type: 'Int', is_active: true }])
+    renderAt('/settings/export', <ExportCsv />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Select none' }))
+    expect(screen.getByRole('button', { name: 'Download CSV' })).toBeDisabled()
   })
 })

@@ -5,7 +5,7 @@ const files = import.meta.glob<Dict>('../../../public/locales/*/translation.json
 
 const KEYS = [
   'userDetails', 'preferences', 'theme', 'themeAuto', 'themeLight', 'themeDark', 'previewChannel', 'previewHint',
-  'accountData', 'importCsv', 'support', 'helpSupport', 'aboutShort', 'updateAvailable', 'logout',
+  'accountData', 'importCsv', 'exportCsv', 'support', 'helpSupport', 'aboutShort', 'updateAvailable', 'logout',
 ]
 
 describe('settings.* translations', () => {
@@ -25,7 +25,7 @@ const keysOf = (o: object, prefix = ''): string[] => [...new Set(Object.entries(
 describe('settings sub-page translations', () => {
   it('has the same keys in en, ru and uk', () => {
     const dicts = Object.values(files) as unknown as Record<string, object>[]
-    for (const ns of ['userDetails', 'password', 'help', 'support', 'import', 'auth', 'shared', 'sharing', 'yatraJoin', 'notFound']) {
+    for (const ns of ['userDetails', 'password', 'help', 'support', 'import', 'export', 'auth', 'shared', 'sharing', 'yatraJoin', 'notFound']) {
       const [en, ...rest] = dicts.map((d) => keysOf(d[ns]))
       expect(en.length, ns).toBeGreaterThan(0)
       for (const other of rest) expect(other, ns).toEqual(en)

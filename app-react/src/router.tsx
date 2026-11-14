@@ -95,6 +95,7 @@ const SharedDesktop = lazy(() => import('./features/shared/SharedReports').then(
 const UserDetails = lazy(() => import('./features/settings/UserDetails').then((m) => ({ default: m.UserDetails })))
 const ChangePassword = lazy(() => import('./features/settings/ChangePassword').then((m) => ({ default: m.ChangePassword })))
 const ImportCsv = lazy(() => import('./features/settings/ImportCsv').then((m) => ({ default: m.ImportCsv })))
+const ExportCsv = lazy(() => import('./features/settings/ExportCsv').then((m) => ({ default: m.ExportCsv })))
 const Stats = lazy(() => import('./features/stats/Stats').then((m) => ({ default: m.Stats })))
 const Help = lazy(() => import('./features/settings/Help').then((m) => ({ default: m.Help })))
 const SendMessage = lazy(() => import('./features/settings/SendMessage').then((m) => ({ default: m.SendMessage })))
@@ -154,6 +155,7 @@ export const router = createBrowserRouter([
       { path: '/settings/edit-user', element: ui(<UserDetails />) },
       { path: '/settings/edit-password', element: ui(<ChangePassword />) },
       { path: '/settings/import', element: ui(<ImportCsv />) },
+      { path: '/settings/export', element: ui(<ExportCsv />) },
       { path: '/help/support-form', element: ui(<SendMessage />) },
       { path: '/yatra/:id/join', element: ui(<YatraJoin />) },
     ],

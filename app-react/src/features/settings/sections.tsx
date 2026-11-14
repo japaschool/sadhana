@@ -66,6 +66,7 @@ export function AccountRows() {
     <>
       <SettingsRow label={t('settings.changePassword')} to="/settings/edit-password" />
       <SettingsRow label={t('settings.importCsv')} to="/settings/import" />
+      <SettingsRow label={t('settings.exportCsv')} to="/settings/export" />
     </>
   )
 }
