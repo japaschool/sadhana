@@ -38,6 +38,24 @@ export function writeStored(id: string) {
   try { localStorage.setItem(KEY, id) } catch { /* blocked storage: the choice lasts for this visit */ }
 }
 
+const RANGE_KEY = 'insights-range'
+
+/** The last range picked on any Insights screen, remembered on this device; a screen that doesn't offer it opens on its own default. */
+export function useInsightsRange(remember = true) {
+  const [picked, setPicked] = useState<Range | null>(() => {
+    if (!remember) return null
+    try {
+      const r = localStorage.getItem(RANGE_KEY) as Range | null
+      return r && (RANGES.includes(r) || LONG_RANGES.includes(r)) ? r : null
+    } catch { return null }
+  })
+  const set = (r: Range) => {
+    setPicked(r)
+    if (remember) try { localStorage.setItem(RANGE_KEY, r) } catch { /* blocked storage: the choice lasts for this visit */ }
+  }
+  return [picked, set] as const
+}
+
 export type InsightsView = 'overview' | 'charts'
 const VIEW_KEY = 'insights-view'
 
@@ -72,8 +90,8 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
   const reportsQ = useQuery({ queryKey: sharedUser ? [...src.key, 'reports', 'panels'] : [...REPORTS_KEY], queryFn: src.reports, select: sortReports, retry: !sharedUser })
   const practicesQ = useQuery({ queryKey: [...src.key, 'practices'], queryFn: src.practices })
   const [stored, setStored] = useState(sharedUser ? '' : readStored)
-  // A range picked here lasts while its report is shown; another report opens on its own default.
-  const [rangeFor, setRangeFor] = useState<{ id: string; range: Range } | null>(null)
+  // A picked range carries across reports and Insights screens; a shared page keeps its own, without long ranges.
+  const [pickedRange, setRange] = useInsightsRange(!sharedUser)
   const [end, setEndState] = useState<Date | null>(null)
   const [picked, setPicked] = useState<string | null>(null)
   const [vsYear, setVsYear] = useState(false)
@@ -86,7 +104,7 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
   const todayCob = toDateStr(new Date())
   // A shared page has nothing past a year.
   const opensOn = report?.default_range && !(sharedUser && LONG_RANGES.includes(report.default_range)) ? report.default_range : '30d'
-  const range = rangeFor && rangeFor.id === (report?.id ?? '') ? rangeFor.range : opensOn
+  const range = pickedRange && !(sharedUser && LONG_RANGES.includes(pickedRange)) ? pickedRange : opensOn
   // A month report has no range or end date: it reads half a year to the shown month's end, which covers that month, the one before and any 90 days.
   // A goals report has no range or end date either: it reads the last year to today, whatever the range or log date.
   const goals = hasPanel(report, 'Goals')
@@ -142,7 +160,7 @@ export function useInsights(logDate?: Date, withTables = false, sharedUser?: str
     selectedId,
     select: (id: string) => { setStored(id); setPicked(null); if (!sharedUser) writeStored(id) },
     range,
-    setRange: (r: Range) => setRangeFor({ id: report?.id ?? '', range: r }),
+    setRange,
     end,
     setEnd: (d: Date | null) => setEndState(d && toDateStr(d) !== todayCob ? d : null),
     todayCob,

@@ -52,6 +52,16 @@ describe('UsualOverTime', () => {
     fireEvent.click(screen.getByRole('radio', { name: '3y' }))
     expect(screen.getByRole('radio', { name: '3y' })).toBeChecked()
   })
+  it('reopens_on_the_remembered_range_and_defaults_when_not_offered', async () => {
+    getReportData.mockImplementation(async () => data(1200))
+    localStorage.setItem('insights-range', '3y')
+    const { unmount } = show()
+    expect(await screen.findByRole('radio', { name: '3y' })).toBeChecked()
+    unmount()
+    localStorage.setItem('insights-range', '30d')
+    show()
+    expect(await screen.findByRole('radio', { name: '2y' })).toBeChecked()
+  })
   it('row_without_history_says_so', async () => {
     getReportData.mockImplementation(async () => data(400, 1, (i) => ({ 'Кругов за день': 16, ...(i <= 60 ? { 'Отбой': { Time: { h: 22, m: 0 } } } : {}) })))
     show()

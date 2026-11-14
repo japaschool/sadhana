@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -12,6 +12,7 @@ import { SettingsSubpage } from '../../settings/SettingsSubpage'
 import { fromDateStr, toDateStr } from '../../today/date'
 import { formatDay, formatTick, spansYears } from '../insightsLogic'
 import { AXIS, TipRow, TipShell } from '../mobile/InsightsChart'
+import { useInsightsRange } from '../useInsights'
 import type { RowKind } from '../panels/gapLogic'
 import { rowName, rowValueText } from './format'
 import { RowLabel } from './MeVsNormal'
@@ -74,8 +75,8 @@ export function UsualOverTime() {
     return data.rows.map((row) => ({ row, weeks: usualWeeks(data.series.get(row.key) ?? new Map(), leftOut, todayCob, first) }))
   }, [data.rows, data.series, periods, todayCob, first])
   const offered = offeredRanges(first, todayCob)
-  const [picked, setPicked] = useState<UsualRange | null>(null)
-  const range = picked && offered.includes(picked) ? picked : openingRange(offered)
+  const [picked, setPicked] = useInsightsRange()
+  const range = picked && offered.includes(picked as UsualRange) ? picked as UsualRange : openingRange(offered)
   const from = rangeStart(range, todayCob, first)
   const units = { h: t('today.unitH'), min: t('today.unitMin') }
   const month = (d: string) => new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(fromDateStr(d))

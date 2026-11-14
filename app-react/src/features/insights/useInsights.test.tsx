@@ -114,6 +114,16 @@ describe('useInsights', () => {
     expect(result.current.selectedId).toBe('r1')
   })
 
+  it('remembers a picked range across reports and visits', async () => {
+    const { result } = setup()
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    act(() => result.current.setRange('90d'))
+    expect(localStorage.getItem('insights-range')).toBe('90d')
+    act(() => result.current.select('r1'))
+    expect(result.current.range).toBe('90d')
+    expect(setup().result.current.range).toBe('90d')
+  })
+
   it('writes a selection change to storage', async () => {
     const { result } = setup()
     await waitFor(() => expect(result.current.isLoading).toBe(false))
